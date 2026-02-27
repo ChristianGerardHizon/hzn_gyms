@@ -15,13 +15,13 @@ class User with UserMappable {
   /// The user's display name.
   final String name;
 
-  /// The user's email address.
-  final String email;
+  /// The user's username (used for login).
+  final String username;
 
   /// The user's avatar URL (pre-computed).
   final String? avatarUrl;
 
-  /// Whether the user's email has been verified.
+  /// Whether the user's account has been verified.
   final bool verified;
 
   /// The user's branch ID (if assigned to a branch).
@@ -30,7 +30,7 @@ class User with UserMappable {
   const User({
     required this.id,
     required this.name,
-    required this.email,
+    required this.username,
     this.avatarUrl,
     this.verified = false,
     this.branch,

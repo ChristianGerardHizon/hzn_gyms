@@ -58,7 +58,10 @@ class FormDialogScaffold extends StatelessWidget {
   final FormDirtyGuardResult dirtyGuard;
 
   /// Called when the save button is pressed.
-  final VoidCallback onSave;
+  ///
+  /// Receives a [BuildContext] below the dialog's [ScaffoldMessenger] so
+  /// snackbar calls with `useRootMessenger: false` render above the dialog.
+  final ValueChanged<BuildContext> onSave;
 
   /// The form content (fields).
   final Widget child;
@@ -96,39 +99,43 @@ class FormDialogScaffold extends StatelessWidget {
         child: ConstrainedDialogContent(
           maxWidth: maxWidth,
           fullScreen: fullScreen,
-          child: Column(
-            children: [
-              FormDialogHeader(
-                title: title,
-                isSaving: isSaving,
-                onClose: () async {
-                  if (await dirtyGuard.confirmDiscard(context)) {
-                    if (context.mounted) Navigator.of(context).pop();
-                  }
-                },
-                onSave: onSave,
-                saveLabel: saveLabel,
-                cancelLabel: cancelLabel,
-                showCancelButton: showCancelButton,
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: FormBuilder(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    padding: contentPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-                        child,
-                        const SizedBox(height: 24),
-                      ],
+          child: ScaffoldMessenger(
+            child: Scaffold(
+              body: Column(
+                children: [
+                  FormDialogHeader(
+                    title: title,
+                    isSaving: isSaving,
+                    onClose: () async {
+                      if (await dirtyGuard.confirmDiscard(context)) {
+                        if (context.mounted) Navigator.of(context).pop();
+                      }
+                    },
+                    onSave: onSave,
+                    saveLabel: saveLabel,
+                    cancelLabel: cancelLabel,
+                    showCancelButton: showCancelButton,
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: FormBuilder(
+                      key: formKey,
+                      child: SingleChildScrollView(
+                        padding: contentPadding,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 16),
+                            child,
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

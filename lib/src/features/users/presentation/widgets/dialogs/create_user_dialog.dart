@@ -58,7 +58,7 @@ class CreateUserDialog extends HookConsumerWidget {
       final user = User(
         id: '',
         name: (values['name'] as String).trim(),
-        email: (values['email'] as String).trim().toLowerCase(),
+        username: (values['username'] as String).trim().toLowerCase(),
         roleId: values['role'] as String?,
         branchId: values['branch'] as String?,
       );
@@ -190,22 +190,22 @@ class CreateUserDialog extends HookConsumerWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // Email (required)
+                      // Username (required)
                       FormBuilderTextField(
-                        name: 'email',
+                        name: 'username',
                         decoration: const InputDecoration(
-                          labelText: 'Email *',
+                          labelText: 'Username *',
                           border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.email),
+                          prefixIcon: Icon(Icons.alternate_email),
                         ),
                         enabled: !isSaving.value,
-                        keyboardType: TextInputType.emailAddress,
                         validator: FormBuilderValidators.compose([
                           FormBuilderValidators.required(
-                            errorText: 'Email is required',
+                            errorText: 'Username is required',
                           ),
-                          FormBuilderValidators.email(
-                            errorText: 'Invalid email format',
+                          FormBuilderValidators.minLength(
+                            3,
+                            errorText: 'Username must be at least 3 characters',
                           ),
                         ]),
                       ),
@@ -395,7 +395,7 @@ class CreateUserDialog extends HookConsumerWidget {
 
   static const _fieldLabels = {
     'name': 'Name',
-    'email': 'Email',
+    'username': 'Username',
     'password': 'Password',
     'confirmPassword': 'Confirm Password',
     'role': 'Role',

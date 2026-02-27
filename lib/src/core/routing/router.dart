@@ -6,11 +6,12 @@ import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../pages/app_root.dart';
 import 'router_utils.dart';
 import 'routes/auth.routes.dart';
+import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
 import 'routes/organization.routes.dart';
 import 'routes/products.routes.dart';
-import 'routes/customers.routes.dart';
-import 'routes/services.routes.dart';
+import 'routes/members.routes.dart';
+import 'routes/memberships.routes.dart';
 import 'routes/sales.routes.dart';
 import 'routes/sales_history.routes.dart';
 import 'routes/reports.routes.dart';
@@ -47,9 +48,10 @@ GoRouter router(Ref ref) {
         builder: (context, state, child) => AppRoot(child: child),
         routes: [
           $dashboardRoute,
+          $checkInRoute,
           $productsShellRoute,
-          $servicesShellRoute,
-          $customersShellRoute,
+          $membersShellRoute,
+          $membershipsShellRoute,
           $salesRoute,
           $salesShellRoute,
           $reportsRoute,

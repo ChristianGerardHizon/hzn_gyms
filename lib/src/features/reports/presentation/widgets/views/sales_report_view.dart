@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../dashboard/presentation/widgets/kpi_card.dart';
 import '../../../domain/sales_report.dart';
 import '../../controllers/sales_report_controller.dart';
 import '../charts/bar_chart_widget.dart';
 import '../charts/line_chart_widget.dart';
 import '../charts/pie_chart_widget.dart';
+import '../report_kpi_card.dart';
+import '../report_kpi_grid.dart';
 
 /// View displaying the sales report with charts and tables.
 class SalesReportView extends ConsumerWidget {
@@ -111,30 +112,30 @@ class SalesReportView extends ConsumerWidget {
   }
 
   Widget _buildKpiSection(BuildContext context, SalesReport report) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+    return ReportKpiGrid(
+      crossAxisCount: 3,
       children: [
-        KpiCard(
+        ReportKpiCard(
           title: 'Total Revenue',
           value: _currencyFormat.format(report.totalRevenue),
           icon: Icons.attach_money,
           color: Colors.green,
-          compact: true,
+          subtitle: 'For selected period',
+          featured: true,
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Transactions',
           value: report.transactionCount.toString(),
-          icon: Icons.receipt_long,
+          icon: Icons.receipt_long_outlined,
           color: Colors.blue,
-          compact: true,
+          subtitle: 'Total completed sales',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Average Transaction',
           value: _currencyFormat.format(report.averageTransactionValue),
           icon: Icons.trending_up,
           color: Colors.orange,
-          compact: true,
+          subtitle: 'Per transaction',
         ),
       ],
     );

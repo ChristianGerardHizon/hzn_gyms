@@ -116,8 +116,8 @@ class UserSearchFieldsDialog extends ConsumerWidget {
     switch (field) {
       case 'name':
         return t.fields.name;
-      case 'email':
-        return t.fields.email;
+      case 'username':
+        return t.fields.username;
       default:
         return field;
     }

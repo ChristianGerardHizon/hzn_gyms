@@ -53,6 +53,27 @@ class SaleStatusCard extends StatelessWidget {
 
   (Color, IconData, String, String) _getStatusInfo(String status) {
     switch (status.toLowerCase()) {
+      case 'pending':
+        return (
+          Colors.grey,
+          Icons.schedule,
+          'Pending',
+          'This sale is pending',
+        );
+      case 'awaitingpayment':
+        return (
+          Colors.amber,
+          Icons.payment,
+          'Awaiting Payment',
+          'This sale is awaiting payment',
+        );
+      case 'paid':
+        return (
+          Colors.green,
+          Icons.check_circle,
+          'Paid',
+          'This sale has been fully paid',
+        );
       case 'completed':
         return (
           Colors.green,

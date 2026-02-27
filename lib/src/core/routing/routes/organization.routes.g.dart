@@ -47,26 +47,6 @@ RouteBase get $organizationShellRoute => ShellRouteData.$route(
                 ),
               ],
             ),
-            GoRouteData.$route(
-              path: 'machines',
-              factory: $OrganizationMachinesRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $OrganizationMachineDetailRoute._fromState,
-                ),
-              ],
-            ),
-            GoRouteData.$route(
-              path: 'storages',
-              factory: $OrganizationStoragesRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $OrganizationStorageDetailRoute._fromState,
-                ),
-              ],
-            ),
           ],
         ),
       ],
@@ -239,108 +219,6 @@ mixin $OrganizationBranchDetailRoute on GoRouteData {
   @override
   String get location => GoRouteData.$location(
         '/organization/branches/${Uri.encodeComponent(_self.id)}',
-      );
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $OrganizationMachinesRoute on GoRouteData {
-  static OrganizationMachinesRoute _fromState(GoRouterState state) =>
-      const OrganizationMachinesRoute();
-
-  @override
-  String get location => GoRouteData.$location(
-        '/organization/machines',
-      );
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $OrganizationMachineDetailRoute on GoRouteData {
-  static OrganizationMachineDetailRoute _fromState(GoRouterState state) =>
-      OrganizationMachineDetailRoute(
-        id: state.pathParameters['id']!,
-      );
-
-  OrganizationMachineDetailRoute get _self =>
-      this as OrganizationMachineDetailRoute;
-
-  @override
-  String get location => GoRouteData.$location(
-        '/organization/machines/${Uri.encodeComponent(_self.id)}',
-      );
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $OrganizationStoragesRoute on GoRouteData {
-  static OrganizationStoragesRoute _fromState(GoRouterState state) =>
-      const OrganizationStoragesRoute();
-
-  @override
-  String get location => GoRouteData.$location(
-        '/organization/storages',
-      );
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $OrganizationStorageDetailRoute on GoRouteData {
-  static OrganizationStorageDetailRoute _fromState(GoRouterState state) =>
-      OrganizationStorageDetailRoute(
-        id: state.pathParameters['id']!,
-      );
-
-  OrganizationStorageDetailRoute get _self =>
-      this as OrganizationStorageDetailRoute;
-
-  @override
-  String get location => GoRouteData.$location(
-        '/organization/storages/${Uri.encodeComponent(_self.id)}',
       );
 
   @override

@@ -35,7 +35,7 @@ class FormDirtyGuardResult {
 /// ```dart
 /// final dirtyGuard = useFormDirtyGuard(
 ///   formKey: formKey,
-///   initialValues: {'name': user.name, 'email': user.email},
+///   initialValues: {'name': user.name, 'username': user.username},
 /// );
 /// ```
 ///

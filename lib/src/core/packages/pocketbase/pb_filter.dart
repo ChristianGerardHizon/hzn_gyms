@@ -235,19 +235,12 @@ abstract class PBFilters {
   /// Base filter excluding soft-deleted records.
   static PBFilter get active => PBFilter().notDeleted();
 
-  /// Filter for patient-related queries with soft delete.
+  /// Filter for member-related queries with soft delete.
   ///
-  /// Example: `PBFilters.forPatient(patientId).build()`
-  /// Result: `patient = "id" && isDeleted = false`
-  static PBFilter forPatient(String patientId) =>
-      PBFilter().relation('patient', patientId).notDeleted();
-
-  /// Filter for record-related queries with soft delete.
-  ///
-  /// Example: `PBFilters.forRecord(recordId).build()`
-  /// Result: `patientRecord = "id" && isDeleted = false`
-  static PBFilter forRecord(String recordId) =>
-      PBFilter().relation('patientRecord', recordId).notDeleted();
+  /// Example: `PBFilters.forMember(memberId).build()`
+  /// Result: `member = "id" && isDeleted = false`
+  static PBFilter forMember(String memberId) =>
+      PBFilter().relation('member', memberId).notDeleted();
 
   /// Filter for branch-scoped queries with soft delete.
   ///
@@ -255,11 +248,4 @@ abstract class PBFilters {
   /// Result: `branch = "id" && isDeleted = false`
   static PBFilter forBranch(String branchId) =>
       PBFilter().relation('branch', branchId).notDeleted();
-
-  /// Filter for treatment-related queries with soft delete.
-  ///
-  /// Example: `PBFilters.forTreatment(treatmentId).build()`
-  /// Result: `treatment = "id" && isDeleted = false`
-  static PBFilter forTreatment(String treatmentId) =>
-      PBFilter().relation('treatment', treatmentId).notDeleted();
 }

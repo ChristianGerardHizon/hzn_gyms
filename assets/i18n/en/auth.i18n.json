@@ -20,6 +20,5 @@
     "checkEmail": "Check Your Email",
     "resetLinkSent(email)": "Password reset link has been sent to $email",
     "signInToContinue": "Sign in to continue",
-    "signingIn": "Signing in...",
-    "verificationEmailSent": "A verification email has been sent to your email address"
+    "signingIn": "Signing in..."
 }

@@ -96,7 +96,7 @@ final class UserSearchFieldsProvider
   }
 }
 
-String _$userSearchFieldsHash() => r'ff1b8078192f8d240dfea4cccc5308610b4425c1';
+String _$userSearchFieldsHash() => r'd17e475ffe272d0766af01a32c37386d7abfc3c4';
 
 /// Provider for managing which fields are included in user search.
 

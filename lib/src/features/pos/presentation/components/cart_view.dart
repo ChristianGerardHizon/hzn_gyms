@@ -4,7 +4,6 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/currency_format.dart';
-import '../../../services/domain/cart_service_item.dart';
 import '../cart_controller.dart';
 import 'checkout_dialog.dart';
 import 'variable_price_dialog.dart';
@@ -22,7 +21,6 @@ class CartView extends ConsumerWidget {
       error: (error, stack) => Center(child: Text('Error: $error')),
       data: (cartState) {
         final cartItems = cartState.items;
-        final serviceItems = cartState.serviceItems;
         final total = cartState.total;
         final totalCount = cartState.totalItemCount;
         final isSyncing = cartState.isSyncing;
@@ -61,7 +59,7 @@ class CartView extends ConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Add products or services from the grid',
+                                'Add products from the grid',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant
                                       .withValues(alpha: 0.7),
@@ -75,40 +73,6 @@ class CartView extends ConsumerWidget {
                   : ListView(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       children: [
-                        // Service items
-                        ...serviceItems.map((item) =>
-                          _buildServiceItemCard(
-                            context, ref, theme, item, isSyncing)),
-
-                        // Products section
-                        if (cartItems.isNotEmpty && serviceItems.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.inventory_2,
-                                  size: 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Products',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Divider(
-                                    color: theme.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
                         ...cartItems.map((item) {
                           final product = item.product;
                           if (product == null) return const SizedBox.shrink();
@@ -318,99 +282,6 @@ class CartView extends ConsumerWidget {
               onUpdatePrice: (p) => ref
                   .read(cartControllerProvider.notifier)
                   .updateCustomPrice(item.id, p),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceItemCard(
-    BuildContext context,
-    WidgetRef ref,
-    ThemeData theme,
-    CartServiceItem item,
-    bool isSyncing,
-  ) {
-    final service = item.service;
-    final serviceName = service?.name ?? 'Service';
-    final isVariablePrice =
-        item.hasCustomPrice || (service?.isVariablePrice ?? false);
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Row 1: Service name + badge + delete button
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.miscellaneous_services,
-                        size: 14,
-                        color: theme.colorScheme.tertiary,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          serviceName,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: theme.colorScheme.onSurfaceVariant,
-                      size: 16,
-                    ),
-                    padding: EdgeInsets.zero,
-                    onPressed: isSyncing
-                        ? null
-                        : () {
-                            ref
-                                .read(cartControllerProvider.notifier)
-                                .removeServiceItemById(item.id);
-                          },
-                    tooltip: 'Remove item',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Row 2: Unit price, quantity controls, and total
-            _buildItemControls(
-              context, ref, theme, isSyncing,
-              itemId: item.id,
-              effectivePrice: item.effectivePrice,
-              quantity: item.quantity,
-              total: item.total,
-              isVariablePrice: isVariablePrice,
-              itemName: serviceName,
-              unitLabel: service?.quantityUnit?.shortSingular,
-              maxQuantity: service?.maxQuantity,
-              onUpdateQuantity: (q) => ref
-                  .read(cartControllerProvider.notifier)
-                  .updateServiceQuantityById(item.id, q),
-              onUpdatePrice: (p) => ref
-                  .read(cartControllerProvider.notifier)
-                  .updateServiceCustomPrice(item.id, p),
             ),
           ],
         ),

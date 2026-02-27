@@ -150,17 +150,32 @@ class PaymentRepositoryImpl implements PaymentRepository {
     return total;
   }
 
-  /// Updates sale.isPaid based on total payments vs totalAmount.
+  /// Updates sale.isPaid and status based on total payments vs totalAmount.
   Future<void> _updateSaleIsPaid(String saleId) async {
-    // Get sale to know total amount
+    // Get sale to know total amount and current status
     final sale = await _sales.getOne(saleId);
     final totalAmount = sale.getDoubleValue('totalAmount');
+    final currentStatus = sale.getStringValue('status');
 
     // Calculate total paid
     final totalPaid = await _calculateTotalPaid(saleId);
 
     // Update isPaid
     final isPaid = totalPaid >= totalAmount;
-    await _sales.update(saleId, body: {'isPaid': isPaid});
+    final body = <String, dynamic>{'isPaid': isPaid};
+
+    // Auto-update status based on payment state
+    // Only update if not already refunded or voided
+    if (currentStatus != 'refunded' && currentStatus != 'voided') {
+      if (isPaid) {
+        body['status'] = 'paid';
+      } else if (totalPaid > 0) {
+        body['status'] = 'awaitingPayment';
+      } else {
+        body['status'] = 'pending';
+      }
+    }
+
+    await _sales.update(saleId, body: body);
   }
 }

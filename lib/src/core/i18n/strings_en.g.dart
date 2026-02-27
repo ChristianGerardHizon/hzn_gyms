@@ -107,9 +107,6 @@ class TranslationsAuthEn {
 
 	/// en: 'Signing in...'
 	String get signingIn => 'Signing in...';
-
-	/// en: 'A verification email has been sent to your email address'
-	String get verificationEmailSent => 'A verification email has been sent to your email address';
 }
 
 // Path: common
@@ -255,14 +252,14 @@ class TranslationsFailuresEn {
 	/// en: 'No internet connection.'
 	String get noInternet => 'No internet connection.';
 
-	/// en: 'Invalid email or password.'
-	String get invalidCredentials => 'Invalid email or password.';
+	/// en: 'Invalid username or password.'
+	String get invalidCredentials => 'Invalid username or password.';
 
 	/// en: 'Your account has been disabled.'
 	String get accountDisabled => 'Your account has been disabled.';
 
-	/// en: 'Please verify your email address.'
-	String get emailNotVerified => 'Please verify your email address.';
+	/// en: 'Your account has not been verified.'
+	String get accountNotVerified => 'Your account has not been verified.';
 
 	/// en: 'Too many requests. Please wait a moment.'
 	String get tooManyRequests => 'Too many requests. Please wait a moment.';
@@ -278,6 +275,9 @@ class TranslationsFieldsEn {
 
 	/// en: 'Email'
 	String get email => 'Email';
+
+	/// en: 'Username'
+	String get username => 'Username';
 
 	/// en: 'Password'
 	String get password => 'Password';
@@ -384,8 +384,14 @@ class TranslationsNavigationEn {
 	/// en: 'Services'
 	String get services => 'Services';
 
-	/// en: 'Customers'
-	String get customers => 'Customers';
+	/// en: 'Check-In'
+	String get checkIn => 'Check-In';
+
+	/// en: 'Members'
+	String get members => 'Members';
+
+	/// en: 'Memberships'
+	String get memberships => 'Memberships';
 
 	/// en: 'System'
 	String get system => 'System';
@@ -513,7 +519,6 @@ extension on Translations {
 			'auth.resetLinkSent' => ({required Object email}) => 'Password reset link has been sent to ${email}',
 			'auth.signInToContinue' => 'Sign in to continue',
 			'auth.signingIn' => 'Signing in...',
-			'auth.verificationEmailSent' => 'A verification email has been sent to your email address',
 			'common.appName' => 'Ebe Gym',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'Save',
@@ -556,11 +561,12 @@ extension on Translations {
 			'failures.conflict' => 'A conflict occurred. The resource may already exist.',
 			'failures.timeout' => 'Request timed out. Please try again.',
 			'failures.noInternet' => 'No internet connection.',
-			'failures.invalidCredentials' => 'Invalid email or password.',
+			'failures.invalidCredentials' => 'Invalid username or password.',
 			'failures.accountDisabled' => 'Your account has been disabled.',
-			'failures.emailNotVerified' => 'Please verify your email address.',
+			'failures.accountNotVerified' => 'Your account has not been verified.',
 			'failures.tooManyRequests' => 'Too many requests. Please wait a moment.',
 			'fields.email' => 'Email',
+			'fields.username' => 'Username',
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Name',
@@ -593,7 +599,9 @@ extension on Translations {
 			'navigation.salesHistory' => 'Sales',
 			'navigation.organization' => 'Organization',
 			'navigation.services' => 'Services',
-			'navigation.customers' => 'Customers',
+			'navigation.checkIn' => 'Check-In',
+			'navigation.members' => 'Members',
+			'navigation.memberships' => 'Memberships',
 			'navigation.system' => 'System',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'No Branch',

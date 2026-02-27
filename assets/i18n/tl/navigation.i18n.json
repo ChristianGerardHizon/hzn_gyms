@@ -13,7 +13,9 @@
     "salesHistory": "Mga Benta",
     "organization": "Organisasyon",
     "services": "Mga Serbisyo",
-    "customers": "Mga Customer",
+    "checkIn": "Check-In",
+    "members": "Mga Miyembro",
+    "memberships": "Mga Membership",
     "system": "Sistema",
     "account": "Account",
     "noBranch": "Walang Sangay"

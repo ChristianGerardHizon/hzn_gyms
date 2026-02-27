@@ -1,18 +1,15 @@
-import 'dart:math';
-
 import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/foundation/failure.dart';
+import '../../../core/utils/receipt_utils.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 import '../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../products/data/repositories/product_lot_repository.dart';
 import '../../products/data/repositories/product_repository.dart';
-import '../../services/domain/sale_service_item.dart';
 import '../data/repositories/payment_repository.dart';
 import '../data/repositories/sales_repository.dart';
-import '../domain/order_status.dart';
 import '../domain/payment_method.dart';
 import '../domain/payment_type.dart';
 import '../domain/sale.dart';
@@ -73,8 +70,8 @@ class CheckoutController extends _$CheckoutController {
 
     final cashierId = auth.user.id;
 
-    // Generate receipt number: BRANCH-YYYYMMDD-RANDOM
-    final receiptNumber = _generateReceiptNumber(branchId);
+    // Generate receipt number: S-YYMMDD-XXXX
+    final receiptNumber = generateReceiptNumber();
 
     // Convert cart items to sale items (including lot info if present)
     final saleItems = cartState.items.map((cartItem) {
@@ -89,33 +86,29 @@ class CheckoutController extends _$CheckoutController {
         subtotal: cartItem.total,
         productLotId: cartItem.productLotId,
         lotNumber: cartItem.lotNumber,
+        itemType: 'product',
       );
     }).toList();
 
-    // Convert cart service items to sale service items
-    final saleServiceItems = cartState.serviceItems.map((cartServiceItem) {
-      final service = cartServiceItem.service;
-      return SaleServiceItem(
-        id: '',
-        saleId: '',
-        serviceId: cartServiceItem.serviceId,
-        serviceName: service?.name ?? 'Unknown Service',
-        quantity: cartServiceItem.quantity,
-        unitPrice: cartServiceItem.effectivePrice,
-        subtotal: cartServiceItem.total,
-      );
-    }).toList();
+    // Determine initial status based on payment
+    final String initialStatus;
+    if (payNow && paymentAmount != null && paymentAmount >= cartState.total) {
+      initialStatus = 'paid';
+    } else if (payNow && paymentAmount != null && paymentAmount > 0) {
+      initialStatus = 'awaitingPayment';
+    } else {
+      initialStatus = 'pending';
+    }
 
-    // Create the sale with initial orderStatus: pending
+    // Create the sale
     final sale = Sale(
       id: '', // Will be assigned by backend
       receiptNumber: receiptNumber,
       branchId: branchId,
       cashierId: cashierId,
       totalAmount: cartState.total,
-      status: 'pending',
-      orderStatus: OrderStatus.pending,
-      isPaid: false, // Will be updated when payment is recorded
+      status: initialStatus,
+      isPaid: initialStatus == 'paid',
       customerId: customerId,
       customerName: customerName,
       notes: notes,
@@ -132,7 +125,6 @@ class CheckoutController extends _$CheckoutController {
     final result = await salesRepo.createSale(
       sale,
       saleItems,
-      serviceItems: saleServiceItems,
     );
 
     return result.fold(
@@ -194,22 +186,5 @@ class CheckoutController extends _$CheckoutController {
         );
       },
     );
-  }
-
-  /// Generates a receipt number in format: S-YYMMDD-XXXX
-  /// Uses random alphanumeric suffix to avoid race conditions.
-  String _generateReceiptNumber(String branchId) {
-    final now = DateTime.now();
-    final year = (now.year % 100).toString().padLeft(2, '0');
-    final month = now.month.toString().padLeft(2, '0');
-    final day = now.day.toString().padLeft(2, '0');
-    final datePart = '$year$month$day';
-
-    // Generate random 4-character alphanumeric suffix
-    final random = Random();
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluded I,O,0,1 for clarity
-    final suffix = List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
-
-    return 'S-$datePart-$suffix';
   }
 }

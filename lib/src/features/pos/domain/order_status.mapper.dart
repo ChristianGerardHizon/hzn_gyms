@@ -28,12 +28,8 @@ class OrderStatusMapper extends EnumMapper<OrderStatus> {
     switch (value) {
       case r'pending':
         return OrderStatus.pending;
-      case r'processing':
-        return OrderStatus.processing;
       case r'ready':
         return OrderStatus.ready;
-      case r'pickedUp':
-        return OrderStatus.pickedUp;
       default:
         throw MapperException.unknownEnumValue(value);
     }
@@ -44,12 +40,8 @@ class OrderStatusMapper extends EnumMapper<OrderStatus> {
     switch (self) {
       case OrderStatus.pending:
         return r'pending';
-      case OrderStatus.processing:
-        return r'processing';
       case OrderStatus.ready:
         return r'ready';
-      case OrderStatus.pickedUp:
-        return r'pickedUp';
     }
   }
 }

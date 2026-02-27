@@ -11,9 +11,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   ///
-  /// Set window initial settings
+  /// Set window initial settings (fire-and-forget to avoid blocking app start)
   ///
-  await WindowUtils.register();
+  WindowUtils.register();
 
   ///
   /// Set locale for translations

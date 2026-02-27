@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../../core/widgets/form_feedback.dart';
+import '../../../../../core/widgets/step_indicator.dart';
 import '../../../../products/data/services/csv_import_service.dart';
 import '../../controllers/csv_import_controller.dart';
 
@@ -97,7 +98,7 @@ class CsvImportDialog extends HookConsumerWidget {
           // Step indicator
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _StepIndicator(
+            child: StepIndicator(
               currentStep: currentStep.value,
               steps: const ['File', 'Summary', 'Review', 'Import'],
             ),
@@ -156,65 +157,6 @@ class CsvImportDialog extends HookConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// =============================================================================
-// Step Indicator
-// =============================================================================
-
-class _StepIndicator extends StatelessWidget {
-  const _StepIndicator({
-    required this.currentStep,
-    required this.steps,
-  });
-
-  final int currentStep;
-  final List<String> steps;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        for (var i = 0; i < steps.length; i++) ...[
-          if (i > 0)
-            Expanded(
-              child: Container(
-                height: 2,
-                color: i <= currentStep
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.outlineVariant,
-              ),
-            ),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: i <= currentStep
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.outlineVariant,
-            ),
-            child: Center(
-              child: i < currentStep
-                  ? Icon(Icons.check,
-                      size: 16, color: theme.colorScheme.onPrimary)
-                  : Text(
-                      '${i + 1}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: i == currentStep
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

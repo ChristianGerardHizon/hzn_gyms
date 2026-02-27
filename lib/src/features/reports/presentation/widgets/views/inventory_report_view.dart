@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../dashboard/presentation/widgets/kpi_card.dart';
 import '../../../domain/inventory_report.dart';
 import '../../controllers/inventory_report_controller.dart';
 import '../charts/bar_chart_widget.dart';
 import '../charts/pie_chart_widget.dart';
+import '../report_kpi_card.dart';
+import '../report_kpi_grid.dart';
 
 /// View displaying the inventory report with charts and tables.
 class InventoryReportView extends ConsumerWidget {
@@ -90,58 +91,61 @@ class InventoryReportView extends ConsumerWidget {
   }
 
   Widget _buildKpiSection(BuildContext context, InventoryReport report) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+    final inStockPct = report.totalProducts > 0
+        ? (report.inStockCount / report.totalProducts * 100).toStringAsFixed(1)
+        : '0';
+
+    return ReportKpiGrid(
       children: [
-        KpiCard(
+        ReportKpiCard(
           title: 'Total Products',
           value: report.totalProducts.toString(),
-          icon: Icons.inventory_2,
+          icon: Icons.inventory_2_outlined,
           color: Colors.deepPurple,
-          compact: true,
+          subtitle: 'All products in catalog',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'In Stock',
           value: report.inStockCount.toString(),
-          icon: Icons.check_circle,
+          icon: Icons.check_circle_outline,
           color: Colors.green,
-          compact: true,
+          subtitle: '$inStockPct% of total inventory',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Low Stock',
           value: report.lowStockCount.toString(),
-          icon: Icons.warning,
-          color: Colors.yellow.shade700,
-          compact: true,
+          icon: Icons.warning_amber_outlined,
+          color: Colors.amber.shade700,
+          subtitle: 'Requires reorder soon',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Out of Stock',
           value: report.outOfStockCount.toString(),
-          icon: Icons.remove_shopping_cart,
+          icon: Icons.remove_shopping_cart_outlined,
           color: Colors.red,
-          compact: true,
+          subtitle: 'Immediate action required',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Expired',
           value: report.expiredCount.toString(),
-          icon: Icons.dangerous,
+          icon: Icons.dangerous_outlined,
           color: Colors.red.shade900,
-          compact: true,
+          subtitle: 'Items past shelf life',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Near Expiration',
           value: report.nearExpirationCount.toString(),
           icon: Icons.access_time,
-          color: Colors.amber.shade700,
-          compact: true,
+          color: Colors.orange,
+          subtitle: 'Expiring within 30 days',
         ),
-        KpiCard(
+        ReportKpiCard(
           title: 'Inventory Value',
           value: _currencyFormat.format(report.totalInventoryValue),
-          icon: Icons.attach_money,
+          icon: Icons.monetization_on_outlined,
           color: Colors.blue,
-          compact: true,
+          subtitle: 'Estimated current total',
+          featured: true,
         ),
       ],
     );

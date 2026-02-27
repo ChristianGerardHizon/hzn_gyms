@@ -29,16 +29,19 @@ class Application extends HookConsumerWidget {
       child: ThemeConsumer(
         child: Builder(
           builder: (themeContext) {
-            // Determine system brightness for system mode
+            // Use system brightness as immediate default (no storage read needed)
             final systemBrightness =
                 MediaQuery.platformBrightnessOf(themeContext);
+            final systemDefault = systemBrightness == Brightness.dark
+                ? AppThemes.darkId
+                : AppThemes.lightId;
 
-            // Get effective theme based on mode
+            // Use persisted preference when available, fall back to system
             final effectiveThemeId = themeModeAsync.whenOrNull(
                   data: (_) =>
                       themeController.getEffectiveThemeId(systemBrightness),
                 ) ??
-                AppThemes.lightId;
+                systemDefault;
 
             // Apply theme via post-frame callback to avoid build-time mutations
             WidgetsBinding.instance.addPostFrameCallback((_) {

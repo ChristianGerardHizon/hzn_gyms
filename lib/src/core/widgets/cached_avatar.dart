@@ -74,3 +74,85 @@ class CachedAvatar extends StatelessWidget {
     return onTap != null ? GestureDetector(onTap: onTap, child: avatar) : avatar;
   }
 }
+
+/// A reusable cached image widget that displays a rectangular image from a URL
+/// with a customizable placeholder.
+///
+/// Unlike [CachedAvatar] which renders a circle, this renders a rectangular
+/// image that fills its parent using [BoxFit.cover].
+///
+/// Uses [CachedNetworkImage] for efficient disk/memory caching.
+class CachedImage extends StatelessWidget {
+  const CachedImage({
+    super.key,
+    this.imageUrl,
+    this.placeholder,
+    this.borderRadius,
+    this.fit = BoxFit.cover,
+  });
+
+  /// The URL of the image to display. If null, shows the placeholder.
+  final String? imageUrl;
+
+  /// Custom placeholder widget. If null, uses a default container with
+  /// the app icon.
+  final Widget? placeholder;
+
+  /// Optional border radius for the image.
+  final BorderRadius? borderRadius;
+
+  /// How the image should fit within its bounds. Defaults to [BoxFit.cover].
+  final BoxFit fit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final placeholderWidget = placeholder ??
+        Container(
+          color: theme.colorScheme.primaryContainer,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Image.asset(
+                'assets/icons/app_icon_transparent.png',
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        );
+
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return placeholderWidget;
+    }
+
+    Widget image = CachedNetworkImage(
+      imageUrl: imageUrl!,
+      fit: fit,
+      width: double.infinity,
+      height: double.infinity,
+      placeholder: (context, url) => Container(
+        color: theme.colorScheme.surfaceContainerHighest,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Image.asset(
+              'assets/icons/app_icon_transparent.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => placeholderWidget,
+    );
+
+    if (borderRadius != null) {
+      image = ClipRRect(
+        borderRadius: borderRadius!,
+        child: image,
+      );
+    }
+
+    return image;
+  }
+}

@@ -13,7 +13,9 @@
     "salesHistory": "Sales",
     "organization": "Organization",
     "services": "Services",
-    "customers": "Customers",
+    "checkIn": "Check-In",
+    "members": "Members",
+    "memberships": "Memberships",
     "system": "System",
     "account": "Account",
     "noBranch": "No Branch"

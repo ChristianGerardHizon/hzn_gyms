@@ -9,31 +9,25 @@ This document contains all entities (domain models) in the project with their fi
 | Domain | Entity | Collection | Description |
 |--------|--------|------------|-------------|
 | Organization | User | `users` | System users (all types) |
-| Organization | UserRole | `user_roles` | Role definitions and permissions |
+| Organization | UserRole | `userRoles` | Role definitions and permissions |
 | Organization | Branch | `branches` | Business branches/locations |
-| Patient | Patient | `patients` | Animal patients |
-| Patient | PatientSpecies | `patient_species` | Species catalog (Dog, Cat, etc.) |
-| Patient | PatientBreed | `patient_breeds` | Breed catalog |
-| Patient | PatientRecord | `patient_records` | Medical visit records |
-| Patient | PatientFile | `patient_files` | Patient documents/images |
-| Patient | PatientTreatment | `patient_treatments` | Treatment type catalog |
-| Patient | PatientTreatmentRecord | `patient_treatment_records` | Treatment tracking |
-| Patient | PatientPrescriptionItem | `patient_prescription_items` | Prescription medications |
+| Member | Member | `members` | Gym members |
+| Member | MemberCard | `memberCards` | Physical ID cards for members |
+| Membership | Membership | `memberships` | Membership plan templates |
+| Membership | MembershipAddOn | `membershipAddOns` | Add-on options for membership plans |
+| Membership | MemberMembership | `memberMemberships` | Member subscriptions |
+| Membership | MemberMembershipAddOn | `memberMembershipAddOns` | Selected add-ons on purchased memberships |
+| Check-In | CheckIn | `checkIns` | Member check-in records |
 | Product | Product | `products` | Products/inventory items |
-| Product | ProductCategory | `product_categories` | Product categories (hierarchical) |
-| Product | ProductStock | `product_stocks` | Stock lots with expiration |
-| Product | ProductInventory | `product_inventories` | Inventory status view |
-| Product | ProductAdjustment | `product_adjustments` | Stock adjustments |
-| Service | Service | `services` | Laundry services (wash, dry, fold, iron) |
-| Service | ServiceCategory | `service_categories` | Service categories |
-| Service | CartServiceItem | `cart_service_items` | Service items in shopping cart |
-| Service | SaleServiceItem | `sale_service_items` | Service items in completed sale |
-| Sales | OrderStatusHistory | `orderStatusHistory` | Status change audit trail for sales |
-| Machine | Machine | `machines` | Laundry machines (washer, dryer, etc.) |
-| Storage | StorageLocation | `storages` | Storage locations for laundry items |
-| Appointment | AppointmentSchedule | `appointment_schedules` | Appointment bookings |
-| System | ChangeLog | `change_logs` | Audit trail |
-| System | SystemVersion | `system_versions` | App version tracking |
+| Product | ProductCategory | `productCategories` | Product categories (hierarchical) |
+| Product | ProductStock | `productStocks` | Stock lots with expiration |
+| Product | ProductAdjustment | `productAdjustments` | Stock adjustments |
+| POS | PosGroup | `posGroups` | Cashier layout groups |
+| POS | PosGroupItem | `posGroupItems` | Products in POS groups |
+| Sales | Sale | `sales` | Transaction records |
+| Sales | SaleItem | `saleItems` | Product items in transactions |
+| Sales | Payment | `payments` | Payment records |
+| Sales | Cart / CartItem | `carts` / `cartItems` | Shopping cart (temporary) |
 
 ---
 
@@ -50,47 +44,34 @@ This document contains all entities (domain models) in the project with their fi
                           └─────┬──────┘
                                 │
               ┌─────────────────┼─────────────────┐
-              │                 │                 │
-              ▼                 ▼                 ▼
-        ┌───────────┐    ┌───────────┐    ┌───────────┐
-        │  Branch   │    │ ChangeLog │    │  Patient  │
-        └─────┬─────┘    └───────────┘    └─────┬─────┘
-              │                                 │
-              │         ┌───────────────────────┼───────────────────────┐
-              │         │                       │                       │
-              ▼         ▼                       ▼                       ▼
-        ┌───────────────────┐           ┌─────────────┐         ┌───────────────────┐
-        │ Patient, Product, │           │PatientRecord│         │ PatientTreatment  │
-        │ AppointmentSchedule│          └──────┬──────┘         │     Record        │
-        │ PatientRecord     │                  │                └─────────┬─────────┘
-        └───────────────────┘                  │                          │
-                                               ▼                          ▼
-                                        ┌──────────────┐         ┌─────────────────┐
-                                        │ Prescription │         │PatientTreatment │
-                                        │    Item      │         │   (catalog)     │
-                                        └──────────────┘         └─────────────────┘
+              │                 │                  │
+              ▼                 ▼                  ▼
+        ┌───────────┐    ┌───────────┐     ┌───────────┐
+        │  Branch   │    │  Member   │     │   Sale    │
+        └─────┬─────┘    └─────┬─────┘     └─────┬─────┘
+              │                │                  │
+              │      ┌────────┼────────┐    ┌────┴────┐
+              │      │        │        │    │         │
+              ▼      ▼        ▼        ▼    ▼         ▼
+         Products  Member   CheckIn  Sales  SaleItem  Payment
+                   Membership
 
 
-        ┌──────────────────┐                  ┌─────────────────┐
-        │ PatientSpecies   │◄─────────────────│  PatientBreed   │
-        └────────┬─────────┘                  └─────────────────┘
-                 │
-                 ▼
-           ┌─────────┐
-           │ Patient │
-           └─────────┘
+        ┌─────────────────┐          ┌─────────────┐
+        │   Membership    │◄─────────│   Member     │
+        │   (plan)        │          │  Membership  │
+        └─────────────────┘          └──────────────┘
 
 
         ┌─────────────────┐          ┌─────────────┐          ┌─────────────────┐
         │ ProductCategory │◄─────────│   Product   │─────────►│  ProductStock   │
         │   (hierarchy)   │          └──────┬──────┘          └────────┬────────┘
         └─────────────────┘                 │                          │
-                                            │                          │
                                             ▼                          ▼
                                    ┌────────────────┐         ┌────────────────┐
-                                   │ProductInventory│         │ ProductAdjust  │
-                                   └────────────────┘         │    (stock)     │
-                                                              └────────────────┘
+                                   │   PosGroup     │         │ ProductAdjust  │
+                                   │   PosGroupItem │         └────────────────┘
+                                   └────────────────┘
 ```
 
 ---
@@ -120,10 +101,6 @@ All system users with role-based access.
 - `role` -> UserRole
 - `branch` -> Branch (optional)
 
-**Computed Properties:**
-- `hasAvatar` - Checks if avatar exists
-- `avatarUri(domain)` - Builds full avatar URI
-
 ---
 
 ### UserRole
@@ -133,39 +110,15 @@ Role definitions with permissions.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Role name (e.g., "Admin", "Veterinarian", "Staff") |
+| `name` | String | Yes | Role name (e.g., "Admin", "Staff", "Cashier") |
 | `description` | String | No | Role description |
 | `permissions` | List\<String> | Yes | List of permission keys |
-| `isSystem` | bool | Yes | Whether this is a system-defined role (cannot be deleted) |
+| `isSystem` | bool | Yes | Whether this is a system-defined role |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `user_roles`
-
-**Referenced by:** User
-
-**Default Roles:**
-- `admin` - Full system access
-- `veterinarian` - Patient management, records, prescriptions
-- `staff` - Basic operations, appointments, inventory
-- `cashier` - Sales and POS only
-
-**Permission Keys:**
-```
-patients.view, patients.create, patients.edit, patients.delete
-records.view, records.create, records.edit, records.delete
-prescriptions.view, prescriptions.create, prescriptions.edit, prescriptions.delete
-appointments.view, appointments.create, appointments.edit, appointments.delete
-products.view, products.create, products.edit, products.delete
-inventory.view, inventory.adjust
-sales.view, sales.create
-users.view, users.create, users.edit, users.delete
-roles.view, roles.create, roles.edit, roles.delete
-branches.view, branches.create, branches.edit, branches.delete
-settings.view, settings.edit
-system.admin
-```
+**Collection:** `userRoles`
 
 ---
 
@@ -183,202 +136,203 @@ Business branches or locations.
 
 **Collection:** `branches`
 
-**Referenced by:** User, Patient, Product, PatientRecord, AppointmentSchedule
+**Referenced by:** User, Member, Product, Sale, MemberMembership, CheckIn
 
 ---
 
-## Patient Domain
+## Member Domain
 
-### Patient
+### Member
 
-Animal patients/clients.
+Gym members.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Patient name |
-| `images` | List\<String> | Yes | List of image filenames |
-| `avatar` | String | No | Main avatar filename |
-| `species` | String (FK) | No | FK to PatientSpecies |
-| `breed` | String (FK) | No | FK to PatientBreed |
-| `owner` | String | No | Owner name |
-| `contactNumber` | String | No | Contact phone number |
-| `email` | String | No | Email address |
-| `address` | String | No | Physical address |
-| `color` | String | No | Animal color/markings |
-| `sex` | PatientSex | No | Animal sex (male/female) |
-| `branch` | String (FK) | No | FK to Branch |
+| `name` | String | Yes | Member name |
+| `mobileNumber` | String | No | Phone/mobile number |
 | `dateOfBirth` | DateTime | No | Date of birth |
+| `address` | String | No | Address |
+| `sex` | String | No | Gender (male/female/other) |
+| `remarks` | String | No | Notes |
+| `addedBy` | String (FK) | No | FK to User who registered |
+| `rfidCardId` | String | No | RFID card ID for check-in |
+| `email` | String | No | Email address |
+| `emergencyContact` | String | No | Emergency contact info |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `patients`
+**Collection:** `members`
 
-**Relationships:**
-- `species` -> PatientSpecies (optional)
-- `breed` -> PatientBreed (optional)
-- `branch` -> Branch (optional)
-
-**Enum:** `PatientSex { male, female }`
+**Referenced by:** MemberMembership, CheckIn, Sale
 
 ---
 
-### PatientSpecies
+## Membership Domain
 
-Species catalog (Dog, Cat, Bird, etc.).
+### Membership
+
+Membership plan templates.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Species name |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `patient_species`
-
-**Referenced by:** Patient, PatientBreed
-
----
-
-### PatientBreed
-
-Breed catalog linked to species.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Breed name |
-| `species` | String (FK) | Yes | FK to PatientSpecies |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `patient_breeds`
-
-**Relationships:**
-- `species` -> PatientSpecies
-
----
-
-### PatientRecord
-
-Medical visit records for patients.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `patient` | String (FK) | Yes | FK to Patient |
-| `visitDate` | DateTime | Yes | Date of visit |
-| `diagnosis` | String | No | Diagnosis text |
-| `treatment` | String | No | Treatment applied |
-| `notes` | String | No | Additional notes |
+| `name` | String | Yes | Plan name (e.g., "Monthly", "Annual") |
+| `description` | String | No | Plan description |
+| `durationDays` | int | Yes | Duration in days (30, 90, 365, etc.) |
+| `price` | num | Yes | Price in PHP |
 | `branch` | String (FK) | No | FK to Branch |
-| `weightInKg` | num | No | Animal weight in kg |
-| `tests` | String | No | Tests performed |
-| `temperature` | String | No | Temperature reading |
+| `isActive` | bool | Yes | Whether plan is currently offered |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `patient_records`
+**Collection:** `memberships`
+
+**Referenced by:** MemberMembership, MembershipAddOn
+
+---
+
+### MembershipAddOn
+
+Add-on options for membership plans (e.g., "Treadmill Access", "Coach/Instructor", "Pool Access").
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | String | Yes | PocketBase record ID |
+| `membership` | String (FK) | Yes | FK to Membership plan |
+| `name` | String | Yes | Add-on name |
+| `description` | String | No | Add-on description |
+| `price` | num | Yes | Price in PHP |
+| `isActive` | bool | No | Whether currently offered |
+| `isDeleted` | bool | No | Soft delete flag |
+| `created` | DateTime | No | Creation timestamp |
+| `updated` | DateTime | No | Last update timestamp |
+
+**Collection:** `membershipAddOns`
 
 **Relationships:**
-- `patient` -> Patient
+- `membership` -> Membership (cascadeDelete)
+
+**Referenced by:** MemberMembershipAddOn
+
+---
+
+### MemberMembership
+
+Member subscriptions linking members to membership plans.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | String | Yes | PocketBase record ID |
+| `member` | String (FK) | Yes | FK to Member |
+| `membership` | String (FK) | Yes | FK to Membership plan |
+| `startDate` | DateTime | Yes | Start date |
+| `endDate` | DateTime | Yes | Expiry date |
+| `status` | MemberMembershipStatus | Yes | Subscription status |
+| `branch` | String (FK) | Yes | FK to Branch |
+| `saleId` | String (FK) | No | FK to Sale (if purchased through POS) |
+| `soldBy` | String (FK) | No | FK to User who sold |
+| `notes` | String | No | Optional notes |
+| `created` | DateTime | No | Creation timestamp |
+| `updated` | DateTime | No | Last update timestamp |
+
+**Collection:** `memberMemberships`
+
+**Relationships:**
+- `member` -> Member
+- `membership` -> Membership
+- `branch` -> Branch
+
+**Enum:** `MemberMembershipStatus { active, expired, cancelled, voided }`
+
+**Computed Properties:**
+- `isCurrentlyActive` - Status is active and current date is within start/end range
+- `isExpired` - Current date is past end date
+- `daysRemaining` - Days until expiry (0 if expired)
+
+---
+
+### MemberMembershipAddOn
+
+Records of add-ons selected by a member when purchasing a membership. Stores snapshots of add-on name and price at time of purchase.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | String | Yes | PocketBase record ID |
+| `memberMembership` | String (FK) | Yes | FK to MemberMembership |
+| `membershipAddOn` | String (FK) | Yes | FK to MembershipAddOn |
+| `addOnName` | String | Yes | Snapshot of add-on name at purchase |
+| `price` | num | Yes | Snapshot of add-on price at purchase (PHP) |
+| `created` | DateTime | No | Creation timestamp |
+| `updated` | DateTime | No | Last update timestamp |
+
+**Collection:** `memberMembershipAddOns`
+
+**Relationships:**
+- `memberMembership` -> MemberMembership (cascadeDelete)
+- `membershipAddOn` -> MembershipAddOn
+
+---
+
+## Member Card Domain
+
+### MemberCard
+
+Physical ID cards linked to gym members for RFID/barcode check-in. Members can have multiple cards.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | String | Yes | PocketBase record ID |
+| `member` | String (FK) | Yes | FK to Member |
+| `cardValue` | String | Yes | Unique identifier on the physical card |
+| `label` | String | No | Human-readable name (e.g., "Primary Card") |
+| `status` | MemberCardStatus | Yes | Current card status |
+| `deactivatedAt` | DateTime | No | When card was deactivated/reported lost |
+| `notes` | String | No | Optional notes |
+| `created` | DateTime | No | Creation timestamp (also serves as issued date) |
+| `updated` | DateTime | No | Last update timestamp |
+
+**Collection:** `memberCards`
+
+**Relationships:**
+- `member` -> Member (cascadeDelete)
+
+**Enum:** `MemberCardStatus { active, lost, deactivated }`
+
+**Indexes:**
+- Unique index on `cardValue`
+- Index on `member`
+
+---
+
+## Check-In Domain
+
+### CheckIn
+
+Member check-in records.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | String | Yes | PocketBase record ID |
+| `member` | String (FK) | Yes | FK to Member |
+| `branch` | String (FK) | No | FK to Branch |
+| `checkInTime` | DateTime | Yes | Check-in timestamp |
+| `method` | CheckInMethod | Yes | How they checked in |
+| `checkedInBy` | String (FK) | No | FK to User (for manual) |
+| `memberMembership` | String (FK) | No | FK to active MemberMembership |
+| `notes` | String | No | Optional notes |
+| `created` | DateTime | No | Creation timestamp |
+| `updated` | DateTime | No | Last update timestamp |
+
+**Collection:** `checkIns`
+
+**Relationships:**
+- `member` -> Member
 - `branch` -> Branch (optional)
 
-**Computed Properties:**
-- `displayWeightInKg` - Formats weight with "kg" unit
-
----
-
-### PatientFile
-
-Patient documents and images.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `patient` | String (FK) | Yes | FK to Patient |
-| `file` | String | Yes | Filename/path |
-| `notes` | String | No | File description |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `patient_files`
-
-**Relationships:**
-- `patient` -> Patient
-
-**Computed Properties:**
-- `isImage` - Checks if file is image format (.png, .jpg, .jpeg, .gif, .webp, .bmp, .ico, .tiff, .avif, .svg)
-
----
-
-### PatientTreatment
-
-Treatment type catalog.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Treatment name |
-| `icon` | String | No | Icon filename/identifier |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `patient_treatments`
-
-**Referenced by:** PatientTreatmentRecord
-
----
-
-### PatientTreatmentRecord
-
-Treatment tracking for patients.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `treatment` | String (FK) | Yes | FK to PatientTreatment |
-| `patient` | String (FK) | Yes | FK to Patient |
-| `date` | DateTime | No | Treatment date |
-| `notes` | String | No | Treatment notes |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `patient_treatment_records`
-
-**Relationships:**
-- `treatment` -> PatientTreatment
-- `patient` -> Patient
-
----
-
-### PatientPrescriptionItem
-
-Prescription medications for patient records.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | Record ID |
-| `patientRecord` | String (FK) | Yes | FK to PatientRecord |
-| `date` | DateTime | Yes | Prescription date |
-| `medication` | String | Yes | Medication name |
-| `instructions` | String | No | Usage instructions |
-| `dosage` | String | No | Dosage information |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `patient_prescription_items`
-
-**Relationships:**
-- `patientRecord` -> PatientRecord
+**Enum:** `CheckInMethod { manual, rfid }`
 
 ---
 
@@ -408,13 +362,6 @@ Products and inventory items.
 
 **Collection:** `products`
 
-**Relationships:**
-- `category` -> ProductCategory (optional)
-- `branch` -> Branch (optional)
-
-**Computed Properties:**
-- `hasImage` - Checks if image exists
-
 ---
 
 ### ProductCategory
@@ -427,13 +374,8 @@ Product categories with hierarchy support.
 | `name` | String | Yes | Category name |
 | `parent` | String (FK) | No | FK to ProductCategory (for hierarchy) |
 | `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `product_categories`
-
-**Relationships:**
-- `parent` -> ProductCategory (self-referencing, optional)
+**Collection:** `productCategories`
 
 ---
 
@@ -451,38 +393,8 @@ Stock lots with expiration tracking.
 | `quantity` | int | No | Quantity in stock |
 | `isDisposed` | bool | Yes | Whether stock has been disposed |
 | `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `product_stocks`
-
-**Relationships:**
-- `product` -> Product
-
----
-
-### ProductInventory
-
-Aggregated inventory status view.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `product` | String (FK) | Yes | FK to Product |
-| `status` | ProductStatus | Yes | Inventory status |
-| `totalQuantity` | num | Yes | Total quantity available |
-| `totalExpired` | num | Yes | Total expired quantity |
-| `forSale` | bool | Yes | Whether available for sale |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `product_inventories`
-
-**Relationships:**
-- `product` -> Product
-
-**Enum:** `ProductStatus { inStock, outOfStock, lowStock, noThreshold }`
+**Collection:** `productStocks`
 
 ---
 
@@ -499,208 +411,77 @@ Stock adjustment records.
 | `newValue` | num | Yes | New value |
 | `product` | String (FK) | Conditional | FK to Product (if type=product) |
 | `productStock` | String (FK) | Conditional | FK to ProductStock (if type=productStock) |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `product_adjustments`
+**Collection:** `productAdjustments`
 
 **Enum:** `ProductAdjustmentType { product, productStock }`
-
-**Subtypes:**
-- `ProductAdjustmentSimple` - Adjusts Product quantity directly
-- `ProductAdjustmentStock` - Adjusts ProductStock quantity
 
 ---
 
 ## Sales Domain
 
-### OrderStatusHistory
+### Sale
 
-Audit trail for status changes on sales (both sale status and order status).
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `sale` | String (FK) | Yes | FK to Sale (cascade delete) |
-| `statusType` | StatusType | Yes | Type of status changed |
-| `fromStatus` | String | Yes | Previous status value |
-| `toStatus` | String | Yes | New status value |
-| `description` | String | No | Human-readable description |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `orderStatusHistory`
-
-**Relationships:**
-- `sale` -> Sale (cascade delete)
-
-**Enum:** `StatusType { saleStatus, orderStatus }`
-
----
-
-## Machine & Storage Domain
-
-### Machine
-
-Laundry machines (washers, dryers, etc.) assigned to branches.
-
-**Collection:** `machines`
-**File:** `lib/src/features/machines/domain/machine.dart`
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `id` | String | Yes | auto | PocketBase record ID |
-| `name` | String | Yes | - | Machine name (e.g., "Washer #1") |
-| `type` | MachineType | Yes | - | Machine type (washer, dryer, other) |
-| `branchId` | String? | No | - | Relation to Branch |
-| `isAvailable` | bool | No | true | Whether machine is currently available |
-| `isDeleted` | bool | No | false | Soft delete flag |
-| `created` | DateTime? | No | auto | Creation timestamp |
-| `updated` | DateTime? | No | auto | Last update timestamp |
-
-**Enum: MachineType** (`machine_type.dart`)
-- `washer` - Washing machine
-- `dryer` - Dryer machine
-- `other` - Other machine type
-
-### StorageLocation
-
-Storage locations (shelves, racks) for laundry items.
-
-**Collection:** `storages`
-**File:** `lib/src/features/storages/domain/storage_location.dart`
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `id` | String | Yes | auto | PocketBase record ID |
-| `name` | String | Yes | - | Location name (e.g., "Shelf A-1") |
-| `branchId` | String? | No | - | Relation to Branch |
-| `isAvailable` | bool | No | true | Whether location is available |
-| `isDeleted` | bool | No | false | Soft delete flag |
-| `created` | DateTime? | No | auto | Creation timestamp |
-| `updated` | DateTime? | No | auto | Last update timestamp |
-
-**SaleServiceItem Machine/Storage Fields:**
-- `machineId` (String?) - Assigned machine relation
-- `machineName` (String?) - Snapshot of machine name at assignment
-- `storageId` (String?) - Assigned storage relation
-- `storageName` (String?) - Snapshot of storage name at assignment
-
----
-
-## Appointment Domain
-
-### AppointmentSchedule
-
-Appointment bookings.
+Transaction records.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
-| `date` | DateTime | Yes | Appointment date/time |
-| `hasTime` | bool | Yes | Whether time is included |
-| `notes` | String | No | Appointment notes |
-| `purpose` | String | No | Appointment purpose |
-| `status` | AppointmentScheduleStatus | Yes | Appointment status |
-| `patientRecord` | String (FK) | No | FK to PatientRecord |
-| `patient` | String (FK) | No | FK to Patient |
-| `patientName` | String | No | Cached patient name |
-| `ownerName` | String | No | Cached owner name |
-| `ownerContact` | String | No | Cached contact info |
+| `receiptNumber` | String | Yes | Generated receipt number |
+| `status` | SaleStatus | Yes | Sale status |
+| `total` | num | Yes | Total amount |
+| `member` | String (FK) | No | FK to Member |
 | `branch` | String (FK) | No | FK to Branch |
-| `isDeleted` | bool | Yes | Soft delete flag |
+| `soldBy` | String (FK) | No | FK to User |
+| `notes` | String | No | Sale notes |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
-**Collection:** `appointment_schedules`
+**Collection:** `sales`
 
-**Relationships:**
-- `patientRecord` -> PatientRecord (optional)
-- `patient` -> Patient (optional)
-- `branch` -> Branch (optional)
-
-**Enum:** `AppointmentScheduleStatus { scheduled, completed, missed, cancelled }`
-
-**Computed Properties:**
-- `displayDate` - Formats date with/without time
-- `patientDisplayName` - Returns expanded or cached patient name
-- `ownerDisplayName` - Returns expanded or cached owner name
+**Enum:** `SaleStatus { pending, completed, refunded, voided }`
 
 ---
 
-## System Domain
+## POS Domain
 
-### ChangeLog
+### PosGroup / PosGroupItem
 
-Audit trail for system changes.
+Cashier layout groups per branch.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `collection` | String | Yes | Name of changed collection |
-| `reference` | String | Yes | ID of changed record |
-| `message` | String | No | Change description |
-| `user` | String (FK) | No | FK to User who made the change |
-| `change` | dynamic | Yes | Actual change data/payload |
-| `type` | ChangeLogType | Yes | Type of change |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `change_logs`
-
-**Relationships:**
-- `user` -> User (optional)
-
-**Enum:** `ChangeLogType { create, update, delete }`
+**Collection:** `posGroups`, `posGroupItems`
 
 ---
 
-### SystemVersion
+## View Collections (SQL Views)
 
-Application version tracking.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | String | Yes | PocketBase record ID |
-| `buildNumber` | num | Yes | Build/version number |
-| `artifacts` | List\<SystemArtifact> | Yes | List of system artifacts |
-| `isDeleted` | bool | Yes | Soft delete flag |
-| `created` | DateTime | No | Creation timestamp |
-| `updated` | DateTime | No | Last update timestamp |
-
-**Collection:** `system_versions`
-
----
-
-### SystemArtifact
-
-Embedded artifact information (not a separate collection).
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | String | Yes | Artifact name |
-| `url` | String | Yes | Download URL |
-| `type` | String | Yes | Artifact type |
-| `version` | String | No | Semantic version |
-| `versionCode` | String | No | Build/version code |
-
-**Computed Properties:**
-- `display` - Formatted display string "name - version+versionCode"
+| View | Description |
+|------|-------------|
+| `vw_inventory_status` | Aggregated inventory status |
+| `vw_sales_daily_summary` | Daily sales totals |
+| `vw_top_selling_products` | Top selling products |
+| `vw_todays_sales` | Today's sales list |
+| `vw_lot_quantity_totals` | Lot quantity aggregates |
+| `vw_low_stock_products` | Low stock alerts |
+| `vw_low_stock_lot_products` | Low stock lot-tracked products |
+| `vw_expired_lots` | Expired lot alerts |
+| `vw_near_expiration_lots` | Near-expiration lot alerts |
+| `vw_pos_search_items` | POS search index |
 
 ---
 
 ## Summary
 
-**Total Collections:** 19
-**Total Enums:** 6
+**Total Collections:** 20 (+ 9 view collections)
+
+**Enums:**
 
 | Enum | Values |
 |------|--------|
-| PatientSex | male, female |
+| MemberCardStatus | active, lost, deactivated |
+| MemberMembershipStatus | active, expired, cancelled, voided |
+| CheckInMethod | manual, rfid |
+| SaleStatus | pending, completed, refunded, voided |
 | ProductStatus | inStock, outOfStock, lowStock, noThreshold |
 | ProductAdjustmentType | product, productStock |
-| AppointmentScheduleStatus | scheduled, completed, missed, cancelled |
-| ChangeLogType | create, update, delete |
-| StatusType | saleStatus, orderStatus |
+| PaymentMethod | cash, card, check, etc. |

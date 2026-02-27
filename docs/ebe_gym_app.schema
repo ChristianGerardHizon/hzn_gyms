@@ -52,6 +52,18 @@ enum ProductInventoryStatus {
   noThreshold
 }
 
+enum MemberMembershipStatus {
+  active
+  expired
+  cancelled
+  voided
+}
+
+enum CheckInMethod {
+  manual
+  rfid
+}
+
 
 # ============================================================================
 # AUTH COLLECTIONS
@@ -97,10 +109,9 @@ collection userRoles [type: base] {
 }
 
 # Permission keys:
-#   patients.{view,create,edit,delete}
-#   records.{view,create,edit,delete}
-#   prescriptions.{view,create,edit,delete}
-#   appointments.{view,create,edit,delete}
+#   members.{view,create,edit,delete}
+#   memberships.{view,create,edit,delete}
+#   checkins.{view,create}
 #   products.{view,create,edit,delete}
 #   inventory.{view,adjust}
 #   sales.{view,create}
@@ -126,6 +137,88 @@ collection branches [type: base] {
 }
 
 
+# ============================================================================
+# MEMBER COLLECTIONS
+# ============================================================================
+
+collection members [type: base] {
+  id               text        [required, primaryKey, length: 15]
+  name             text        [required]
+  mobileNumber     text
+  dateOfBirth      date
+  address          text
+  sex              text        # male, female, other
+  remarks          text
+  addedBy          relation    -> users     [maxSelect: 1]
+  rfidCardId       text        # For RFID check-in
+  email            text
+  emergencyContact text
+  isDeleted        bool
+
+  created          autodate    [onCreate]
+  updated          autodate    [onCreate, onUpdate]
+}
+
+
+# ============================================================================
+# MEMBERSHIP COLLECTIONS
+# ============================================================================
+
+collection memberships [type: base] {
+  id             text        [required, primaryKey, length: 15]
+  name           text        [required]
+  description    text
+  durationDays   number      [required]  # 30, 90, 365, etc.
+  price          number      [required]  # Price in PHP
+  branch         relation    -> branches  [maxSelect: 1]
+  isActive       bool        # Whether plan is currently offered
+  isDeleted      bool
+
+  created        autodate    [onCreate]
+  updated        autodate    [onCreate, onUpdate]
+}
+
+
+collection memberMemberships [type: base] {
+  id             text        [required, primaryKey, length: 15]
+  member         relation    -> members      [maxSelect: 1, required]
+  membership     relation    -> memberships  [maxSelect: 1, required]
+  startDate      date        [required]
+  endDate        date        [required]
+  status         select      [values: MemberMembershipStatus, maxSelect: 1]
+  branch         relation    -> branches     [maxSelect: 1]
+  saleId         relation    -> sales        [maxSelect: 1, optional]
+  soldBy         relation    -> users        [maxSelect: 1, optional]
+  notes          text
+
+  created        autodate    [onCreate]
+  updated        autodate    [onCreate, onUpdate]
+}
+
+
+# ============================================================================
+# CHECK-IN COLLECTIONS
+# ============================================================================
+
+collection checkIns [type: base] {
+  id                text        [required, primaryKey, length: 15]
+  member            relation    -> members             [maxSelect: 1, required]
+  branch            relation    -> branches            [maxSelect: 1]
+  checkInTime       date        [required]
+  method            select      [values: CheckInMethod, maxSelect: 1]
+  checkedInBy       relation    -> users               [maxSelect: 1, optional]
+  memberMembership  relation    -> memberMemberships   [maxSelect: 1, optional]
+  notes             text
+
+  created           autodate    [onCreate]
+  updated           autodate    [onCreate, onUpdate]
+}
+
+
+# ============================================================================
+# PRODUCT COLLECTIONS
+# ============================================================================
+
 collection products [type: base] {
   id             text        [required, primaryKey, length: 15]
   name           text
@@ -143,6 +236,7 @@ collection products [type: base] {
   trackByLot     bool
   quantity       number      # For non-lot-tracked products
   expiration     date        # For non-lot-tracked products
+  quantityUnit   relation    -> quantityUnits [maxSelect: 1, optional]
   isDisposed     bool
   isDeleted      bool
 
@@ -208,16 +302,34 @@ collection productAdjustments [type: base] {
 }
 
 
+collection quantityUnits [type: base] {
+  id             text        [required, primaryKey, length: 15]
+  name           text
+  shortSingular  text
+  shortPlural    text
+  longSingular   text
+  longPlural     text
+  isDeleted      bool
+
+  created        autodate    [onCreate]
+  updated        autodate    [onCreate, onUpdate]
+}
+
+
+# ============================================================================
+# SALES COLLECTIONS
+# ============================================================================
+
 collection sales [type: base] {
   id             text        [required, primaryKey, length: 15]
   receiptNumber  text
   branch         relation    -> branches  [maxSelect: 1]
   cashier        relation    -> users     [maxSelect: 1]
-  customerName   text
+  member         relation    -> members   [maxSelect: 1, optional]
+  customerName   text        # Snapshot / fallback when no member linked
   totalAmount    number
-  paymentMethod  select      [values: PaymentMethod, maxSelect: 1]
-  paymentRef     text
   status         select      [values: SaleStatus, maxSelect: 1]
+  isPaid         bool
   notes          text
   isDeleted      bool
 
@@ -242,6 +354,25 @@ collection saleItems [type: base] {
 }
 
 
+collection payments [type: base] {
+  id             text        [required, primaryKey, length: 15]
+  sale           relation    -> sales  [maxSelect: 1]
+  amount         number
+  paymentMethod  select      [values: PaymentMethod, maxSelect: 1]
+  type           select      [values: payment/refund, maxSelect: 1]
+  paymentRef     text
+  paymentProof   file        [maxSelect: 5]
+  notes          text
+
+  created        autodate    [onCreate]
+  updated        autodate    [onCreate, onUpdate]
+}
+
+
+# ============================================================================
+# CART COLLECTIONS
+# ============================================================================
+
 collection carts [type: base] {
   id             text        [required, primaryKey, length: 15]
   user           relation    -> users     [maxSelect: 1]
@@ -261,11 +392,43 @@ collection cartItems [type: base] {
   quantity       number
   productLot     relation    -> productLots  [maxSelect: 1, optional]
   lotNumber      number
+  customPrice    number
 
   created        autodate    [onCreate]
   updated        autodate    [onCreate, onUpdate]
 }
 
+
+# ============================================================================
+# POS GROUPS
+# ============================================================================
+
+collection posGroups [type: base] {
+  id             text        [required, primaryKey, length: 15]
+  name           text
+  branch         relation    -> branches  [maxSelect: 1]
+  sortOrder      number
+  isDeleted      bool
+
+  created        autodate    [onCreate]
+  updated        autodate    [onCreate, onUpdate]
+}
+
+
+collection posGroupItems [type: base] {
+  id             text        [required, primaryKey, length: 15]
+  group          relation    -> posGroups  [maxSelect: 1]
+  product        relation    -> products   [maxSelect: 1, optional]
+  sortOrder      number
+
+  created        autodate    [onCreate]
+  updated        autodate    [onCreate, onUpdate]
+}
+
+
+# ============================================================================
+# SYSTEM COLLECTIONS
+# ============================================================================
 
 collection printerConfigs [type: base] {
   id             text        [required, primaryKey, length: 15]
@@ -424,6 +587,16 @@ view vw_near_expiration_lots {
 }
 
 
+view vw_pos_search_items {
+  # POS product search index
+  id              text
+  name            text
+  price           number
+  type            text        # always "product"
+  branch          relation    -> branches
+}
+
+
 # ============================================================================
 # RELATIONSHIP DIAGRAM
 # ============================================================================
@@ -432,9 +605,29 @@ view vw_near_expiration_lots {
 #     ├── role ──────────► userRoles
 #     └── branch ────────► branches
 #
+#   members
+#     └── addedBy ───────► users
+#
+#   memberships
+#     └── branch ────────► branches
+#
+#   memberMemberships
+#     ├── member ────────► members
+#     ├── membership ────► memberships
+#     ├── branch ────────► branches
+#     ├── saleId ────────► sales         (optional)
+#     └── soldBy ────────► users         (optional)
+#
+#   checkIns
+#     ├── member ────────► members
+#     ├── branch ────────► branches
+#     ├── checkedInBy ───► users         (optional)
+#     └── memberMembership► memberMemberships (optional)
+#
 #   products
 #     ├── category ──────► productCategories (self-ref via parent)
-#     └── branch ────────► branches
+#     ├── branch ────────► branches
+#     └── quantityUnit ──► quantityUnits (optional)
 #
 #   productLots
 #     └── product ───────► products
@@ -449,12 +642,16 @@ view vw_near_expiration_lots {
 #
 #   sales
 #     ├── branch ────────► branches
-#     └── cashier ───────► users
+#     ├── cashier ───────► users
+#     └── member ────────► members          (optional)
 #
 #   saleItems
 #     ├── sale ──────────► sales
 #     ├── product ───────► products
 #     └── productLot ────► productLots      (optional)
+#
+#   payments
+#     └── sale ──────────► sales
 #
 #   carts
 #     ├── user ──────────► users
@@ -465,7 +662,29 @@ view vw_near_expiration_lots {
 #     ├── product ───────► products
 #     └── productLot ────► productLots      (optional)
 #
+#   posGroups
+#     └── branch ────────► branches
+#
+#   posGroupItems
+#     ├── group ─────────► posGroups
+#     └── product ───────► products         (optional)
+#
 #   printerConfigs
 #     └── branch ────────► branches
 #
 # ============================================================================
+
+
+# ============================================================================
+# REMOVED COLLECTIONS (from laundry management era)
+# ============================================================================
+# The following were removed during the gym transformation:
+#   - customers          (replaced by members)
+#   - services           (laundry services - removed)
+#   - serviceCategories  (laundry service categories - removed)
+#   - saleServiceItems   (service line items in sales - removed)
+#   - cartServiceItems   (service items in cart - removed)
+#   - machines           (laundry machines - removed)
+#   - storages           (laundry storage locations - removed)
+#   - orderStatusHistory (laundry order tracking - removed)
+#   - vw_top_selling_services (service sales view - removed)

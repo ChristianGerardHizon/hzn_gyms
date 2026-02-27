@@ -3,7 +3,6 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../../../core/utils/date_utils.dart';
 import '../../../products/data/dto/product_dto.dart';
-import '../../../services/data/dto/service_dto.dart';
 import '../../domain/pos_group_item.dart';
 
 part 'pos_group_item_dto.mapper.dart';
@@ -16,7 +15,6 @@ class PosGroupItemDto with PosGroupItemDtoMappable {
   final String collectionName;
   final String group;
   final String? product;
-  final String? service;
   final int sortOrder;
   final String? created;
   final String? updated;
@@ -27,7 +25,6 @@ class PosGroupItemDto with PosGroupItemDtoMappable {
     required this.collectionName,
     required this.group,
     this.product,
-    this.service,
     this.sortOrder = 0,
     this.created,
     this.updated,
@@ -43,7 +40,6 @@ class PosGroupItemDto with PosGroupItemDtoMappable {
       collectionName: json['collectionName'] as String? ?? '',
       group: json['group'] as String? ?? '',
       product: json['product'] as String?,
-      service: json['service'] as String?,
       sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
@@ -52,22 +48,17 @@ class PosGroupItemDto with PosGroupItemDtoMappable {
 
   /// Converts the DTO to a domain PosGroupItem entity.
   ///
-  /// Accepts optional expanded RecordModels for product and service.
+  /// Accepts an optional expanded RecordModel for product.
   PosGroupItem toEntity({
     RecordModel? productExpanded,
-    RecordModel? serviceExpanded,
   }) {
     return PosGroupItem(
       id: id,
       groupId: group,
       productId: product != null && product!.isNotEmpty ? product : null,
-      serviceId: service != null && service!.isNotEmpty ? service : null,
       sortOrder: sortOrder,
       product: productExpanded != null
           ? ProductDto.fromRecord(productExpanded).toEntity()
-          : null,
-      service: serviceExpanded != null
-          ? ServiceDto.fromRecord(serviceExpanded).toEntity()
           : null,
       created: parseToLocal(created),
       updated: parseToLocal(updated),

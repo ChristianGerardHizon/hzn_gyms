@@ -280,10 +280,52 @@ return ScaffoldMessenger(
 - Controllers: `*_controller.dart`
 - Models: `*_model.dart` or entity name
 
+## Git Workflow
+
+### Branch Protection Rules
+
+**CRITICAL: NEVER push directly to `main` or `staging` branches.**
+
+- `main` and `staging` are protected branches
+- Always create a feature or fix branch for any changes
+- All changes must go through a Pull Request to `staging`
+
+### Branch Naming Convention
+
+- Features: `feat/<short-description>` (e.g., `feat/member-registration`)
+- Bug fixes: `fix/<short-description>` (e.g., `fix/login-validation`)
+- Chores/refactoring: `chore/<short-description>` (e.g., `chore/update-dependencies`)
+
+### Workflow
+
+1. Create a new branch from `staging`:
+   ```bash
+   git checkout staging
+   git pull origin staging
+   git checkout -b feat/your-feature-name
+   ```
+
+2. Make your changes and commit
+
+3. Push your branch and create a PR to `staging`:
+   ```bash
+   git push -u origin feat/your-feature-name
+   gh pr create --base staging
+   ```
+
+4. After PR is merged to `staging`, `main` will be updated separately (production releases)
+
 ## Pull Requests
 
 - **All PRs must target the `staging` branch**, not `main`.
 - When creating PRs with `gh pr create`, always use `--base staging`.
+- **Before creating a PR, always ask the user which version label to apply:**
+  - `version:patch` — Bug fixes, small tweaks (e.g., `1.2.3` → `1.2.4`)
+  - `version:minor` — New features, enhancements (e.g., `1.2.3` → `1.3.0`)
+  - `version:major` — Breaking changes, major releases (e.g., `1.2.3` → `2.0.0`)
+  - **No label** — Skip deploy; the PR will merge without triggering a build (staging only)
+  - For PRs targeting `main`, a version label is **required** — the deploy will fail without one.
+  - Add the label using: `gh pr edit <number> --add-label "version:patch"`
 
 ### QA Notes
 

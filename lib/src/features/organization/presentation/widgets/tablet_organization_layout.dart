@@ -6,13 +6,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/routing/routes/organization.routes.dart';
-import '../../../machines/presentation/controllers/machines_controller.dart';
-import '../../../machines/presentation/widgets/machine_form_dialog.dart';
 import '../../../settings/domain/branch.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/widgets/dialogs/branch_form_dialog.dart';
-import '../../../storages/presentation/controllers/storage_locations_controller.dart';
-import '../../../storages/presentation/widgets/storage_location_form_dialog.dart';
 import '../../../users/presentation/controllers/paginated_users_controller.dart';
 import '../../../users/presentation/controllers/user_roles_controller.dart';
 import '../../../users/presentation/widgets/dialogs/create_user_dialog.dart';
@@ -24,8 +20,8 @@ import 'organization_nav_panel.dart';
 
 /// Three-panel tablet layout for organization management.
 ///
-/// Panel 1 (72px): Navigation rail for Users/Roles mode selection
-/// Panel 2 (320px): List panel (users or roles based on current mode)
+/// Panel 1 (72px): Navigation rail for Users/Roles/Branches mode selection
+/// Panel 2 (320px): List panel (users, roles, or branches based on current mode)
 /// Panel 3 (expanded): Detail panel from router or empty state
 class TabletOrganizationLayout extends ConsumerWidget {
   const TabletOrganizationLayout({
@@ -48,10 +44,6 @@ class TabletOrganizationLayout extends ConsumerWidget {
       currentMode = OrganizationMode.roles;
     } else if (path.contains('/branches')) {
       currentMode = OrganizationMode.branches;
-    } else if (path.contains('/machines')) {
-      currentMode = OrganizationMode.machines;
-    } else if (path.contains('/storages')) {
-      currentMode = OrganizationMode.storages;
     } else {
       currentMode = OrganizationMode.users;
     }
@@ -69,10 +61,6 @@ class TabletOrganizationLayout extends ConsumerWidget {
                 const OrganizationRolesRoute().go(context);
               case OrganizationMode.branches:
                 const OrganizationBranchesRoute().go(context);
-              case OrganizationMode.machines:
-                const OrganizationMachinesRoute().go(context);
-              case OrganizationMode.storages:
-                const OrganizationStoragesRoute().go(context);
             }
           },
         ),
@@ -86,10 +74,6 @@ class TabletOrganizationLayout extends ConsumerWidget {
             OrganizationMode.roles => _RolesListWrapper(selectedId: selectedId),
             OrganizationMode.branches =>
               _BranchesListWrapper(selectedId: selectedId),
-            OrganizationMode.machines =>
-              _MachinesListWrapper(selectedId: selectedId),
-            OrganizationMode.storages =>
-              _StoragesListWrapper(selectedId: selectedId),
           },
         ),
         const VerticalDivider(width: 1),
@@ -559,264 +543,4 @@ List<Branch> _filterBranches(List<Branch> branches, String query) {
     final addressMatch = b.address.toLowerCase().contains(normalizedQuery);
     return nameMatch || addressMatch;
   }).toList();
-}
-
-/// Wrapper for machines list with organization-specific navigation.
-class _MachinesListWrapper extends HookConsumerWidget {
-  const _MachinesListWrapper({required this.selectedId});
-
-  final String? selectedId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final machinesAsync = ref.watch(machinesControllerProvider);
-    final controller = ref.read(machinesControllerProvider.notifier);
-
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'machine_fab',
-        onPressed: () => showMachineFormDialog(context),
-        tooltip: 'Add Machine',
-        child: const Icon(Icons.add),
-      ),
-      body: machinesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-        data: (machines) {
-          return Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Row(
-                  children: [
-                    Text('Machines', style: theme.textTheme.titleLarge),
-                    const Spacer(),
-                    Text(
-                      '${machines.length} total',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              // List
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => controller.refresh(),
-                  child: machines.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            const SizedBox(height: 80),
-                            Icon(
-                              Icons.local_laundry_service_outlined,
-                              size: 80,
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No machines yet',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap + to add a machine',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          itemCount: machines.length,
-                          itemBuilder: (context, index) {
-                            final machine = machines[index];
-                            final isSelected = machine.id == selectedId;
-
-                            return ListTile(
-                              selected: isSelected,
-                              selectedTileColor: theme
-                                  .colorScheme.primaryContainer
-                                  .withValues(alpha: 0.3),
-                              leading: CircleAvatar(
-                                backgroundColor: isSelected
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.primaryContainer,
-                                child: Icon(
-                                  Icons.local_laundry_service,
-                                  color: isSelected
-                                      ? theme.colorScheme.onPrimary
-                                      : theme
-                                          .colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                              title: Text(machine.name),
-                              subtitle: Text(machine.type.displayName),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () =>
-                                  OrganizationMachineDetailRoute(
-                                          id: machine.id)
-                                      .go(context),
-                            );
-                          },
-                        ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Wrapper for storages list with organization-specific navigation.
-class _StoragesListWrapper extends HookConsumerWidget {
-  const _StoragesListWrapper({required this.selectedId});
-
-  final String? selectedId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final storagesAsync = ref.watch(storageLocationsControllerProvider);
-    final controller = ref.read(storageLocationsControllerProvider.notifier);
-
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'storage_fab',
-        onPressed: () => showStorageLocationFormDialog(context),
-        tooltip: 'Add Storage',
-        child: const Icon(Icons.add),
-      ),
-      body: storagesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-        data: (storages) {
-          return Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Row(
-                  children: [
-                    Text('Storage Locations',
-                        style: theme.textTheme.titleLarge),
-                    const Spacer(),
-                    Text(
-                      '${storages.length} total',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              // List
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => controller.refresh(),
-                  child: storages.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            const SizedBox(height: 80),
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 80,
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No storage locations yet',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap + to add a storage location',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          itemCount: storages.length,
-                          itemBuilder: (context, index) {
-                            final storage = storages[index];
-                            final isSelected = storage.id == selectedId;
-
-                            return ListTile(
-                              selected: isSelected,
-                              selectedTileColor: theme
-                                  .colorScheme.primaryContainer
-                                  .withValues(alpha: 0.3),
-                              leading: CircleAvatar(
-                                backgroundColor: isSelected
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.primaryContainer,
-                                child: Icon(
-                                  Icons.inventory_2,
-                                  color: isSelected
-                                      ? theme.colorScheme.onPrimary
-                                      : theme
-                                          .colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                              title: Text(storage.name),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: () =>
-                                  OrganizationStorageDetailRoute(
-                                          id: storage.id)
-                                      .go(context),
-                            );
-                          },
-                        ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 }

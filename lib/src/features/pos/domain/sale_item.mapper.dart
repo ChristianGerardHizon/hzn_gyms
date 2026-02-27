@@ -63,6 +63,12 @@ class SaleItemMapper extends ClassMapperBase<SaleItem> {
     _$lotNumber,
     opt: true,
   );
+  static String? _$itemType(SaleItem v) => v.itemType;
+  static const Field<SaleItem, String> _f$itemType = Field(
+    'itemType',
+    _$itemType,
+    opt: true,
+  );
   static DateTime? _$created(SaleItem v) => v.created;
   static const Field<SaleItem, DateTime> _f$created = Field(
     'created',
@@ -88,6 +94,7 @@ class SaleItemMapper extends ClassMapperBase<SaleItem> {
     #product: _f$product,
     #productLotId: _f$productLotId,
     #lotNumber: _f$lotNumber,
+    #itemType: _f$itemType,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -104,6 +111,7 @@ class SaleItemMapper extends ClassMapperBase<SaleItem> {
       product: data.dec(_f$product),
       productLotId: data.dec(_f$productLotId),
       lotNumber: data.dec(_f$lotNumber),
+      itemType: data.dec(_f$itemType),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -178,6 +186,7 @@ abstract class SaleItemCopyWith<$R, $In extends SaleItem, $Out>
     Product? product,
     String? productLotId,
     String? lotNumber,
+    String? itemType,
     DateTime? created,
     DateTime? updated,
   });
@@ -207,6 +216,7 @@ class _SaleItemCopyWithImpl<$R, $Out>
     Object? product = $none,
     Object? productLotId = $none,
     Object? lotNumber = $none,
+    Object? itemType = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -221,6 +231,7 @@ class _SaleItemCopyWithImpl<$R, $Out>
       if (product != $none) #product: product,
       if (productLotId != $none) #productLotId: productLotId,
       if (lotNumber != $none) #lotNumber: lotNumber,
+      if (itemType != $none) #itemType: itemType,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -237,6 +248,7 @@ class _SaleItemCopyWithImpl<$R, $Out>
     product: data.get(#product, or: $value.product),
     productLotId: data.get(#productLotId, or: $value.productLotId),
     lotNumber: data.get(#lotNumber, or: $value.lotNumber),
+    itemType: data.get(#itemType, or: $value.itemType),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

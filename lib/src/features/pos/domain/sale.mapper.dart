@@ -14,7 +14,6 @@ class SaleMapper extends ClassMapperBase<Sale> {
   static SaleMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = SaleMapper._());
-      OrderStatusMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -43,25 +42,12 @@ class SaleMapper extends ClassMapperBase<Sale> {
   );
   static String _$status(Sale v) => v.status;
   static const Field<Sale, String> _f$status = Field('status', _$status);
-  static OrderStatus _$orderStatus(Sale v) => v.orderStatus;
-  static const Field<Sale, OrderStatus> _f$orderStatus = Field(
-    'orderStatus',
-    _$orderStatus,
-    opt: true,
-    def: OrderStatus.pending,
-  );
   static bool _$isPaid(Sale v) => v.isPaid;
   static const Field<Sale, bool> _f$isPaid = Field(
     'isPaid',
     _$isPaid,
     opt: true,
     def: false,
-  );
-  static DateTime? _$pickedUpAt(Sale v) => v.pickedUpAt;
-  static const Field<Sale, DateTime> _f$pickedUpAt = Field(
-    'pickedUpAt',
-    _$pickedUpAt,
-    opt: true,
   );
   static String? _$customerId(Sale v) => v.customerId;
   static const Field<Sale, String> _f$customerId = Field(
@@ -79,6 +65,12 @@ class SaleMapper extends ClassMapperBase<Sale> {
   static const Field<Sale, String> _f$notes = Field(
     'notes',
     _$notes,
+    opt: true,
+  );
+  static String? _$voidedById(Sale v) => v.voidedById;
+  static const Field<Sale, String> _f$voidedById = Field(
+    'voidedById',
+    _$voidedById,
     opt: true,
   );
   static DateTime? _$created(Sale v) => v.created;
@@ -102,12 +94,11 @@ class SaleMapper extends ClassMapperBase<Sale> {
     #cashierId: _f$cashierId,
     #totalAmount: _f$totalAmount,
     #status: _f$status,
-    #orderStatus: _f$orderStatus,
     #isPaid: _f$isPaid,
-    #pickedUpAt: _f$pickedUpAt,
     #customerId: _f$customerId,
     #customerName: _f$customerName,
     #notes: _f$notes,
+    #voidedById: _f$voidedById,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -120,12 +111,11 @@ class SaleMapper extends ClassMapperBase<Sale> {
       cashierId: data.dec(_f$cashierId),
       totalAmount: data.dec(_f$totalAmount),
       status: data.dec(_f$status),
-      orderStatus: data.dec(_f$orderStatus),
       isPaid: data.dec(_f$isPaid),
-      pickedUpAt: data.dec(_f$pickedUpAt),
       customerId: data.dec(_f$customerId),
       customerName: data.dec(_f$customerName),
       notes: data.dec(_f$notes),
+      voidedById: data.dec(_f$voidedById),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -184,12 +174,11 @@ abstract class SaleCopyWith<$R, $In extends Sale, $Out>
     String? cashierId,
     num? totalAmount,
     String? status,
-    OrderStatus? orderStatus,
     bool? isPaid,
-    DateTime? pickedUpAt,
     String? customerId,
     String? customerName,
     String? notes,
+    String? voidedById,
     DateTime? created,
     DateTime? updated,
   });
@@ -210,12 +199,11 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
     String? cashierId,
     num? totalAmount,
     String? status,
-    OrderStatus? orderStatus,
     bool? isPaid,
-    Object? pickedUpAt = $none,
     Object? customerId = $none,
     Object? customerName = $none,
     Object? notes = $none,
+    Object? voidedById = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -226,12 +214,11 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
       if (cashierId != null) #cashierId: cashierId,
       if (totalAmount != null) #totalAmount: totalAmount,
       if (status != null) #status: status,
-      if (orderStatus != null) #orderStatus: orderStatus,
       if (isPaid != null) #isPaid: isPaid,
-      if (pickedUpAt != $none) #pickedUpAt: pickedUpAt,
       if (customerId != $none) #customerId: customerId,
       if (customerName != $none) #customerName: customerName,
       if (notes != $none) #notes: notes,
+      if (voidedById != $none) #voidedById: voidedById,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -244,12 +231,11 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
     cashierId: data.get(#cashierId, or: $value.cashierId),
     totalAmount: data.get(#totalAmount, or: $value.totalAmount),
     status: data.get(#status, or: $value.status),
-    orderStatus: data.get(#orderStatus, or: $value.orderStatus),
     isPaid: data.get(#isPaid, or: $value.isPaid),
-    pickedUpAt: data.get(#pickedUpAt, or: $value.pickedUpAt),
     customerId: data.get(#customerId, or: $value.customerId),
     customerName: data.get(#customerName, or: $value.customerName),
     notes: data.get(#notes, or: $value.notes),
+    voidedById: data.get(#voidedById, or: $value.voidedById),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

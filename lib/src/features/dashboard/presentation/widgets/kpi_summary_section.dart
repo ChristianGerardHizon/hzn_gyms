@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/routes/check_in.routes.dart';
+import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
-import '../controllers/new_customers_controller.dart';
+import '../controllers/active_members_count_controller.dart';
+import '../controllers/new_members_controller.dart';
+import '../controllers/todays_checkins_controller.dart';
 import '../controllers/todays_sales_controller.dart';
 import 'kpi_card.dart';
 
@@ -11,63 +15,115 @@ import 'kpi_card.dart';
 ///
 /// Shows:
 /// - Today's sales count and total
-/// - New customers registered today
+/// - Today's check-ins
+/// - Active members (with active memberships)
+/// - New members registered today
 class KpiSummarySection extends ConsumerWidget {
   const KpiSummarySection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final salesSummaryAsync = ref.watch(todaySalesSummaryProvider);
-    final newCustomersAsync = ref.watch(todaysNewCustomersCountProvider);
+    final checkInsAsync = ref.watch(todaysCheckInsCountProvider);
+    final activeMembersAsync = ref.watch(activeMembersCountProvider);
+    final newMembersAsync = ref.watch(todaysNewMembersCountProvider);
 
     const spacing = 12.0;
 
-    final cards = <Widget>[
-      // Today's sales
-      Expanded(
-        child: salesSummaryAsync.when(
-          data: (summary) => KpiCard(
-            title: "Today's Sales",
-            value: summary.count.toString(),
-            icon: Icons.point_of_sale,
-            subtitle: _formatCurrency(summary.total),
-            compact: true,
-            color: Colors.green,
-            onTap: () => const SalesHistoryRoute().go(context),
-          ),
-          loading: () => _buildLoadingCard(),
-          error: (_, __) => _buildErrorCard(
-            context,
-            "Today's Sales",
-            Icons.point_of_sale,
-          ),
-        ),
-      ),
-      const SizedBox(width: spacing),
-      // New customers today
-      Expanded(
-        child: newCustomersAsync.when(
-          data: (count) => KpiCard(
-            title: 'New Customers',
-            value: count.toString(),
-            icon: Icons.person_add_outlined,
-            subtitle: 'Registered today',
-            compact: true,
-            color: Colors.blue,
-          ),
-          loading: () => _buildLoadingCard(),
-          error: (_, __) => _buildErrorCard(
-            context,
-            'New Customers',
-            Icons.person_add_outlined,
-          ),
-        ),
-      ),
-    ];
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(children: cards),
+      child: Column(
+        children: [
+          // First row: Sales + Check-ins
+          Row(
+            children: [
+              Expanded(
+                child: salesSummaryAsync.when(
+                  data: (summary) => KpiCard(
+                    title: "Today's Sales",
+                    value: summary.count.toString(),
+                    icon: Icons.point_of_sale,
+                    subtitle: _formatCurrency(summary.total),
+                    compact: true,
+                    color: Colors.green,
+                    onTap: () => const SalesHistoryRoute().go(context),
+                  ),
+                  loading: () => _buildLoadingCard(),
+                  error: (_, __) => _buildErrorCard(
+                    context,
+                    "Today's Sales",
+                    Icons.point_of_sale,
+                  ),
+                ),
+              ),
+              const SizedBox(width: spacing),
+              Expanded(
+                child: checkInsAsync.when(
+                  data: (count) => KpiCard(
+                    title: "Today's Check-ins",
+                    value: count.toString(),
+                    icon: Icons.how_to_reg,
+                    subtitle: 'Members checked in',
+                    compact: true,
+                    color: Colors.teal,
+                    onTap: () => const CheckInRoute().go(context),
+                  ),
+                  loading: () => _buildLoadingCard(),
+                  error: (_, __) => _buildErrorCard(
+                    context,
+                    "Today's Check-ins",
+                    Icons.how_to_reg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: spacing),
+          // Second row: Active Members + New Members
+          Row(
+            children: [
+              Expanded(
+                child: activeMembersAsync.when(
+                  data: (count) => KpiCard(
+                    title: 'Active Members',
+                    value: count.toString(),
+                    icon: Icons.card_membership,
+                    subtitle: 'With active membership',
+                    compact: true,
+                    color: Colors.purple,
+                    onTap: () => const MembersRoute().go(context),
+                  ),
+                  loading: () => _buildLoadingCard(),
+                  error: (_, __) => _buildErrorCard(
+                    context,
+                    'Active Members',
+                    Icons.card_membership,
+                  ),
+                ),
+              ),
+              const SizedBox(width: spacing),
+              Expanded(
+                child: newMembersAsync.when(
+                  data: (count) => KpiCard(
+                    title: 'New Members',
+                    value: count.toString(),
+                    icon: Icons.person_add_outlined,
+                    subtitle: 'Registered today',
+                    compact: true,
+                    color: Colors.blue,
+                  ),
+                  loading: () => _buildLoadingCard(),
+                  error: (_, __) => _buildErrorCard(
+                    context,
+                    'New Members',
+                    Icons.person_add_outlined,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -138,7 +194,7 @@ class KpiSummarySection extends ConsumerWidget {
 
   String _formatCurrency(num amount) {
     final formatter = NumberFormat.currency(
-      symbol: '₱',
+      symbol: '\u20B1',
       decimalDigits: 2,
     );
     return formatter.format(amount);

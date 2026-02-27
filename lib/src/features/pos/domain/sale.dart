@@ -1,7 +1,5 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
-import 'order_status.dart';
-
 part 'sale.mapper.dart';
 
 /// Sale domain model.
@@ -16,12 +14,11 @@ class Sale with SaleMappable {
     required this.cashierId,
     required this.totalAmount,
     required this.status,
-    this.orderStatus = OrderStatus.pending,
     this.isPaid = false,
-    this.pickedUpAt,
     this.customerId,
     this.customerName,
     this.notes,
+    this.voidedById,
     this.created,
     this.updated,
   });
@@ -44,14 +41,8 @@ class Sale with SaleMappable {
   /// Transaction status (completed, refunded, voided).
   final String status;
 
-  /// Order fulfillment status (pending, processing, ready, pickedUp).
-  final OrderStatus orderStatus;
-
   /// Whether the customer has fully paid (auto-calculated from payments).
   final bool isPaid;
-
-  /// Timestamp when the order was picked up.
-  final DateTime? pickedUpAt;
 
   /// Linked customer ID (optional).
   final String? customerId;
@@ -62,6 +53,9 @@ class Sale with SaleMappable {
   /// Internal notes.
   final String? notes;
 
+  /// User ID of whoever voided this sale (null if not voided).
+  final String? voidedById;
+
   /// Creation timestamp.
   final DateTime? created;
 
@@ -70,7 +64,4 @@ class Sale with SaleMappable {
 
   /// Returns display name for customer.
   String? get customerDisplay => customerName;
-
-  /// Returns true if order has been picked up.
-  bool get isPickedUp => orderStatus == OrderStatus.pickedUp;
 }

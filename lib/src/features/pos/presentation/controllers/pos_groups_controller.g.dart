@@ -11,7 +11,7 @@ part of 'pos_groups_controller.dart';
 /// Controller for managing POS groups for the current branch.
 ///
 /// Provides CRUD operations on groups and group items.
-/// Groups are loaded with their items expanded (products/services).
+/// Groups are loaded with their items expanded (products).
 
 @ProviderFor(PosGroupsController)
 final posGroupsControllerProvider = PosGroupsControllerProvider._();
@@ -19,13 +19,13 @@ final posGroupsControllerProvider = PosGroupsControllerProvider._();
 /// Controller for managing POS groups for the current branch.
 ///
 /// Provides CRUD operations on groups and group items.
-/// Groups are loaded with their items expanded (products/services).
+/// Groups are loaded with their items expanded (products).
 final class PosGroupsControllerProvider
     extends $AsyncNotifierProvider<PosGroupsController, List<PosGroup>> {
   /// Controller for managing POS groups for the current branch.
   ///
   /// Provides CRUD operations on groups and group items.
-  /// Groups are loaded with their items expanded (products/services).
+  /// Groups are loaded with their items expanded (products).
   PosGroupsControllerProvider._()
       : super(
           from: null,
@@ -46,12 +46,12 @@ final class PosGroupsControllerProvider
 }
 
 String _$posGroupsControllerHash() =>
-    r'559e4d187710a5fc6ca66df16ed913c0d0cd3e59';
+    r'e4e2c7839382de363e17253eae2c9bda633d0b81';
 
 /// Controller for managing POS groups for the current branch.
 ///
 /// Provides CRUD operations on groups and group items.
-/// Groups are loaded with their items expanded (products/services).
+/// Groups are loaded with their items expanded (products).
 
 abstract class _$PosGroupsController extends $AsyncNotifier<List<PosGroup>> {
   FutureOr<List<PosGroup>> build();

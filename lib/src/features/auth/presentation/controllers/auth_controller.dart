@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/foundation/failure.dart';
 import '../../../../core/routing/pending_redirect_provider.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/auth_state.dart';
@@ -16,37 +17,54 @@ class AuthController extends _$AuthController {
 
   @override
   Future<AuthState?> build() async {
-    // Try to initialize from stored auth on app startup
-    final result = await _repository.initialize();
+    // Load cached auth immediately (no network call)
+    final cachedResult = await _repository.getCachedAuth();
 
-    return result.fold(
-      (failure) => null, // No valid auth, return null
-      (authState) => authState,
+    return cachedResult.fold(
+      (failure) => null, // No cached auth, return null (will redirect to login)
+      (cachedAuth) {
+        // Refresh token in background to validate and update
+        _refreshInBackground();
+        return cachedAuth;
+      },
     );
   }
 
-  /// Attempts to login with email and password.
+  /// Refreshes auth in the background. If refresh fails with auth error,
+  /// logs the user out.
+  Future<void> _refreshInBackground() async {
+    final result = await _repository.refreshInBackground();
+
+    result.fold(
+      (failure) {
+        // If token is invalid (401/403), log out
+        if (failure is AuthFailure || failure is NoAuthFailure) {
+          state = const AsyncData(null);
+        }
+        // For network errors, keep cached auth (user can work offline-ish)
+      },
+      (freshAuth) {
+        // Update with fresh data silently
+        state = AsyncData(freshAuth);
+      },
+    );
+  }
+
+  /// Attempts to login with username and password.
   ///
   /// Returns true on success, false on failure.
-  /// If the user's email is not verified, a verification email is automatically sent.
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String username, String password) async {
     state = const AsyncLoading();
 
-    final result = await _repository.login(email, password);
+    final result = await _repository.login(username, password);
 
     return result.fold(
       (failure) {
         state = AsyncError(failure, StackTrace.current);
         return false;
       },
-      (authState) async {
+      (authState) {
         state = AsyncData(authState);
-
-        // Auto-send verification email if user is not verified
-        if (!authState.isVerified) {
-          await _repository.requestVerification(email);
-        }
-
         return true;
       },
     );
@@ -81,12 +99,6 @@ class AuthController extends _$AuthController {
   /// Requests a password reset email.
   Future<bool> requestPasswordReset(String email) async {
     final result = await _repository.requestPasswordReset(email);
-    return result.isRight();
-  }
-
-  /// Requests email verification.
-  Future<bool> requestVerification(String email) async {
-    final result = await _repository.requestVerification(email);
     return result.isRight();
   }
 

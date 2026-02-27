@@ -20,6 +20,7 @@ class SaleItem with SaleItemMappable {
     this.product,
     this.productLotId,
     this.lotNumber,
+    this.itemType,
     this.created,
     this.updated,
   });
@@ -53,6 +54,9 @@ class SaleItem with SaleItemMappable {
 
   /// Lot number snapshot at time of sale.
   final String? lotNumber;
+
+  /// Item type: 'product', 'membership', or 'addon'.
+  final String? itemType;
 
   /// Creation timestamp.
   final DateTime? created;

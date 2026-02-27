@@ -65,10 +65,8 @@ class PosGroupRepositoryImpl implements PosGroupRepository {
 
   PosGroupItem _toGroupItemEntity(RecordModel record) {
     final productExpanded = record.get<RecordModel?>('expand.product');
-    final serviceExpanded = record.get<RecordModel?>('expand.service');
     return PosGroupItemDto.fromRecord(record).toEntity(
       productExpanded: productExpanded,
-      serviceExpanded: serviceExpanded,
     );
   }
 
@@ -107,11 +105,11 @@ class PosGroupRepositoryImpl implements PosGroupRepository {
         final groups = <PosGroup>[];
 
         for (final groupRecord in groupRecords) {
-          // Fetch items for each group with product/service expansion (including quantityUnit)
+          // Fetch items for each group with product expansion (including quantityUnit)
           final itemRecords = await _groupItems.getFullList(
             filter: 'group = "${groupRecord.id}"',
             sort: 'sortOrder',
-            expand: 'product.quantityUnit,service.quantityUnit',
+            expand: 'product.quantityUnit',
           );
 
           final items = itemRecords
@@ -120,9 +118,6 @@ class PosGroupRepositoryImpl implements PosGroupRepository {
               .where((item) {
             if (item.isProduct && item.product != null) {
               return !item.product!.isDeleted && item.product!.forSale;
-            }
-            if (item.isService && item.service != null) {
-              return !item.service!.isDeleted;
             }
             return false;
           }).toList();
@@ -207,7 +202,7 @@ class PosGroupRepositoryImpl implements PosGroupRepository {
         final records = await _groupItems.getFullList(
           filter: 'group = "$groupId"',
           sort: 'sortOrder',
-          expand: 'product.quantityUnit,service.quantityUnit',
+          expand: 'product.quantityUnit',
         );
         return records.map(_toGroupItemEntity).toList();
       },
@@ -226,16 +221,13 @@ class PosGroupRepositoryImpl implements PosGroupRepository {
         if (item.productId != null && item.productId!.isNotEmpty) {
           body['product'] = item.productId;
         }
-        if (item.serviceId != null && item.serviceId!.isNotEmpty) {
-          body['service'] = item.serviceId;
-        }
         final record = await _groupItems.create(body: body);
         invalidateCache();
 
-        // Re-fetch with expansion to get product/service data (including quantityUnit)
+        // Re-fetch with expansion to get product data (including quantityUnit)
         final expanded = await _groupItems.getOne(
           record.id,
-          expand: 'product.quantityUnit,service.quantityUnit',
+          expand: 'product.quantityUnit',
         );
         return _toGroupItemEntity(expanded);
       },

@@ -65,12 +65,16 @@ class PaymentsController extends _$PaymentsController {
 
     return result.fold(
       (failure) {
-        state = AsyncError(failure, StackTrace.current);
+        if (ref.mounted) {
+          state = AsyncError(failure, StackTrace.current);
+        }
         return null;
       },
       (payment) {
         // Invalidate the payments list to trigger refresh
-        ref.invalidate(salePaymentsProvider(saleId));
+        if (ref.mounted) {
+          ref.invalidate(salePaymentsProvider(saleId));
+        }
         return payment;
       },
     );
@@ -83,12 +87,16 @@ class PaymentsController extends _$PaymentsController {
 
     return result.fold(
       (failure) {
-        state = AsyncError(failure, StackTrace.current);
+        if (ref.mounted) {
+          state = AsyncError(failure, StackTrace.current);
+        }
         return false;
       },
       (_) {
         // Invalidate the payments list to trigger refresh
-        ref.invalidate(salePaymentsProvider(saleId));
+        if (ref.mounted) {
+          ref.invalidate(salePaymentsProvider(saleId));
+        }
         return true;
       },
     );

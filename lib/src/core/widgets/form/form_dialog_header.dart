@@ -43,7 +43,10 @@ class FormDialogHeader extends StatelessWidget {
   final VoidCallback onClose;
 
   /// Called when the save button is pressed.
-  final VoidCallback onSave;
+  ///
+  /// Receives a [BuildContext] below the dialog's [ScaffoldMessenger] so
+  /// snackbar calls with `useRootMessenger: false` render above the dialog.
+  final ValueChanged<BuildContext> onSave;
 
   /// Whether a save operation is in progress.
   /// Disables buttons and shows a loading indicator on the save button.
@@ -87,7 +90,7 @@ class FormDialogHeader extends StatelessWidget {
             ),
           ],
           FilledButton(
-            onPressed: isSaving ? null : onSave,
+            onPressed: isSaving ? null : () => onSave(context),
             child: isSaving
                 ? const SizedBox(
                     height: 20,

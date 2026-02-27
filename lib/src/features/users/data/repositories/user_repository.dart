@@ -195,13 +195,12 @@ class UserRepositoryImpl implements UserRepository {
     return TaskEither.tryCatch(
       () async {
         final body = <String, dynamic>{
+          'username': user.username,
           'name': user.name,
-          'email': user.email,
           'password': password,
           'passwordConfirm': password,
           'role': user.roleId,
           'branch': user.branchId,
-          'verified': user.verified,
           'isDeleted': false,
         };
 
@@ -218,11 +217,10 @@ class UserRepositoryImpl implements UserRepository {
     return TaskEither.tryCatch(
       () async {
         final body = <String, dynamic>{
+          'username': user.username,
           'name': user.name,
-          'email': user.email,
           'role': user.roleId,
           'branch': user.branchId,
-          'verified': user.verified,
         };
 
         final record =
@@ -252,7 +250,7 @@ class UserRepositoryImpl implements UserRepository {
   }) async {
     return TaskEither.tryCatch(
       () async {
-        final searchFields = fields ?? ['name', 'email'];
+        final searchFields = fields ?? ['name', 'username'];
         final filter = PBFilter()
             .notDeleted()
             .searchFields(query, searchFields)
@@ -279,7 +277,7 @@ class UserRepositoryImpl implements UserRepository {
   }) async {
     return TaskEither.tryCatch(
       () async {
-        final searchFields = fields ?? ['name', 'email'];
+        final searchFields = fields ?? ['name', 'username'];
         final filter = PBFilter()
             .notDeleted()
             .searchFields(query, searchFields)

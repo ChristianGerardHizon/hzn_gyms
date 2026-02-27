@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../settings/domain/branch.dart';
@@ -40,7 +39,7 @@ class CreateProductDialog extends HookConsumerWidget {
     final branchesAsync = ref.watch(branchesControllerProvider);
     final userBranchId = ref.watch(currentBranchIdProvider);
 
-    Future<void> handleSave() async {
+    Future<void> handleSave(BuildContext dialogContext) async {
       final isValid = formKey.currentState!.saveAndValidate();
 
       if (!isValid) {
@@ -48,7 +47,7 @@ class CreateProductDialog extends HookConsumerWidget {
         final errorMessages = formatFormErrors(errors, _fieldLabels);
 
         if (errorMessages.isNotEmpty) {
-          showFormErrorDialog(context, errors: errorMessages);
+          showFormErrorDialog(dialogContext, errors: errorMessages);
         }
         return;
       }
@@ -91,24 +90,25 @@ class CreateProductDialog extends HookConsumerWidget {
           .createProduct(product);
 
       if (createdProduct == null) {
-        if (context.mounted) {
+        if (dialogContext.mounted) {
           isSaving.value = false;
           showFormErrorDialog(
-            context,
+            dialogContext,
             errors: ['Failed to create product. Please try again.'],
           );
         }
         return;
       }
 
-      if (context.mounted) {
+      if (dialogContext.mounted) {
         isSaving.value = false;
-        context.pop();
+        Navigator.of(dialogContext).pop();
 
-        showSuccessSnackBar(context, message: 'Product created successfully');
+        showSuccessSnackBar(dialogContext,
+            message: 'Product created successfully');
 
         // Navigate to product detail
-        ProductDetailRoute(id: createdProduct.id).go(context);
+        ProductDetailRoute(id: createdProduct.id).go(dialogContext);
       }
     }
 

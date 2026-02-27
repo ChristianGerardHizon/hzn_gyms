@@ -10,7 +10,6 @@ import 'components/cart_view.dart';
 import 'components/cashier_search_dropdown.dart';
 import 'components/grouped_cashier_view.dart';
 import 'components/product_grid.dart';
-import 'components/service_grid.dart';
 import 'controllers/pos_groups_controller.dart';
 
 class PosScreen extends HookConsumerWidget {
@@ -59,7 +58,7 @@ class _DesktopLayout extends StatelessWidget {
       ),
       body: Row(
         children: [
-          // Product/Service Grid Area
+          // Product Grid Area
           Expanded(
             flex: 6,
             child: Column(
@@ -75,17 +74,6 @@ class _DesktopLayout extends StatelessWidget {
                     child: GroupedCashierView(groups: groups),
                   )
                 else ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      'Services',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                  const Expanded(
-                    child: ServiceGrid(),
-                  ),
-                  const Divider(height: 1),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
@@ -240,17 +228,6 @@ class _MobileLayout extends ConsumerWidget {
               child: GroupedCashierView(groups: groups),
             )
           else ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                'Services',
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            const Expanded(
-              child: ServiceGrid(),
-            ),
-            const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(

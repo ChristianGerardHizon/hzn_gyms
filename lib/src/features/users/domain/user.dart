@@ -11,7 +11,7 @@ class User with UserMappable {
   const User({
     required this.id,
     required this.name,
-    required this.email,
+    required this.username,
     this.avatar,
     this.verified = false,
     this.roleId,
@@ -29,13 +29,13 @@ class User with UserMappable {
   /// User's display name.
   final String name;
 
-  /// User's email address.
-  final String email;
+  /// User's username (used for login).
+  final String username;
 
   /// Avatar URL (full path).
   final String? avatar;
 
-  /// Email verification status.
+  /// Account verification status.
   final bool verified;
 
   /// FK to UserRole.
@@ -78,6 +78,6 @@ class User with UserMappable {
     return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
   }
 
-  /// Display email verification status.
+  /// Display account verification status.
   String get verificationStatus => verified ? 'Verified' : 'Unverified';
 }

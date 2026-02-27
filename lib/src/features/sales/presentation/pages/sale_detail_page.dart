@@ -3,24 +3,19 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/routing/routes/customers.routes.dart';
+import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/utils/breakpoints.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
-import '../../../pos/domain/order_status.dart';
-import '../../../pos/domain/order_status_history.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/presentation/payments_controller.dart';
-import '../controllers/order_status_history_provider.dart';
+import '../../../users/presentation/controllers/user_provider.dart';
 import '../controllers/sale_items_provider.dart';
 import '../controllers/sale_provider.dart';
-import '../controllers/sale_service_items_provider.dart';
-import '../widgets/assign_machines_dialog.dart';
-import '../widgets/assign_storages_dialog.dart';
-import '../widgets/record_payment_sheet.dart';
-import '../widgets/sale_highlight_banner.dart';
+import '../widgets/record_payment_dialog.dart';
 import '../widgets/sale_status_chip.dart';
 
 /// Sale detail page showing sale information and items.
@@ -105,10 +100,7 @@ class _SaleDetailContent extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final saleItemsAsync = ref.watch(saleItemsProvider(sale.id));
-    final serviceItemsAsync = ref.watch(saleServiceItemsProvider(sale.id));
     final paymentsAsync = ref.watch(salePaymentsProvider(sale.id));
-    final statusHistoryAsync =
-        ref.watch(orderStatusHistoryProvider(sale.id));
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
     final currencyFormat = NumberFormat.currency(symbol: '₱');
 
@@ -137,15 +129,11 @@ class _SaleDetailContent extends HookConsumerWidget {
         onRefresh: () async {
           ref.invalidate(saleProvider(sale.id));
           ref.invalidate(saleItemsProvider(sale.id));
-          ref.invalidate(saleServiceItemsProvider(sale.id));
           ref.invalidate(salePaymentsProvider(sale.id));
-          ref.invalidate(orderStatusHistoryProvider(sale.id));
           await Future.wait([
             ref.read(saleProvider(sale.id).future),
             ref.read(saleItemsProvider(sale.id).future),
-            ref.read(saleServiceItemsProvider(sale.id).future),
             ref.read(salePaymentsProvider(sale.id).future),
-            ref.read(orderStatusHistoryProvider(sale.id).future),
           ]);
         },
         child: SingleChildScrollView(
@@ -205,25 +193,8 @@ class _SaleDetailContent extends HookConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Highlight Banner - shows most important status
-              SaleHighlightBanner(
-                orderStatus: sale.orderStatus,
-                isPaid: sale.isPaid,
-                saleStatus: sale.status,
-              ),
-              const SizedBox(height: 16),
-
               // Sale Status Actions (Refund/Unrefund)
               _buildSaleStatusActions(context, ref),
-              const SizedBox(height: 16),
-
-              // Order Status Card
-              _buildOrderStatusCard(context, ref),
-              const SizedBox(height: 16),
-
-              // Status History Timeline
-              _buildStatusHistoryCard(
-                  context, statusHistoryAsync, dateFormat),
               const SizedBox(height: 16),
 
               // Items Section
@@ -270,120 +241,6 @@ class _SaleDetailContent extends HookConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Service Items Section
-              serviceItemsAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (serviceItems) {
-                  if (serviceItems.isEmpty) return const SizedBox.shrink();
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Service Items',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Card(
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: serviceItems.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final item = serviceItems[index];
-                            final hasMachine = item.machineName != null &&
-                                item.machineName!.isNotEmpty;
-                            final hasStorage = item.storageName != null &&
-                                item.storageName!.isNotEmpty;
-
-                            return Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Service name + price row
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.serviceName,
-                                              style: theme
-                                                  .textTheme.titleSmall,
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '${currencyFormat.format(item.unitPrice)} x ${item.quantity}',
-                                              style: theme
-                                                  .textTheme.bodySmall
-                                                  ?.copyWith(
-                                                color: theme.colorScheme
-                                                    .onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Text(
-                                        currencyFormat
-                                            .format(item.subtotal),
-                                        style:
-                                            theme.textTheme.titleSmall,
-                                      ),
-                                    ],
-                                  ),
-
-                                  // Machine & Storage assignment section
-                                  if (hasMachine || hasStorage) ...[
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        if (hasMachine)
-                                          Expanded(
-                                            child:
-                                                _AssignmentInfoCard(
-                                              icon: Icons
-                                                  .local_laundry_service,
-                                              label: 'Machine',
-                                              name:
-                                                  item.machineName!,
-                                              color: Colors.blue,
-                                            ),
-                                          ),
-                                        if (hasMachine && hasStorage)
-                                          const SizedBox(width: 12),
-                                        if (hasStorage)
-                                          Expanded(
-                                            child:
-                                                _AssignmentInfoCard(
-                                              icon: Icons.inventory_2,
-                                              label: 'Storage',
-                                              name:
-                                                  item.storageName!,
-                                              color: Colors.teal,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  );
-                },
-              ),
-
               // Total Card
               Card(
                 color: theme.colorScheme.primaryContainer,
@@ -421,28 +278,44 @@ class _SaleDetailContent extends HookConsumerWidget {
   Widget _buildSaleStatusActions(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isUpdating = useState(false);
-    final isRefunded = sale.status.toLowerCase() == 'refunded';
-    final isVoided = sale.status.toLowerCase() == 'voided';
-    final isPending = sale.status.toLowerCase() == 'pending';
+    final statusLower = sale.status.toLowerCase();
+    final isRefunded = statusLower == 'refunded';
+    final isVoided = statusLower == 'voided';
+    final isPending = statusLower == 'pending';
+    final isAwaitingPayment = statusLower == 'awaitingpayment';
 
-    // Don't show actions for voided sales
+    // Show voided info card instead of actions
     if (isVoided) {
-      return const SizedBox.shrink();
+      return _buildVoidedInfoCard(context, ref, theme);
     }
 
     Future<void> updateSaleStatus(String newStatus) async {
-      // Show confirmation dialog
+      final (title, content, confirmLabel, confirmColor) = switch (newStatus) {
+        'refunded' => (
+            'Refund Sale?',
+            'Are you sure you want to mark this sale as refunded?',
+            'Refund',
+            Colors.orange,
+          ),
+        'voided' => (
+            'Void Sale?',
+            'Are you sure you want to void this sale? This action cannot be undone.',
+            'Void',
+            Colors.red,
+          ),
+        _ => (
+            'Update Status?',
+            'Are you sure you want to update this sale status?',
+            'Update',
+            Colors.green,
+          ),
+      };
+
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(
-            newStatus == 'refunded' ? 'Refund Sale?' : 'Remove Refund?',
-          ),
-          content: Text(
-            newStatus == 'refunded'
-                ? 'Are you sure you want to mark this sale as refunded? This will update the sale status.'
-                : 'Are you sure you want to remove the refund status and mark this sale as $newStatus?',
-          ),
+          title: Text(title),
+          content: Text(content),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -450,11 +323,8 @@ class _SaleDetailContent extends HookConsumerWidget {
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor:
-                    newStatus == 'refunded' ? Colors.orange : Colors.green,
-              ),
-              child: Text(newStatus == 'refunded' ? 'Refund' : 'Remove Refund'),
+              style: FilledButton.styleFrom(backgroundColor: confirmColor),
+              child: Text(confirmLabel),
             ),
           ],
         ),
@@ -464,7 +334,14 @@ class _SaleDetailContent extends HookConsumerWidget {
 
       isUpdating.value = true;
       final repo = ref.read(salesRepositoryProvider);
-      final result = await repo.updateSaleStatus(sale.id, newStatus);
+
+      // When voiding, also set voidedBy to the current user
+      final result = newStatus == 'voided'
+          ? await repo.updateSale(sale.id, {
+              'status': 'voided',
+              'voidedBy': ref.read(currentAuthProvider)?.user.id,
+            })
+          : await repo.updateSaleStatus(sale.id, newStatus);
       isUpdating.value = false;
 
       if (!context.mounted) return;
@@ -474,16 +351,21 @@ class _SaleDetailContent extends HookConsumerWidget {
           showErrorSnackBar(context, message: failure.messageString);
         },
         (_) {
-          showSuccessSnackBar(
-            context,
-            message: newStatus == 'refunded'
-                ? 'Sale marked as refunded'
-                : 'Refund status removed',
-          );
+          showSuccessSnackBar(context, message: 'Sale status updated');
           ref.invalidate(saleProvider(sale.id));
         },
       );
     }
+
+    // Determine chip color and label
+    final (chipColor, chipLabel) = switch (statusLower) {
+      'pending' => (Colors.grey, 'Pending'),
+      'awaitingpayment' => (Colors.amber, 'Awaiting Payment'),
+      'paid' => (Colors.green, 'Paid'),
+      'completed' => (Colors.green, 'Completed'),
+      'refunded' => (Colors.orange, 'Refunded'),
+      _ => (Colors.grey, sale.status),
+    };
 
     return Card(
       child: Padding(
@@ -508,25 +390,15 @@ class _SaleDetailContent extends HookConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: isRefunded
-                    ? Colors.orange.withValues(alpha: 0.1)
-                    : isPending
-                        ? Colors.amber.withValues(alpha: 0.1)
-                        : Colors.green.withValues(alpha: 0.1),
+                color: chipColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
-                isRefunded
-                    ? 'Refunded'
-                    : isPending
-                        ? 'Pending'
-                        : 'Completed',
+                chipLabel,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: isRefunded
-                      ? Colors.orange
-                      : isPending
-                          ? Colors.amber.shade700
-                          : Colors.green,
+                  color: chipColor == Colors.amber
+                      ? Colors.amber.shade700
+                      : chipColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -542,21 +414,11 @@ class _SaleDetailContent extends HookConsumerWidget {
                     )
                   : const Icon(Icons.more_vert),
               enabled: !isUpdating.value,
-              onSelected: (value) {
-                if (value == 'refund') {
-                  updateSaleStatus('refunded');
-                } else if (value == 'unrefund') {
-                  final revertStatus =
-                      sale.orderStatus == OrderStatus.pickedUp
-                          ? 'completed'
-                          : 'pending';
-                  updateSaleStatus(revertStatus);
-                }
-              },
+              onSelected: (value) => updateSaleStatus(value),
               itemBuilder: (context) => [
                 if (isRefunded)
                   const PopupMenuItem<String>(
-                    value: 'unrefund',
+                    value: 'pending',
                     child: ListTile(
                       leading: Icon(Icons.undo, color: Colors.green),
                       title: Text('Remove Refund'),
@@ -564,16 +426,28 @@ class _SaleDetailContent extends HookConsumerWidget {
                       visualDensity: VisualDensity.compact,
                     ),
                   )
-                else
-                  const PopupMenuItem<String>(
-                    value: 'refund',
-                    child: ListTile(
-                      leading: Icon(Icons.replay, color: Colors.orange),
-                      title: Text('Mark as Refunded'),
-                      contentPadding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
+                else ...[
+                  if (!isRefunded)
+                    const PopupMenuItem<String>(
+                      value: 'refunded',
+                      child: ListTile(
+                        leading: Icon(Icons.replay, color: Colors.orange),
+                        title: Text('Mark as Refunded'),
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
-                  ),
+                  if (isPending || isAwaitingPayment)
+                    const PopupMenuItem<String>(
+                      value: 'voided',
+                      child: ListTile(
+                        leading: Icon(Icons.cancel, color: Colors.red),
+                        title: Text('Void Sale'),
+                        contentPadding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
               ],
             ),
           ],
@@ -582,266 +456,49 @@ class _SaleDetailContent extends HookConsumerWidget {
     );
   }
 
-  Widget _buildOrderStatusCard(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isUpdating = useState(false);
+  Widget _buildVoidedInfoCard(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+  ) {
+    final voidedByAsync = sale.voidedById != null
+        ? ref.watch(userProvider(sale.voidedById!))
+        : null;
 
-    Future<void> updateOrderStatus(OrderStatus status) async {
-      // Show assignment dialogs for processing/ready transitions
-      if (status == OrderStatus.processing) {
-        final serviceItems =
-            ref.read(saleServiceItemsProvider(sale.id)).value ?? [];
-        if (serviceItems.isNotEmpty) {
-          final result = await showAssignMachinesDialog(
-            context,
-            serviceItems: serviceItems,
-          );
-          if (result == null || !context.mounted) return;
-        }
-      } else if (status == OrderStatus.ready) {
-        final serviceItems =
-            ref.read(saleServiceItemsProvider(sale.id)).value ?? [];
-        if (serviceItems.isNotEmpty) {
-          final result = await showAssignStoragesDialog(
-            context,
-            serviceItems: serviceItems,
-          );
-          if (result == null || !context.mounted) return;
-        }
-      }
-
-      isUpdating.value = true;
-      final repo = ref.read(salesRepositoryProvider);
-      final result = await repo.updateOrderStatus(sale.id, status);
-      isUpdating.value = false;
-
-      if (!context.mounted) return;
-
-      result.fold(
-        (failure) {
-          showErrorSnackBar(context, message: failure.messageString);
-        },
-        (_) {
-          ref.invalidate(saleProvider(sale.id));
-          ref.invalidate(saleServiceItemsProvider(sale.id));
-        },
-      );
-    }
+    final voidedByName = voidedByAsync?.value?.name;
 
     return Card(
+      color: Colors.red.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.local_shipping,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Order Status',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Order status - responsive grid layout
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // Use 2x2 grid for narrow screens, single row for wider screens
-                final useGrid = constraints.maxWidth < 400;
-
-                if (useGrid) {
-                  // 2x2 Grid layout for mobile
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: OrderStatus.values.map((status) {
-                      final isSelected = sale.orderStatus == status;
-                      return SizedBox(
-                        width: (constraints.maxWidth - 8) / 2,
-                        child: _OrderStatusButton(
-                          status: status,
-                          isSelected: isSelected,
-                          isUpdating: isUpdating.value,
-                          icon: _getOrderStatusIcon(status),
-                          onTap: () => updateOrderStatus(status),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                } else {
-                  // Single row for tablet/wider screens
-                  return Row(
-                    children: OrderStatus.values.map((status) {
-                      final isSelected = sale.orderStatus == status;
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            right: status != OrderStatus.values.last ? 8 : 0,
-                          ),
-                          child: _OrderStatusButton(
-                            status: status,
-                            isSelected: isSelected,
-                            isUpdating: isUpdating.value,
-                            icon: _getOrderStatusIcon(status),
-                            onTap: () => updateOrderStatus(status),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                }
-              },
-            ),
-
-            // Picked up timestamp
-            if (sale.orderStatus == OrderStatus.pickedUp &&
-                sale.pickedUpAt != null) ...[
-              const SizedBox(height: 12),
-              Row(
+            const Icon(Icons.cancel, color: Colors.red, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.check_circle,
-                    size: 16,
-                    color: Colors.green,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Picked up on ${DateFormat('MMM dd, yyyy hh:mm a').format(sale.pickedUpAt!)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                  Text(
+                    'Voided',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
                     ),
                   ),
+                  if (voidedByName != null)
+                    Text(
+                      'By $voidedByName',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.red.shade300,
+                      ),
+                    ),
                 ],
               ),
-            ],
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  IconData _getOrderStatusIcon(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return Icons.schedule;
-      case OrderStatus.processing:
-        return Icons.autorenew;
-      case OrderStatus.ready:
-        return Icons.check_circle_outline;
-      case OrderStatus.pickedUp:
-        return Icons.local_shipping;
-    }
-  }
-
-  Widget _buildStatusHistoryCard(
-    BuildContext context,
-    AsyncValue<List<OrderStatusHistory>> historyAsync,
-    DateFormat dateFormat,
-  ) {
-    final theme = Theme.of(context);
-
-    return historyAsync.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (history) {
-        if (history.isEmpty) return const SizedBox.shrink();
-
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.history,
-                      color: theme.colorScheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Status History',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    final entry = history[index];
-                    final isOrderStatus =
-                        entry.statusType == StatusType.orderStatus;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: isOrderStatus
-                                ? Colors.blue.withValues(alpha: 0.1)
-                                : Colors.purple.withValues(alpha: 0.1),
-                            child: Icon(
-                              isOrderStatus
-                                  ? Icons.local_shipping
-                                  : Icons.receipt_long,
-                              size: 16,
-                              color: isOrderStatus
-                                  ? Colors.blue
-                                  : Colors.purple,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  entry.description ?? '',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  entry.created != null
-                                      ? dateFormat.format(entry.created!)
-                                      : '',
-                                  style:
-                                      theme.textTheme.bodySmall?.copyWith(
-                                    color: theme
-                                        .colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1113,7 +770,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                         width: double.infinity,
                         child: FilledButton.tonalIcon(
                           onPressed: () async {
-                            final result = await showRecordPaymentSheet(
+                            final result = await showRecordPaymentDialog(
                               context,
                               sale: sale,
                               balanceDue: balanceDue,
@@ -1275,7 +932,7 @@ class _CustomerInfoRow extends StatelessWidget {
             child: hasCustomerId
                 ? InkWell(
                     onTap: () =>
-                        CustomerDetailRoute(id: customerId!).go(context),
+                        MemberDetailRoute(id: customerId!).go(context),
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -1308,146 +965,6 @@ class _CustomerInfoRow extends StatelessWidget {
                   ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Card showing a machine or storage assignment with a large icon.
-class _AssignmentInfoCard extends StatelessWidget {
-  const _AssignmentInfoCard({
-    required this.icon,
-    required this.label,
-    required this.name,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final String name;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            icon,
-            size: 32,
-            color: color,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            name,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Custom button for order status selection.
-class _OrderStatusButton extends StatelessWidget {
-  const _OrderStatusButton({
-    required this.status,
-    required this.isSelected,
-    required this.isUpdating,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final OrderStatus status;
-  final bool isSelected;
-  final bool isUpdating;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final Color statusColor;
-    switch (status) {
-      case OrderStatus.pending:
-        statusColor = Colors.amber.shade700;
-      case OrderStatus.processing:
-        statusColor = Colors.blue;
-      case OrderStatus.ready:
-        statusColor = Colors.green;
-      case OrderStatus.pickedUp:
-        statusColor = Colors.grey;
-    }
-
-    return Material(
-      color: isSelected
-          ? statusColor.withValues(alpha: 0.15)
-          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: isUpdating ? null : onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? statusColor
-                  : theme.colorScheme.outline.withValues(alpha: 0.3),
-              width: isSelected ? 2 : 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 24,
-                color: isSelected
-                    ? statusColor
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                status.displayName,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: isSelected
-                      ? statusColor
-                      : theme.colorScheme.onSurfaceVariant,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

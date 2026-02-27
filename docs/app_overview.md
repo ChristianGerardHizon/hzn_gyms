@@ -22,35 +22,60 @@ A comprehensive Flutter multi-platform gym management system supporting Android,
 
 ### Primary Features (Main Navigation)
 
-#### Appointments (`/appointments`)
-Schedule and manage veterinary appointments.
+#### Dashboard (`/`)
+Home screen with gym metrics and quick actions.
 
-- **Screens**: Appointments list, detail page, daily view, calendar integration
-- **Statuses**: Scheduled, Completed, Missed, Cancelled
+- Responsive layout (single column mobile, single-pane tablet)
+- KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members
+- Quick action buttons: Check-In, New Sale, New Member
+- Expiring memberships section (memberships expiring within 7 days)
+- Inventory alerts (low stock, expiring products)
+- Pull-to-refresh invalidates all dashboard data
+
+#### Check-In (`/check-in`)
+Member check-in system for tracking gym visits.
+
+- **Features**:
+  - Card scan input (RFID/barcode) for quick check-in via member cards
+  - Member search by name or mobile number
+  - Active membership status display
+  - Manual check-in with membership validation
+  - Warning for members without active membership
+  - Recent check-ins list for today
+  - Success dialog with membership status
+  - Backward compatibility with legacy `rfidCardId` field on members
+- **Key Models**: `CheckIn`, `CheckInMethod`
 - **Controllers**:
-  - `appointmentsController` - Main list
-  - `paginatedAppointmentsController` - Filtered/paginated
-  - `dailyAppointmentsController` - Today's appointments
-  - `patientAppointmentsController` - Patient-specific
+  - `checkInController` - Today's check-ins list + manual/card check-in actions
+  - `memberCheckIns` - Check-in history for a specific member
 
-#### Patients (`/patients`)
-Core feature for managing animal patients and medical records.
+#### Members (`/members`)
+Member management with membership and check-in tracking.
 
 - **Sub-features**:
-  - Patient List & Detail
-  - Medical Records (diagnosis, treatment, tests)
-  - Treatments tracking
-  - Prescriptions per visit
-  - Patient Files (documents, images, videos)
-- **UI**: 6-tab interface (Overview, Details, Records, Treatments, Appointments, Files)
-- **Key Models**: `Patient`, `PatientRecord`, `PatientTreatment`, `PatientPrescriptionItem`, `PatientFile`
-- **Patient Files**:
-  - Upload images (JPG, PNG, GIF, WEBP, HEIC), videos (MP4, MOV, AVI, WEBM), and PDFs
-  - 10MB file size limit with client-side validation
-  - Full-screen image viewer with zoom/pan (PhotoView)
-  - Video player with playback controls
-  - PDF viewer with external app launch
-  - File management: upload, view, edit notes, delete
+  - Members list with search by name or phone
+  - Member detail with info and tabbed sections
+  - Create/edit member via bottom sheet form
+- **Member Detail Sections**:
+  - Overview: name, contact, DOB, sex, address, remarks, RFID
+  - ID Cards: physical cards (RFID/barcode) with status management (add, deactivate, report lost, delete)
+  - Memberships: active/expired memberships, purchase button
+  - Check-ins: check-in history
+  - Sales History: past product purchases
+- **Key Models**: `Member`, `MemberCard`, `MemberCardStatus`
+- **Master-Detail Layout**: Tablet shows list + detail side-by-side; mobile navigates between pages
+
+#### Memberships (`/memberships`)
+Membership plan management for gym subscriptions.
+
+- **Sub-features**:
+  - Membership plans list with search
+  - Plan detail with duration, price, active/inactive status
+  - Create/edit plans via bottom sheet form
+  - **Add-ons per plan** (e.g., Treadmill Access, Coach/Instructor, Locker, Pool Access) — each with its own price, managed from the plan detail page
+  - Purchase membership flow from member detail page with optional add-on selection — total cost = base price + selected add-ons
+- **Key Models**: `Membership`, `MembershipAddOn`, `MemberMembership`, `MemberMembershipAddOn`, `MemberMembershipStatus`
+- **Master-Detail Layout**: Tablet shows list + detail side-by-side
 
 #### Products (`/products`)
 Inventory and product management with lot tracking.
@@ -62,60 +87,27 @@ Inventory and product management with lot tracking.
   - Hierarchical category organization
 - **Key Models**: `Product`, `ProductCategory`, `ProductLot`, `ProductAdjustment`
 
-#### Services (`/services`)
-Service management and POS integration for laundry services.
-
-- **Sub-features**:
-  - Services list with category filtering and search
-  - Service categories management
-  - Variable price and weight-based service support
-  - Estimated duration tracking
-- **Key Models**: `Service`, `ServiceCategory`, `CartServiceItem`, `SaleServiceItem`
-- **POS Integration**: Services appear in a separate tab in the cashier alongside products
-
-#### Customers (`/customers`)
-Customer management with sales history tracking.
-
-- **Sub-features**:
-  - Customers list with search by name or phone
-  - Customer detail with info and full sales history
-  - Create/edit customer via bottom sheet form
-  - Inline customer creation from POS checkout
-- **Key Models**: `Customer`
-- **POS Integration**: Customer selection is required at checkout with search/autocomplete and quick "New Customer" creation
-- **Master-Detail Layout**: Tablet shows list + detail side-by-side; mobile navigates between pages
-
-#### Dashboard (`/`)
-Home screen with quick summary and today's appointments.
-
-- Responsive layout (single column mobile, two-pane tablet)
-- Quick summary cards
-- Today's appointments section
-
 ---
 
 ### Secondary Features
 
 #### Point of Sale / Cashier (`/cashier`)
-Complete POS system for processing sales of products and services.
+Complete POS system for processing product sales.
 
 - **Features**:
-  - **Customizable Cashier Layout** (POS Groups): Create named groups of products/services per branch to define the cashier page layout. Groups display as scrollable sections with sticky headers. Items can belong to multiple groups. Falls back to default Products/Services tabs when no groups are configured.
-  - Products/Services tab toggle (SegmentedButton) — default mode when no groups exist
+  - **Customizable Cashier Layout** (POS Groups): Create named groups of products per branch to define the cashier page layout. Groups display as scrollable sections with sticky headers. Falls back to default product grid when no groups are configured.
   - Product grid with search and category filtering
-  - Service grid with search
-  - Search dropdown overlay (grouped mode) — searches across all products and services, results show in a dropdown with type icons
-  - Shopping cart with mixed product + service items
+  - Search dropdown overlay (grouped mode)
+  - Shopping cart with product items
   - Lot selection with FEFO ordering for lot-tracked products
-  - Variable price support for both products and services
+  - Variable price support for products
   - Multiple payment methods (cash, card, check, etc.)
   - Receipt generation and printing
 - **Components**:
   - `ProductGrid` - Product selection (default mode)
-  - `ServiceGrid` - Service selection (default mode)
-  - `GroupedCashierView` - Scrollable grouped sections with product/service cards (grouped mode)
+  - `GroupedCashierView` - Scrollable grouped sections (grouped mode)
   - `CashierSearchDropdown` - Search overlay for grouped mode
-  - `CartView` - Shopping cart (products + services)
+  - `CartView` - Shopping cart
   - `CheckoutDialog` - Payment processing
   - `LotSelectionDialog` - FEFO lot selection
   - `ReceiptDialog` - Receipt display/print
@@ -124,23 +116,15 @@ Complete POS system for processing sales of products and services.
 View and manage completed transactions.
 
 - Paginated sales history with search
-- Sale status display (pending, completed, refunded, cancelled)
+- Sale status display (pending, completed, refunded, voided)
 - Detailed sale view with items and payment info
+- Refund/unrefund functionality with confirmation dialogs
 
-#### Messages (`/messages`)
-Communication system for appointments and follow-ups.
+#### Reports (`/reports`)
+Sales and inventory reporting.
 
-- Send appointment reminders
-- Message templates for quick messaging
-- Template selector in appointment sheets
-
-#### Treatment Plans (`/treatment-plans`)
-Plan and track multi-visit treatment courses.
-
-- Create treatment plans with scheduled items
-- Track treatment progress per patient
-- Reschedule treatment items
-- Treatment templates for quick creation
+- Sales reports with date ranges
+- Inventory reports
 
 ---
 
@@ -156,24 +140,15 @@ Plan and track multi-visit treatment courses.
 
 **Modes:**
 - **Users** (`/organization/users`) - User CRUD, role assignment, branch association
-- **Roles** (`/organization/roles`) - Role and permission management (Admin, Veterinarian, Staff, Cashier)
+- **Roles** (`/organization/roles`) - Role and permission management (Admin, Staff, Cashier)
 - **Branches** (`/organization/branches`) - Multi-location support with address and contact info
-- **Machines** (`/organization/machines`) - Laundry machine management (washer, dryer, other) with availability tracking
-- **Storages** (`/organization/storages`) - Storage location management for ready laundry items
 
 #### System Settings (`/system`)
 3-panel tablet layout for system configuration.
 
-**Layout** (tablet):
-- Panel 1 (80px): Navigation rail with icon + text labels
-- Panel 2 (320px): List panel (species, categories, or templates)
-- Panel 3 (expanded): Detail panel or empty state
-
 **Modes:**
-- **Species & Breeds** (`/system/species`) - Pet species catalog with breeds linked to species
 - **Product Categories** (`/system/product-categories`) - Hierarchical product categories
-- **Message Templates** (`/system/message-templates`) - Pre-defined messages for appointments
-- **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch (create groups, add products/services, reorder)
+- **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
 
 ---
 
@@ -207,95 +182,80 @@ Located in `/lib/src/core/`
 - `paginated_state.dart` - Pagination state management
 
 ### Shared Widgets (`/core/widgets/`)
-- `mobile_bottom_nav.dart` - Bottom navigation
-- `mobile_drawer.dart` - Mobile drawer
+- `mobile_bottom_nav.dart` - Bottom navigation (Dashboard, Check-In, Cashier, More)
+- `mobile_drawer.dart` - Mobile drawer (all navigation items)
 - `tablet_nav_rail.dart` - Tablet navigation rail
 - `breadcrumb_nav.dart` - Breadcrumb navigation
 - `cached_avatar.dart` - Avatar caching
 
 ### Utilities (`/core/utils/`)
 - `breakpoints.dart` - Responsive breakpoints
-- `currency_format.dart` - Money formatting
+- `currency_format.dart` - Money formatting (Philippine Peso)
 - `date_utils.dart` - Date utilities
 
 ---
 
 ## Domain Models
 
-### 18+ Collections across 6 Domains
+### Collections across 7 Domains
 
-#### Organization Domain (5 collections)
+#### Organization Domain (3 collections)
 | Collection | Description |
 |------------|-------------|
-| `User` | System users (all types) |
-| `UserRole` | Role definitions with permissions |
-| `Branch` | Business branches/locations |
-| `Machine` | Laundry machines (washer, dryer, other) |
-| `StorageLocation` | Storage locations for laundry items |
+| `users` | System users (all types) |
+| `userRoles` | Role definitions with permissions |
+| `branches` | Business branches/locations |
 
-#### Patient Domain (8 collections)
+#### Member Domain (1 collection)
 | Collection | Description |
 |------------|-------------|
-| `Patient` | Animal patients with owner info |
-| `PatientSpecies` | Pet species catalog |
-| `PatientBreed` | Breed catalog |
-| `PatientRecord` | Medical visit records |
-| `PatientFile` | Patient documents/images |
-| `PatientTreatment` | Treatment type catalog |
-| `PatientTreatmentRecord` | Treatment tracking |
-| `PatientPrescriptionItem` | Medication prescriptions |
+| `members` | Gym members with contact info, RFID |
+
+#### Member Card Domain (1 collection)
+| Collection | Description |
+|------------|-------------|
+| `memberCards` | Physical ID cards linked to members for check-in |
+
+#### Membership Domain (2 collections)
+| Collection | Description |
+|------------|-------------|
+| `memberships` | Membership plan templates (Monthly, Annual, etc.) |
+| `memberMemberships` | Member subscriptions linking members to plans |
+
+#### Check-In Domain (1 collection)
+| Collection | Description |
+|------------|-------------|
+| `checkIns` | Member check-in records |
 
 #### Product Domain (5 collections)
 | Collection | Description |
 |------------|-------------|
-| `Product` | Products/inventory items |
-| `ProductCategory` | Hierarchical categories |
-| `ProductStock` | Stock lots with expiration |
-| `ProductLot` | Batch/lot numbers (FEFO tracking) |
-| `ProductAdjustment` | Stock change audit trail |
-
-#### Appointment Domain (1 collection)
-| Collection | Description |
-|------------|-------------|
-| `AppointmentSchedule` | Appointment bookings |
-
-#### Service Domain (2 collections)
-| Collection | Description |
-|------------|-------------|
-| `Service` | Laundry services (wash, dry, fold, etc.) |
-| `ServiceCategory` | Service categories |
+| `products` | Products/inventory items |
+| `productCategories` | Hierarchical categories |
+| `productStocks` | Stock lots with expiration |
+| `productLots` | Batch/lot numbers (FEFO tracking) |
+| `productAdjustments` | Stock change audit trail |
 
 #### POS Domain (2 collections)
 | Collection | Description |
 |------------|-------------|
-| `PosGroup` | Named groups for cashier layout (per-branch) |
-| `PosGroupItem` | Many-to-many link between groups and products/services |
+| `posGroups` | Named groups for cashier layout (per-branch) |
+| `posGroupItems` | Many-to-many link between groups and products |
 
-#### Sales Domain (5 collections)
+#### Sales Domain (3 collections)
 | Collection | Description |
 |------------|-------------|
-| `Sale` | Transaction records |
-| `SaleItem` | Product items in transaction |
-| `SaleServiceItem` | Service items in transaction |
-| `Cart` / `CartItem` | Shopping cart (temporary, products) |
-| `CartServiceItem` | Shopping cart (temporary, services) |
-
-#### Treatment Plans Domain (3 collections)
-| Collection | Description |
-|------------|-------------|
-| `TreatmentTemplate` | Pre-defined treatment plans |
-| `TreatmentPlan` | Multi-visit treatment course |
-| `TreatmentPlanItem` | Individual treatment sessions |
+| `sales` | Transaction records |
+| `saleItems` | Product items in transaction |
+| `payments` | Payment records per sale |
 
 ### Enums
-- `PatientSex` - male, female
-- `PatientFileType` - image, video, document, unknown
+- `MemberMembershipStatus` - active, expired, cancelled, voided
+- `CheckInMethod` - manual, rfid
+- `SaleStatus` - pending, completed, refunded, voided
 - `ProductStatus` - inStock, outOfStock, lowStock, noThreshold
 - `ProductAdjustmentType` - product, productStock
-- `AppointmentScheduleStatus` - scheduled, completed, missed, cancelled
-- `SaleStatus` - pending, completed, refunded, cancelled
 - `PaymentMethod` - cash, card, check, etc.
-- `ChangeLogType` - create, update, delete
 
 ---
 
@@ -307,17 +267,18 @@ Located in `/lib/src/core/`
 - Password Recovery (`/recovery`)
 
 ### Main Navigation
-- **Dashboard**: Home with today's appointments
-- **Patients List**: Browse all patients
-- **Patient Detail**: 5-tab interface
-- **Patient Record Detail**: Medical visit with prescriptions
-- **Products List**: Browse products
-- **Product Detail**: Stock and adjustments
-- **Appointments List**: Filtered appointments
-- **Appointment Detail**: Full appointment info
+- **Dashboard**: Home with KPIs, quick actions, expiring memberships, inventory alerts
+- **Check-In**: Member search, check-in with membership validation
 - **Cashier/POS**: Product grid and checkout
 - **Sales List**: Transaction history
-- **Sale Detail**: Receipt view with status history timeline
+- **Sale Detail**: Receipt view with refund/void actions
+- **Products List**: Browse products with categories
+- **Product Detail**: Stock and adjustments
+- **Members List**: Browse all members
+- **Member Detail**: 4-tab interface (Overview, Memberships, Check-ins, Sales)
+- **Memberships List**: Browse membership plans
+- **Membership Detail**: Plan info with edit/delete
+- **Reports**: Sales and inventory charts
 
 ### Organization (3-panel layout)
 - Users Management (list/detail)
@@ -325,9 +286,8 @@ Located in `/lib/src/core/`
 - Branches Management (list/detail)
 
 ### System Settings (3-panel layout)
-- Species/Breeds Management (list/detail)
 - Product Categories (list/detail)
-- Message Templates (list/detail)
+- Cashier Layout / POS Groups (list/detail)
 
 ### Responsive Behavior
 | Breakpoint | Layout |
@@ -344,8 +304,6 @@ Located in `/lib/src/core/`
 ### Backend: PocketBase
 - **Type**: Open-source backend-as-a-service
 - **Features**: Real-time database, authentication, file storage
-- **Dev URL**: `http://127.0.0.1:8090`
-- **Production**: `https://staging.sannjoseanimalclinic.com`
 
 ### State Management: Hooks Riverpod
 - `@riverpod` annotation for providers
@@ -356,7 +314,7 @@ Located in `/lib/src/core/`
 ### Serialization: dart_mappable
 - `@MappableClass()` decorator
 - Automatic JSON serialization
-- DTOs for API↔Domain mapping
+- DTOs for API-to-Domain mapping
 
 ### Forms: flutter_form_builder
 - `FormBuilder` widget wrapper
@@ -388,27 +346,20 @@ App Root (Shell)
 │
 └── Main Shell (with navigation)
     ├── / (Dashboard)
-    ├── /patients
-    │   ├── /patients (List)
-    │   ├── /patients/:id (Detail)
-    │   └── /patients/records/:id (Record Detail)
-    ├── /appointments
-    │   ├── /appointments (List)
-    │   ├── /appointments/:id (Detail)
-    │   └── /appointments/calendar
-    ├── /products
-    │   ├── /products (List)
-    │   ├── /products/:id (Detail)
-    │   ├── /products/categories
-    │   └── /products/adjustments
-    ├── /services
-    │   ├── /services (List)
-    │   └── /services/:id (Detail)
+    ├── /check-in (Check-In)
     ├── /cashier (POS)
-    ├── /sales
-    │   ├── /sales (List)
-    │   └── /sales/:id (Detail)
-    ├── /messages
+    ├── /sales (Sales History)
+    │   └── /sales/:id (Sale Detail)
+    ├── /products (Products)
+    │   ├── /products/:id (Detail)
+    │   └── /products/... (stocks, categories, adjustments)
+    ├── /members (Members)
+    │   ├── /members (List)
+    │   └── /members/:id (Detail)
+    ├── /memberships (Memberships)
+    │   ├── /memberships (List)
+    │   └── /memberships/:id (Detail)
+    ├── /reports (Reports)
     ├── /organization (3-panel layout)
     │   ├── /organization/users
     │   │   └── /organization/users/:id
@@ -417,12 +368,8 @@ App Root (Shell)
     │   └── /organization/branches
     │       └── /organization/branches/:id
     └── /system (3-panel layout)
-        ├── /system/species
-        │   └── /system/species/:id
         ├── /system/product-categories
         │   └── /system/product-categories/:id
-        ├── /system/message-templates
-        │   └── /system/message-templates/:id
         └── /system/cashier-groups
             └── /system/cashier-groups/:id
 ```
@@ -431,34 +378,25 @@ App Root (Shell)
 
 | Platform | Component | Description |
 |----------|-----------|-------------|
-| Mobile | Bottom Nav | 5 primary items |
-| Mobile | Drawer | Full menu (7+ sections) |
+| Mobile | Bottom Nav | 3 primary items + More (Dashboard, Check-In, Cashier, More) |
+| Mobile | Drawer | Full menu (10 sections) |
 | Tablet | Navigation Rail | Icons only (72px) |
 | Tablet Large | Expanded Rail | Icons + labels (160px) |
-| Desktop | Side Menu | Full collapsible menu |
 
-#### 3-Panel Master-Detail Layouts (Tablet)
-Organization and System sections use a 3-panel layout:
+### Navigation Index Mapping
 
-| Panel | Width | Content |
-|-------|-------|---------|
-| Panel 1 | 80px | Mode navigation rail (icon + text label) |
-| Panel 2 | 320px | List panel with AppBar title and FAB |
-| Panel 3 | Expanded | Detail panel or empty state |
-
-- **Organization modes**: Users, Roles, Branches, Machines, Storages
-- **System modes**: Species & Breeds, Product Categories, Message Templates, Cashier Layout (POS Groups)
-
-### Primary Navigation
-1. 🏠 Dashboard - `/`
-2. 👤 Patients - `/patients`
-3. 📅 Appointments - `/appointments`
-4. 📦 Products - `/products`
-
-### Secondary Navigation
-5. 💰 Sales - `/sales`
-6. 🏢 Organization - `/organization`
-7. ⚙️ System - `/system`
+| Index | Route | Label | Icon |
+|-------|-------|-------|------|
+| 0 | `/` | Dashboard | `dashboard` |
+| 1 | `/check-in` | Check-In | `how_to_reg` |
+| 2 | `/cashier` | Cashier | `point_of_sale` |
+| 3 | `/sales` | Sales | `receipt_long` |
+| 4 | `/products` | Products | `inventory_2` |
+| 5 | `/members` | Members | `people` |
+| 6 | `/memberships` | Memberships | `card_membership` |
+| 7 | `/reports` | Reports | `analytics` |
+| 8 | `/organization` | Organization | `business` |
+| 9 | `/system` | System | `settings` |
 
 ---
 
@@ -492,8 +430,8 @@ static Json toCreateJson(Entity entity)
 ```
 
 ### Naming Conventions
-- **Plural** (`PatientsController`) = manages list
-- **Singular** (`patientProvider`) = manages single entity
+- **Plural** (`MembersController`) = manages list
+- **Singular** (`memberProvider`) = manages single entity
 - Pages: `*_page.dart`
 - Sheets: `*_sheet.dart`
 - Routes: `*.routes.dart`
@@ -518,18 +456,18 @@ lib/src/
 │
 └── features/
     ├── auth/              # Authentication
-    ├── dashboard/         # Home/dashboard
-    ├── patients/          # Patient management
+    ├── dashboard/         # Home/dashboard with KPIs
+    ├── check_in/          # Member check-in
+    ├── members/           # Member management
+    ├── memberships/       # Membership plans & subscriptions
     ├── products/          # Inventory
-    ├── appointments/      # Scheduling
+    ├── quantity_units/    # Quantity unit master data
     ├── pos/               # Point of sale
     ├── sales/             # Sales history
-    ├── messages/          # Messaging
-    ├── treatment_plans/   # Treatment planning
-    ├── settings/          # System settings (species, categories, templates)
+    ├── reports/           # Sales & inventory reports
+    ├── settings/          # System settings (categories, POS groups)
     ├── organization/      # Organization settings (3-panel layout)
-    ├── users/             # User management
-    └── user_roles/        # Roles/permissions
+    └── users/             # User management
         │
         └── [feature]/
             ├── data/
@@ -565,19 +503,14 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
-| Feb 05 | Order Status History | Added orderStatusHistory collection and timeline UI on sale detail page to track every status change (sale status and order status) with auto-logging on create and update |
-| Feb 05 | Machines & Storages | Added machines and storage locations management under Organization with CRUD, plus machine/storage assignment dialogs when transitioning sale order status to processing/ready |
-| Feb 04 | SSH Web Deployment | Added SSH-based auto-deployment of web builds and PocketBase migrations to staging/production servers via rsync in CI/CD pipeline |
-| Feb 04 | Deployment Docs | Added CI/CD and deployment documentation (`docs/deployment.md`) covering GitHub Actions workflows, secrets, version management, and branching strategy |
-| Feb 02 | Customers Feature | Customer CRUD with sales history, required customer at POS checkout with search and inline creation |
-| Feb 02 | Cashier Groups | Customizable cashier layout with POS groups per branch — scrollable sections, search dropdown, settings page under System, falls back to default tabs when no groups configured |
-| Feb 02 | Services Feature | Full services CRUD (wash, dry, fold, iron) with categories, variable pricing, POS integration via Products/Services tab toggle, cart support, and checkout flow |
-| Jan 24 | 3-Panel Layouts | Organization and System now use 3-panel tablet layouts with nav rail, list, and detail panels |
-| Jan 24 | Branches Moved | Branches management moved from System to Organization section |
-| Jan 24 | Nav Panel Labels | Navigation panels now show icon + text labels for better clarity |
-| Jan 23 | Patient Files | Upload/view images, videos, PDFs with 10MB limit |
-| Jan 21 | Lot Tracking | FEFO ordering in cashier |
-| Jan 21 | Treatment Plans | Multi-visit treatment with edit |
-| Jan 19 | Stock Adjustments | Audit trail for inventory |
-| Jan 18 | Message Templates | Appointment message selector |
-| Jan 16 | Sale Status | Improved display with icons |
+| Feb 17 | Member Cards | Physical ID cards (RFID/barcode) linked to members with status management; card scan check-in on check-in page with backward compatibility for legacy rfidCardId |
+| Feb 16 | Membership Add-Ons | Add-on options per membership plan (e.g., Treadmill, Coach, Pool) with pricing, selectable during purchase |
+| Feb 12 | Dashboard Adaptation | Replaced laundry metrics with gym KPIs (sales, check-ins, active members, new members), added expiring memberships section |
+| Feb 12 | Check-In Feature | Created full check-in system with member search, membership validation, and recent check-ins list |
+| Feb 12 | Memberships Feature | Created membership plans CRUD, member subscriptions, purchase flow from member detail page |
+| Feb 12 | Members Feature | Adapted customers to members with gym-specific fields (RFID, memberships, check-ins tabs) |
+| Feb 12 | Laundry Removal | Removed machines, storages, and services features; cleaned up all laundry-specific code |
+| Feb 05 | Machines & Storages | (Removed) Previously managed laundry equipment |
+| Feb 02 | Cashier Groups | Customizable cashier layout with POS groups per branch |
+| Feb 02 | Services Feature | (Removed) Previously managed laundry services |
+| Feb 02 | Customers Feature | (Adapted) Renamed to Members with gym-specific fields |

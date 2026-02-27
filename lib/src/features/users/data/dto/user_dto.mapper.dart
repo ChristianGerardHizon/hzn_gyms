@@ -35,6 +35,11 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
   );
   static String _$name(UserDto v) => v.name;
   static const Field<UserDto, String> _f$name = Field('name', _$name);
+  static String _$username(UserDto v) => v.username;
+  static const Field<UserDto, String> _f$username = Field(
+    'username',
+    _$username,
+  );
   static String _$email(UserDto v) => v.email;
   static const Field<UserDto, String> _f$email = Field('email', _$email);
   static String? _$avatar(UserDto v) => v.avatar;
@@ -100,6 +105,7 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     #collectionId: _f$collectionId,
     #collectionName: _f$collectionName,
     #name: _f$name,
+    #username: _f$username,
     #email: _f$email,
     #avatar: _f$avatar,
     #verified: _f$verified,
@@ -118,6 +124,7 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
       collectionId: data.dec(_f$collectionId),
       collectionName: data.dec(_f$collectionName),
       name: data.dec(_f$name),
+      username: data.dec(_f$username),
       email: data.dec(_f$email),
       avatar: data.dec(_f$avatar),
       verified: data.dec(_f$verified),
@@ -193,6 +200,7 @@ abstract class UserDtoCopyWith<$R, $In extends UserDto, $Out>
     String? collectionId,
     String? collectionName,
     String? name,
+    String? username,
     String? email,
     String? avatar,
     bool? verified,
@@ -221,6 +229,7 @@ class _UserDtoCopyWithImpl<$R, $Out>
     String? collectionId,
     String? collectionName,
     String? name,
+    String? username,
     String? email,
     Object? avatar = $none,
     bool? verified,
@@ -237,6 +246,7 @@ class _UserDtoCopyWithImpl<$R, $Out>
       if (collectionId != null) #collectionId: collectionId,
       if (collectionName != null) #collectionName: collectionName,
       if (name != null) #name: name,
+      if (username != null) #username: username,
       if (email != null) #email: email,
       if (avatar != $none) #avatar: avatar,
       if (verified != null) #verified: verified,
@@ -255,6 +265,7 @@ class _UserDtoCopyWithImpl<$R, $Out>
     collectionId: data.get(#collectionId, or: $value.collectionId),
     collectionName: data.get(#collectionName, or: $value.collectionName),
     name: data.get(#name, or: $value.name),
+    username: data.get(#username, or: $value.username),
     email: data.get(#email, or: $value.email),
     avatar: data.get(#avatar, or: $value.avatar),
     verified: data.get(#verified, or: $value.verified),

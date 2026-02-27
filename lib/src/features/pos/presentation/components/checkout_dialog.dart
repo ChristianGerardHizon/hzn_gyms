@@ -8,13 +8,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/form_feedback.dart';
-import '../../../customers/domain/customer.dart';
-import '../../../customers/presentation/controllers/customers_controller.dart';
-import '../../../dashboard/presentation/controllers/kanban_sales_controller.dart';
+import '../../../members/domain/member.dart';
+import '../../../members/presentation/controllers/members_controller.dart';
 import '../../../dashboard/presentation/controllers/todays_sales_controller.dart';
 import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
-import '../../../services/domain/cart_service_item.dart';
-import '../../../services/domain/sale_service_item.dart';
 import '../../domain/cart_item.dart';
 import '../../domain/sale_item.dart';
 import '../cart_controller.dart';
@@ -66,26 +63,16 @@ class CheckoutDialog extends HookConsumerWidget {
     // UI state
     final isSaving = useState(false);
 
-    // Customer selection state
-    final selectedCustomer = useState<Customer?>(null);
+    // Member selection state
+    final selectedMember = useState<Member?>(null);
 
     // Watch cart state
     final cartState = ref.watch(cartControllerProvider);
     final cartItems = cartState.value?.items ?? [];
-    final cartServiceItems = cartState.value?.serviceItems ?? [];
     final total = cartState.value?.total ?? 0;
     final cartIsEmpty = cartState.value?.isEmpty ?? true;
 
     Future<void> handleCheckout() async {
-      // Validate customer is selected
-      if (selectedCustomer.value == null) {
-        showFormErrorDialog(
-          context,
-          errors: ['Please select a customer before completing the sale'],
-        );
-        return;
-      }
-
       final isValid = formKey.currentState!.saveAndValidate();
       if (!isValid) {
         final errors = formKey.currentState?.errors ?? {};
@@ -100,9 +87,9 @@ class CheckoutDialog extends HookConsumerWidget {
 
       isSaving.value = true;
 
-      // Determine customer info
-      final customerId = selectedCustomer.value?.id;
-      final customerName = selectedCustomer.value?.name;
+      // Determine member info
+      final customerId = selectedMember.value?.id;
+      final customerName = selectedMember.value?.name;
 
       // Process checkout - create unpaid sale (payment handled separately)
       final result =
@@ -139,24 +126,9 @@ class CheckoutDialog extends HookConsumerWidget {
                   ))
               .toList();
 
-          // Convert cart service items to sale service items for receipt
-          final saleServiceItems = cartServiceItems
-              .where((item) => item.service != null)
-              .map((item) => SaleServiceItem(
-                    id: '',
-                    saleId: sale.id,
-                    serviceId: item.serviceId,
-                    serviceName: item.service!.name,
-                    quantity: item.quantity,
-                    unitPrice: item.effectivePrice,
-                    subtotal: item.total,
-                  ))
-              .toList();
-
           // Refresh sales list & dashboard
           ref.invalidate(paginatedSalesControllerProvider);
           ref.invalidate(todaySalesSummaryProvider);
-          ref.invalidate(kanbanSalesProvider);
 
           // Close checkout dialog
           context.pop();
@@ -166,7 +138,6 @@ class CheckoutDialog extends HookConsumerWidget {
             context,
             sale: sale,
             saleItems: saleItems,
-            saleServiceItems: saleServiceItems,
           );
         },
       );
@@ -227,13 +198,12 @@ class CheckoutDialog extends HookConsumerWidget {
                       const SizedBox(height: 16),
 
                       // Order summary
-                      _buildOrderSummary(
-                          context, cartItems, cartServiceItems, total),
+                      _buildOrderSummary(context, cartItems, total),
                       const SizedBox(height: 24),
 
-                      // Customer section (required)
-                      _CustomerSelectionCard(
-                        selectedCustomer: selectedCustomer,
+                      // Member section (optional)
+                      _MemberSelectionCard(
+                        selectedMember: selectedMember,
                         ref: ref,
                       ),
                       const SizedBox(height: 24),
@@ -296,13 +266,11 @@ class CheckoutDialog extends HookConsumerWidget {
   Widget _buildOrderSummary(
     BuildContext context,
     List<CartItem> items,
-    List<CartServiceItem> serviceItems,
     double total,
   ) {
     final theme = Theme.of(context);
-    final totalQuantity = items.fold<int>(
-            0, (sum, item) => sum + item.quantity.toInt()) +
-        serviceItems.fold<int>(0, (sum, item) => sum + item.quantity.toInt());
+    final totalQuantity =
+        items.fold<int>(0, (sum, item) => sum + item.quantity.toInt());
 
     return Card(
       color: theme.colorScheme.surfaceContainerHighest,
@@ -359,42 +327,6 @@ class CheckoutDialog extends HookConsumerWidget {
                 quantity: item.quantity,
                 unitPrice: item.effectivePrice,
                 subtotal: item.total,
-              );
-            }),
-
-            // Service item rows
-            if (serviceItems.isNotEmpty && items.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(Icons.miscellaneous_services,
-                        size: 12, color: theme.colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 6),
-                    Text('Services',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        )),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child:
-                            Divider(color: theme.colorScheme.outlineVariant)),
-                  ],
-                ),
-              ),
-            ...serviceItems.map((item) {
-              final service = item.service;
-              final unit = service?.quantityUnit;
-              final unitLabel = unit != null
-                  ? (item.quantity == 1 ? unit.shortSingular : unit.shortPlural)
-                  : null;
-              return _buildSummaryRow(
-                theme,
-                name: service?.name ?? 'Service',
-                quantity: item.quantity,
-                unitPrice: item.effectivePrice,
-                subtotal: item.total,
-                unitLabel: unitLabel,
               );
             }),
 
@@ -493,31 +425,31 @@ const _fieldLabels = {
   'notes': 'Notes',
 };
 
-/// Card widget for customer search/select with inline creation.
-class _CustomerSelectionCard extends HookConsumerWidget {
-  const _CustomerSelectionCard({
-    required this.selectedCustomer,
+/// Card widget for member search/select with inline creation.
+class _MemberSelectionCard extends HookConsumerWidget {
+  const _MemberSelectionCard({
+    required this.selectedMember,
     required this.ref,
   });
 
-  final ValueNotifier<Customer?> selectedCustomer;
+  final ValueNotifier<Member?> selectedMember;
   final WidgetRef ref;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final customersAsync = ref.watch(customersControllerProvider);
+    final membersAsync = ref.watch(membersControllerProvider);
     final searchController = useTextEditingController();
     final searchQuery = useState('');
     final isSearching = useState(false);
 
-    final customers = customersAsync.value ?? [];
-    final filteredCustomers = searchQuery.value.isEmpty
-        ? <Customer>[]
-        : customers.where((c) {
+    final members = membersAsync.value ?? [];
+    final filteredMembers = searchQuery.value.isEmpty
+        ? <Member>[]
+        : members.where((m) {
             final query = searchQuery.value.toLowerCase();
-            return c.name.toLowerCase().contains(query) ||
-                (c.phone?.toLowerCase().contains(query) ?? false);
+            return m.name.toLowerCase().contains(query) ||
+                (m.mobileNumber?.toLowerCase().contains(query) ?? false);
           }).toList();
 
     return Card(
@@ -537,7 +469,7 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Customer *',
+                  'Member (Optional)',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -547,11 +479,11 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Quick Add'),
                   onPressed: () async {
-                    final customer =
-                        await _showQuickAddCustomerDialog(context, ref);
-                    if (customer != null) {
-                      selectedCustomer.value = customer;
-                      searchController.text = customer.name;
+                    final member =
+                        await _showQuickAddMemberDialog(context, ref);
+                    if (member != null) {
+                      selectedMember.value = member;
+                      searchController.text = member.name;
                       isSearching.value = false;
                     }
                   },
@@ -560,8 +492,8 @@ class _CustomerSelectionCard extends HookConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-            // Selected customer display or search field
-            if (selectedCustomer.value != null && !isSearching.value) ...[
+            // Selected member display or search field
+            if (selectedMember.value != null && !isSearching.value) ...[
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -582,15 +514,15 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            selectedCustomer.value!.name,
+                            selectedMember.value!.name,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.onPrimaryContainer,
                             ),
                           ),
-                          if (selectedCustomer.value!.phone != null)
+                          if (selectedMember.value!.mobileNumber != null)
                             Text(
-                              selectedCustomer.value!.phone!,
+                              selectedMember.value!.mobileNumber!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onPrimaryContainer
                                     .withValues(alpha: 0.7),
@@ -606,7 +538,7 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                         color: theme.colorScheme.onPrimaryContainer,
                       ),
                       onPressed: () {
-                        selectedCustomer.value = null;
+                        selectedMember.value = null;
                         searchController.clear();
                         searchQuery.value = '';
                         isSearching.value = true;
@@ -619,7 +551,7 @@ class _CustomerSelectionCard extends HookConsumerWidget {
               TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  labelText: 'Search customer by name or phone',
+                  labelText: 'Search member by name or mobile',
                   prefixIcon: const Icon(Icons.search),
                   border: const OutlineInputBorder(),
                   hintText: 'Type to search...',
@@ -651,11 +583,11 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                       color: theme.colorScheme.outlineVariant,
                     ),
                   ),
-                  child: filteredCustomers.isEmpty
+                  child: filteredMembers.isEmpty
                       ? Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
-                            'No customers found',
+                            'No members found',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -663,9 +595,9 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                         )
                       : ListView.builder(
                           shrinkWrap: true,
-                          itemCount: filteredCustomers.length,
+                          itemCount: filteredMembers.length,
                           itemBuilder: (context, index) {
-                            final customer = filteredCustomers[index];
+                            final member = filteredMembers[index];
                             return ListTile(
                               dense: true,
                               leading: CircleAvatar(
@@ -678,11 +610,11 @@ class _CustomerSelectionCard extends HookConsumerWidget {
                                   color: theme.colorScheme.onPrimaryContainer,
                                 ),
                               ),
-                              title: Text(customer.name),
-                              subtitle: Text(customer.phone ?? ''),
+                              title: Text(member.name),
+                              subtitle: Text(member.mobileNumber ?? ''),
                               onTap: () {
-                                selectedCustomer.value = customer;
-                                searchController.text = customer.name;
+                                selectedMember.value = member;
+                                searchController.text = member.name;
                                 searchQuery.value = '';
                                 isSearching.value = false;
                               },
@@ -698,19 +630,19 @@ class _CustomerSelectionCard extends HookConsumerWidget {
     );
   }
 
-  Future<Customer?> _showQuickAddCustomerDialog(
+  Future<Member?> _showQuickAddMemberDialog(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    return showDialog<Customer?>(
+    return showDialog<Member?>(
       context: context,
-      builder: (context) => const _QuickAddCustomerDialog(),
+      builder: (context) => const _QuickAddMemberDialog(),
     );
   }
 }
 
-class _QuickAddCustomerDialog extends HookConsumerWidget {
-  const _QuickAddCustomerDialog();
+class _QuickAddMemberDialog extends HookConsumerWidget {
+  const _QuickAddMemberDialog();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -723,14 +655,14 @@ class _QuickAddCustomerDialog extends HookConsumerWidget {
       isSaving.value = true;
       final values = formKey.currentState!.value;
 
-      final customerData = Customer(
+      final memberData = Member(
         id: '',
         name: values['name'] as String,
-        phone: values['phone'] as String,
+        mobileNumber: values['mobileNumber'] as String,
       );
 
-      final controller = ref.read(customersControllerProvider.notifier);
-      final created = await controller.createCustomer(customerData);
+      final controller = ref.read(membersControllerProvider.notifier);
+      final created = await controller.createMember(memberData);
 
       isSaving.value = false;
 
@@ -739,7 +671,7 @@ class _QuickAddCustomerDialog extends HookConsumerWidget {
       } else if (context.mounted) {
         showErrorSnackBar(
           context,
-          message: 'Failed to create customer',
+          message: 'Failed to create member',
           useRootMessenger: false,
         );
       }
@@ -748,7 +680,7 @@ class _QuickAddCustomerDialog extends HookConsumerWidget {
     return ScaffoldMessenger(
       child: Builder(
         builder: (context) => AlertDialog(
-          title: const Text('Quick Add Customer'),
+          title: const Text('Quick Add Member'),
           content: FormBuilder(
             key: formKey,
             child: Column(
@@ -767,9 +699,9 @@ class _QuickAddCustomerDialog extends HookConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 FormBuilderTextField(
-                  name: 'phone',
+                  name: 'mobileNumber',
                   decoration: const InputDecoration(
-                    labelText: 'Phone *',
+                    labelText: 'Mobile Number *',
                     border: OutlineInputBorder(),
                   ),
                   validator: FormBuilderValidators.required(),

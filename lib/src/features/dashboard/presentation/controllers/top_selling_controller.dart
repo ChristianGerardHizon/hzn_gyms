@@ -31,29 +31,6 @@ Future<List<TopSellingItem>> topSellingProducts(Ref ref) async {
   );
 }
 
-/// Top 5 selling services (all-time, aggregated from date-grouped view).
-///
-/// Queries [PocketBaseCollections.vwTopSellingServices], aggregates rows
-/// by service (since the view groups by date), sorts by revenue descending,
-/// and returns the top 5.
-@riverpod
-Future<List<TopSellingItem>> topSellingServices(Ref ref) async {
-  final branchId = ref.watch(currentBranchIdProvider);
-  final pb = ref.read(pocketbaseProvider);
-
-  final records = await pb
-      .collection(PocketBaseCollections.vwTopSellingServices)
-      .getFullList(
-        filter: branchId != null ? 'branch = "$branchId"' : null,
-      );
-
-  return _aggregateAndSort(
-    records,
-    nameField: 'serviceName',
-    idField: 'service_id',
-  );
-}
-
 /// Aggregates date-grouped view records by item, sums quantities/revenue/
 /// transactions, sorts by total revenue descending, and returns top 5.
 List<TopSellingItem> _aggregateAndSort(

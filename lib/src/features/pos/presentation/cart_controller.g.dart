@@ -33,7 +33,7 @@ final class CartControllerProvider
   CartController create() => CartController();
 }
 
-String _$cartControllerHash() => r'74b873a501ab067656d0a403236824997615bbc2';
+String _$cartControllerHash() => r'd532a6be31ebc4808b42c3f837eadb1faa40e3f5';
 
 abstract class _$CartController extends $AsyncNotifier<CartState> {
   FutureOr<CartState> build();
@@ -140,51 +140,3 @@ final class CartItemsProvider
 }
 
 String _$cartItemsHash() => r'fbdc81b5c3d757873612c7d60708a85bfa210b17';
-
-/// Provider for cart service items.
-
-@ProviderFor(cartServiceItems)
-final cartServiceItemsProvider = CartServiceItemsProvider._();
-
-/// Provider for cart service items.
-
-final class CartServiceItemsProvider extends $FunctionalProvider<
-    List<CartServiceItem>,
-    List<CartServiceItem>,
-    List<CartServiceItem>> with $Provider<List<CartServiceItem>> {
-  /// Provider for cart service items.
-  CartServiceItemsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'cartServiceItemsProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$cartServiceItemsHash();
-
-  @$internal
-  @override
-  $ProviderElement<List<CartServiceItem>> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  List<CartServiceItem> create(Ref ref) {
-    return cartServiceItems(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<CartServiceItem> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<List<CartServiceItem>>(value),
-    );
-  }
-}
-
-String _$cartServiceItemsHash() => r'9cfcba4de6bd65037d6f699b74031aecec738c09';

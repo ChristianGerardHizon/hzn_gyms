@@ -20,6 +20,6 @@ class AuthState with AuthStateMappable {
     required this.user,
   });
 
-  /// Whether the user's email is verified.
+  /// Whether the user's account is verified.
   bool get isVerified => user.verified;
 }

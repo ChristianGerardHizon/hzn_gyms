@@ -15,7 +15,6 @@ class PosGroupItemMapper extends ClassMapperBase<PosGroupItem> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = PosGroupItemMapper._());
       ProductMapper.ensureInitialized();
-      ServiceMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -41,12 +40,6 @@ class PosGroupItemMapper extends ClassMapperBase<PosGroupItem> {
     _$productId,
     opt: true,
   );
-  static String? _$serviceId(PosGroupItem v) => v.serviceId;
-  static const Field<PosGroupItem, String> _f$serviceId = Field(
-    'serviceId',
-    _$serviceId,
-    opt: true,
-  );
   static int _$sortOrder(PosGroupItem v) => v.sortOrder;
   static const Field<PosGroupItem, int> _f$sortOrder = Field(
     'sortOrder',
@@ -58,12 +51,6 @@ class PosGroupItemMapper extends ClassMapperBase<PosGroupItem> {
   static const Field<PosGroupItem, Product> _f$product = Field(
     'product',
     _$product,
-    opt: true,
-  );
-  static Service? _$service(PosGroupItem v) => v.service;
-  static const Field<PosGroupItem, Service> _f$service = Field(
-    'service',
-    _$service,
     opt: true,
   );
   static DateTime? _$created(PosGroupItem v) => v.created;
@@ -84,10 +71,8 @@ class PosGroupItemMapper extends ClassMapperBase<PosGroupItem> {
     #id: _f$id,
     #groupId: _f$groupId,
     #productId: _f$productId,
-    #serviceId: _f$serviceId,
     #sortOrder: _f$sortOrder,
     #product: _f$product,
-    #service: _f$service,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -97,10 +82,8 @@ class PosGroupItemMapper extends ClassMapperBase<PosGroupItem> {
       id: data.dec(_f$id),
       groupId: data.dec(_f$groupId),
       productId: data.dec(_f$productId),
-      serviceId: data.dec(_f$serviceId),
       sortOrder: data.dec(_f$sortOrder),
       product: data.dec(_f$product),
-      service: data.dec(_f$service),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -169,15 +152,12 @@ extension PosGroupItemValueCopy<$R, $Out>
 abstract class PosGroupItemCopyWith<$R, $In extends PosGroupItem, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ProductCopyWith<$R, Product, Product>? get product;
-  ServiceCopyWith<$R, Service, Service>? get service;
   $R call({
     String? id,
     String? groupId,
     String? productId,
-    String? serviceId,
     int? sortOrder,
     Product? product,
-    Service? service,
     DateTime? created,
     DateTime? updated,
   });
@@ -196,17 +176,12 @@ class _PosGroupItemCopyWithImpl<$R, $Out>
   ProductCopyWith<$R, Product, Product>? get product =>
       $value.product?.copyWith.$chain((v) => call(product: v));
   @override
-  ServiceCopyWith<$R, Service, Service>? get service =>
-      $value.service?.copyWith.$chain((v) => call(service: v));
-  @override
   $R call({
     String? id,
     String? groupId,
     Object? productId = $none,
-    Object? serviceId = $none,
     int? sortOrder,
     Object? product = $none,
-    Object? service = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -214,10 +189,8 @@ class _PosGroupItemCopyWithImpl<$R, $Out>
       if (id != null) #id: id,
       if (groupId != null) #groupId: groupId,
       if (productId != $none) #productId: productId,
-      if (serviceId != $none) #serviceId: serviceId,
       if (sortOrder != null) #sortOrder: sortOrder,
       if (product != $none) #product: product,
-      if (service != $none) #service: service,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -227,10 +200,8 @@ class _PosGroupItemCopyWithImpl<$R, $Out>
     id: data.get(#id, or: $value.id),
     groupId: data.get(#groupId, or: $value.groupId),
     productId: data.get(#productId, or: $value.productId),
-    serviceId: data.get(#serviceId, or: $value.serviceId),
     sortOrder: data.get(#sortOrder, or: $value.sortOrder),
     product: data.get(#product, or: $value.product),
-    service: data.get(#service, or: $value.service),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

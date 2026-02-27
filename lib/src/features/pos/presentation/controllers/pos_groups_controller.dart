@@ -10,7 +10,7 @@ part 'pos_groups_controller.g.dart';
 /// Controller for managing POS groups for the current branch.
 ///
 /// Provides CRUD operations on groups and group items.
-/// Groups are loaded with their items expanded (products/services).
+/// Groups are loaded with their items expanded (products).
 @Riverpod(keepAlive: true)
 class PosGroupsController extends _$PosGroupsController {
   PosGroupRepository get _repository =>
@@ -139,34 +139,6 @@ class PosGroupsController extends _$PosGroupsController {
     final item = PosGroupItem(
       groupId: groupId,
       productId: productId,
-      sortOrder: group.items.length,
-    );
-
-    final result = await _repository.addItemToGroup(item);
-
-    return result.fold(
-      (failure) => false,
-      (newItem) {
-        final updatedList = currentList.map((g) {
-          if (g.id == groupId) {
-            return g.copyWith(items: [...g.items, newItem]);
-          }
-          return g;
-        }).toList();
-        state = AsyncData(updatedList);
-        return true;
-      },
-    );
-  }
-
-  /// Adds a service to a group.
-  Future<bool> addServiceToGroup(String groupId, String serviceId) async {
-    final currentList = state.value ?? [];
-    final group = currentList.firstWhere((g) => g.id == groupId);
-
-    final item = PosGroupItem(
-      groupId: groupId,
-      serviceId: serviceId,
       sortOrder: group.items.length,
     );
 

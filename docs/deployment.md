@@ -62,7 +62,7 @@ PR merged to staging (or manual dispatch)
   │
   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
   │
-  ├─ Build Web (WASM, --release)
+  ├─ Build Web (--release)
   │   --dart-define=ENV=staging
   │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
   │
@@ -100,7 +100,7 @@ PR merged to main
   │   │
   │   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
   │   │
-  │   ├─ Build Web (--release, no WASM)
+  │   ├─ Build Web (--release)
   │   │   --dart-define=ENV=prod
   │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
   │   │
@@ -288,7 +288,7 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 | Platform | CI/CD Status | Notes |
 |----------|-------------|-------|
 | Android (APK) | Fully automated | Signed release builds for both environments |
-| Web | Fully automated | WASM for staging, standard for production. Auto-deployed via SSH/rsync to PocketBase `pb_public/`. |
+| Web | Fully automated | Standard builds for both environments. Auto-deployed via SSH/rsync to PocketBase `pb_public/`. |
 | iOS | Not configured | Would require macOS runner + signing certificates |
 | macOS | Not configured | Would require macOS runner |
 | Linux | Not configured | Could use standard Ubuntu runner |
@@ -305,5 +305,5 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 | **Approval gate** | None | "Production" environment approval |
 | **Version suffix** | `-staging` | None |
 | **Release type** | Prerelease | Public release |
-| **Web build** | `--wasm`, deployed via SSH | Standard, deployed via SSH |
+| **Web build** | Standard, deployed via SSH | Standard, deployed via SSH |
 | **Version Manager** | Not updated | Updated after release |

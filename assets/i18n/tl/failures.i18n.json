@@ -9,8 +9,8 @@
     "conflict": "May nangyaring conflict. Maaaring umiiral na ang resource.",
     "timeout": "Nag-timeout ang request. Pakisubukang muli.",
     "noInternet": "Walang koneksyon sa internet.",
-    "invalidCredentials": "Di-wastong email o password.",
+    "invalidCredentials": "Di-wastong username o password.",
     "accountDisabled": "Ang iyong account ay na-disable.",
-    "emailNotVerified": "Pakiverify ang iyong email address.",
+    "accountNotVerified": "Hindi pa na-verify ang iyong account.",
     "tooManyRequests": "Masyadong maraming request. Maghintay ng ilang sandali."
 }

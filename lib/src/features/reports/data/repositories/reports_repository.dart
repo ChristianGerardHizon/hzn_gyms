@@ -8,6 +8,7 @@ import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../domain/inventory_report.dart';
+import '../../domain/membership_report.dart';
 import '../../domain/sales_report.dart';
 
 part 'reports_repository.g.dart';
@@ -29,6 +30,12 @@ abstract class ReportsRepository {
   });
 
   FutureEither<InventoryReport> getInventoryReport({String? branchId});
+
+  FutureEither<MembershipReport> getMembershipReport({
+    required DateTime startDate,
+    required DateTime endDate,
+    String? branchId,
+  });
 }
 
 @Riverpod(keepAlive: true)
@@ -42,6 +49,11 @@ class ReportsRepositoryImpl implements ReportsRepository {
   ReportsRepositoryImpl(this._pb);
 
   RecordService get _products => _pb.collection(PocketBaseCollections.products);
+  RecordService get _members => _pb.collection(PocketBaseCollections.members);
+  RecordService get _memberMemberships =>
+      _pb.collection(PocketBaseCollections.memberMemberships);
+  RecordService get _memberMembershipAddOns =>
+      _pb.collection(PocketBaseCollections.memberMembershipAddOns);
 
   /// Returns a PocketBase filter for branch on view collections.
   static String? _branchViewFilter(String? branchId) {
@@ -251,6 +263,151 @@ class ReportsRepositoryImpl implements ReportsRepository {
       productsByCategory: byCategory,
       stockStatusBreakdown: stockStatus,
       lowStockItems: lowStockItems,
+    );
+  }
+
+  @override
+  FutureEither<MembershipReport> getMembershipReport({
+    required DateTime startDate,
+    required DateTime endDate,
+    String? branchId,
+  }) async {
+    return TaskEither.tryCatch(
+      () async {
+        // Build filters
+        final branchFilter = branchId != null
+            ? PBFilter().relation('branch', branchId)
+            : PBFilter();
+
+        final periodFilter = PBFilter().between('created', startDate, endDate);
+
+        // Combined filter for memberMemberships created in period + branch
+        final mmPeriodFilter = PBFilter()
+            .and(branchFilter)
+            .and(periodFilter);
+
+        // Fetch data in parallel
+        final results = await Future.wait([
+          // [0] Members created in period (no branch filter — members are global)
+          _members.getFullList(
+            filter: PBFilter().between('created', startDate, endDate).build(),
+            sort: 'created',
+          ),
+          // [1] MemberMemberships created in period (with expand)
+          _memberMemberships.getFullList(
+            filter: mmPeriodFilter.build(),
+            expand: 'member,membership',
+            sort: 'created',
+          ),
+          // [2] All active memberMemberships for branch (for active count)
+          _memberMemberships.getFullList(
+            filter: (branchId != null
+                    ? PBFilter().relation('branch', branchId)
+                    : PBFilter())
+                .equals('status', 'active')
+                .build(),
+          ),
+          // [3] All memberMembershipAddOns (filter in-memory by parent IDs)
+          _memberMembershipAddOns.getFullList(),
+        ]);
+
+        final memberRecords = results[0];
+        final periodMemberMemberships = results[1];
+        final activeMemberMemberships = results[2];
+        final allAddOns = results[3];
+
+        return _aggregateMembershipReport(
+          memberRecords: memberRecords,
+          periodMemberMemberships: periodMemberMemberships,
+          activeMemberMemberships: activeMemberMemberships,
+          allAddOns: allAddOns,
+        );
+      },
+      Failure.handle,
+    ).run();
+  }
+
+  MembershipReport _aggregateMembershipReport({
+    required List<RecordModel> memberRecords,
+    required List<RecordModel> periodMemberMemberships,
+    required List<RecordModel> activeMemberMemberships,
+    required List<RecordModel> allAddOns,
+  }) {
+    // --- 1. New member registrations by day ---
+    final registrationsByDay = <DateTime, int>{};
+    for (final member in memberRecords) {
+      final createdStr = member.getStringValue('created');
+      final created = DateTime.tryParse(createdStr)?.toLocal();
+      if (created != null) {
+        final day = DateTime(created.year, created.month, created.day);
+        registrationsByDay[day] = (registrationsByDay[day] ?? 0) + 1;
+      }
+    }
+
+    // --- 2. Period membership stats ---
+    num membershipRevenue = 0;
+    final planDistribution = <String, num>{};
+    final revenueByPlan = <String, num>{};
+    var expiredCancelledCount = 0;
+
+    // Collect IDs for add-on filtering
+    final periodMmIds = <String>{};
+
+    for (final record in periodMemberMemberships) {
+      periodMmIds.add(record.id);
+
+      final status = record.getStringValue('status');
+      final membershipExpand = record.get<RecordModel?>('expand.membership');
+      final planName = membershipExpand?.getStringValue('name') ?? 'Unknown';
+      final planPrice = membershipExpand?.getDoubleValue('price') ?? 0;
+
+      membershipRevenue += planPrice;
+      planDistribution[planName] = (planDistribution[planName] ?? 0) + 1;
+      revenueByPlan[planName] = (revenueByPlan[planName] ?? 0) + planPrice;
+
+      if (status == 'expired' || status == 'cancelled') {
+        expiredCancelledCount++;
+      }
+    }
+
+    // --- 3. Add-on revenue (filter by parent memberMembership IDs) ---
+    num addOnRevenue = 0;
+    for (final addOn in allAddOns) {
+      final parentId = addOn.getStringValue('memberMembership');
+      if (periodMmIds.contains(parentId)) {
+        addOnRevenue += addOn.getDoubleValue('price');
+      }
+    }
+
+    // --- 4. Currently active memberships count ---
+    final now = DateTime.now();
+    var activeCount = 0;
+
+    for (final record in activeMemberMemberships) {
+      final startDateStr = record.getStringValue('startDate');
+      final endDateStr = record.getStringValue('endDate');
+      final mmStartDate = DateTime.tryParse(startDateStr)?.toLocal();
+      final mmEndDate = DateTime.tryParse(endDateStr)?.toLocal();
+
+      if (mmStartDate != null && mmEndDate != null) {
+        if (now.isAfter(mmStartDate) && now.isBefore(mmEndDate)) {
+          activeCount++;
+        }
+      }
+    }
+
+    return MembershipReport(
+      totalNewMembers: memberRecords.length,
+      activeMemberships: activeCount,
+      expiredCancelledMemberships: expiredCancelledCount,
+      membershipRevenue: membershipRevenue,
+      addOnRevenue: addOnRevenue,
+      registrationsByDay: registrationsByDay.entries
+          .map((e) => DailyRegistration(date: e.key, count: e.value))
+          .toList()
+        ..sort((a, b) => a.date.compareTo(b.date)),
+      membershipPlanDistribution: planDistribution,
+      revenueByPlan: revenueByPlan,
     );
   }
 }

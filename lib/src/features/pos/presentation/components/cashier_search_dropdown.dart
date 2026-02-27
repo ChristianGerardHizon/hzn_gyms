@@ -6,15 +6,11 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../products/data/repositories/product_repository.dart';
-import '../../../products/domain/product.dart';
-import '../../../services/data/repositories/service_repository.dart';
-import '../../../services/domain/service.dart';
 import '../cart_controller.dart';
 import 'lot_selection_dialog.dart';
-import 'quantity_prompt_dialog.dart';
 import 'variable_price_dialog.dart';
 
-/// A search field with a dropdown overlay that shows matching products/services.
+/// A search field with a dropdown overlay that shows matching products.
 ///
 /// Used in the grouped cashier view to search across all items.
 /// Tapping a result adds it to the cart directly.
@@ -74,7 +70,7 @@ class CashierSearchDropdown extends HookConsumerWidget {
         focusNode: focusNode,
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.search),
-          hintText: 'Search products & services...',
+          hintText: 'Search products...',
           border: const OutlineInputBorder(),
           isDense: isDense,
           suffixIcon: searchQuery.value.isNotEmpty
@@ -283,30 +279,26 @@ class _SearchResultsList extends StatelessWidget {
               ))
           .toList();
     } catch (_) {
-      // Fallback to dual-query if view is unavailable
+      // Fallback to product query if view is unavailable
       return _searchAllFallback();
     }
   }
 
-  /// Fallback search using separate product/service repositories.
+  /// Fallback search using the product repository.
   Future<List<_SearchResult>> _searchAllFallback() async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return [];
 
     final productRepo = ref.read(productRepositoryProvider);
-    final serviceRepo = ref.read(serviceRepositoryProvider);
-
-    final results = await Future.wait([
-      productRepo.search(trimmed, fields: ['name', 'description']),
-      serviceRepo.search(trimmed, fields: ['name', 'description']),
-    ]);
+    final result =
+        await productRepo.search(trimmed, fields: ['name', 'description']);
 
     final items = <_SearchResult>[];
 
-    results[0].fold(
+    result.fold(
       (_) {},
       (products) {
-        for (final product in (products as List<Product>)) {
+        for (final product in products) {
           if (product.forSale && !product.isDeleted) {
             items.add(_SearchResult(
               id: product.id,
@@ -315,24 +307,6 @@ class _SearchResultsList extends StatelessWidget {
               description: product.description,
               price: product.price.toDouble(),
               branch: product.branch,
-            ));
-          }
-        }
-      },
-    );
-
-    results[1].fold(
-      (_) {},
-      (services) {
-        for (final service in (services as List<Service>)) {
-          if (!service.isDeleted) {
-            items.add(_SearchResult(
-              id: service.id,
-              type: 'service',
-              name: service.name,
-              description: service.description,
-              price: service.price.toDouble(),
-              branch: service.branch,
             ));
           }
         }
@@ -354,8 +328,6 @@ class _SearchResultTile extends StatelessWidget {
   final WidgetRef ref;
   final VoidCallback onSelected;
 
-  bool get isProduct => item.type == 'product';
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -364,15 +336,15 @@ class _SearchResultTile extends StatelessWidget {
     return ListTile(
       dense: true,
       leading: Icon(
-        isProduct ? Icons.inventory_2 : Icons.miscellaneous_services,
-        color: isProduct ? theme.colorScheme.primary : theme.colorScheme.tertiary,
+        Icons.inventory_2,
+        color: theme.colorScheme.primary,
       ),
       title: Text(item.name),
       subtitle: Text(
         isVariablePrice ? 'Variable price' : item.price.toCurrency(),
       ),
       trailing: Text(
-        isProduct ? 'Product' : 'Service',
+        'Product',
         style: theme.textTheme.labelSmall?.copyWith(
           color: theme.colorScheme.outline,
         ),
@@ -382,11 +354,7 @@ class _SearchResultTile extends StatelessWidget {
   }
 
   Future<void> _handleTap(BuildContext context) async {
-    if (isProduct) {
-      await _handleProductTap(context);
-    } else {
-      await _handleServiceTap(context);
-    }
+    await _handleProductTap(context);
     onSelected();
   }
 
@@ -426,59 +394,6 @@ class _SearchResultTile extends StatelessWidget {
         });
       } else {
         cartNotifier.addToCart(product);
-      }
-    });
-  }
-
-  Future<void> _handleServiceTap(BuildContext context) async {
-    // Fetch the full service object for cart logic
-    final serviceRepo = ref.read(serviceRepositoryProvider);
-    final result = await serviceRepo.fetchOne(item.id);
-
-    result.fold((_) {}, (service) {
-      if (!context.mounted) return;
-      final cartNotifier = ref.read(cartControllerProvider.notifier);
-
-      if (service.hasVariablePrice) {
-        // Variable price services always show price dialog
-        showVariablePriceDialog(context, productName: service.name)
-            .then((price) {
-          if (price != null) {
-            if (service.showPrompt) {
-              // Also prompt for quantity after price
-              showQuantityPromptDialog(
-                context,
-                serviceName: service.name,
-                maxQuantity: service.maxQuantity,
-                unitLabel: service.quantityUnit?.shortPlural,
-              ).then((quantity) {
-                if (quantity != null) {
-                  cartNotifier.addServiceToCart(
-                    service,
-                    customPrice: price,
-                    quantity: quantity,
-                  );
-                }
-              });
-            } else {
-              cartNotifier.addServiceToCart(service, customPrice: price);
-            }
-          }
-        });
-      } else if (service.showPrompt) {
-        // Show quantity prompt for non-variable price services
-        showQuantityPromptDialog(
-          context,
-          serviceName: service.name,
-          maxQuantity: service.maxQuantity,
-          unitLabel: service.quantityUnit?.shortPlural,
-        ).then((quantity) {
-          if (quantity != null) {
-            cartNotifier.addServiceToCart(service, quantity: quantity);
-          }
-        });
-      } else {
-        cartNotifier.addServiceToCart(service);
       }
     });
   }

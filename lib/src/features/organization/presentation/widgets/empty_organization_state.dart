@@ -32,16 +32,6 @@ class EmptyOrganizationState extends StatelessWidget {
           'Select a branch',
           'Choose a branch from the list to view details',
         ),
-      OrganizationMode.machines => (
-          Icons.local_laundry_service_outlined,
-          'Select a machine',
-          'Choose a machine from the list to view details',
-        ),
-      OrganizationMode.storages => (
-          Icons.inventory_2_outlined,
-          'Select a storage location',
-          'Choose a storage location from the list to view details',
-        ),
     };
 
     return Scaffold(

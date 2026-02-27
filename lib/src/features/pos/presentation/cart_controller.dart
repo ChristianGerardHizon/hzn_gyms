@@ -5,8 +5,6 @@ import '../../auth/presentation/controllers/auth_controller.dart';
 import '../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../products/domain/product.dart';
 import '../../products/domain/product_lot.dart';
-import '../../services/domain/cart_service_item.dart';
-import '../../services/domain/service.dart';
 import '../data/repositories/cart_repository.dart';
 import '../domain/cart.dart';
 import '../domain/cart_item.dart';
@@ -14,16 +12,12 @@ import '../domain/cart_item.dart';
 part 'cart_controller.g.dart';
 part 'cart_controller.mapper.dart';
 
-/// Result of attempting to add a service to the cart.
-enum AddServiceResult { success, maxReached }
-
 /// State for the shopping cart.
 @MappableClass()
 class CartState with CartStateMappable {
   const CartState({
     this.cartId,
     this.items = const [],
-    this.serviceItems = const [],
     this.isSyncing = false,
   });
 
@@ -33,25 +27,20 @@ class CartState with CartStateMappable {
   /// Product items in the cart.
   final List<CartItem> items;
 
-  /// Service items in the cart.
-  final List<CartServiceItem> serviceItems;
-
   /// Whether a sync operation is in progress.
   final bool isSyncing;
 
-  /// Total price of all items (products + services).
-  double get total =>
-      items.fold(0.0, (sum, item) => sum + item.total) +
-      serviceItems.fold(0.0, (sum, item) => sum + item.total);
+  /// Total price of all items.
+  double get total => items.fold(0.0, (sum, item) => sum + item.total);
 
-  /// Whether the cart is empty (no products and no services).
-  bool get isEmpty => items.isEmpty && serviceItems.isEmpty;
+  /// Whether the cart is empty.
+  bool get isEmpty => items.isEmpty;
 
   /// Whether the cart is not empty.
   bool get isNotEmpty => !isEmpty;
 
-  /// Total number of line items (products + services).
-  int get totalItemCount => items.length + serviceItems.length;
+  /// Total number of line items.
+  int get totalItemCount => items.length;
 }
 
 @Riverpod(keepAlive: true)
@@ -79,17 +68,11 @@ class CartController extends _$CartController {
         // Load items from the most recent active cart
         final cart = carts.first;
         final itemsResult = await _cartRepo.getCartItems(cart.id);
-        final serviceItemsResult =
-            await _cartRepo.getCartServiceItems(cart.id);
         return itemsResult.fold(
           (failure) => CartState(cartId: cart.id),
           (items) => CartState(
             cartId: cart.id,
             items: items,
-            serviceItems: serviceItemsResult.fold(
-              (failure) => [],
-              (serviceItems) => serviceItems,
-            ),
           ),
         );
       },
@@ -122,7 +105,6 @@ class CartController extends _$CartController {
         state = AsyncData(CartState(
           cartId: createdCart.id,
           items: currentState?.items ?? [],
-          serviceItems: currentState?.serviceItems ?? [],
         ));
         return createdCart.id;
       },
@@ -510,212 +492,6 @@ class CartController extends _$CartController {
     );
   }
 
-  // ── Service Item Methods ──────────────────────────────────────────────
-
-  /// Adds a service to the cart.
-  /// For variable-price services, [customPrice] must be provided.
-  /// [quantity] defaults to 1 if not specified.
-  /// When [forceNewLine] is true, always creates a new cart line instead of
-  /// merging into an existing one (used for excess quantity splitting).
-  ///
-  /// Returns [AddServiceResult.maxReached] when the service has a
-  /// `maxQuantity` limit, `allowExcess` is false, and the existing cart
-  /// line is already at or above that limit.
-  Future<AddServiceResult> addServiceToCart(
-    Service service, {
-    num? customPrice,
-    int quantity = 1,
-    bool forceNewLine = false,
-  }) async {
-    final currentState = state.value;
-    if (currentState == null) return AddServiceResult.success;
-
-    // Check if a matching service item already exists
-    final existingIndex = forceNewLine
-        ? -1
-        : currentState.serviceItems.indexWhere((item) {
-            if (item.serviceId != service.id) return false;
-            if (customPrice != null) return item.customPrice == customPrice;
-            return !item.hasCustomPrice;
-          });
-
-    if (existingIndex >= 0) {
-      // Update quantity of existing item
-      final existingItem = currentState.serviceItems[existingIndex];
-      final newQuantity = existingItem.quantity + quantity;
-      final maxQty = service.maxQuantity;
-
-      // Check if the new quantity would exceed the max
-      if (maxQty != null && newQuantity > maxQty) {
-        if (service.allowExcess) {
-          // Create a new cart line with the requested quantity
-          return addServiceToCart(
-            service,
-            customPrice: customPrice,
-            quantity: quantity,
-            forceNewLine: true,
-          );
-        } else {
-          // Max reached and excess not allowed
-          return AddServiceResult.maxReached;
-        }
-      }
-
-      await updateServiceQuantityById(existingItem.id, newQuantity.toInt());
-      return AddServiceResult.success;
-    } else {
-      // Add new item
-      state = AsyncData(currentState.copyWith(isSyncing: true));
-
-      final cartId = await _ensureCart();
-      if (cartId == null) {
-        state = AsyncData(currentState.copyWith(isSyncing: false));
-        return AddServiceResult.success;
-      }
-
-      final cartServiceItem = CartServiceItem(
-        cartId: cartId,
-        serviceId: service.id,
-        service: service,
-        quantity: quantity,
-        customPrice: customPrice,
-      );
-
-      final result = await _cartRepo.addCartServiceItem(cartServiceItem);
-      result.fold(
-        (failure) {
-          state = AsyncData(currentState.copyWith(isSyncing: false));
-        },
-        (createdItem) {
-          final item = createdItem.customPrice == null && customPrice != null
-              ? createdItem.copyWith(customPrice: customPrice)
-              : createdItem;
-          final newServiceItems = [
-            ...currentState.serviceItems,
-            item,
-          ];
-          state = AsyncData(currentState.copyWith(
-            cartId: cartId,
-            serviceItems: newServiceItems,
-            isSyncing: false,
-          ));
-        },
-      );
-      return AddServiceResult.success;
-    }
-  }
-
-  /// Updates the quantity of a specific cart service item by its ID.
-  Future<void> updateServiceQuantityById(
-      String cartServiceItemId, int quantity) async {
-    if (quantity <= 0) {
-      await removeServiceItemById(cartServiceItemId);
-      return;
-    }
-
-    final currentState = state.value;
-    if (currentState == null) return;
-
-    final index = currentState.serviceItems
-        .indexWhere((item) => item.id == cartServiceItemId);
-    if (index < 0) return;
-
-    final item = currentState.serviceItems[index];
-
-    // Cap quantity at maxQuantity if the service doesn't allow excess.
-    // Overflow / splitting is handled upstream by addServiceToCart.
-    final maxQty = item.service?.maxQuantity;
-    if (maxQty != null && quantity > maxQty) {
-      quantity = maxQty;
-    }
-    state = AsyncData(currentState.copyWith(isSyncing: true));
-
-    final updatedItem = item.copyWith(quantity: quantity);
-    final result = await _cartRepo.updateCartServiceItem(updatedItem);
-
-    result.fold(
-      (failure) {
-        state = AsyncData(currentState.copyWith(isSyncing: false));
-      },
-      (syncedItem) {
-        final finalItem =
-            syncedItem.customPrice == null && item.customPrice != null
-                ? syncedItem.copyWith(customPrice: item.customPrice)
-                : syncedItem;
-        final newServiceItems = [...currentState.serviceItems];
-        newServiceItems[index] = finalItem;
-        state = AsyncData(currentState.copyWith(
-          serviceItems: newServiceItems,
-          isSyncing: false,
-        ));
-      },
-    );
-  }
-
-  /// Removes a specific cart service item by its ID.
-  Future<void> removeServiceItemById(String cartServiceItemId) async {
-    final currentState = state.value;
-    if (currentState == null) return;
-
-    final item = currentState.serviceItems.firstWhere(
-      (item) => item.id == cartServiceItemId,
-      orElse: () => const CartServiceItem(),
-    );
-    if (item.id.isEmpty) return;
-
-    state = AsyncData(currentState.copyWith(isSyncing: true));
-
-    final result = await _cartRepo.deleteCartServiceItem(cartServiceItemId);
-    result.fold(
-      (failure) {
-        state = AsyncData(currentState.copyWith(isSyncing: false));
-      },
-      (_) {
-        final newServiceItems = currentState.serviceItems
-            .where((i) => i.id != cartServiceItemId)
-            .toList();
-        state = AsyncData(currentState.copyWith(
-          serviceItems: newServiceItems,
-          isSyncing: false,
-        ));
-      },
-    );
-  }
-
-  /// Updates the custom price of a cart service item.
-  Future<void> updateServiceCustomPrice(
-      String cartServiceItemId, num newPrice) async {
-    final currentState = state.value;
-    if (currentState == null) return;
-
-    final index = currentState.serviceItems
-        .indexWhere((item) => item.id == cartServiceItemId);
-    if (index < 0) return;
-
-    final item = currentState.serviceItems[index];
-    state = AsyncData(currentState.copyWith(isSyncing: true));
-
-    final updatedItem = item.copyWith(customPrice: newPrice);
-    final result = await _cartRepo.updateCartServiceItem(updatedItem);
-
-    result.fold(
-      (failure) {
-        state = AsyncData(currentState.copyWith(isSyncing: false));
-      },
-      (syncedItem) {
-        final finalItem = syncedItem.customPrice == null
-            ? syncedItem.copyWith(customPrice: newPrice)
-            : syncedItem;
-        final newServiceItems = [...currentState.serviceItems];
-        newServiceItems[index] = finalItem;
-        state = AsyncData(currentState.copyWith(
-          serviceItems: newServiceItems,
-          isSyncing: false,
-        ));
-      },
-    );
-  }
-
   /// Clears all items from the cart.
   Future<void> clearCart() async {
     final currentState = state.value;
@@ -727,13 +503,6 @@ class CartController extends _$CartController {
     for (final item in currentState.items) {
       if (item.id.isNotEmpty) {
         await _cartRepo.deleteCartItem(item.id);
-      }
-    }
-
-    // Delete all service items from backend
-    for (final item in currentState.serviceItems) {
-      if (item.id.isNotEmpty) {
-        await _cartRepo.deleteCartServiceItem(item.id);
       }
     }
 
@@ -778,11 +547,4 @@ double cartTotal(Ref ref) {
 List<CartItem> cartItems(Ref ref) {
   final cartState = ref.watch(cartControllerProvider);
   return cartState.value?.items ?? [];
-}
-
-/// Provider for cart service items.
-@Riverpod(keepAlive: true)
-List<CartServiceItem> cartServiceItems(Ref ref) {
-  final cartState = ref.watch(cartControllerProvider);
-  return cartState.value?.serviceItems ?? [];
 }

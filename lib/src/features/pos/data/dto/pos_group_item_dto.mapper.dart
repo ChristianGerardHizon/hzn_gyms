@@ -44,12 +44,6 @@ class PosGroupItemDtoMapper extends ClassMapperBase<PosGroupItemDto> {
     _$product,
     opt: true,
   );
-  static String? _$service(PosGroupItemDto v) => v.service;
-  static const Field<PosGroupItemDto, String> _f$service = Field(
-    'service',
-    _$service,
-    opt: true,
-  );
   static int _$sortOrder(PosGroupItemDto v) => v.sortOrder;
   static const Field<PosGroupItemDto, int> _f$sortOrder = Field(
     'sortOrder',
@@ -77,7 +71,6 @@ class PosGroupItemDtoMapper extends ClassMapperBase<PosGroupItemDto> {
     #collectionName: _f$collectionName,
     #group: _f$group,
     #product: _f$product,
-    #service: _f$service,
     #sortOrder: _f$sortOrder,
     #created: _f$created,
     #updated: _f$updated,
@@ -90,7 +83,6 @@ class PosGroupItemDtoMapper extends ClassMapperBase<PosGroupItemDto> {
       collectionName: data.dec(_f$collectionName),
       group: data.dec(_f$group),
       product: data.dec(_f$product),
-      service: data.dec(_f$service),
       sortOrder: data.dec(_f$sortOrder),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -165,7 +157,6 @@ abstract class PosGroupItemDtoCopyWith<$R, $In extends PosGroupItemDto, $Out>
     String? collectionName,
     String? group,
     String? product,
-    String? service,
     int? sortOrder,
     String? created,
     String? updated,
@@ -190,7 +181,6 @@ class _PosGroupItemDtoCopyWithImpl<$R, $Out>
     String? collectionName,
     String? group,
     Object? product = $none,
-    Object? service = $none,
     int? sortOrder,
     Object? created = $none,
     Object? updated = $none,
@@ -201,7 +191,6 @@ class _PosGroupItemDtoCopyWithImpl<$R, $Out>
       if (collectionName != null) #collectionName: collectionName,
       if (group != null) #group: group,
       if (product != $none) #product: product,
-      if (service != $none) #service: service,
       if (sortOrder != null) #sortOrder: sortOrder,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -214,7 +203,6 @@ class _PosGroupItemDtoCopyWithImpl<$R, $Out>
     collectionName: data.get(#collectionName, or: $value.collectionName),
     group: data.get(#group, or: $value.group),
     product: data.get(#product, or: $value.product),
-    service: data.get(#service, or: $value.service),
     sortOrder: data.get(#sortOrder, or: $value.sortOrder),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

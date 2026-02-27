@@ -64,14 +64,14 @@ class UserOverviewTab extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.email_outlined,
+                        Icons.alternate_email,
                         size: 16,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          user.email,
+                          user.username,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -266,7 +266,7 @@ class UserOverviewTab extends StatelessWidget {
                   child: _buildStatusItem(
                     context,
                     icon: Icons.verified_user,
-                    label: 'Email',
+                    label: 'Verification',
                     value: user.verified ? 'Verified' : 'Unverified',
                     isPositive: user.verified,
                   ),

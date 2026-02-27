@@ -28,6 +28,10 @@ class SaleStatusMapper extends EnumMapper<SaleStatus> {
     switch (value) {
       case r'pending':
         return SaleStatus.pending;
+      case r'awaitingPayment':
+        return SaleStatus.awaitingPayment;
+      case r'paid':
+        return SaleStatus.paid;
       case r'completed':
         return SaleStatus.completed;
       case r'refunded':
@@ -44,6 +48,10 @@ class SaleStatusMapper extends EnumMapper<SaleStatus> {
     switch (self) {
       case SaleStatus.pending:
         return r'pending';
+      case SaleStatus.awaitingPayment:
+        return r'awaitingPayment';
+      case SaleStatus.paid:
+        return r'paid';
       case SaleStatus.completed:
         return r'completed';
       case SaleStatus.refunded:

@@ -6,8 +6,6 @@ import '../../../../core/foundation/failure.dart';
 import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
-import '../../../services/data/dto/cart_service_item_dto.dart';
-import '../../../services/domain/cart_service_item.dart';
 import '../../domain/cart.dart';
 import '../../domain/cart_item.dart';
 import '../dto/cart_dto.dart';
@@ -27,12 +25,6 @@ abstract class CartRepository {
   FutureEither<CartItem> addCartItem(CartItem item);
   FutureEither<CartItem> updateCartItem(CartItem item);
   FutureEither<void> deleteCartItem(String id);
-
-  // Cart Service Items
-  FutureEither<List<CartServiceItem>> getCartServiceItems(String cartId);
-  FutureEither<CartServiceItem> addCartServiceItem(CartServiceItem item);
-  FutureEither<CartServiceItem> updateCartServiceItem(CartServiceItem item);
-  FutureEither<void> deleteCartServiceItem(String id);
 }
 
 @Riverpod(keepAlive: true)
@@ -48,8 +40,6 @@ class CartRepositoryImpl implements CartRepository {
   RecordService get _carts => _pb.collection(PocketBaseCollections.carts);
   RecordService get _cartItems =>
       _pb.collection(PocketBaseCollections.cartItems);
-  RecordService get _cartServiceItems =>
-      _pb.collection(PocketBaseCollections.cartServiceItems);
 
   Cart _toCartEntity(RecordModel record) {
     return CartDto.fromRecord(record).toEntity();
@@ -60,12 +50,6 @@ class CartRepositoryImpl implements CartRepository {
     final productExpanded = record.get<RecordModel?>('expand.product');
     return CartItemDto.fromRecord(record)
         .toEntity(productExpanded: productExpanded);
-  }
-
-  CartServiceItem _toCartServiceItemEntity(RecordModel record) {
-    final serviceExpanded = record.get<RecordModel?>('expand.service');
-    return CartServiceItemDto.fromRecord(record)
-        .toEntity(serviceExpanded: serviceExpanded);
   }
 
   @override
@@ -203,70 +187,6 @@ class CartRepositoryImpl implements CartRepository {
     return TaskEither.tryCatch(
       () async {
         await _cartItems.delete(id);
-      },
-      Failure.handle,
-    ).run();
-  }
-
-  // Cart Service Items
-
-  @override
-  FutureEither<List<CartServiceItem>> getCartServiceItems(String cartId) async {
-    return TaskEither.tryCatch(
-      () async {
-        final records = await _cartServiceItems.getFullList(
-          filter: 'cart = "$cartId"',
-          expand: 'service.quantityUnit',
-        );
-        return records.map(_toCartServiceItemEntity).toList();
-      },
-      Failure.handle,
-    ).run();
-  }
-
-  @override
-  FutureEither<CartServiceItem> addCartServiceItem(
-      CartServiceItem item) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'cart': item.cartId,
-          'service': item.serviceId,
-          'quantity': item.quantity,
-        };
-        if (item.customPrice != null) {
-          body['customPrice'] = item.customPrice;
-        }
-        final record =
-            await _cartServiceItems.create(body: body, expand: 'service.quantityUnit');
-        return _toCartServiceItemEntity(record);
-      },
-      Failure.handle,
-    ).run();
-  }
-
-  @override
-  FutureEither<CartServiceItem> updateCartServiceItem(
-      CartServiceItem item) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'quantity': item.quantity,
-          'customPrice': item.customPrice ?? 0,
-        };
-        final record = await _cartServiceItems.update(item.id,
-            body: body, expand: 'service.quantityUnit');
-        return _toCartServiceItemEntity(record);
-      },
-      Failure.handle,
-    ).run();
-  }
-
-  @override
-  FutureEither<void> deleteCartServiceItem(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _cartServiceItems.delete(id);
       },
       Failure.handle,
     ).run();

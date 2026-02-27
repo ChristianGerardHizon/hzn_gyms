@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 
-import '../../../pos/domain/order_status.dart';
-
 /// A prominent banner that highlights the most important status of a sale.
 ///
 /// Priority logic:
 /// 1. Refunded - special case, always show prominently
-/// 2. Pending order - needs attention
-/// 3. Ready for pickup + Unpaid - ready but needs payment first
-/// 4. Ready for pickup + Paid - ready to release to customer
-/// 5. Processing - in progress
-/// 6. Picked up - completed
+/// 2. Voided - cancelled sale
+/// 3. Pending + Unpaid - payment pending
+/// 4. Pending + Paid - payment received
+/// 5. Completed + Unpaid - unusual case, awaiting payment
+/// 6. Completed + Paid - fully completed
 class SaleHighlightBanner extends StatelessWidget {
   const SaleHighlightBanner({
     super.key,
-    required this.orderStatus,
     required this.isPaid,
     required this.saleStatus,
   });
 
-  final OrderStatus orderStatus;
   final bool isPaid;
   final String saleStatus;
 
@@ -110,8 +106,10 @@ class SaleHighlightBanner extends StatelessWidget {
   }
 
   _HighlightInfo _getHighlight() {
+    final status = saleStatus.toLowerCase();
+
     // Priority 1: Refunded sale
-    if (saleStatus.toLowerCase() == 'refunded') {
+    if (status == 'refunded') {
       return _HighlightInfo(
         color: Colors.orange,
         icon: Icons.replay,
@@ -121,7 +119,7 @@ class SaleHighlightBanner extends StatelessWidget {
     }
 
     // Priority 2: Voided sale
-    if (saleStatus.toLowerCase() == 'voided') {
+    if (status == 'voided') {
       return _HighlightInfo(
         color: Colors.red,
         icon: Icons.cancel,
@@ -130,91 +128,36 @@ class SaleHighlightBanner extends StatelessWidget {
       );
     }
 
-    // Priority 3: Pending order - needs attention
-    if (orderStatus == OrderStatus.pending) {
+    // Priority 3: Pending
+    if (status == 'pending') {
       return _HighlightInfo(
-        color: Colors.amber.shade700,
+        color: Colors.grey,
         icon: Icons.schedule,
         title: 'Pending',
-        description: 'Order is waiting to be processed.',
-        secondaryInfo: isPaid ? 'Payment received' : 'Payment pending',
-        secondaryIcon: isPaid ? Icons.check_circle : Icons.pending,
-        secondaryColor: isPaid ? Colors.green : Colors.orange,
+        description: 'This sale is pending.',
       );
     }
 
-    // Priority 4: Ready for pickup + Unpaid - needs payment before release
-    if (orderStatus == OrderStatus.ready && !isPaid) {
+    // Priority 4: Awaiting Payment
+    if (status == 'awaitingpayment') {
       return _HighlightInfo(
-        color: Colors.red.shade600,
+        color: Colors.amber.shade700,
         icon: Icons.payment,
-        title: 'Ready - Awaiting Payment',
-        description: 'Order is ready but payment is required before pickup.',
-        secondaryInfo: 'Collect payment before releasing',
-        secondaryIcon: Icons.warning_amber,
-        secondaryColor: Colors.red,
-      );
-    }
-
-    // Priority 5: Ready for pickup + Paid - ready to release
-    if (orderStatus == OrderStatus.ready && isPaid) {
-      return _HighlightInfo(
-        color: Colors.green,
-        icon: Icons.check_circle,
-        title: 'Ready for Pickup',
-        description: 'Order is complete and paid. Ready to release to customer.',
-        secondaryInfo: 'Fully paid',
-        secondaryIcon: Icons.paid,
-        secondaryColor: Colors.green,
-      );
-    }
-
-    // Priority 6: Processing + Unpaid
-    if (orderStatus == OrderStatus.processing && !isPaid) {
-      return _HighlightInfo(
-        color: Colors.blue,
-        icon: Icons.autorenew,
-        title: 'Processing',
-        description: 'Order is being processed.',
-        secondaryInfo: 'Payment pending',
+        title: 'Awaiting Payment',
+        description: 'This sale is awaiting full payment.',
+        secondaryInfo: 'Partial payment received',
         secondaryIcon: Icons.pending,
         secondaryColor: Colors.orange,
       );
     }
 
-    // Priority 7: Processing + Paid
-    if (orderStatus == OrderStatus.processing && isPaid) {
+    // Priority 5: Paid
+    if (status == 'paid' || (status == 'completed' && isPaid)) {
       return _HighlightInfo(
-        color: Colors.blue,
-        icon: Icons.autorenew,
-        title: 'Processing',
-        description: 'Order is being processed.',
-        secondaryInfo: 'Payment received',
-        secondaryIcon: Icons.check_circle,
-        secondaryColor: Colors.green,
-      );
-    }
-
-    // Priority 8: Picked up + Unpaid (unusual case)
-    if (orderStatus == OrderStatus.pickedUp && !isPaid) {
-      return _HighlightInfo(
-        color: Colors.red.shade600,
-        icon: Icons.warning,
-        title: 'Picked Up - Unpaid',
-        description: 'Order was released but payment is still pending.',
-        secondaryInfo: 'Payment required',
-        secondaryIcon: Icons.error,
-        secondaryColor: Colors.red,
-      );
-    }
-
-    // Priority 9: Picked up + Paid - completed
-    if (orderStatus == OrderStatus.pickedUp && isPaid) {
-      return _HighlightInfo(
-        color: Colors.grey,
+        color: Colors.green,
         icon: Icons.task_alt,
-        title: 'Completed',
-        description: 'Order has been picked up by the customer.',
+        title: 'Paid',
+        description: 'This sale has been fully paid.',
         secondaryInfo: 'Fully paid',
         secondaryIcon: Icons.paid,
         secondaryColor: Colors.green,

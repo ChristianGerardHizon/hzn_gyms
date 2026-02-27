@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../features/pos/presentation/cart_controller.dart';
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
+import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/organization.routes.dart';
 import '../routing/routes/products.routes.dart';
-import '../routing/routes/customers.routes.dart';
-import '../routing/routes/services.routes.dart';
+import '../routing/routes/members.routes.dart';
+import '../routing/routes/memberships.routes.dart';
 import '../routing/routes/reports.routes.dart';
 import '../routing/routes/sales.routes.dart';
 import '../routing/routes/sales_history.routes.dart';
@@ -54,27 +54,29 @@ class _AppRootState extends ConsumerState<AppRoot> {
   /// Route paths in order of navigation index.
   static const _routePaths = [
     DashboardRoute.path, // 0: /
-    SalesRoute.path, // 1: /cashier
-    SalesHistoryRoute.path, // 2: /sales
-    ProductsRoute.path, // 3: /products
-    ServicesRoute.path, // 4: /services
-    CustomersRoute.path, // 5: /customers
-    ReportsRoute.path, // 6: /reports
-    OrganizationRoute.path, // 7: /organization
-    SystemRoute.path, // 8: /system
+    CheckInRoute.path, // 1: /check-in
+    SalesRoute.path, // 2: /cashier
+    SalesHistoryRoute.path, // 3: /sales
+    ProductsRoute.path, // 4: /products
+    MembersRoute.path, // 5: /members
+    MembershipsRoute.path, // 6: /memberships
+    ReportsRoute.path, // 7: /reports
+    OrganizationRoute.path, // 8: /organization
+    SystemRoute.path, // 9: /system
   ];
 
   /// Routes in order of navigation index.
   static const _routes = <GoRouteData>[
     DashboardRoute(), // 0
-    SalesRoute(), // 1
-    SalesHistoryRoute(), // 2
-    ProductsRoute(), // 3
-    ServicesRoute(), // 4
-    CustomersRoute(), // 5
-    ReportsRoute(), // 6
-    OrganizationRoute(), // 7
-    SystemRoute(), // 8
+    CheckInRoute(), // 1
+    SalesRoute(), // 2
+    SalesHistoryRoute(), // 3
+    ProductsRoute(), // 4
+    MembersRoute(), // 5
+    MembershipsRoute(), // 6
+    ReportsRoute(), // 7
+    OrganizationRoute(), // 8
+    SystemRoute(), // 9
   ];
 
   /// Gets the selected index based on current route location.
@@ -109,9 +111,6 @@ class _AppRootState extends ConsumerState<AppRoot> {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize cart controller early to load any active cart
-    ref.watch(cartControllerProvider);
-
     final isMobile = Breakpoints.isMobile(context);
 
     return PopScope(
