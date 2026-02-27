@@ -54,53 +54,62 @@ class DashboardPage extends ConsumerWidget {
       );
     }
 
-    // Mobile: Single column layout with all sections
+    // Mobile: CustomScrollView so the members grid is virtualized
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          // Refresh all dashboard data
           ref.invalidate(inventoryAlertsSummaryProvider);
           ref.invalidate(todaySalesSummaryProvider);
           ref.invalidate(todaysCheckInsCountProvider);
           ref.invalidate(activeMembersCountProvider);
           ref.invalidate(todaysNewMembersCountProvider);
           ref.invalidate(expiringMembershipsProvider);
-          ref.invalidate(dashboardMembersProvider);
+          ref.invalidate(dashboardMembersPageProvider);
           ref.invalidate(productsNearExpirationCountProvider);
           ref.invalidate(productsExpiredCountProvider);
           ref.invalidate(lowStockProductsCountProvider);
         },
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dashboard Header
-              const _MobileDashboardHeader(),
-              const SizedBox(height: 16),
+          slivers: [
+            // Header + KPI + Quick Actions
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    _MobileDashboardHeader(),
+                    SizedBox(height: 16),
+                    KpiSummarySection(),
+                    SizedBox(height: 20),
+                    QuickActionsSection(),
+                    SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
 
-              // KPI Summary Section
-              const KpiSummarySection(),
-              const SizedBox(height: 20),
+            // Members Section (virtualized slivers)
+            const DashboardMembersSection(),
 
-              // Quick Actions Section
-              const QuickActionsSection(),
-              const SizedBox(height: 24),
-
-              // Members Section
-              const DashboardMembersSection(),
-              const SizedBox(height: 24),
-
-              // Inventory Alerts Section
-              const InventoryAlertsSection(),
-              const SizedBox(height: 24),
-
-              // App Version Footer
-              const DashboardFooter(),
-              const SizedBox(height: 16),
-            ],
-          ),
+            // Inventory Alerts + Footer
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SizedBox(height: 24),
+                    InventoryAlertsSection(),
+                    SizedBox(height: 24),
+                    DashboardFooter(),
+                    SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

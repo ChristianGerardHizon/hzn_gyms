@@ -4,136 +4,169 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
-import '../../../members/domain/member.dart';
-import '../../../members/presentation/controllers/members_controller.dart';
-import '../../../memberships/data/dto/member_membership_dto.dart';
-import '../../../memberships/domain/member_membership.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 
 part 'dashboard_members_controller.g.dart';
 
-/// A member combined with their latest membership (if any).
-class DashboardMember {
-  const DashboardMember({
-    required this.member,
-    this.activeMembership,
-    this.latestMembership,
-  });
+/// Membership status filter for the dashboard grid.
+enum MemberStatusFilter {
+  all('All'),
+  expired('Expired'),
+  expiringSoon('Expiring Soon');
 
-  final Member member;
-
-  /// The current active (non-expired) membership, if any.
-  final MemberMembership? activeMembership;
-
-  /// The most recent membership regardless of expiry status.
-  final MemberMembership? latestMembership;
-
-  /// Days until membership expires, or null if no active membership.
-  int? get daysUntilExpiry => activeMembership?.daysRemaining;
-
-  /// Whether this member's membership has expired.
-  bool get isExpired =>
-      activeMembership == null && latestMembership != null;
+  const MemberStatusFilter(this.label);
+  final String label;
 }
 
-/// All members with their latest active membership attached.
+/// A member from the membersWithMembershipStatus view collection.
+class DashboardMember {
+  const DashboardMember({
+    required this.id,
+    required this.name,
+    this.photo,
+    this.mobileNumber,
+    this.membershipEndDate,
+    this.membershipStatus,
+  });
+
+  final String id;
+  final String name;
+  final String? photo;
+  final String? mobileNumber;
+  final DateTime? membershipEndDate;
+  final String? membershipStatus;
+
+  /// Days until membership expires, or null if no membership.
+  int? get daysUntilExpiry {
+    if (membershipEndDate == null) return null;
+    final now = DateTime.now();
+    if (now.isAfter(membershipEndDate!)) return 0;
+    return membershipEndDate!.difference(now).inDays;
+  }
+
+  /// Whether this member's membership has expired.
+  bool get isExpired {
+    if (membershipEndDate == null) return false;
+    return DateTime.now().isAfter(membershipEndDate!);
+  }
+
+  /// Whether this member has an active (non-expired) membership.
+  bool get hasActiveMembership =>
+      membershipEndDate != null && !isExpired;
+
+  /// Factory from a PocketBase RecordModel from the view collection.
+  factory DashboardMember.fromViewRecord(
+    RecordModel record, {
+    required String baseUrl,
+  }) {
+    final id = record.id;
+    final name = record.getStringValue('name');
+    final photoFile = record.getStringValue('photo');
+    final mobileNumber = record.getStringValue('mobileNumber');
+    final endDateStr = record.get<String>('membershipEndDate');
+    final status = record.getStringValue('membershipStatus');
+
+    // Build photo URL using the original 'members' collection
+    // since the view inherits file references from the members table.
+    String? photoUrl;
+    if (photoFile.isNotEmpty) {
+      photoUrl =
+          '$baseUrl/api/files/${PocketBaseCollections.members}/$id/$photoFile';
+    }
+
+    return DashboardMember(
+      id: id,
+      name: name,
+      photo: photoUrl,
+      mobileNumber: mobileNumber.isNotEmpty ? mobileNumber : null,
+      membershipEndDate: parseToLocal(endDateStr),
+      membershipStatus: status.isNotEmpty ? status : null,
+    );
+  }
+}
+
+/// Result of a paginated dashboard members query.
+class DashboardMembersPage {
+  const DashboardMembersPage({
+    required this.items,
+    required this.totalItems,
+    required this.page,
+    required this.totalPages,
+  });
+
+  final List<DashboardMember> items;
+  final int totalItems;
+  final int page;
+  final int totalPages;
+
+  bool get hasMore => page < totalPages;
+}
+
+const _pageSize = 12;
+
+/// Fetches a single page of members with their membership status
+/// from the [membersWithMembershipStatus] view collection.
 ///
-/// Sorted with near-expiration members first, then active, then no membership.
+/// Uses server-side pagination and filtering. A single API call
+/// replaces the previous 3-call approach (members + active memberships
+/// + all memberships).
 @riverpod
-Future<List<DashboardMember>> dashboardMembers(Ref ref) async {
+Future<DashboardMembersPage> dashboardMembersPage(
+  Ref ref, {
+  int page = 1,
+  String? searchQuery,
+  MemberStatusFilter statusFilter = MemberStatusFilter.all,
+}) async {
   final branchId = ref.watch(currentBranchIdProvider);
   final pb = ref.read(pocketbaseProvider);
 
-  // 1. Get all members from the existing keepAlive provider
-  final membersAsync = ref.watch(membersControllerProvider);
-  final members = membersAsync.value ?? [];
+  final filter = PBFilter();
 
-  // 2. Fetch all active memberMemberships (not yet expired)
-  final activeFilter = PBFilter()
-      .equals('status', 'active')
-      .greaterOrEqual('endDate', DateTime.now());
-  if (branchId != null) {
-    activeFilter.relation('branch', branchId);
+  // Search filter
+  if (searchQuery != null && searchQuery.isNotEmpty) {
+    filter.searchFields(searchQuery, ['name', 'mobileNumber']);
   }
 
-  // 3. Fetch all memberships (including expired) to detect expired members
-  final allFilter = PBFilter();
+  // Branch filter
   if (branchId != null) {
-    allFilter.relation('branch', branchId);
+    filter.relation('membershipBranch', branchId);
   }
 
-  final activeResult = await pb
-      .collection(PocketBaseCollections.memberMemberships)
-      .getFullList(
-        filter: activeFilter.buildOrEmpty(),
-        sort: '-endDate',
-        expand: 'member,membership',
+  // Status filter (server-side via the view's membershipEndDate)
+  final now = DateTime.now();
+  switch (statusFilter) {
+    case MemberStatusFilter.all:
+      break;
+    case MemberStatusFilter.expired:
+      // Members whose latest membership endDate is in the past
+      filter.lessThan('membershipEndDate', now);
+      break;
+    case MemberStatusFilter.expiringSoon:
+      // Members whose latest membership endDate is between now and +7 days
+      filter.greaterOrEqual('membershipEndDate', now);
+      final sevenDaysFromNow = now.add(const Duration(days: 7));
+      filter.lessOrEqual('membershipEndDate', sevenDaysFromNow);
+      break;
+  }
+
+  final result = await pb
+      .collection(PocketBaseCollections.membersWithMembershipStatus)
+      .getList(
+        page: page,
+        perPage: _pageSize,
+        filter: filter.build(),
+        sort: 'name',
       );
 
-  final allResult = await pb
-      .collection(PocketBaseCollections.memberMemberships)
-      .getFullList(
-        filter: allFilter.buildOrEmpty(),
-        sort: '-endDate',
-        expand: 'member,membership',
-      );
-
-  final activeMemberships = activeResult
-      .map((RecordModel r) => MemberMembershipDto.fromRecord(r).toEntity())
+  final items = result.items
+      .map((r) => DashboardMember.fromViewRecord(r, baseUrl: pb.baseURL))
       .toList();
 
-  final allMemberships = allResult
-      .map((RecordModel r) => MemberMembershipDto.fromRecord(r).toEntity())
-      .toList();
-
-  // 4. Group by memberId, pick latest endDate per member
-  final activeByMember = <String, MemberMembership>{};
-  for (final mm in activeMemberships) {
-    final existing = activeByMember[mm.memberId];
-    if (existing == null || mm.endDate.isAfter(existing.endDate)) {
-      activeByMember[mm.memberId] = mm;
-    }
-  }
-
-  final latestByMember = <String, MemberMembership>{};
-  for (final mm in allMemberships) {
-    final existing = latestByMember[mm.memberId];
-    if (existing == null || mm.endDate.isAfter(existing.endDate)) {
-      latestByMember[mm.memberId] = mm;
-    }
-  }
-
-  // 5. Combine: attach memberships to each member
-  final dashboardMembers = members.map((member) {
-    return DashboardMember(
-      member: member,
-      activeMembership: activeByMember[member.id],
-      latestMembership: latestByMember[member.id],
-    );
-  }).toList();
-
-  // 6. Sort: expired first, then expiring soon, then active, then no membership last
-  dashboardMembers.sort((a, b) {
-    // Expired members first
-    if (a.isExpired && !b.isExpired) return -1;
-    if (!a.isExpired && b.isExpired) return 1;
-    if (a.isExpired && b.isExpired) {
-      // Both expired: sort by most recently expired first
-      return b.latestMembership!.endDate
-          .compareTo(a.latestMembership!.endDate);
-    }
-
-    final aDays = a.daysUntilExpiry;
-    final bDays = b.daysUntilExpiry;
-
-    // Members with no membership go last
-    if (aDays == null && bDays == null) return 0;
-    if (aDays == null) return 1;
-    if (bDays == null) return -1;
-
-    // Sort by days remaining ascending (most urgent first)
-    return aDays.compareTo(bDays);
-  });
-
-  return dashboardMembers;
+  return DashboardMembersPage(
+    items: items,
+    totalItems: result.totalItems,
+    page: result.page,
+    totalPages: result.totalPages,
+  );
 }

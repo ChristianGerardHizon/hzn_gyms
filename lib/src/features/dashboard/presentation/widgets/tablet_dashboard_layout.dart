@@ -18,7 +18,8 @@ import 'quick_actions_section.dart';
 
 /// Single-pane tablet layout for the dashboard.
 ///
-/// Displays KPIs, quick actions, inventory alerts, and footer.
+/// Uses [CustomScrollView] with slivers so the members grid can be
+/// virtualized (only visible cards are built).
 class TabletDashboardLayout extends HookConsumerWidget {
   const TabletDashboardLayout({super.key});
 
@@ -29,83 +30,91 @@ class TabletDashboardLayout extends HookConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async {
-        // Refresh all dashboard data
         ref.invalidate(inventoryAlertsSummaryProvider);
         ref.invalidate(todaySalesSummaryProvider);
         ref.invalidate(todaysCheckInsCountProvider);
         ref.invalidate(activeMembersCountProvider);
         ref.invalidate(todaysNewMembersCountProvider);
         ref.invalidate(expiringMembershipsProvider);
-        ref.invalidate(dashboardMembersProvider);
+        ref.invalidate(dashboardMembersPageProvider);
         ref.invalidate(productsNearExpirationCountProvider);
         ref.invalidate(productsExpiredCountProvider);
         ref.invalidate(lowStockProductsCountProvider);
       },
-      child: SingleChildScrollView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Icon(
-                  Icons.dashboard,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Dashboard Overview',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+        slivers: [
+          // Header + KPI + Quick Actions
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.dashboard,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Dashboard Overview',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            // Show current branch if available
-            if (branch != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.store,
-                      size: 16,
-                      color: theme.colorScheme.outline,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      branch.name,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.outline,
+                  if (branch != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.store,
+                            size: 16,
+                            color: theme.colorScheme.outline,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            branch.name,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  const SizedBox(height: 24),
+                  const KpiSummarySection(),
+                  const SizedBox(height: 24),
+                  const QuickActionsSection(),
+                  const SizedBox(height: 24),
+                ],
               ),
-            const SizedBox(height: 24),
+            ),
+          ),
 
-            // KPI Summary Section
-            const KpiSummarySection(),
-            const SizedBox(height: 24),
+          // Members Section (virtualized slivers)
+          const DashboardMembersSection(),
 
-            // Quick Actions Section
-            const QuickActionsSection(),
-            const SizedBox(height: 24),
-
-            // Members Section
-            const DashboardMembersSection(),
-            const SizedBox(height: 24),
-
-            // Inventory Alerts Section
-            const InventoryAlertsSection(),
-            const SizedBox(height: 24),
-
-            // App Version Footer
-            const DashboardFooter(),
-          ],
-        ),
+          // Inventory Alerts + Footer
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SizedBox(height: 24),
+                  InventoryAlertsSection(),
+                  SizedBox(height: 24),
+                  DashboardFooter(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
