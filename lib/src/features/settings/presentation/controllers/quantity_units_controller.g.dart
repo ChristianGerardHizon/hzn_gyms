@@ -14,19 +14,20 @@ part of 'quantity_units_controller.dart';
 final quantityUnitsControllerProvider = QuantityUnitsControllerProvider._();
 
 /// Controller for managing quantity units list in settings.
-final class QuantityUnitsControllerProvider extends $AsyncNotifierProvider<
-    QuantityUnitsController, List<QuantityUnit>> {
+final class QuantityUnitsControllerProvider
+    extends
+        $AsyncNotifierProvider<QuantityUnitsController, List<QuantityUnit>> {
   /// Controller for managing quantity units list in settings.
   QuantityUnitsControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'quantityUnitsControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'quantityUnitsControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$quantityUnitsControllerHash();
@@ -49,11 +50,14 @@ abstract class _$QuantityUnitsController
   void runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<QuantityUnit>>, List<QuantityUnit>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<QuantityUnit>>, List<QuantityUnit>>,
-        AsyncValue<List<QuantityUnit>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<QuantityUnit>>, List<QuantityUnit>>,
+              AsyncValue<List<QuantityUnit>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

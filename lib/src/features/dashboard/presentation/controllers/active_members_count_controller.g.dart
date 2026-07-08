@@ -29,15 +29,15 @@ final class ActiveMembersCountProvider
   /// Queries memberMemberships where status = 'active'
   /// and current date is between startDate and endDate.
   ActiveMembersCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'activeMembersCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeMembersCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$activeMembersCountHash();

@@ -15,20 +15,25 @@ final salesReportProvider = SalesReportProvider._();
 
 /// Fetches and provides sales report data.
 
-final class SalesReportProvider extends $FunctionalProvider<
-        AsyncValue<SalesReport>, SalesReport, FutureOr<SalesReport>>
+final class SalesReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SalesReport>,
+          SalesReport,
+          FutureOr<SalesReport>
+        >
     with $FutureModifier<SalesReport>, $FutureProvider<SalesReport> {
   /// Fetches and provides sales report data.
   SalesReportProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'salesReportProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'salesReportProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$salesReportHash();
@@ -36,8 +41,8 @@ final class SalesReportProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<SalesReport> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<SalesReport> create(Ref ref) {

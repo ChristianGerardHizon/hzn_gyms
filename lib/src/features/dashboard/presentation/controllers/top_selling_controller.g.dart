@@ -23,10 +23,13 @@ final topSellingProductsProvider = TopSellingProductsProvider._();
 /// by product (since the view groups by date), sorts by revenue descending,
 /// and returns the top 5.
 
-final class TopSellingProductsProvider extends $FunctionalProvider<
-        AsyncValue<List<TopSellingItem>>,
-        List<TopSellingItem>,
-        FutureOr<List<TopSellingItem>>>
+final class TopSellingProductsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<TopSellingItem>>,
+          List<TopSellingItem>,
+          FutureOr<List<TopSellingItem>>
+        >
     with
         $FutureModifier<List<TopSellingItem>>,
         $FutureProvider<List<TopSellingItem>> {
@@ -36,15 +39,15 @@ final class TopSellingProductsProvider extends $FunctionalProvider<
   /// by product (since the view groups by date), sorts by revenue descending,
   /// and returns the top 5.
   TopSellingProductsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'topSellingProductsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'topSellingProductsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$topSellingProductsHash();
@@ -52,8 +55,8 @@ final class TopSellingProductsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<TopSellingItem>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<TopSellingItem>> create(Ref ref) {

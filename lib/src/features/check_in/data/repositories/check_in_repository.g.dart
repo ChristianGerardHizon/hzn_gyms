@@ -15,21 +15,25 @@ final checkInRepositoryProvider = CheckInRepositoryProvider._();
 
 /// Provides the CheckInRepository instance.
 
-final class CheckInRepositoryProvider extends $FunctionalProvider<
-    CheckInRepository,
-    CheckInRepository,
-    CheckInRepository> with $Provider<CheckInRepository> {
+final class CheckInRepositoryProvider
+    extends
+        $FunctionalProvider<
+          CheckInRepository,
+          CheckInRepository,
+          CheckInRepository
+        >
+    with $Provider<CheckInRepository> {
   /// Provides the CheckInRepository instance.
   CheckInRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'checkInRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'checkInRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$checkInRepositoryHash();
@@ -37,8 +41,8 @@ final class CheckInRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<CheckInRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   CheckInRepository create(Ref ref) {

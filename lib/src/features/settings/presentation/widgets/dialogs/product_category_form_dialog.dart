@@ -6,19 +6,15 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
-import '../../../../../core/i18n/strings.g.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
-import '../../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form_feedback.dart';
 import '../../../../products/domain/product_category.dart';
 import '../../controllers/product_categories_controller.dart';
 
 /// Dialog for creating or editing a product category.
 class ProductCategoryFormDialog extends HookConsumerWidget {
-  const ProductCategoryFormDialog({
-    super.key,
-    this.category,
-  });
+  const ProductCategoryFormDialog({super.key, this.category});
 
   final ProductCategory? category;
 
@@ -26,8 +22,6 @@ class ProductCategoryFormDialog extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final t = Translations.of(context);
     final categoriesAsync = ref.watch(productCategoriesControllerProvider);
 
     // Form key
@@ -35,10 +29,7 @@ class ProductCategoryFormDialog extends HookConsumerWidget {
     final dirtyGuard = useFormDirtyGuard(
       formKey: formKey,
       initialValues: isEditing
-          ? {
-              'name': category!.name,
-              'parent': category!.parentId,
-            }
+          ? {'name': category!.name, 'parent': category!.parentId}
           : null,
     );
 
@@ -103,173 +94,98 @@ class ProductCategoryFormDialog extends HookConsumerWidget {
       }
     }
 
-    return DialogCloseHandler(
-      onClose: (ctx) => dirtyGuard.confirmDiscard(ctx),
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: dirtyGuard.onPopInvokedWithResult,
-        child: ConstrainedDialogContent(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: isSaving.value
-                          ? null
-                          : () async {
-                              if (await dirtyGuard.confirmDiscard(context)) {
-                                if (context.mounted) context.pop();
-                              }
-                            },
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEditing ? 'Edit Category' : 'New Category',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: TextButton(
-                        onPressed: isSaving.value
-                            ? null
-                            : () async {
-                                if (await dirtyGuard.confirmDiscard(context)) {
-                                  if (context.mounted) context.pop();
-                                }
-                              },
-                        child: Text(t.common.cancel),
-                      ),
-                    ),
-                    FilledButton(
-                      onPressed: isSaving.value ? null : handleSave,
-                      child: isSaving.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(t.common.save),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              ),
+    return FormDialogScaffold(
+      title: isEditing ? 'Edit Category' : 'New Category',
+      formKey: formKey,
+      dirtyGuard: dirtyGuard,
+      isSaving: isSaving.value,
+      onSave: (_) => handleSave(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Name field
+          FormBuilderTextField(
+            name: 'name',
+            initialValue: category?.name,
+            decoration: const InputDecoration(
+              labelText: 'Name *',
+              hintText: 'Enter category name',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.inventory_2),
+            ),
+            enabled: !isSaving.value,
+            validator: FormBuilderValidators.required(
+              errorText: 'Name is required',
+            ),
+            textInputAction: TextInputAction.next,
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
 
-              const SizedBox(height: 8),
-
-              // Content
-              Expanded(
-                child: FormBuilder(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-
-                        // Name field
-                        FormBuilderTextField(
-                          name: 'name',
-                          initialValue: category?.name,
-                          decoration: const InputDecoration(
-                            labelText: 'Name *',
-                            hintText: 'Enter category name',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.inventory_2),
-                          ),
-                          enabled: !isSaving.value,
-                          validator: FormBuilderValidators.required(
-                            errorText: 'Name is required',
-                          ),
-                          textInputAction: TextInputAction.next,
-                          autofocus: true,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Parent category dropdown
-                        categoriesAsync.when(
-                          loading: () => const TextField(
-                            enabled: false,
-                            decoration: InputDecoration(
-                              labelText: 'Parent Category',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.account_tree),
-                              suffixIcon: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                ),
-                              ),
-                            ),
-                          ),
-                          error: (_, __) => const TextField(
-                            enabled: false,
-                            decoration: InputDecoration(
-                              labelText: 'Parent Category',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.account_tree),
-                              errorText: 'Failed to load categories',
-                            ),
-                          ),
-                          data: (categories) {
-                            // Filter out self and children to prevent circular reference
-                            final availableParents = categories.where((c) {
-                              if (category == null) return true;
-                              if (c.id == category!.id) return false;
-                              if (c.parentId == category!.id) return false;
-                              return true;
-                            }).toList();
-
-                            return FormBuilderDropdown<String?>(
-                              name: 'parent',
-                              initialValue: category?.parentId,
-                              decoration: const InputDecoration(
-                                labelText: 'Parent Category',
-                                hintText: 'Select parent (optional)',
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.account_tree),
-                              ),
-                              enabled: !isSaving.value,
-                              items: [
-                                const DropdownMenuItem(
-                                  value: null,
-                                  child: Text('None (Root Category)'),
-                                ),
-                                ...availableParents
-                                    .map((c) => DropdownMenuItem(
-                                          value: c.id,
-                                          child: Text(c.name),
-                                        )),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+          // Parent category dropdown
+          categoriesAsync.when(
+            loading: () => const TextField(
+              enabled: false,
+              decoration: InputDecoration(
+                labelText: 'Parent Category',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_tree),
+                suffixIcon: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
               ),
-            ],
+            ),
+            error: (_, __) => const TextField(
+              enabled: false,
+              decoration: InputDecoration(
+                labelText: 'Parent Category',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_tree),
+                errorText: 'Failed to load categories',
+              ),
+            ),
+            data: (categories) {
+              // Filter out self and children to prevent circular reference
+              final availableParents = categories.where((c) {
+                if (category == null) return true;
+                if (c.id == category!.id) return false;
+                if (c.parentId == category!.id) return false;
+                return true;
+              }).toList();
+
+              return FormBuilderDropdown<String?>(
+                name: 'parent',
+                initialValue: category?.parentId,
+                decoration: const InputDecoration(
+                  labelText: 'Parent Category',
+                  hintText: 'Select parent (optional)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.account_tree),
+                ),
+                enabled: !isSaving.value,
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('None (Root Category)'),
+                  ),
+                  ...availableParents.map(
+                    (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
+                  ),
+                ],
+              );
+            },
           ),
-        ),
+        ],
       ),
     );
   }
 
-  static const _fieldLabels = {
-    'name': 'Name',
-    'parent': 'Parent Category',
-  };
+  static const _fieldLabels = {'name': 'Name', 'parent': 'Parent Category'};
 }
 
 /// Shows the product category form dialog.

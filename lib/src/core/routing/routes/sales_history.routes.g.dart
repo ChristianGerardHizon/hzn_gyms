@@ -6,25 +6,20 @@ part of 'sales_history.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $salesShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$salesShellRoute];
 
 RouteBase get $salesShellRoute => ShellRouteData.$route(
-      factory: $SalesShellRouteExtension._fromState,
+  factory: $SalesShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/sales',
+      factory: $SalesHistoryRoute._fromState,
       routes: [
-        GoRouteData.$route(
-          path: '/sales',
-          factory: $SalesHistoryRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: ':id',
-              factory: $SaleDetailRoute._fromState,
-            ),
-          ],
-        ),
+        GoRouteData.$route(path: ':id', factory: $SaleDetailRoute._fromState),
       ],
-    );
+    ),
+  ],
+);
 
 extension $SalesShellRouteExtension on SalesShellRoute {
   static SalesShellRoute _fromState(GoRouterState state) =>
@@ -36,9 +31,7 @@ mixin $SalesHistoryRoute on GoRouteData {
       const SalesHistoryRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/sales',
-      );
+  String get location => GoRouteData.$location('/sales');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -55,16 +48,14 @@ mixin $SalesHistoryRoute on GoRouteData {
 }
 
 mixin $SaleDetailRoute on GoRouteData {
-  static SaleDetailRoute _fromState(GoRouterState state) => SaleDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+  static SaleDetailRoute _fromState(GoRouterState state) =>
+      SaleDetailRoute(id: state.pathParameters['id']!);
 
   SaleDetailRoute get _self => this as SaleDetailRoute;
 
   @override
-  String get location => GoRouteData.$location(
-        '/sales/${Uri.encodeComponent(_self.id)}',
-      );
+  String get location =>
+      GoRouteData.$location('/sales/${Uri.encodeComponent(_self.id)}');
 
   @override
   void go(BuildContext context) => context.go(location);

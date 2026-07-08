@@ -18,15 +18,15 @@ final class SaleSortControllerProvider
     extends $NotifierProvider<SaleSortController, SortConfig> {
   /// Provider for managing sale list sort configuration.
   SaleSortControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'saleSortControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'saleSortControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$saleSortControllerHash();
@@ -55,8 +55,14 @@ abstract class _$SaleSortController extends $Notifier<SortConfig> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<SortConfig, SortConfig>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<SortConfig, SortConfig>, SortConfig, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<SortConfig, SortConfig>,
+              SortConfig,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

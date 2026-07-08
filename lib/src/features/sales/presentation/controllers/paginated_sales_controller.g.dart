@@ -14,19 +14,20 @@ part of 'paginated_sales_controller.dart';
 final paginatedSalesControllerProvider = PaginatedSalesControllerProvider._();
 
 /// Controller for managing paginated sales list.
-final class PaginatedSalesControllerProvider extends $AsyncNotifierProvider<
-    PaginatedSalesController, PaginatedState<Sale>> {
+final class PaginatedSalesControllerProvider
+    extends
+        $AsyncNotifierProvider<PaginatedSalesController, PaginatedState<Sale>> {
   /// Controller for managing paginated sales list.
   PaginatedSalesControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'paginatedSalesControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paginatedSalesControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$paginatedSalesControllerHash();
@@ -47,13 +48,20 @@ abstract class _$PaginatedSalesController
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref
-        as $Ref<AsyncValue<PaginatedState<Sale>>, PaginatedState<Sale>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<PaginatedState<Sale>>, PaginatedState<Sale>>,
-        AsyncValue<PaginatedState<Sale>>,
-        Object?,
-        Object?>;
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<PaginatedState<Sale>>, PaginatedState<Sale>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<PaginatedState<Sale>>,
+                PaginatedState<Sale>
+              >,
+              AsyncValue<PaginatedState<Sale>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

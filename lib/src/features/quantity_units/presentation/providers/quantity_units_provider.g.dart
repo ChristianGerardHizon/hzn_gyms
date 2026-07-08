@@ -15,24 +15,27 @@ final quantityUnitsProvider = QuantityUnitsProvider._();
 
 /// Provides all quantity units.
 
-final class QuantityUnitsProvider extends $FunctionalProvider<
-        AsyncValue<List<QuantityUnit>>,
-        List<QuantityUnit>,
-        FutureOr<List<QuantityUnit>>>
+final class QuantityUnitsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<QuantityUnit>>,
+          List<QuantityUnit>,
+          FutureOr<List<QuantityUnit>>
+        >
     with
         $FutureModifier<List<QuantityUnit>>,
         $FutureProvider<List<QuantityUnit>> {
   /// Provides all quantity units.
   QuantityUnitsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'quantityUnitsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'quantityUnitsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$quantityUnitsHash();
@@ -40,8 +43,8 @@ final class QuantityUnitsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<QuantityUnit>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<QuantityUnit>> create(Ref ref) {

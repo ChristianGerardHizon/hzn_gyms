@@ -24,15 +24,15 @@ final class BranchesControllerProvider
   ///
   /// Provides methods for fetching and CRUD operations on branches.
   BranchesControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'branchesControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'branchesControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$branchesControllerHash();
@@ -55,11 +55,14 @@ abstract class _$BranchesController extends $AsyncNotifier<List<Branch>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Branch>>, List<Branch>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<Branch>>, List<Branch>>,
-        AsyncValue<List<Branch>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Branch>>, List<Branch>>,
+              AsyncValue<List<Branch>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

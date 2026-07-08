@@ -16,21 +16,25 @@ final productAdjustmentRepositoryProvider =
 
 /// Provides the ProductAdjustmentRepository instance.
 
-final class ProductAdjustmentRepositoryProvider extends $FunctionalProvider<
-    ProductAdjustmentRepository,
-    ProductAdjustmentRepository,
-    ProductAdjustmentRepository> with $Provider<ProductAdjustmentRepository> {
+final class ProductAdjustmentRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ProductAdjustmentRepository,
+          ProductAdjustmentRepository,
+          ProductAdjustmentRepository
+        >
+    with $Provider<ProductAdjustmentRepository> {
   /// Provides the ProductAdjustmentRepository instance.
   ProductAdjustmentRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productAdjustmentRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productAdjustmentRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productAdjustmentRepositoryHash();
@@ -38,8 +42,8 @@ final class ProductAdjustmentRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<ProductAdjustmentRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ProductAdjustmentRepository create(Ref ref) {

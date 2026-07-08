@@ -18,15 +18,15 @@ final class MemberSortControllerProvider
     extends $NotifierProvider<MemberSortController, SortConfig> {
   /// Provider for managing member list sort configuration.
   MemberSortControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'memberSortControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memberSortControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$memberSortControllerHash();
@@ -55,8 +55,14 @@ abstract class _$MemberSortController extends $Notifier<SortConfig> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<SortConfig, SortConfig>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<SortConfig, SortConfig>, SortConfig, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<SortConfig, SortConfig>,
+              SortConfig,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

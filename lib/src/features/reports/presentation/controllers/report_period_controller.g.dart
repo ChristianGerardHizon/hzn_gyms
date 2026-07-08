@@ -18,15 +18,15 @@ final class ReportPeriodControllerProvider
     extends $NotifierProvider<ReportPeriodController, ReportPeriod> {
   /// Manages the currently selected report period across all reports.
   ReportPeriodControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'reportPeriodControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'reportPeriodControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$reportPeriodControllerHash();
@@ -55,11 +55,14 @@ abstract class _$ReportPeriodController extends $Notifier<ReportPeriod> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<ReportPeriod, ReportPeriod>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<ReportPeriod, ReportPeriod>,
-        ReportPeriod,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ReportPeriod, ReportPeriod>,
+              ReportPeriod,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

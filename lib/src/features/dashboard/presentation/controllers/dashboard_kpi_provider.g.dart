@@ -27,15 +27,15 @@ final class ProductsNearExpirationCountProvider
   /// Delegates to the unified inventory alerts controller for both lot-tracked
   /// and non-lot-tracked products.
   ProductsNearExpirationCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productsNearExpirationCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productsNearExpirationCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productsNearExpirationCountHash();
@@ -72,15 +72,15 @@ final class ProductsExpiredCountProvider
   /// Delegates to the unified inventory alerts controller for both lot-tracked
   /// and non-lot-tracked products.
   ProductsExpiredCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productsExpiredCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productsExpiredCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productsExpiredCountHash();
@@ -117,15 +117,15 @@ final class LowStockProductsCountProvider
   /// Delegates to the unified inventory alerts controller for both lot-tracked
   /// and non-lot-tracked products.
   LowStockProductsCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'lowStockProductsCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lowStockProductsCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$lowStockProductsCountHash();

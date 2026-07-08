@@ -27,15 +27,15 @@ final class UserEntityCacheProvider
   /// Used to pre-cache newly created users to avoid race conditions
   /// where the detail page loads before the network fetch completes.
   UserEntityCacheProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'userEntityCacheProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userEntityCacheProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$userEntityCacheHash();
@@ -66,11 +66,14 @@ abstract class _$UserEntityCache extends $Notifier<Map<String, User>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Map<String, User>, Map<String, User>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Map<String, User>, Map<String, User>>,
-        Map<String, User>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<String, User>, Map<String, User>>,
+              Map<String, User>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

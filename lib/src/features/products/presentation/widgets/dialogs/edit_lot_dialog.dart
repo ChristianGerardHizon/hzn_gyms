@@ -6,27 +6,20 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
-import '../../../../../core/i18n/strings.g.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
-import '../../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form_feedback.dart';
 import '../../../domain/product_lot.dart';
 import '../../controllers/product_lots_controller.dart';
 
 /// Dialog for editing an existing product lot.
 class EditLotDialog extends HookConsumerWidget {
-  const EditLotDialog({
-    super.key,
-    required this.lot,
-  });
+  const EditLotDialog({super.key, required this.lot});
 
   final ProductLot lot;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final t = Translations.of(context);
-
     // Form key
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final dirtyGuard = useFormDirtyGuard(
@@ -95,152 +88,81 @@ class EditLotDialog extends HookConsumerWidget {
       }
     }
 
-    return DialogCloseHandler(
-      onClose: (ctx) => dirtyGuard.confirmDiscard(ctx),
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: dirtyGuard.onPopInvokedWithResult,
-        child: ConstrainedDialogContent(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: isSaving.value
-                          ? null
-                          : () async {
-                              if (await dirtyGuard.confirmDiscard(context)) {
-                                if (context.mounted) context.pop();
-                              }
-                            },
-                    ),
-                    Expanded(
-                      child: Text('Edit Lot', style: theme.textTheme.titleLarge),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: TextButton(
-                      onPressed: isSaving.value
-                          ? null
-                          : () async {
-                              if (await dirtyGuard.confirmDiscard(context)) {
-                                if (context.mounted) context.pop();
-                              }
-                            },
-                      child: Text(t.common.cancel),
-                    ),
-                  ),
-                  FilledButton(
-                    onPressed: isSaving.value ? null : handleSave,
-                    child: isSaving.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(t.common.save),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
+    return FormDialogScaffold(
+      title: 'Edit Lot',
+      formKey: formKey,
+      dirtyGuard: dirtyGuard,
+      isSaving: isSaving.value,
+      onSave: (_) => handleSave(),
+      initialValue: {
+        'lotNumber': lot.lotNumber,
+        'quantity': lot.quantity.toString(),
+        'expiration': lot.expiration,
+        'notes': lot.notes ?? '',
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Lot Number (required)
+          FormBuilderTextField(
+            name: 'lotNumber',
+            decoration: const InputDecoration(
+              labelText: 'Lot Number *',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.tag),
             ),
-
-            const SizedBox(height: 8),
-
-            // Content
-            Expanded(
-              child: FormBuilder(
-                key: formKey,
-                initialValue: {
-                  'lotNumber': lot.lotNumber,
-                  'quantity': lot.quantity.toString(),
-                  'expiration': lot.expiration,
-                  'notes': lot.notes ?? '',
-                },
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-
-                      // Lot Number (required)
-                      FormBuilderTextField(
-                        name: 'lotNumber',
-                        decoration: const InputDecoration(
-                          labelText: 'Lot Number *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.tag),
-                        ),
-                        enabled: !isSaving.value,
-                        textCapitalization: TextCapitalization.characters,
-                        validator: FormBuilderValidators.required(
-                          errorText: 'Lot number is required',
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Quantity (required)
-                      FormBuilderTextField(
-                        name: 'quantity',
-                        decoration: const InputDecoration(
-                          labelText: 'Quantity *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.inventory),
-                        ),
-                        enabled: !isSaving.value,
-                        keyboardType: TextInputType.number,
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                            errorText: 'Quantity is required',
-                          ),
-                          FormBuilderValidators.numeric(
-                            errorText: 'Must be a number',
-                          ),
-                        ]),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Expiration date
-                      FormBuilderDateTimePicker(
-                        name: 'expiration',
-                        decoration: const InputDecoration(
-                          labelText: 'Expiration Date',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.calendar_today),
-                        ),
-                        enabled: !isSaving.value,
-                        inputType: InputType.date,
-                        firstDate: DateTime(2000),
-                        lastDate:
-                            DateTime.now().add(const Duration(days: 365 * 10)),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Notes
-                      FormBuilderTextField(
-                        name: 'notes',
-                        decoration: const InputDecoration(
-                          labelText: 'Notes',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.notes),
-                        ),
-                        enabled: !isSaving.value,
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
+            enabled: !isSaving.value,
+            textCapitalization: TextCapitalization.characters,
+            validator: FormBuilderValidators.required(
+              errorText: 'Lot number is required',
             ),
-          ],
           ),
-        ),
+          const SizedBox(height: 16),
+
+          // Quantity (required)
+          FormBuilderTextField(
+            name: 'quantity',
+            decoration: const InputDecoration(
+              labelText: 'Quantity *',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.inventory),
+            ),
+            enabled: !isSaving.value,
+            keyboardType: TextInputType.number,
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(errorText: 'Quantity is required'),
+              FormBuilderValidators.numeric(errorText: 'Must be a number'),
+            ]),
+          ),
+          const SizedBox(height: 16),
+
+          // Expiration date
+          FormBuilderDateTimePicker(
+            name: 'expiration',
+            decoration: const InputDecoration(
+              labelText: 'Expiration Date',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.calendar_today),
+            ),
+            enabled: !isSaving.value,
+            inputType: InputType.date,
+            firstDate: DateTime(2000),
+            lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+          ),
+          const SizedBox(height: 16),
+
+          // Notes
+          FormBuilderTextField(
+            name: 'notes',
+            decoration: const InputDecoration(
+              labelText: 'Notes',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.notes),
+            ),
+            enabled: !isSaving.value,
+            maxLines: 2,
+          ),
+        ],
       ),
     );
   }

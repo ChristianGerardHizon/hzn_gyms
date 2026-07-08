@@ -23,16 +23,16 @@ final class MemberCardsControllerProvider
   /// Controller for managing a member's physical ID cards.
   ///
   /// Fetches all cards for a specific member by ID.
-  MemberCardsControllerProvider._(
-      {required MemberCardsControllerFamily super.from,
-      required String super.argument})
-      : super(
-          retry: null,
-          name: r'memberCardsControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  MemberCardsControllerProvider._({
+    required MemberCardsControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberCardsControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$memberCardsControllerHash();
@@ -69,27 +69,26 @@ String _$memberCardsControllerHash() =>
 final class MemberCardsControllerFamily extends $Family
     with
         $ClassFamilyOverride<
-            MemberCardsController,
-            AsyncValue<List<MemberCard>>,
-            List<MemberCard>,
-            FutureOr<List<MemberCard>>,
-            String> {
+          MemberCardsController,
+          AsyncValue<List<MemberCard>>,
+          List<MemberCard>,
+          FutureOr<List<MemberCard>>,
+          String
+        > {
   MemberCardsControllerFamily._()
-      : super(
-          retry: null,
-          name: r'memberCardsControllerProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'memberCardsControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Controller for managing a member's physical ID cards.
   ///
   /// Fetches all cards for a specific member by ID.
 
-  MemberCardsControllerProvider call(
-    String memberId,
-  ) =>
+  MemberCardsControllerProvider call(String memberId) =>
       MemberCardsControllerProvider._(argument: memberId, from: this);
 
   @override
@@ -105,23 +104,20 @@ abstract class _$MemberCardsController
   late final _$args = ref.$arg as String;
   String get memberId => _$args;
 
-  FutureOr<List<MemberCard>> build(
-    String memberId,
-  );
+  FutureOr<List<MemberCard>> build(String memberId);
   @$mustCallSuper
   @override
   void runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<MemberCard>>, List<MemberCard>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<MemberCard>>, List<MemberCard>>,
-        AsyncValue<List<MemberCard>>,
-        Object?,
-        Object?>;
-    element.handleCreate(
-        ref,
-        () => build(
-              _$args,
-            ));
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<MemberCard>>, List<MemberCard>>,
+              AsyncValue<List<MemberCard>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
   }
 }

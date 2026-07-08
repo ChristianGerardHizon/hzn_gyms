@@ -27,15 +27,15 @@ final class CurrentBranchControllerProvider
   /// - For admins: Allows switching between branches, persists selection
   /// - For regular users: Locked to their assigned branch
   CurrentBranchControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'currentBranchControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentBranchControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$currentBranchControllerHash();
@@ -59,11 +59,14 @@ abstract class _$CurrentBranchController extends $AsyncNotifier<Branch?> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<Branch?>, Branch?>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<Branch?>, Branch?>,
-        AsyncValue<Branch?>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<Branch?>, Branch?>,
+              AsyncValue<Branch?>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -80,15 +83,15 @@ final class CurrentBranchIdProvider
     with $Provider<String?> {
   /// Convenience provider for current branch ID.
   CurrentBranchIdProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'currentBranchIdProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentBranchIdProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$currentBranchIdHash();
@@ -132,15 +135,15 @@ final class CurrentBranchFilterProvider
   ///
   /// Returns a filter string like `branch = "id"` or null if no branch selected.
   CurrentBranchFilterProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'currentBranchFilterProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentBranchFilterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$currentBranchFilterHash();

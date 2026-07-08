@@ -15,19 +15,23 @@ final paginatedProductsControllerProvider =
     PaginatedProductsControllerProvider._();
 
 /// Controller for managing paginated products list.
-final class PaginatedProductsControllerProvider extends $AsyncNotifierProvider<
-    PaginatedProductsController, PaginatedState<Product>> {
+final class PaginatedProductsControllerProvider
+    extends
+        $AsyncNotifierProvider<
+          PaginatedProductsController,
+          PaginatedState<Product>
+        > {
   /// Controller for managing paginated products list.
   PaginatedProductsControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'paginatedProductsControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paginatedProductsControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$paginatedProductsControllerHash();
@@ -48,14 +52,23 @@ abstract class _$PaginatedProductsController
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref
-        as $Ref<AsyncValue<PaginatedState<Product>>, PaginatedState<Product>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<PaginatedState<Product>>,
-            PaginatedState<Product>>,
-        AsyncValue<PaginatedState<Product>>,
-        Object?,
-        Object?>;
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<PaginatedState<Product>>,
+              PaginatedState<Product>
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<PaginatedState<Product>>,
+                PaginatedState<Product>
+              >,
+              AsyncValue<PaginatedState<Product>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

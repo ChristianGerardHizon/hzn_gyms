@@ -61,13 +61,11 @@ class CsvImportService {
     String csvContent,
     List<ProductCategory> existingCategories,
   ) {
-    final converter = const CsvToListConverter(eol: '\n');
     List<List<dynamic>> rows;
     try {
-      rows = converter.convert(csvContent);
+      rows = csv.decode(csvContent);
     } catch (_) {
-      // Retry with \r\n line endings
-      rows = const CsvToListConverter(eol: '\r\n').convert(csvContent);
+      rows = Csv(lineDelimiter: '\n').decode(csvContent);
     }
 
     if (rows.isEmpty) {

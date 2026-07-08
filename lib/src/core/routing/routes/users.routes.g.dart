@@ -6,29 +6,21 @@ part of 'users.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $usersShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$usersShellRoute];
 
 RouteBase get $usersShellRoute => ShellRouteData.$route(
-      factory: $UsersShellRouteExtension._fromState,
+  factory: $UsersShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/users',
+      factory: $UsersRoute._fromState,
       routes: [
-        GoRouteData.$route(
-          path: '/users',
-          factory: $UsersRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: ':id',
-              factory: $UserDetailRoute._fromState,
-            ),
-            GoRouteData.$route(
-              path: 'roles',
-              factory: $UserRolesRoute._fromState,
-            ),
-          ],
-        ),
+        GoRouteData.$route(path: ':id', factory: $UserDetailRoute._fromState),
+        GoRouteData.$route(path: 'roles', factory: $UserRolesRoute._fromState),
       ],
-    );
+    ),
+  ],
+);
 
 extension $UsersShellRouteExtension on UsersShellRoute {
   static UsersShellRoute _fromState(GoRouterState state) =>
@@ -39,9 +31,7 @@ mixin $UsersRoute on GoRouteData {
   static UsersRoute _fromState(GoRouterState state) => const UsersRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/users',
-      );
+  String get location => GoRouteData.$location('/users');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -59,19 +49,17 @@ mixin $UsersRoute on GoRouteData {
 
 mixin $UserDetailRoute on GoRouteData {
   static UserDetailRoute _fromState(GoRouterState state) => UserDetailRoute(
-        id: state.pathParameters['id']!,
-        tab: state.uri.queryParameters['tab'],
-      );
+    id: state.pathParameters['id']!,
+    tab: state.uri.queryParameters['tab'],
+  );
 
   UserDetailRoute get _self => this as UserDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/users/${Uri.encodeComponent(_self.id)}',
-        queryParams: {
-          if (_self.tab != null) 'tab': _self.tab,
-        },
-      );
+    '/users/${Uri.encodeComponent(_self.id)}',
+    queryParams: {if (_self.tab != null) 'tab': _self.tab},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -92,9 +80,7 @@ mixin $UserRolesRoute on GoRouteData {
       const UserRolesRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/users/roles',
-      );
+  String get location => GoRouteData.$location('/users/roles');
 
   @override
   void go(BuildContext context) => context.go(location);

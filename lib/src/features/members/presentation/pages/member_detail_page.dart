@@ -18,13 +18,13 @@ import '../../../memberships/presentation/widgets/purchase_membership_dialog.dar
 import '../../../check_in/presentation/controllers/member_check_ins_controller.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';
-import '../../../sales/presentation/widgets/record_payment_sheet.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../controllers/member_provider.dart';
 import '../controllers/members_controller.dart';
 import '../controllers/paginated_members_controller.dart';
 import '../../../member_cards/domain/member_card.dart';
 import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
-import '../../../member_cards/presentation/widgets/add_card_sheet.dart';
+import '../../../member_cards/presentation/widgets/add_card_dialog.dart';
 import '../widgets/member_form_dialog.dart';
 
 /// Member detail page showing member information and sales history.
@@ -203,7 +203,7 @@ class MemberDetailPage extends HookConsumerWidget {
                           ),
                           FilledButton.tonalIcon(
                             onPressed: () async {
-                              final result = await showAddCardSheet(
+                              final result = await showAddCardDialog(
                                 context,
                                 memberId: memberId,
                               );
@@ -254,7 +254,7 @@ class MemberDetailPage extends HookConsumerWidget {
                                       memberId),
                                 );
                                 if (context.mounted) {
-                                  await showRecordPaymentSheet(
+                                  await showRecordPaymentDialog(
                                     context,
                                     sale: result.sale,
                                     balanceDue: result.totalPrice,

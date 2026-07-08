@@ -19,15 +19,16 @@ final class SaleProvider
     extends $FunctionalProvider<AsyncValue<Sale?>, Sale?, FutureOr<Sale?>>
     with $FutureModifier<Sale?>, $FutureProvider<Sale?> {
   /// Provider for fetching a single sale by ID.
-  SaleProvider._(
-      {required SaleFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'saleProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  SaleProvider._({
+    required SaleFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'saleProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$saleHash();
@@ -47,10 +48,7 @@ final class SaleProvider
   @override
   FutureOr<Sale?> create(Ref ref) {
     final argument = this.argument as String;
-    return sale(
-      ref,
-      argument,
-    );
+    return sale(ref, argument);
   }
 
   @override
@@ -71,20 +69,17 @@ String _$saleHash() => r'f36729253ff62567b2d15e784782bb5ec0893704';
 final class SaleFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Sale?>, String> {
   SaleFamily._()
-      : super(
-          retry: null,
-          name: r'saleProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'saleProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for fetching a single sale by ID.
 
-  SaleProvider call(
-    String id,
-  ) =>
-      SaleProvider._(argument: id, from: this);
+  SaleProvider call(String id) => SaleProvider._(argument: id, from: this);
 
   @override
   String toString() => r'saleProvider';

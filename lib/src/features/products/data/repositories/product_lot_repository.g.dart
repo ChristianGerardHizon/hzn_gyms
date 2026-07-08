@@ -15,21 +15,25 @@ final productLotRepositoryProvider = ProductLotRepositoryProvider._();
 
 /// Provides the ProductLotRepository instance.
 
-final class ProductLotRepositoryProvider extends $FunctionalProvider<
-    ProductLotRepository,
-    ProductLotRepository,
-    ProductLotRepository> with $Provider<ProductLotRepository> {
+final class ProductLotRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ProductLotRepository,
+          ProductLotRepository,
+          ProductLotRepository
+        >
+    with $Provider<ProductLotRepository> {
   /// Provides the ProductLotRepository instance.
   ProductLotRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productLotRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productLotRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productLotRepositoryHash();
@@ -37,8 +41,8 @@ final class ProductLotRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<ProductLotRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ProductLotRepository create(Ref ref) {

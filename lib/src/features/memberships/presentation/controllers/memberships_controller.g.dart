@@ -18,15 +18,15 @@ final class MembershipsControllerProvider
     extends $AsyncNotifierProvider<MembershipsController, List<Membership>> {
   /// Controller for managing the list of membership plans.
   MembershipsControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'membershipsControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'membershipsControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$membershipsControllerHash();
@@ -49,11 +49,14 @@ abstract class _$MembershipsController
   void runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<Membership>>, List<Membership>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<Membership>>, List<Membership>>,
-        AsyncValue<List<Membership>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Membership>>, List<Membership>>,
+              AsyncValue<List<Membership>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

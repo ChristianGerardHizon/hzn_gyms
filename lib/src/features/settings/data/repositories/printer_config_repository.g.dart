@@ -15,21 +15,25 @@ final printerConfigRepositoryProvider = PrinterConfigRepositoryProvider._();
 
 /// Provides the PrinterConfigRepository instance.
 
-final class PrinterConfigRepositoryProvider extends $FunctionalProvider<
-    PrinterConfigRepository,
-    PrinterConfigRepository,
-    PrinterConfigRepository> with $Provider<PrinterConfigRepository> {
+final class PrinterConfigRepositoryProvider
+    extends
+        $FunctionalProvider<
+          PrinterConfigRepository,
+          PrinterConfigRepository,
+          PrinterConfigRepository
+        >
+    with $Provider<PrinterConfigRepository> {
   /// Provides the PrinterConfigRepository instance.
   PrinterConfigRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'printerConfigRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'printerConfigRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$printerConfigRepositoryHash();
@@ -37,8 +41,8 @@ final class PrinterConfigRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<PrinterConfigRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   PrinterConfigRepository create(Ref ref) {

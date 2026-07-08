@@ -12,7 +12,7 @@ import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../domain/member.dart';
 import '../controllers/member_search_controller.dart';
 import '../controllers/member_sort_controller.dart';
-import '../../../sales/presentation/widgets/record_payment_sheet.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../controllers/paginated_members_controller.dart';
 import 'dialogs/member_search_fields_dialog.dart';
 import 'member_form_dialog.dart';
@@ -179,7 +179,7 @@ class MemberListPanel extends HookConsumerWidget {
     if (result != null) {
       ref.read(paginatedMembersControllerProvider.notifier).refresh();
       if (result.sale != null && result.totalPrice != null && context.mounted) {
-        await showRecordPaymentSheet(
+        await showRecordPaymentDialog(
           context,
           sale: result.sale!,
           balanceDue: result.totalPrice!,

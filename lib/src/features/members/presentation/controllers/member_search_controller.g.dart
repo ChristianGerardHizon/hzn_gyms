@@ -18,15 +18,15 @@ final class MemberSearchFieldsProvider
     extends $NotifierProvider<MemberSearchFields, Set<String>> {
   /// Provider for managing which fields are included in member search.
   MemberSearchFieldsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'memberSearchFieldsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memberSearchFieldsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$memberSearchFieldsHash();
@@ -55,8 +55,14 @@ abstract class _$MemberSearchFields extends $Notifier<Set<String>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Set<String>, Set<String>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Set<String>, Set<String>>, Set<String>, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

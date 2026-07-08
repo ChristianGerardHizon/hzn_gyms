@@ -18,15 +18,15 @@ final class CheckInControllerProvider
     extends $AsyncNotifierProvider<CheckInController, List<CheckIn>> {
   /// Controller for performing check-ins and managing today's check-in list.
   CheckInControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'checkInControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'checkInControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$checkInControllerHash();
@@ -46,11 +46,14 @@ abstract class _$CheckInController extends $AsyncNotifier<List<CheckIn>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<CheckIn>>, List<CheckIn>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<CheckIn>>, List<CheckIn>>,
-        AsyncValue<List<CheckIn>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<CheckIn>>, List<CheckIn>>,
+              AsyncValue<List<CheckIn>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

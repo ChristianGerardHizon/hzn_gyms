@@ -27,10 +27,13 @@ final inventoryAlertsSummaryProvider = InventoryAlertsSummaryProvider._();
 /// - vw_expired_lots
 /// - vw_near_expiration_lots
 
-final class InventoryAlertsSummaryProvider extends $FunctionalProvider<
-        AsyncValue<InventoryAlertsSummary>,
-        InventoryAlertsSummary,
-        FutureOr<InventoryAlertsSummary>>
+final class InventoryAlertsSummaryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<InventoryAlertsSummary>,
+          InventoryAlertsSummary,
+          FutureOr<InventoryAlertsSummary>
+        >
     with
         $FutureModifier<InventoryAlertsSummary>,
         $FutureProvider<InventoryAlertsSummary> {
@@ -42,15 +45,15 @@ final class InventoryAlertsSummaryProvider extends $FunctionalProvider<
   /// - vw_expired_lots
   /// - vw_near_expiration_lots
   InventoryAlertsSummaryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'inventoryAlertsSummaryProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'inventoryAlertsSummaryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$inventoryAlertsSummaryHash();
@@ -58,8 +61,8 @@ final class InventoryAlertsSummaryProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<InventoryAlertsSummary> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<InventoryAlertsSummary> create(Ref ref) {
@@ -82,15 +85,15 @@ final class LowStockAlertsCountProvider
     with $FutureModifier<int>, $FutureProvider<int> {
   /// Count of low stock products (including lot-tracked).
   LowStockAlertsCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'lowStockAlertsCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lowStockAlertsCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$lowStockAlertsCountHash();
@@ -121,15 +124,15 @@ final class NearExpirationAlertsCountProvider
     with $FutureModifier<int>, $FutureProvider<int> {
   /// Count of products/lots near expiration.
   NearExpirationAlertsCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'nearExpirationAlertsCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nearExpirationAlertsCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$nearExpirationAlertsCountHash();
@@ -160,15 +163,15 @@ final class ExpiredAlertsCountProvider
     with $FutureModifier<int>, $FutureProvider<int> {
   /// Count of expired products/lots.
   ExpiredAlertsCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'expiredAlertsCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'expiredAlertsCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$expiredAlertsCountHash();
@@ -194,24 +197,27 @@ final lowStockAlertsProvider = LowStockAlertsProvider._();
 
 /// List of low stock alerts for display.
 
-final class LowStockAlertsProvider extends $FunctionalProvider<
-        AsyncValue<List<InventoryAlert>>,
-        List<InventoryAlert>,
-        FutureOr<List<InventoryAlert>>>
+final class LowStockAlertsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<InventoryAlert>>,
+          List<InventoryAlert>,
+          FutureOr<List<InventoryAlert>>
+        >
     with
         $FutureModifier<List<InventoryAlert>>,
         $FutureProvider<List<InventoryAlert>> {
   /// List of low stock alerts for display.
   LowStockAlertsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'lowStockAlertsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lowStockAlertsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$lowStockAlertsHash();
@@ -219,8 +225,8 @@ final class LowStockAlertsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<InventoryAlert>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<InventoryAlert>> create(Ref ref) {
@@ -237,24 +243,27 @@ final nearExpirationAlertsProvider = NearExpirationAlertsProvider._();
 
 /// List of near expiration alerts for display.
 
-final class NearExpirationAlertsProvider extends $FunctionalProvider<
-        AsyncValue<List<InventoryAlert>>,
-        List<InventoryAlert>,
-        FutureOr<List<InventoryAlert>>>
+final class NearExpirationAlertsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<InventoryAlert>>,
+          List<InventoryAlert>,
+          FutureOr<List<InventoryAlert>>
+        >
     with
         $FutureModifier<List<InventoryAlert>>,
         $FutureProvider<List<InventoryAlert>> {
   /// List of near expiration alerts for display.
   NearExpirationAlertsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'nearExpirationAlertsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'nearExpirationAlertsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$nearExpirationAlertsHash();
@@ -262,8 +271,8 @@ final class NearExpirationAlertsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<InventoryAlert>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<InventoryAlert>> create(Ref ref) {
@@ -281,24 +290,27 @@ final expiredAlertsProvider = ExpiredAlertsProvider._();
 
 /// List of expired alerts for display.
 
-final class ExpiredAlertsProvider extends $FunctionalProvider<
-        AsyncValue<List<InventoryAlert>>,
-        List<InventoryAlert>,
-        FutureOr<List<InventoryAlert>>>
+final class ExpiredAlertsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<InventoryAlert>>,
+          List<InventoryAlert>,
+          FutureOr<List<InventoryAlert>>
+        >
     with
         $FutureModifier<List<InventoryAlert>>,
         $FutureProvider<List<InventoryAlert>> {
   /// List of expired alerts for display.
   ExpiredAlertsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'expiredAlertsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'expiredAlertsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$expiredAlertsHash();
@@ -306,8 +318,8 @@ final class ExpiredAlertsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<InventoryAlert>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<InventoryAlert>> create(Ref ref) {

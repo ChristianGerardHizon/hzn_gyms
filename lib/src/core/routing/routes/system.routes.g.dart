@@ -6,69 +6,64 @@ part of 'system.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $systemShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$systemShellRoute];
 
 RouteBase get $systemShellRoute => ShellRouteData.$route(
-      factory: $SystemShellRouteExtension._fromState,
+  factory: $SystemShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/system',
+      factory: $SystemRoute._fromState,
       routes: [
         GoRouteData.$route(
-          path: '/system',
-          factory: $SystemRoute._fromState,
+          path: 'product-categories',
+          factory: $ProductCategoriesRoute._fromState,
           routes: [
             GoRouteData.$route(
-              path: 'product-categories',
-              factory: $ProductCategoriesRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $ProductCategoryDetailRoute._fromState,
-                ),
-              ],
-            ),
-            GoRouteData.$route(
-              path: 'quantity-units',
-              factory: $QuantityUnitsRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $QuantityUnitDetailRoute._fromState,
-                ),
-              ],
-            ),
-            GoRouteData.$route(
-              path: 'printers',
-              factory: $PrinterSettingsRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $PrinterDetailRoute._fromState,
-                ),
-              ],
-            ),
-            GoRouteData.$route(
-              path: 'cashier-groups',
-              factory: $CashierGroupsRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $CashierGroupDetailRoute._fromState,
-                ),
-              ],
-            ),
-            GoRouteData.$route(
-              path: 'appearance',
-              factory: $AppearanceRoute._fromState,
-            ),
-            GoRouteData.$route(
-              path: 'import',
-              factory: $ImportRoute._fromState,
+              path: ':id',
+              factory: $ProductCategoryDetailRoute._fromState,
             ),
           ],
         ),
+        GoRouteData.$route(
+          path: 'quantity-units',
+          factory: $QuantityUnitsRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: ':id',
+              factory: $QuantityUnitDetailRoute._fromState,
+            ),
+          ],
+        ),
+        GoRouteData.$route(
+          path: 'printers',
+          factory: $PrinterSettingsRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: ':id',
+              factory: $PrinterDetailRoute._fromState,
+            ),
+          ],
+        ),
+        GoRouteData.$route(
+          path: 'cashier-groups',
+          factory: $CashierGroupsRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: ':id',
+              factory: $CashierGroupDetailRoute._fromState,
+            ),
+          ],
+        ),
+        GoRouteData.$route(
+          path: 'appearance',
+          factory: $AppearanceRoute._fromState,
+        ),
+        GoRouteData.$route(path: 'import', factory: $ImportRoute._fromState),
       ],
-    );
+    ),
+  ],
+);
 
 extension $SystemShellRouteExtension on SystemShellRoute {
   static SystemShellRoute _fromState(GoRouterState state) =>
@@ -79,9 +74,7 @@ mixin $SystemRoute on GoRouteData {
   static SystemRoute _fromState(GoRouterState state) => const SystemRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system',
-      );
+  String get location => GoRouteData.$location('/system');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -102,9 +95,7 @@ mixin $ProductCategoriesRoute on GoRouteData {
       const ProductCategoriesRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system/product-categories',
-      );
+  String get location => GoRouteData.$location('/system/product-categories');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -122,16 +113,14 @@ mixin $ProductCategoriesRoute on GoRouteData {
 
 mixin $ProductCategoryDetailRoute on GoRouteData {
   static ProductCategoryDetailRoute _fromState(GoRouterState state) =>
-      ProductCategoryDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      ProductCategoryDetailRoute(id: state.pathParameters['id']!);
 
   ProductCategoryDetailRoute get _self => this as ProductCategoryDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/system/product-categories/${Uri.encodeComponent(_self.id)}',
-      );
+    '/system/product-categories/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -152,9 +141,7 @@ mixin $QuantityUnitsRoute on GoRouteData {
       const QuantityUnitsRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system/quantity-units',
-      );
+  String get location => GoRouteData.$location('/system/quantity-units');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -172,16 +159,14 @@ mixin $QuantityUnitsRoute on GoRouteData {
 
 mixin $QuantityUnitDetailRoute on GoRouteData {
   static QuantityUnitDetailRoute _fromState(GoRouterState state) =>
-      QuantityUnitDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      QuantityUnitDetailRoute(id: state.pathParameters['id']!);
 
   QuantityUnitDetailRoute get _self => this as QuantityUnitDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/system/quantity-units/${Uri.encodeComponent(_self.id)}',
-      );
+    '/system/quantity-units/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -202,9 +187,7 @@ mixin $PrinterSettingsRoute on GoRouteData {
       const PrinterSettingsRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system/printers',
-      );
+  String get location => GoRouteData.$location('/system/printers');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -222,16 +205,14 @@ mixin $PrinterSettingsRoute on GoRouteData {
 
 mixin $PrinterDetailRoute on GoRouteData {
   static PrinterDetailRoute _fromState(GoRouterState state) =>
-      PrinterDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      PrinterDetailRoute(id: state.pathParameters['id']!);
 
   PrinterDetailRoute get _self => this as PrinterDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/system/printers/${Uri.encodeComponent(_self.id)}',
-      );
+    '/system/printers/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -252,9 +233,7 @@ mixin $CashierGroupsRoute on GoRouteData {
       const CashierGroupsRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system/cashier-groups',
-      );
+  String get location => GoRouteData.$location('/system/cashier-groups');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -272,16 +251,14 @@ mixin $CashierGroupsRoute on GoRouteData {
 
 mixin $CashierGroupDetailRoute on GoRouteData {
   static CashierGroupDetailRoute _fromState(GoRouterState state) =>
-      CashierGroupDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      CashierGroupDetailRoute(id: state.pathParameters['id']!);
 
   CashierGroupDetailRoute get _self => this as CashierGroupDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/system/cashier-groups/${Uri.encodeComponent(_self.id)}',
-      );
+    '/system/cashier-groups/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -302,9 +279,7 @@ mixin $AppearanceRoute on GoRouteData {
       const AppearanceRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system/appearance',
-      );
+  String get location => GoRouteData.$location('/system/appearance');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -324,9 +299,7 @@ mixin $ImportRoute on GoRouteData {
   static ImportRoute _fromState(GoRouterState state) => const ImportRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/system/import',
-      );
+  String get location => GoRouteData.$location('/system/import');
 
   @override
   void go(BuildContext context) => context.go(location);

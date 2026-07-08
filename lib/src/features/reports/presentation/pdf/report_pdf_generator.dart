@@ -374,7 +374,7 @@ class ReportPdfGenerator {
     final saveResult = await FileSaver.instance.saveAs(
       name: filename,
       bytes: result.bytes,
-      ext: 'pdf',
+      fileExtension: 'pdf',
       mimeType: MimeType.pdf,
     );
 
