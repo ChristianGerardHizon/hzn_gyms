@@ -25,7 +25,7 @@ class UserRole with UserRoleMappable {
   /// PocketBase record ID.
   final String id;
 
-  /// Role name (e.g., "Admin", "Veterinarian", "Staff").
+  /// Role name (e.g., "Admin", "Gym Manager", "Staff").
   final String name;
 
   /// Role description.
@@ -84,29 +84,30 @@ class UserRole with UserRoleMappable {
 
 /// Permission keys used in the system.
 abstract class Permissions {
-  // Patient permissions
-  static const patientsView = 'patients.view';
-  static const patientsCreate = 'patients.create';
-  static const patientsEdit = 'patients.edit';
-  static const patientsDelete = 'patients.delete';
+  // Member permissions
+  static const membersView = 'members.view';
+  static const membersCreate = 'members.create';
+  static const membersEdit = 'members.edit';
+  static const membersDelete = 'members.delete';
 
-  // Records permissions
-  static const recordsView = 'records.view';
-  static const recordsCreate = 'records.create';
-  static const recordsEdit = 'records.edit';
-  static const recordsDelete = 'records.delete';
+  // Membership permissions
+  static const membershipsView = 'memberships.view';
+  static const membershipsCreate = 'memberships.create';
+  static const membershipsEdit = 'memberships.edit';
+  static const membershipsDelete = 'memberships.delete';
 
-  // Prescriptions permissions
-  static const prescriptionsView = 'prescriptions.view';
-  static const prescriptionsCreate = 'prescriptions.create';
-  static const prescriptionsEdit = 'prescriptions.edit';
-  static const prescriptionsDelete = 'prescriptions.delete';
+  // Check-in permissions
+  static const checkInsView = 'checkIns.view';
+  static const checkInsCreate = 'checkIns.create';
 
-  // Appointments permissions
-  static const appointmentsView = 'appointments.view';
-  static const appointmentsCreate = 'appointments.create';
-  static const appointmentsEdit = 'appointments.edit';
-  static const appointmentsDelete = 'appointments.delete';
+  // Member card permissions
+  static const memberCardsView = 'memberCards.view';
+  static const memberCardsCreate = 'memberCards.create';
+  static const memberCardsEdit = 'memberCards.edit';
+  static const memberCardsDelete = 'memberCards.delete';
+
+  // Reports permissions
+  static const reportsView = 'reports.view';
 
   // Products permissions
   static const productsView = 'products.view';
@@ -149,20 +150,21 @@ abstract class Permissions {
 
   /// All permissions grouped by category (keys only).
   static const Map<String, List<String>> allByCategory = {
-    'Patients': [patientsView, patientsCreate, patientsEdit, patientsDelete],
-    'Records': [recordsView, recordsCreate, recordsEdit, recordsDelete],
-    'Prescriptions': [
-      prescriptionsView,
-      prescriptionsCreate,
-      prescriptionsEdit,
-      prescriptionsDelete,
+    'Members': [membersView, membersCreate, membersEdit, membersDelete],
+    'Memberships': [
+      membershipsView,
+      membershipsCreate,
+      membershipsEdit,
+      membershipsDelete,
     ],
-    'Appointments': [
-      appointmentsView,
-      appointmentsCreate,
-      appointmentsEdit,
-      appointmentsDelete,
+    'Check-In': [checkInsView, checkInsCreate],
+    'Member Cards': [
+      memberCardsView,
+      memberCardsCreate,
+      memberCardsEdit,
+      memberCardsDelete,
     ],
+    'Reports': [reportsView],
     'Products': [productsView, productsCreate, productsEdit, productsDelete],
     'Inventory': [inventoryView, inventoryAdjust],
     'Sales': [salesView, salesCreate],
@@ -210,121 +212,115 @@ abstract class Permissions {
   /// Private: Build the full permission list with metadata.
   static List<Permission> _buildPermissionList() {
     return [
-      // Patients
+      // Members
       const Permission(
-        key: patientsView,
-        name: 'View Patients',
-        category: 'Patients',
-        description: 'View patient profiles and basic information',
+        key: membersView,
+        name: 'View Members',
+        category: 'Members',
+        description: 'View member profiles and basic information',
         icon: Icons.visibility,
       ),
       const Permission(
-        key: patientsCreate,
-        name: 'Create Patients',
-        category: 'Patients',
-        description: 'Register new patient records',
+        key: membersCreate,
+        name: 'Create Members',
+        category: 'Members',
+        description: 'Register new gym members',
         icon: Icons.add,
       ),
       const Permission(
-        key: patientsEdit,
-        name: 'Edit Patients',
-        category: 'Patients',
-        description: 'Modify existing patient information',
+        key: membersEdit,
+        name: 'Edit Members',
+        category: 'Members',
+        description: 'Modify existing member information',
         icon: Icons.edit,
       ),
       const Permission(
-        key: patientsDelete,
-        name: 'Delete Patients',
-        category: 'Patients',
-        description: 'Remove patient records (soft delete)',
+        key: membersDelete,
+        name: 'Delete Members',
+        category: 'Members',
+        description: 'Remove member records (soft delete)',
         icon: Icons.delete,
       ),
-      // Records
+      // Memberships
       const Permission(
-        key: recordsView,
-        name: 'View Records',
-        category: 'Records',
-        description: 'View medical records and history',
+        key: membershipsView,
+        name: 'View Memberships',
+        category: 'Memberships',
+        description: 'View membership plans and subscriptions',
         icon: Icons.visibility,
       ),
       const Permission(
-        key: recordsCreate,
-        name: 'Create Records',
-        category: 'Records',
-        description: 'Create new medical records',
+        key: membershipsCreate,
+        name: 'Create Memberships',
+        category: 'Memberships',
+        description: 'Create membership plans and purchases',
         icon: Icons.add,
       ),
       const Permission(
-        key: recordsEdit,
-        name: 'Edit Records',
-        category: 'Records',
-        description: 'Modify existing medical records',
+        key: membershipsEdit,
+        name: 'Edit Memberships',
+        category: 'Memberships',
+        description: 'Modify membership plans and subscriptions',
         icon: Icons.edit,
       ),
       const Permission(
-        key: recordsDelete,
-        name: 'Delete Records',
-        category: 'Records',
-        description: 'Remove medical records (soft delete)',
+        key: membershipsDelete,
+        name: 'Delete Memberships',
+        category: 'Memberships',
+        description: 'Remove membership plans (soft delete)',
         icon: Icons.delete,
       ),
-      // Prescriptions
+      // Check-In
       const Permission(
-        key: prescriptionsView,
-        name: 'View Prescriptions',
-        category: 'Prescriptions',
-        description: 'View prescription information',
+        key: checkInsView,
+        name: 'View Check-Ins',
+        category: 'Check-In',
+        description: 'View check-in history and today\'s visits',
         icon: Icons.visibility,
       ),
       const Permission(
-        key: prescriptionsCreate,
-        name: 'Create Prescriptions',
-        category: 'Prescriptions',
-        description: 'Create new prescriptions',
+        key: checkInsCreate,
+        name: 'Create Check-Ins',
+        category: 'Check-In',
+        description: 'Process member check-ins',
         icon: Icons.add,
       ),
+      // Member Cards
       const Permission(
-        key: prescriptionsEdit,
-        name: 'Edit Prescriptions',
-        category: 'Prescriptions',
-        description: 'Modify existing prescriptions',
-        icon: Icons.edit,
-      ),
-      const Permission(
-        key: prescriptionsDelete,
-        name: 'Delete Prescriptions',
-        category: 'Prescriptions',
-        description: 'Remove prescriptions (soft delete)',
-        icon: Icons.delete,
-      ),
-      // Appointments
-      const Permission(
-        key: appointmentsView,
-        name: 'View Appointments',
-        category: 'Appointments',
-        description: 'View appointment schedules',
+        key: memberCardsView,
+        name: 'View Member Cards',
+        category: 'Member Cards',
+        description: 'View physical ID cards linked to members',
         icon: Icons.visibility,
       ),
       const Permission(
-        key: appointmentsCreate,
-        name: 'Create Appointments',
-        category: 'Appointments',
-        description: 'Schedule new appointments',
+        key: memberCardsCreate,
+        name: 'Create Member Cards',
+        category: 'Member Cards',
+        description: 'Issue new member ID cards',
         icon: Icons.add,
       ),
       const Permission(
-        key: appointmentsEdit,
-        name: 'Edit Appointments',
-        category: 'Appointments',
-        description: 'Modify appointment details',
+        key: memberCardsEdit,
+        name: 'Edit Member Cards',
+        category: 'Member Cards',
+        description: 'Update member card status and details',
         icon: Icons.edit,
       ),
       const Permission(
-        key: appointmentsDelete,
-        name: 'Delete Appointments',
-        category: 'Appointments',
-        description: 'Cancel or remove appointments',
+        key: memberCardsDelete,
+        name: 'Delete Member Cards',
+        category: 'Member Cards',
+        description: 'Remove member cards (soft delete)',
         icon: Icons.delete,
+      ),
+      // Reports
+      const Permission(
+        key: reportsView,
+        name: 'View Reports',
+        category: 'Reports',
+        description: 'View sales, inventory, and membership reports',
+        icon: Icons.visibility,
       ),
       // Products
       const Permission(

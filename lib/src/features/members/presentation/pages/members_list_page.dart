@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../controllers/paginated_members_controller.dart';
 import '../widgets/member_list_panel.dart';
+import '../widgets/member_list_skeleton.dart';
 
 /// Members list page for mobile view.
 class MembersListPage extends ConsumerWidget {
@@ -19,7 +20,7 @@ class MembersListPage extends ConsumerWidget {
         hasMore: paginatedState.hasMore,
         isLoadingMore: paginatedState.isLoadingMore,
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const MemberListSkeleton(),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

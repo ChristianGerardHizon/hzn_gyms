@@ -73,6 +73,7 @@ class MemberListPanel extends HookConsumerWidget {
       onLoadMore: () => paginatedController.loadMore(),
       hasMore: hasMore,
       isLoading: isLoadingMore,
+      itemCount: members.length,
     );
 
     return Scaffold(
@@ -143,6 +144,7 @@ class MemberListPanel extends HookConsumerWidget {
                     leading: CachedAvatar(
                       imageUrl: member.photo,
                       radius: 20,
+                      thumbSize: 80,
                     ),
                     title: Text(
                       member.name,

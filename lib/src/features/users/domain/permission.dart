@@ -18,14 +18,14 @@ class Permission with PermissionMappable {
     this.icon,
   });
 
-  /// The permission key (e.g., "patients.view").
+  /// The permission key (e.g., "members.view").
   /// This is what gets stored in PocketBase.
   final String key;
 
-  /// Display name (e.g., "View Patients").
+  /// Display name (e.g., "View Members").
   final String name;
 
-  /// Category for grouping (e.g., "Patients", "Users").
+  /// Category for grouping (e.g., "Members", "Users").
   final String category;
 
   /// Optional description explaining what this permission grants.
@@ -38,13 +38,13 @@ class Permission with PermissionMappable {
   /// Unique identifier (same as key for consistency).
   String get id => key;
 
-  /// Gets the action part of the permission key (e.g., "view" from "patients.view").
+  /// Gets the action part of the permission key (e.g., "view" from "members.view").
   String get action {
     final parts = key.split('.');
     return parts.length > 1 ? parts[1] : key;
   }
 
-  /// Gets the resource part of the permission key (e.g., "patients" from "patients.view").
+  /// Gets the resource part of the permission key (e.g., "members" from "members.view").
   String get resource {
     final parts = key.split('.');
     return parts.isNotEmpty ? parts[0] : key;

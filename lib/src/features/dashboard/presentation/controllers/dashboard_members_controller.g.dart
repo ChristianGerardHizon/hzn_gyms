@@ -98,7 +98,7 @@ final class DashboardMembersPageProvider
 }
 
 String _$dashboardMembersPageHash() =>
-    r'6aab100a3d351c434740d309e5084934c1c9ef3f';
+    r'e03dc9685a80040c28951d31e7a3df55818e51b6';
 
 /// Fetches a single page of members with their membership status
 /// from the [membersWithMembershipStatus] view collection.
@@ -132,7 +132,7 @@ final class DashboardMembersPageFamily extends $Family
   DashboardMembersPageProvider call({
     int page = 1,
     String? searchQuery,
-    MemberStatusFilter statusFilter = MemberStatusFilter.all,
+    MemberStatusFilter statusFilter = MemberStatusFilter.expiringSoon,
   }) => DashboardMembersPageProvider._(
     argument: (
       page: page,

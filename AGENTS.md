@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 - `lib/` contains all Dart source. Entry point is `lib/main.dart`.
 - `lib/src/core/` holds shared app infrastructure (routing, widgets, utils, models).
-- `lib/src/features/` is organized by domain modules (patients, products, appointments, etc.) with `data/`, `domain/`, and `presentation/` layers.
+- `lib/src/features/` is organized by domain modules (members, products, memberships, check_in, etc.) with `data/`, `domain/`, and `presentation/` layers.
 - `assets/` contains static assets and icons.
 - `test/` mirrors the `lib/` structure for unit/widget tests.
 - `docs/` includes architecture references (entities, UI, folder structure).
@@ -34,16 +34,16 @@ Use `flutter run` for local development; run `build_runner` and `slang` after mo
 ## Coding Style & Naming Conventions
 - Formatting: use `dart format lib/` before committing.
 - Linting: follow `flutter_lints` and `custom_lint` (`analysis_options.yaml`), and address `dart analyze` warnings.
-- File naming: `snake_case.dart` (e.g., `patients_controller.dart`).
+- File naming: `snake_case.dart` (e.g., `members_controller.dart`).
 - Pages: `*_page.dart`; controllers: `*_controller.dart`; widgets: `*_widget.dart`.
-- Controllers are plural when they manage lists (e.g., `patients_controller.dart`, `patient_records_controller.dart`).
-- Single-entity providers use singular naming and live in `*_provider.dart` (e.g., `patient_provider.dart`, `patient_record_provider.dart`).
+- Controllers are plural when they manage lists (e.g., `members_controller.dart`, `member_memberships_controller.dart`).
+- Single-entity providers use singular naming and live in `*_provider.dart` (e.g., `member_provider.dart`, `member_membership_provider.dart`).
 - Feature folders use `snake_case` and follow the `data/`, `domain/`, `presentation/` pattern.
 
 ## Provider Setup
 - Use `@riverpod` for providers and `@Riverpod` when keep-alive is needed.
 - Keep list controllers and single-entity providers in separate files with their own `part` directives.
-- Provider names should mirror singular/plural intent (e.g., `patientRecordsControllerProvider` vs `patientRecordProvider`).
+- Provider names should mirror singular/plural intent (e.g., `memberMembershipsControllerProvider` vs `memberMembershipProvider`).
 
 ## Testing Guidelines
 - Framework: Flutter test runner (`flutter test`).
@@ -58,6 +58,14 @@ Use `flutter run` for local development; run `build_runner` and `slang` after mo
 
 ## Agent-Specific Notes
 - See `CLAUDE.md` for code patterns (Riverpod, routing, models) when making architectural changes.
+
+### PocketBase Schema Changes
+- **Do NOT create manual migration files** in `server/pb_migrations/`.
+- Apply schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API** or admin UI.
+- Credentials: `.env` (`PB_LOCAL_*` for local, `PB_STAGING_*` for staging).
+- Auth: `POST /api/collections/_superusers/auth-with-password` → use returned `token`.
+- Update: `PATCH /api/collections/{nameOrId}` with the changed fields (e.g. `indexes` array).
+- PocketBase auto-generates migrations from API/UI changes; never hand-write `.js` migration files.
 
 
 ## grepai - Semantic Code Search

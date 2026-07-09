@@ -8,7 +8,7 @@ extension PocketBaseDateExtensions on DateTime {
   /// Converts to UTC and returns ISO8601 string for PocketBase storage.
   ///
   /// Use this when sending dates to the server in create/update operations.
-  /// Example: `patient.dateOfBirth.toUtcIso8601()`
+  /// Example: `member.dateOfBirth.toUtcIso8601()`
   String toUtcIso8601() => toUtc().toIso8601String();
 
   /// Converts to UTC and returns string in PocketBase filter format: 'Y-m-d H:i:s.uZ'
@@ -38,7 +38,7 @@ extension PocketBaseDateExtensionsNullable on DateTime? {
   /// Converts to PocketBase UTC format, or returns null if DateTime is null.
   ///
   /// Safe to use with optional date fields in filter queries.
-  /// Example: `appointment.date.toPocketBaseUtcOrNull()`
+  /// Example: `checkIn.checkInTime.toPocketBaseUtcOrNull()`
   String? toPocketBaseUtcOrNull() => this?.toPocketBaseUtc();
 }
 
@@ -64,8 +64,24 @@ DateTime? parseToLocal(String? dateStr) {
 ///
 /// Example:
 /// ```dart
-/// final date = parseToLocalOrDefault(json['visitDate'], DateTime.now());
+/// final date = parseToLocalOrDefault(json['checkInTime'], DateTime.now());
 /// ```
 DateTime parseToLocalOrDefault(String? dateStr, DateTime defaultValue) {
   return parseToLocal(dateStr) ?? defaultValue;
 }
+
+/// Normalizes a [DateTime] to midnight local time (calendar date only).
+DateTime toLocalDateOnly(DateTime dateTime) =>
+    DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+/// Whole calendar days from today (local) to [date].
+///
+/// Returns `0` on the expiration day, positive before it, negative after.
+int calendarDaysUntil(DateTime date) {
+  final today = toLocalDateOnly(DateTime.now());
+  final target = toLocalDateOnly(date);
+  return target.difference(today).inDays;
+}
+
+/// Whether [date]'s local calendar day is strictly before today.
+bool isBeforeToday(DateTime date) => calendarDaysUntil(date) < 0;

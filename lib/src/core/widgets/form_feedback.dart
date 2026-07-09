@@ -84,7 +84,7 @@ void showFormErrorDialog(
 ///
 /// Example:
 /// ```dart
-/// showSuccessSnackBar(context, message: 'Patient created successfully');
+/// showSuccessSnackBar(context, message: 'Member created successfully');
 /// ```
 void showSuccessSnackBar(
   BuildContext context, {
@@ -229,7 +229,7 @@ void showWarningSnackBar(
 ///
 /// Example:
 /// ```dart
-/// final labels = {'name': 'Pet Name', 'email': 'Email Address'};
+/// final labels = {'name': 'Member Name', 'email': 'Email Address'};
 /// final messages = formatFormErrors(formKey.currentState?.errors ?? {}, labels);
 /// if (messages.isNotEmpty) {
 ///   showFormErrorDialog(context, errors: messages);

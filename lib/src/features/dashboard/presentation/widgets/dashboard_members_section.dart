@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
+import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../controllers/dashboard_members_controller.dart';
 
@@ -27,7 +28,8 @@ class DashboardMembersSection extends HookConsumerWidget {
     final hasMore = useState(true);
     final isLoadingMore = useState(false);
     final hasLoadedOnce = useState(false);
-    final statusFilter = useState(MemberStatusFilter.all);
+    final statusFilter = useState(MemberStatusFilter.expiringSoon);
+    final loadPerf = useRef<PerfTimer?>(null);
 
     // Debounce search input by 400ms
     useEffect(() {
@@ -45,6 +47,8 @@ class DashboardMembersSection extends HookConsumerWidget {
     useEffect(() {
       currentPage.value = 1;
       hasMore.value = true;
+      loadPerf.value?.finish('CANCELLED (filter/search changed)');
+      loadPerf.value = null;
       return null;
     }, [debouncedQuery.value, statusFilter.value]);
 
@@ -58,9 +62,30 @@ class DashboardMembersSection extends HookConsumerWidget {
       ),
     );
 
+    // Track provider lifecycle for performance debugging.
+    useEffect(() {
+      if (pageAsync.isLoading) {
+        loadPerf.value ??= PerfTimer(
+          'dashboardMembersSection p${currentPage.value} '
+          '${statusFilter.value.name}'
+          '${query != null ? ' q="$query"' : ''}',
+        );
+        loadPerf.value!.checkpoint('provider loading');
+      } else if (pageAsync.hasError) {
+        loadPerf.value?.checkpoint('provider error: ${pageAsync.error}');
+        loadPerf.value?.finish('FAILED');
+        loadPerf.value = null;
+      }
+      return null;
+    }, [pageAsync.isLoading, pageAsync.hasError, pageAsync.error]);
+
     // When new page data arrives, append it to the list
     useEffect(() {
       pageAsync.whenData((page) {
+        loadPerf.value?.checkpoint(
+          'provider data received (${page.items.length} items)',
+        );
+
         if (currentPage.value == 1) {
           allMembers.value = page.items;
         } else {
@@ -73,6 +98,12 @@ class DashboardMembersSection extends HookConsumerWidget {
         hasMore.value = page.hasMore;
         isLoadingMore.value = false;
         hasLoadedOnce.value = true;
+
+        loadPerf.value?.checkpoint(
+          'UI state updated (${allMembers.value.length} members shown)',
+        );
+        loadPerf.value?.finish();
+        loadPerf.value = null;
       });
       return null;
     }, [pageAsync]);
@@ -309,13 +340,7 @@ class _DashboardMemberCard extends StatelessWidget {
                 children: [
                   CachedImage(
                       imageUrl: _thumbnailUrl(dashboardMember.photo)),
-                  if (isExpired)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: _DaysLeftBadge(days: 0),
-                    )
-                  else if (days != null && days <= 7)
+                  if (days != null && (isExpired || days <= 7))
                     Positioned(
                       top: 6,
                       left: 6,
@@ -377,7 +402,10 @@ class _DaysLeftBadge extends StatelessWidget {
     if (days == null) {
       label = 'No membership';
       backgroundColor = Colors.grey.shade700;
-    } else if (days! <= 0) {
+    } else if (days == 0) {
+      label = 'Expires today';
+      backgroundColor = Colors.orange.shade700;
+    } else if (days! < 0) {
       label = 'Expired';
       backgroundColor = Colors.red.shade700;
     } else if (days == 1) {

@@ -47,11 +47,9 @@ core/
 │   ├── int_extension.dart
 │   ├── num_extension.dart
 │   └── file_extension.dart
-├── hooks/               # Custom Flutter hooks for forms
-│   ├── date_time_hook.dart
-│   ├── patient_sex_hook.dart
-│   ├── pb_empty_hook.dart
-│   └── pb_num_hook.dart
+├── hooks/               # Custom Flutter hooks
+│   ├── use_infinite_scroll.dart
+│   └── use_form_dirty_guard.dart
 ├── loggers/             # Development logging
 │   └── riverpod_logger.dart
 ├── models/              # Core shared models
@@ -105,39 +103,18 @@ Features are organized into **domain groups** for better discoverability and mai
 
 ```
 features/
-├── patients/                    # Patient domain group
-│   ├── core/                    # Main patient entity
-│   ├── breeds/                  # Breed definitions
-│   ├── files/                   # Medical documents/images
-│   ├── prescriptions/           # Prescription records
-│   ├── records/                 # Medical visit records
-│   ├── species/                 # Species catalog
-│   ├── treatments/              # Treatment type catalog
-│   └── treatment_records/       # Treatment instances
-│
-├── products/                    # Product domain group
-│   ├── core/                    # Main product entity
-│   ├── adjustments/             # Inventory adjustments
-│   ├── categories/              # Product categories
-│   ├── inventories/             # Aggregated inventory views
-│   └── stocks/                  # Lot/batch inventory
-│
-├── appointments/                # Appointments domain
-│   └── schedules/               # Scheduled appointments
-│
-├── organization/                # Organization management
-│   ├── admins/                  # Administrator accounts
-│   ├── branches/                # Organization locations
-│   └── users/                   # Regular user accounts
-│
-├── system/                      # System features
-│   ├── authentication/          # Login/logout, auth state
-│   ├── change_logs/             # Audit trail
-│   ├── dashboard/               # Dashboard/home
-│   ├── settings/                # App settings
-│   └── system_versions/         # Version management
-│
-└── sales/                       # Point of sale (presentation only)
+├── members/                     # Gym member management
+├── memberships/                 # Membership plans and subscriptions
+├── member_cards/                # Physical ID cards (RFID/barcode)
+├── check_in/                    # Member check-in
+├── products/                    # Product catalog and inventory
+├── pos/                         # Point of sale / cashier
+├── sales/                       # Sales history
+├── reports/                     # Sales and inventory reports
+├── dashboard/                   # Dashboard KPIs and quick actions
+├── organization/                # Users, roles, branches
+├── settings/                    # System settings
+└── auth/                        # Authentication
 ```
 
 Each feature follows a consistent internal structure:
@@ -277,121 +254,75 @@ Each feature follows a consistent internal structure:
 
 ## Entities
 
-### User Management
+See [`docs/entities.md`](docs/entities.md) for the full entity reference. Key domains:
+
+### Member Management
 
 | Entity | Description | Key Fields |
 |--------|-------------|------------|
-| `Admin` | Administrator accounts | name, email, avatar, branch |
-| `User` | Regular user accounts | name, email, avatar, branch |
-| `Branch` | Organization locations | name |
-| `AuthAdmin` | Admin authentication wrapper | record, token |
-| `AuthUser` | User authentication wrapper | record, token |
+| `Member` | Gym members | name, mobileNumber, dateOfBirth, sex, address, remarks, rfidCardId |
+| `MemberCard` | Physical ID cards | member, cardNumber, status, type |
+| `Membership` | Membership plan templates | name, duration, price, isActive |
+| `MemberMembership` | Member subscriptions | member, membership, startDate, endDate, status |
+| `CheckIn` | Check-in records | member, checkInTime, method |
 
-### Patient Management
-
-| Entity | Description | Key Fields |
-|--------|-------------|------------|
-| `Patient` | Animal/pet records | name, species, breed, sex, dateOfBirth, owner, branch |
-| `PatientSpecies` | Species catalog | name (Dog, Cat, Bird, etc.) |
-| `PatientBreed` | Breed definitions | name, species |
-| `PatientRecord` | Medical visit records | patient, visitDate, diagnosis, treatment, weightInKg, temperature |
-| `PatientTreatment` | Treatment type catalog | name, icon (Vaccination, Surgery, etc.) |
-| `PatientTreatmentRecord` | Treatment instances | treatment, patient, date, notes |
-| `PatientFile` | Medical documents/images | patient, file, notes |
-| `PatientPrescriptionItem` | Prescription records | patientRecord, medication, dosage, instructions |
-
-### Appointments
+### Products & Sales
 
 | Entity | Description | Key Fields |
 |--------|-------------|------------|
-| `AppointmentSchedule` | Scheduled appointments | date, patient, status, purpose, notes |
-
-**Status Enum:** `scheduled`, `completed`, `missed`, `cancelled`
-
-### Products & Inventory
-
-| Entity | Description | Key Fields |
-|--------|-------------|------------|
-| `Product` | Product catalog | name, price, category, branch, quantity, stockThreshold |
+| `Product` | Product catalog | name, price, category, branch, stockThreshold |
 | `ProductCategory` | Product categories | name, parent (hierarchical) |
-| `ProductStock` | Lot/batch inventory | product, lotNo, quantity, expiration |
-| `ProductInventory` | Aggregated inventory view | product, status, totalQuantity |
-| `ProductAdjustment` | Inventory adjustments | reason, type, oldValue, newValue |
+| `ProductLot` | Lot/batch inventory | product, lotNo, quantity, expiration |
+| `Sale` | Transaction records | totalAmount, status, customerId, branch |
+| `Payment` | Payment records | sale, amount, paymentMethod |
 
-**Product Status Enum:** `inStock`, `outOfStock`, `lowStock`, `noThreshold`
-
-### System & Audit
+### Organization
 
 | Entity | Description | Key Fields |
 |--------|-------------|------------|
-| `ChangeLog` | Audit trail | collection, reference, type, user/admin, change |
-| `SystemVersion` | App versions | buildNumber, artifacts |
-| `SystemArtifact` | Downloadable builds | name, url, type, version |
-
-### Core Models
-
-| Model | Description |
-|-------|-------------|
-| `PbRecord` | Abstract base class for all PocketBase entities (id, created, updated, isDeleted) |
-| `Failure` | Sealed class for error handling (AuthFailure, DataFailure, PocketbaseFailure, etc.) |
-| `PBFile` | Sealed class for file handling (PBLocalFile, PBNetworkFile, PBMemoryFile) |
-| `PageResults<T>` | Pagination wrapper (page, perPage, totalItems, items) |
-| `PocketbaseFilter` | Query builder with fluent API |
+| `User` | System users | name, email, role, branch |
+| `UserRole` | Role definitions | name, permissions |
+| `Branch` | Gym locations | name, address, contactNumber, operatingHours |
 
 ## Entity Relationships
 
 ```
 Branch
-  ├── Admin
-  ├── User
-  ├── Patient ──→ PatientSpecies
-  │     │         PatientBreed
-  │     │
-  │     ├── PatientRecord ──→ PatientPrescriptionItem
-  │     │         │
-  │     │         └── PatientTreatmentRecord ──→ PatientTreatment
-  │     │
-  │     └── PatientFile
-  │
-  ├── Product ──→ ProductCategory
-  │     │
-  │     ├── ProductStock
-  │     ├── ProductInventory
-  │     └── ProductAdjustment
-  │
-  └── AppointmentSchedule ──→ Patient
-                              PatientRecord
-
-ChangeLog ──→ User | Admin (audit trail for all entities)
+  ├── User ──→ UserRole
+  ├── Member ──→ MemberCard
+  │     ├── MemberMembership ──→ Membership
+  │     ├── CheckIn
+  │     └── Sale ──→ SaleItem, Payment
+  └── Product ──→ ProductCategory
+        ├── ProductLot
+        └── ProductAdjustment
 ```
 
 ## Key Patterns
 
 ### Error Handling
-Uses sealed `Failure` class with `TaskResult<T>` (Either<Failure, T>) for type-safe error handling:
+Uses sealed `Failure` class with `FutureEither<T>` for type-safe error handling:
 ```dart
-TaskResult<Patient> getPatient(String id) {
-  return TaskResult.tryCatch(() async {
+FutureEither<Member> getMember(String id) {
+  return TaskEither.tryCatch(() async {
     final result = await collection.getOne(id);
-    return Patient.fromJson(result.toJson());
-  }, Failure.handle);
+    return MemberDto.fromRecord(result).toEntity();
+  }, Failure.handle).run();
 }
 ```
 
 ### Repository Pattern
-All data access through repository interfaces:
-- `PBCollectionRepository<T>` - Standard CRUD operations
-- `PBViewRepository<T>` - Read-only view operations
-- `PBAuthRepository<T>` - Authentication operations
+All data access through repository interfaces with `FutureEither` return types.
 
 ### State Management
 Riverpod with `@riverpod` annotation and `AsyncNotifier`:
 ```dart
 @riverpod
-class PatientController extends _$PatientController {
+class Member extends _$Member {
   @override
-  Future<Patient> build(String id) async {
-    return ref.read(patientRepositoryProvider).get(id).then((r) => r.getRight());
+  Future<Member?> build(String id) async {
+    final result = await ref.read(memberRepositoryProvider).getById(id);
+    return result.fold((_) => null, (member) => member);
   }
 }
 ```
@@ -399,24 +330,21 @@ class PatientController extends _$PatientController {
 ### Type-Safe Routing
 GoRouter with `@TypedGoRoute` annotation:
 ```dart
-@TypedGoRoute<PatientPageRoute>(path: '/patients/:id')
-class PatientPageRoute extends GoRouteData {
+@TypedGoRoute<MemberDetailRoute>(path: ':id')
+class MemberDetailRoute extends GoRouteData {
   final String id;
   @override
-  Widget build(context, state) => PatientPage(id: id);
+  Widget build(context, state) => MemberDetailPage(memberId: id);
 }
 ```
 
 ### Model Serialization
-dart_mappable with custom hooks:
+dart_mappable with `@MappableClass()`:
 ```dart
 @MappableClass()
-class Patient extends PbRecord with PatientMappable {
-  @MappableField(hook: DateTimeHook())
+class Member with MemberMappable {
+  final String name;
   final DateTime? dateOfBirth;
-
-  @MappableField(hook: PbEmptyHook())
-  final String? species;
 }
 ```
 
@@ -463,9 +391,6 @@ dart run change_app_package_name:main com.example.app
 
 ### Deployment
 ```bash
-# Deploy staging (web)
-surge --domain stg-sannjose.surge.sh build/web
-
 # Deploy server to Fly.io
 flyctl launch --build-only --dockerfile
 ```
@@ -486,8 +411,8 @@ The app supports multiple deployment environments via `--dart-define`:
 | Environment | URL | Usage |
 |-------------|-----|-------|
 | `dev` | `http://127.0.0.1:8090` | Local development |
-| `staging` | `https://staging.sannjoseanimalclinic.com` | Staging/QA |
-| `prod` | `https://www.sannjoseanimalclinic.com` | Production |
+| `staging` | `https://staging.ebegym.com` | Staging/QA |
+| `prod` | `https://ebegym.com` | Production |
 
 ### VS Code Launch Configs
 

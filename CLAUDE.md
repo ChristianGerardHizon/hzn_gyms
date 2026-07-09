@@ -17,6 +17,33 @@ This is **ebe_gym** - a Flutter multi-platform gym management system. The applic
 - **Forms:** flutter_form_builder
 - **Localization:** slang/slang_flutter
 
+### PocketBase Schema Changes
+
+**IMPORTANT: Do NOT create manual migration files in `server/pb_migrations/`.** Apply all PocketBase schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API**.
+
+Credentials are in `.env`:
+- Local: `PB_LOCAL_URL`, `PB_LOCAL_EMAIL`, `PB_LOCAL_PASSWORD`
+- Staging: `PB_STAGING_URL`, `PB_STAGING_EMAIL`, `PB_STAGING_PASSWORD`
+
+```bash
+# 1. Authenticate as superuser
+TOKEN=$(curl -s -X POST "$PB_LOCAL_URL/api/collections/_superusers/auth-with-password" \
+  -H "Content-Type: application/json" \
+  -d "{\"identity\":\"$PB_LOCAL_EMAIL\",\"password\":\"$PB_LOCAL_PASSWORD\"}" \
+  | jq -r '.token')
+
+# 2. Read current collection (check existing indexes first)
+curl -s "$PB_LOCAL_URL/api/collections/{collectionName}" -H "Authorization: $TOKEN"
+
+# 3. Patch collection (merge with existing indexes — do not overwrite unrelated ones)
+curl -s -X PATCH "$PB_LOCAL_URL/api/collections/{collectionName}" \
+  -H "Authorization: $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"indexes":["CREATE INDEX idx_name ON collectionName (field1, field2)"]}'
+```
+
+PocketBase auto-generates migration files when changes are made through the API or admin UI. Never hand-write `.js` files in `server/pb_migrations/`.
+
 ## Architecture
 
 The project follows a **feature-based clean architecture**:
@@ -24,7 +51,7 @@ The project follows a **feature-based clean architecture**:
 ```
 lib/src/
 ├── core/           # Shared functionality (routing, widgets, utils, models)
-└── features/       # Feature modules (patients, products, appointments, etc.)
+└── features/       # Feature modules (members, products, memberships, etc.)
     └── [feature]/
         ├── data/           # Repositories, data sources
         ├── domain/         # Models, entities
@@ -96,12 +123,12 @@ dart format lib/
 ### Controller Naming (Singular vs Plural)
 - **IMPORTANT:** Use singular/plural names consistently based on what the controller manages:
   - **Plural** (`PatientsController`) - Manages a **list** of entities (e.g., `List<Patient>`)
-  - **Singular** (`patientProvider`) - Fetches/manages a **single** entity by ID
+  - **Singular** (`memberProvider`) - Fetches/manages a **single** entity by ID
 - Examples:
-  - `PatientsController` → `patientsControllerProvider` → returns `List<Patient>`
-  - `patient(id)` → `patientProvider(id)` → returns `Patient?`
-  - `PatientRecordsController(patientId)` → `patientRecordsControllerProvider(patientId)` → returns `List<PatientRecord>`
-  - `patientRecord(id)` → `patientRecordProvider(id)` → returns `PatientRecord?`
+  - `MembersController` → `membersControllerProvider` → returns `List<Member>`
+  - `member(id)` → `memberProvider(id)` → returns `Member?`
+  - `MemberMembershipsController(memberId)` → `memberMembershipsControllerProvider(memberId)` → returns `List<MemberMembership>`
+  - `memberMembership(id)` → `memberMembershipProvider(id)` → returns `MemberMembership?`
 
 ### Provider File Setup
 - Keep list controllers and single-entity providers in separate files.
@@ -115,8 +142,8 @@ dart format lib/
 - Each feature has its own `*.routes.dart` file
 - Use `@TypedGoRoute` annotation with go_router_builder
 - **IMPORTANT:** Always use generated route extensions instead of manual navigation
-  - Prefer: `const PatientsRoute().go(context)` or `PatientDetailRoute(id: patientId).go(context)`
-  - Avoid: `context.push('/patients')` or `context.go('/patients/$patientId')`
+  - Prefer: `const MembersRoute().go(context)` or `MemberDetailRoute(id: memberId).go(context)`
+  - Avoid: `context.push('/members')` or `context.go('/members/$memberId')`
 - **IMPORTANT:** Use `context.pop()` instead of `Navigator.pop(context)` for consistency with GoRouter
 
 ### Models

@@ -35,7 +35,7 @@
             "args": [
                 "--web-port=8000",
                 "--dart-define=ENV=staging",
-                "--dart-define=API_URL=https://staging.ebegym.sannjoseanimalclinic.com"
+                "--dart-define=API_URL=https://staging.ebegym.hznsystems.com"
             ]
         },
         {
@@ -46,7 +46,7 @@
             "args": [
                 "--web-port=8000",
                 "--dart-define=ENV=prod",
-                "--dart-define=API_URL=https://ebegym.sannjoseanimalclinic.com"
+                "--dart-define=API_URL=https://ebegym.hznsystems.com"
             ]
         },
         {
@@ -58,7 +58,7 @@
             "args": [
                 "--web-port=8000",
                 "--dart-define=ENV=prod",
-                "--dart-define=API_URL=https://ebegym.sannjoseanimalclinic.com"
+                "--dart-define=API_URL=https://ebegym.hznsystems.com"
             ]
         },
         {
@@ -74,15 +74,6 @@
             "type": "dart",
             "flutterMode": "release",
             "program": "lib/main.dart"
-        },
-        {
-            "name": "example app",
-            "request": "launch",
-            "type": "dart",
-            "program": "docs/examples/main_example.dart",
-            "args": [
-                "--web-port=8001"
-            ]
         }
     ]
 }

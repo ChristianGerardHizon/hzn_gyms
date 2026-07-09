@@ -19,24 +19,32 @@ ScrollController useInfiniteScroll({
   required bool hasMore,
   required bool isLoading,
   double threshold = 200.0,
+  int? itemCount,
 }) {
   final scrollController = useScrollController();
 
   useEffect(() {
-    void listener() {
+    void checkAndLoad() {
       if (isLoading || !hasMore) return;
+      if (!scrollController.hasClients) return;
 
-      final maxScroll = scrollController.position.maxScrollExtent;
-      final currentScroll = scrollController.position.pixels;
+      final position = scrollController.position;
+      final remaining = position.maxScrollExtent - position.pixels;
 
-      if (maxScroll - currentScroll <= threshold) {
+      if (remaining <= threshold) {
         onLoadMore();
       }
     }
 
+    void listener() => checkAndLoad();
+
     scrollController.addListener(listener);
+
+    // When the first page does not fill the viewport, no scroll events fire.
+    WidgetsBinding.instance.addPostFrameCallback((_) => checkAndLoad());
+
     return () => scrollController.removeListener(listener);
-  }, [hasMore, isLoading]);
+  }, [hasMore, isLoading, itemCount]);
 
   return scrollController;
 }

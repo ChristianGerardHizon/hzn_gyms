@@ -187,18 +187,18 @@ The SSH user needs write access to:
 
 | Path | Purpose |
 |------|---------|
-| `/opt/pocketbase/hizonelaundry-staging/pb_public/` | Staging web build |
-| `/opt/pocketbase/hizonelaundry-staging/pb_migrations/` | Staging PocketBase migrations |
-| `/opt/pocketbase/hizonelaundry/pb_public/` | Production web build |
-| `/opt/pocketbase/hizonelaundry/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/ebegym-staging/pb_public/` | Staging web build |
+| `/opt/pocketbase/ebegym-staging/pb_migrations/` | Staging PocketBase migrations |
+| `/opt/pocketbase/ebegym/pb_public/` | Production web build |
+| `/opt/pocketbase/ebegym/pb_migrations/` | Production PocketBase migrations |
 
 ### Passwordless Sudo
 
 The SSH user needs passwordless sudo for restarting PocketBase services. Add to `/etc/sudoers.d/deploy`:
 
 ```
-deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pocketbase_hizonelaundry-staging.service
-deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pocketbase_hizonelaundry.service
+deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pocketbase_ebegym-staging.service
+deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pocketbase_ebegym.service
 ```
 
 ---

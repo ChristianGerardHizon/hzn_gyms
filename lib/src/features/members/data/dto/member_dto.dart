@@ -73,15 +73,17 @@ class MemberDto with MemberDtoMappable {
       id: id,
       name: name,
       photo: _buildPhotoUrl(baseUrl),
-      mobileNumber:
-          mobileNumber != null && mobileNumber!.isNotEmpty ? mobileNumber : null,
+      mobileNumber: mobileNumber != null && mobileNumber!.isNotEmpty
+          ? mobileNumber
+          : null,
       dateOfBirth: parseToLocal(dateOfBirth),
       address: address != null && address!.isNotEmpty ? address : null,
       sex: _parseSex(sex),
       remarks: remarks != null && remarks!.isNotEmpty ? remarks : null,
       addedBy: addedBy != null && addedBy!.isNotEmpty ? addedBy : null,
-      rfidCardId:
-          rfidCardId != null && rfidCardId!.isNotEmpty ? rfidCardId : null,
+      rfidCardId: rfidCardId != null && rfidCardId!.isNotEmpty
+          ? rfidCardId
+          : null,
       email: email != null && email!.isNotEmpty ? email : null,
       emergencyContact: emergencyContact != null && emergencyContact!.isNotEmpty
           ? emergencyContact

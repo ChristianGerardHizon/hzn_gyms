@@ -12,6 +12,7 @@ import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../domain/member.dart';
 import '../dto/member_dto.dart';
+import '../local/member_local_data_source.dart';
 
 part 'member_repository.g.dart';
 
@@ -36,8 +37,10 @@ abstract class MemberRepository {
   FutureEither<List<Member>> search(String query, {List<String>? fields});
 
   /// Creates a new member with an optional photo.
-  FutureEither<Member> createWithPhoto(Member member,
-      {http.MultipartFile? photo});
+  FutureEither<Member> createWithPhoto(
+    Member member, {
+    http.MultipartFile? photo,
+  });
 
   /// Updates a member's photo image.
   FutureEither<Member> updatePhoto(String id, http.MultipartFile file);
@@ -60,122 +63,112 @@ abstract class MemberRepository {
     String? filter,
   });
 
+  /// Syncs all members from PocketBase into the local cache.
+  FutureEither<void> syncAllMembers({String? filter, String? sort});
+
   /// Invalidates the member list cache.
-  void invalidateCache();
+  Future<void> invalidateCache();
 }
 
 /// Provides the MemberRepository instance.
 @Riverpod(keepAlive: true)
 MemberRepository memberRepository(Ref ref) {
-  return MemberRepositoryImpl(ref.watch(pocketbaseProvider));
+  return MemberRepositoryImpl(
+    ref.watch(pocketbaseProvider),
+    ref.watch(memberLocalDataSourceProvider),
+  );
 }
 
-/// Implementation of [MemberRepository] using PocketBase.
+/// Implementation of [MemberRepository] using PocketBase with Drift cache.
 class MemberRepositoryImpl implements MemberRepository {
-  final PocketBase _pb;
+  MemberRepositoryImpl(this._pb, this._localDataSource);
 
-  MemberRepositoryImpl(this._pb);
+  final PocketBase _pb;
+  final MemberLocalDataSource _localDataSource;
 
   RecordService get _collection =>
       _pb.collection(PocketBaseCollections.members);
-
-  // Cache for member list
-  List<Member>? _cachedMembers;
-  DateTime? _cacheTimestamp;
-  String? _cachedFilter;
-  String? _cachedSort;
-
-  // Cache TTL (5 minutes)
-  static const _cacheTtl = Duration(minutes: 5);
-
-  /// Checks if the cache is valid.
-  bool _isCacheValid(String? filter, String? sort) {
-    if (_cachedMembers == null || _cacheTimestamp == null) return false;
-    if (_cachedFilter != filter || _cachedSort != sort) return false;
-    return DateTime.now().difference(_cacheTimestamp!) < _cacheTtl;
-  }
-
-  @override
-  void invalidateCache() {
-    _cachedMembers = null;
-    _cacheTimestamp = null;
-    _cachedFilter = null;
-    _cachedSort = null;
-  }
 
   Member _toEntity(RecordModel record) {
     return MemberDto.fromRecord(record).toEntity(baseUrl: _pb.baseURL);
   }
 
+  Future<void> _upsertRecord(RecordModel record) {
+    return _localDataSource.upsertFromDtos([MemberDto.fromRecord(record)]);
+  }
+
+  Future<void> _upsertRecords(List<RecordModel> records) {
+    return _localDataSource.upsertFromDtos(records.map(MemberDto.fromRecord));
+  }
+
+  @override
+  Future<void> invalidateCache() => _localDataSource.clearAll();
+
   @override
   FutureEither<List<Member>> fetchAll({String? filter, String? sort}) async {
-    if (_isCacheValid(filter, sort)) {
-      return Right(_cachedMembers!);
-    }
+    return TaskEither.tryCatch(() async {
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: sort ?? 'name',
+      );
 
-    return TaskEither.tryCatch(
-      () async {
-        final records = await _collection.getFullList(
-          filter: filter,
-          sort: sort ?? 'name',
-        );
+      final dtos = records.map(MemberDto.fromRecord).toList();
+      await _localDataSource.replaceAllFromDtos(dtos);
 
-        final members = records.map(_toEntity).toList();
+      return dtos.map((dto) => dto.toEntity(baseUrl: _pb.baseURL)).toList();
+    }, Failure.handle).run();
+  }
 
-        // Update cache
-        _cachedMembers = members;
-        _cacheTimestamp = DateTime.now();
-        _cachedFilter = filter;
-        _cachedSort = sort;
-
-        return members;
-      },
-      Failure.handle,
-    ).run();
+  @override
+  FutureEither<void> syncAllMembers({String? filter, String? sort}) async {
+    return TaskEither.tryCatch(() async {
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: sort ?? 'name',
+      );
+      await _localDataSource.replaceAllFromDtos(
+        records.map(MemberDto.fromRecord),
+      );
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> fetchOne(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'Member ID cannot be empty',
-            null,
-            'invalid_member_id',
-          );
-        }
+    return TaskEither.tryCatch(() async {
+      if (id.isEmpty) {
+        throw const DataFailure(
+          'Member ID cannot be empty',
+          null,
+          'invalid_member_id',
+        );
+      }
 
-        final record = await _collection.getOne(id);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.getOne(id);
+      await _upsertRecord(record);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> create(Member member) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': member.name,
-          'mobileNumber': member.mobileNumber,
-          'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
-          'address': member.address,
-          'sex': member.sex?.name,
-          'remarks': member.remarks,
-          'addedBy': member.addedBy,
-          'rfidCardId': member.rfidCardId,
-          'email': member.email,
-          'emergencyContact': member.emergencyContact,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'name': member.name,
+        'mobileNumber': member.mobileNumber,
+        'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
+        'address': member.address,
+        'sex': member.sex?.name,
+        'remarks': member.remarks,
+        'addedBy': member.addedBy,
+        'rfidCardId': member.rfidCardId,
+        'email': member.email,
+        'emergencyContact': member.emergencyContact,
+      };
 
-        final record = await _collection.create(body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body);
+      await _upsertRecord(record);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
@@ -183,65 +176,56 @@ class MemberRepositoryImpl implements MemberRepository {
     Member member, {
     http.MultipartFile? photo,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': member.name,
-          'mobileNumber': member.mobileNumber,
-          'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
-          'address': member.address,
-          'sex': member.sex?.name,
-          'remarks': member.remarks,
-          'addedBy': member.addedBy,
-          'rfidCardId': member.rfidCardId,
-          'email': member.email,
-          'emergencyContact': member.emergencyContact,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'name': member.name,
+        'mobileNumber': member.mobileNumber,
+        'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
+        'address': member.address,
+        'sex': member.sex?.name,
+        'remarks': member.remarks,
+        'addedBy': member.addedBy,
+        'rfidCardId': member.rfidCardId,
+        'email': member.email,
+        'emergencyContact': member.emergencyContact,
+      };
 
-        final record = await _collection.create(
-          body: body,
-          files: photo != null ? [photo] : [],
-        );
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(
+        body: body,
+        files: photo != null ? [photo] : [],
+      );
+      await _upsertRecord(record);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> update(Member member) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': member.name,
-          'mobileNumber': member.mobileNumber,
-          'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
-          'address': member.address,
-          'sex': member.sex?.name,
-          'remarks': member.remarks,
-          'rfidCardId': member.rfidCardId,
-          'email': member.email,
-          'emergencyContact': member.emergencyContact,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'name': member.name,
+        'mobileNumber': member.mobileNumber,
+        'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
+        'address': member.address,
+        'sex': member.sex?.name,
+        'remarks': member.remarks,
+        'rfidCardId': member.rfidCardId,
+        'email': member.email,
+        'emergencyContact': member.emergencyContact,
+      };
 
-        final record = await _collection.update(member.id, body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.update(member.id, body: body);
+      await _upsertRecord(record);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> delete(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _collection.delete(id);
-        invalidateCache();
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      await _collection.delete(id);
+      await _localDataSource.deleteMember(id);
+    }, Failure.handle).run();
   }
 
   @override
@@ -249,33 +233,27 @@ class MemberRepositoryImpl implements MemberRepository {
     String query, {
     List<String>? fields,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final searchFields = fields ?? ['name', 'mobileNumber'];
-        final filter =
-            PBFilter().searchFields(query, searchFields).build();
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'mobileNumber'];
+      final filter = PBFilter().searchFields(query, searchFields).build();
 
-        final records = await _collection.getFullList(
-          filter: filter,
-          sort: 'name',
-        );
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: 'name',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      await _upsertRecords(records);
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> updatePhoto(String id, http.MultipartFile file) async {
-    return TaskEither.tryCatch(
-      () async {
-        final record = await _collection.update(id, files: [file]);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      final record = await _collection.update(id, files: [file]);
+      await _upsertRecord(record);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
@@ -285,24 +263,23 @@ class MemberRepositoryImpl implements MemberRepository {
     String? filter,
     String? sort,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _collection.getList(
-          page: page,
-          perPage: perPage,
-          filter: filter,
-          sort: sort ?? 'name',
-        );
+    return TaskEither.tryCatch(() async {
+      final result = await _collection.getList(
+        page: page,
+        perPage: perPage,
+        filter: filter,
+        sort: sort ?? 'name',
+      );
 
-        return PaginatedResult<Member>(
-          items: result.items.map(_toEntity).toList(),
-          page: result.page,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
-        );
-      },
-      Failure.handle,
-    ).run();
+      await _upsertRecords(result.items);
+
+      return PaginatedResult<Member>(
+        items: result.items.map(_toEntity).toList(),
+        page: result.page,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      );
+    }, Failure.handle).run();
   }
 
   @override
@@ -314,30 +291,29 @@ class MemberRepositoryImpl implements MemberRepository {
     String? sort,
     String? filter,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final searchFields = fields ?? ['name', 'mobileNumber'];
-        final searchFilter =
-            PBFilter().searchFields(query, searchFields).build();
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'mobileNumber'];
+      final searchFilter = PBFilter().searchFields(query, searchFields).build();
 
-        final combinedFilter =
-            filter != null ? '$searchFilter && $filter' : searchFilter;
+      final combinedFilter = filter != null
+          ? '$searchFilter && $filter'
+          : searchFilter;
 
-        final result = await _collection.getList(
-          page: page,
-          perPage: perPage,
-          filter: combinedFilter,
-          sort: sort ?? 'name',
-        );
+      final result = await _collection.getList(
+        page: page,
+        perPage: perPage,
+        filter: combinedFilter,
+        sort: sort ?? 'name',
+      );
 
-        return PaginatedResult<Member>(
-          items: result.items.map(_toEntity).toList(),
-          page: result.page,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
-        );
-      },
-      Failure.handle,
-    ).run();
+      await _upsertRecords(result.items);
+
+      return PaginatedResult<Member>(
+        items: result.items.map(_toEntity).toList(),
+        page: result.page,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      );
+    }, Failure.handle).run();
   }
 }

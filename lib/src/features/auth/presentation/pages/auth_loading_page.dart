@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/assets/assets.gen.dart';
 import '../../../../core/i18n/strings.g.dart';
 
 /// Auth loading page shown while login is in progress.
@@ -16,10 +17,9 @@ class AuthLoadingPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.pets,
-              size: 80,
-              color: Theme.of(context).colorScheme.primary,
+            Assets.icons.appIconTransparent.image(
+              width: 80,
+              height: 80,
             ),
             const SizedBox(height: 24),
             Text(

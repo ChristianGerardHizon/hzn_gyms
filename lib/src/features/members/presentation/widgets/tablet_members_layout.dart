@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../controllers/paginated_members_controller.dart';
 import 'member_list_panel.dart';
+import 'member_list_skeleton.dart';
 
 /// Two-pane tablet layout for members.
 ///
@@ -27,7 +28,20 @@ class TabletMembersLayout extends ConsumerWidget {
     final selectedMemberId = routerState.pathParameters['id'];
 
     return membersAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => Row(
+        children: [
+          const SizedBox(
+            width: 320,
+            child: MemberListSkeleton(),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: selectedMemberId != null
+                ? detailContent
+                : const _EmptyMemberState(),
+          ),
+        ],
+      ),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

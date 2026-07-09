@@ -19,7 +19,7 @@ class PermissionCategoryWidget extends StatelessWidget {
     this.initiallyExpanded = false,
   });
 
-  /// The category name (e.g., "Patients", "Users").
+  /// The category name (e.g., "Members", "Users").
   final String category;
 
   /// List of Permission objects in this category.
@@ -118,14 +118,16 @@ class PermissionCategoryWidget extends StatelessWidget {
         return Icons.settings;
       case 'Users':
         return Icons.people;
-      case 'Patients':
-        return Icons.pets;
-      case 'Records':
-        return Icons.medical_services;
-      case 'Prescriptions':
-        return Icons.medication;
-      case 'Appointments':
-        return Icons.calendar_today;
+      case 'Members':
+        return Icons.people;
+      case 'Memberships':
+        return Icons.card_membership;
+      case 'Check-In':
+        return Icons.how_to_reg;
+      case 'Member Cards':
+        return Icons.badge;
+      case 'Reports':
+        return Icons.assessment;
       case 'Products':
         return Icons.inventory;
       case 'Inventory':
@@ -285,14 +287,16 @@ class PermissionCategoryDisplayWidget extends StatelessWidget {
         return Icons.settings;
       case 'Users':
         return Icons.people;
-      case 'Patients':
-        return Icons.pets;
-      case 'Records':
-        return Icons.medical_services;
-      case 'Prescriptions':
-        return Icons.medication;
-      case 'Appointments':
-        return Icons.calendar_today;
+      case 'Members':
+        return Icons.people;
+      case 'Memberships':
+        return Icons.card_membership;
+      case 'Check-In':
+        return Icons.how_to_reg;
+      case 'Member Cards':
+        return Icons.badge;
+      case 'Reports':
+        return Icons.assessment;
       case 'Products':
         return Icons.inventory;
       case 'Inventory':
