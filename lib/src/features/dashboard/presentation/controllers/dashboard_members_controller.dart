@@ -27,7 +27,7 @@ class DashboardMember {
     required this.name,
     this.photo,
     this.mobileNumber,
-    this.membershipEndDate,
+    this.expirationDate,
     this.membershipStatus,
   });
 
@@ -35,15 +35,15 @@ class DashboardMember {
   final String name;
   final String? photo;
   final String? mobileNumber;
-  final DateTime? membershipEndDate;
+  final DateTime? expirationDate;
   final String? membershipStatus;
 
   /// Days until membership expires, or null if no membership.
   ///
   /// Returns `0` on the expiration day (still valid through that day).
   int? get daysUntilExpiry {
-    if (membershipEndDate == null) return null;
-    return calendarDaysUntil(membershipEndDate!);
+    if (expirationDate == null) return null;
+    return calendarDaysUntil(expirationDate!);
   }
 
   /// Whether this member's membership has expired.
@@ -51,13 +51,12 @@ class DashboardMember {
   /// Expiration is inclusive of the end date — members expiring today
   /// are not considered expired until the following day.
   bool get isExpired {
-    if (membershipEndDate == null) return false;
-    return isBeforeToday(membershipEndDate!);
+    if (expirationDate == null) return false;
+    return isBeforeToday(expirationDate!);
   }
 
   /// Whether this member has an active (non-expired) membership.
-  bool get hasActiveMembership =>
-      membershipEndDate != null && !isExpired;
+  bool get hasActiveMembership => expirationDate != null && !isExpired;
 
   /// Factory from a PocketBase RecordModel from the view collection.
   factory DashboardMember.fromViewRecord(
@@ -68,7 +67,7 @@ class DashboardMember {
     final name = record.getStringValue('name');
     final photoFile = record.getStringValue('photo');
     final mobileNumber = record.getStringValue('mobileNumber');
-    final endDateStr = record.get<String>('membershipEndDate');
+    final endDateStr = record.get<String>('expirationDate');
     final status = record.getStringValue('membershipStatus');
 
     // Build photo URL using the original 'members' collection
@@ -84,7 +83,7 @@ class DashboardMember {
       name: name,
       photo: photoUrl,
       mobileNumber: mobileNumber.isNotEmpty ? mobileNumber : null,
-      membershipEndDate: parseToLocal(endDateStr),
+      expirationDate: parseToLocal(endDateStr),
       membershipStatus: status.isNotEmpty ? status : null,
     );
   }
@@ -112,13 +111,13 @@ const _pageSize = 12;
 String _dashboardMembersSort(MemberStatusFilter statusFilter) {
   switch (statusFilter) {
     case MemberStatusFilter.all:
-      // Tier 0: active (soonest expiration first). Tier 1: expired (recent first).
-      // Tier 2: no membership — always at the bottom.
+      // Upcoming first (soonest expiration, like Expiring Soon), then expired
+      // when scrolling — no date-range limit.
       return 'membershipSortTier,membershipSortOrder,name';
     case MemberStatusFilter.expired:
-      return '-membershipEndDate,name';
+      return '-expirationDate,name';
     case MemberStatusFilter.expiringSoon:
-      return 'membershipEndDate,name';
+      return 'expirationDate,name';
   }
 }
 
@@ -158,7 +157,7 @@ Future<DashboardMembersPage> dashboardMembersPage(
     filter.relation('membershipBranch', branchId);
   }
 
-  // Status filter (server-side via the view's membershipEndDate)
+  // Status filter (server-side via the view's expirationDate)
   final now = DateTime.now();
   final startOfToday = DateTime(now.year, now.month, now.day);
   final endOfSevenDayWindow = DateTime(
@@ -175,12 +174,12 @@ Future<DashboardMembersPage> dashboardMembersPage(
       break;
     case MemberStatusFilter.expired:
       // End date before today (expiration day is still valid)
-      filter.lessThan('membershipEndDate', startOfToday);
+      filter.lessThan('expirationDate', startOfToday);
       break;
     case MemberStatusFilter.expiringSoon:
       // From today through the next 7 calendar days (inclusive)
-      filter.greaterOrEqual('membershipEndDate', startOfToday);
-      filter.lessOrEqual('membershipEndDate', endOfSevenDayWindow);
+      filter.greaterOrEqual('expirationDate', startOfToday);
+      filter.lessOrEqual('expirationDate', endOfSevenDayWindow);
       break;
   }
 

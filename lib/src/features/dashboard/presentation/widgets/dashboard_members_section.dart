@@ -364,9 +364,9 @@ class _DashboardMemberCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    dashboardMember.membershipEndDate != null
+                    dashboardMember.expirationDate != null
                         ? DateFormat('MMM d, y')
-                            .format(dashboardMember.membershipEndDate!)
+                            .format(dashboardMember.expirationDate!)
                         : 'No membership',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: isExpired
@@ -410,7 +410,7 @@ class _DaysLeftBadge extends StatelessWidget {
       backgroundColor = Colors.red.shade700;
     } else if (days == 1) {
       label = '1 day left';
-      backgroundColor = Colors.red.shade700;
+      backgroundColor = Colors.orange.shade700;
     } else {
       label = '$days days left';
       backgroundColor = Colors.orange.shade700;
