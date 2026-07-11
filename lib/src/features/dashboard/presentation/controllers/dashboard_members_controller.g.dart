@@ -98,7 +98,7 @@ final class DashboardMembersPageProvider
 }
 
 String _$dashboardMembersPageHash() =>
-    r'e5b536e7ea7422dba516abcbf151fba48b5533da';
+    r'20ce6cd42d4f9f7b1c829e05b97c21e21b47ddd1';
 
 /// Fetches a single page of members with their membership status
 /// from the [membersWithMembershipStatus] view collection.

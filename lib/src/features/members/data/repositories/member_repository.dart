@@ -163,6 +163,7 @@ class MemberRepositoryImpl implements MemberRepository {
         'rfidCardId': member.rfidCardId,
         'email': member.email,
         'emergencyContact': member.emergencyContact,
+        'branch': member.branch,
       };
 
       final record = await _collection.create(body: body);
@@ -188,6 +189,7 @@ class MemberRepositoryImpl implements MemberRepository {
         'rfidCardId': member.rfidCardId,
         'email': member.email,
         'emergencyContact': member.emergencyContact,
+        'branch': member.branch,
       };
 
       final record = await _collection.create(
@@ -212,6 +214,7 @@ class MemberRepositoryImpl implements MemberRepository {
         'rfidCardId': member.rfidCardId,
         'email': member.email,
         'emergencyContact': member.emergencyContact,
+        'branch': member.branch,
       };
 
       final record = await _collection.update(member.id, body: body);

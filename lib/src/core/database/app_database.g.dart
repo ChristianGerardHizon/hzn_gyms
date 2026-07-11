@@ -132,6 +132,15 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _branchMeta = const VerificationMeta('branch');
+  @override
+  late final GeneratedColumn<String> branch = GeneratedColumn<String>(
+    'branch',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdMeta = const VerificationMeta(
     'created',
   );
@@ -179,6 +188,7 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
     rfidCardId,
     email,
     emergencyContact,
+    branch,
     created,
     updated,
     syncedAt,
@@ -280,6 +290,12 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
         ),
       );
     }
+    if (data.containsKey('branch')) {
+      context.handle(
+        _branchMeta,
+        branch.isAcceptableOrUnknown(data['branch']!, _branchMeta),
+      );
+    }
     if (data.containsKey('created')) {
       context.handle(
         _createdMeta,
@@ -357,6 +373,10 @@ class $MembersTable extends Members with TableInfo<$MembersTable, MemberRow> {
         DriftSqlType.string,
         data['${effectivePrefix}emergency_contact'],
       ),
+      branch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}branch'],
+      ),
       created: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created'],
@@ -391,6 +411,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
   final String? rfidCardId;
   final String? email;
   final String? emergencyContact;
+  final String? branch;
   final DateTime? created;
   final DateTime? updated;
   final DateTime syncedAt;
@@ -407,6 +428,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     this.rfidCardId,
     this.email,
     this.emergencyContact,
+    this.branch,
     this.created,
     this.updated,
     required this.syncedAt,
@@ -445,6 +467,9 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     }
     if (!nullToAbsent || emergencyContact != null) {
       map['emergency_contact'] = Variable<String>(emergencyContact);
+    }
+    if (!nullToAbsent || branch != null) {
+      map['branch'] = Variable<String>(branch);
     }
     if (!nullToAbsent || created != null) {
       map['created'] = Variable<DateTime>(created);
@@ -488,6 +513,9 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       emergencyContact: emergencyContact == null && nullToAbsent
           ? const Value.absent()
           : Value(emergencyContact),
+      branch: branch == null && nullToAbsent
+          ? const Value.absent()
+          : Value(branch),
       created: created == null && nullToAbsent
           ? const Value.absent()
           : Value(created),
@@ -516,6 +544,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       rfidCardId: serializer.fromJson<String?>(json['rfidCardId']),
       email: serializer.fromJson<String?>(json['email']),
       emergencyContact: serializer.fromJson<String?>(json['emergencyContact']),
+      branch: serializer.fromJson<String?>(json['branch']),
       created: serializer.fromJson<DateTime?>(json['created']),
       updated: serializer.fromJson<DateTime?>(json['updated']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
@@ -537,6 +566,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       'rfidCardId': serializer.toJson<String?>(rfidCardId),
       'email': serializer.toJson<String?>(email),
       'emergencyContact': serializer.toJson<String?>(emergencyContact),
+      'branch': serializer.toJson<String?>(branch),
       'created': serializer.toJson<DateTime?>(created),
       'updated': serializer.toJson<DateTime?>(updated),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
@@ -556,6 +586,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     Value<String?> rfidCardId = const Value.absent(),
     Value<String?> email = const Value.absent(),
     Value<String?> emergencyContact = const Value.absent(),
+    Value<String?> branch = const Value.absent(),
     Value<DateTime?> created = const Value.absent(),
     Value<DateTime?> updated = const Value.absent(),
     DateTime? syncedAt,
@@ -574,6 +605,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     emergencyContact: emergencyContact.present
         ? emergencyContact.value
         : this.emergencyContact,
+    branch: branch.present ? branch.value : this.branch,
     created: created.present ? created.value : this.created,
     updated: updated.present ? updated.value : this.updated,
     syncedAt: syncedAt ?? this.syncedAt,
@@ -600,6 +632,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
       emergencyContact: data.emergencyContact.present
           ? data.emergencyContact.value
           : this.emergencyContact,
+      branch: data.branch.present ? data.branch.value : this.branch,
       created: data.created.present ? data.created.value : this.created,
       updated: data.updated.present ? data.updated.value : this.updated,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
@@ -621,6 +654,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
           ..write('rfidCardId: $rfidCardId, ')
           ..write('email: $email, ')
           ..write('emergencyContact: $emergencyContact, ')
+          ..write('branch: $branch, ')
           ..write('created: $created, ')
           ..write('updated: $updated, ')
           ..write('syncedAt: $syncedAt')
@@ -642,6 +676,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
     rfidCardId,
     email,
     emergencyContact,
+    branch,
     created,
     updated,
     syncedAt,
@@ -662,6 +697,7 @@ class MemberRow extends DataClass implements Insertable<MemberRow> {
           other.rfidCardId == this.rfidCardId &&
           other.email == this.email &&
           other.emergencyContact == this.emergencyContact &&
+          other.branch == this.branch &&
           other.created == this.created &&
           other.updated == this.updated &&
           other.syncedAt == this.syncedAt);
@@ -680,6 +716,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
   final Value<String?> rfidCardId;
   final Value<String?> email;
   final Value<String?> emergencyContact;
+  final Value<String?> branch;
   final Value<DateTime?> created;
   final Value<DateTime?> updated;
   final Value<DateTime> syncedAt;
@@ -697,6 +734,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     this.rfidCardId = const Value.absent(),
     this.email = const Value.absent(),
     this.emergencyContact = const Value.absent(),
+    this.branch = const Value.absent(),
     this.created = const Value.absent(),
     this.updated = const Value.absent(),
     this.syncedAt = const Value.absent(),
@@ -715,6 +753,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     this.rfidCardId = const Value.absent(),
     this.email = const Value.absent(),
     this.emergencyContact = const Value.absent(),
+    this.branch = const Value.absent(),
     this.created = const Value.absent(),
     this.updated = const Value.absent(),
     required DateTime syncedAt,
@@ -735,6 +774,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     Expression<String>? rfidCardId,
     Expression<String>? email,
     Expression<String>? emergencyContact,
+    Expression<String>? branch,
     Expression<DateTime>? created,
     Expression<DateTime>? updated,
     Expression<DateTime>? syncedAt,
@@ -753,6 +793,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
       if (rfidCardId != null) 'rfid_card_id': rfidCardId,
       if (email != null) 'email': email,
       if (emergencyContact != null) 'emergency_contact': emergencyContact,
+      if (branch != null) 'branch': branch,
       if (created != null) 'created': created,
       if (updated != null) 'updated': updated,
       if (syncedAt != null) 'synced_at': syncedAt,
@@ -773,6 +814,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     Value<String?>? rfidCardId,
     Value<String?>? email,
     Value<String?>? emergencyContact,
+    Value<String?>? branch,
     Value<DateTime?>? created,
     Value<DateTime?>? updated,
     Value<DateTime>? syncedAt,
@@ -791,6 +833,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
       rfidCardId: rfidCardId ?? this.rfidCardId,
       email: email ?? this.email,
       emergencyContact: emergencyContact ?? this.emergencyContact,
+      branch: branch ?? this.branch,
       created: created ?? this.created,
       updated: updated ?? this.updated,
       syncedAt: syncedAt ?? this.syncedAt,
@@ -837,6 +880,9 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
     if (emergencyContact.present) {
       map['emergency_contact'] = Variable<String>(emergencyContact.value);
     }
+    if (branch.present) {
+      map['branch'] = Variable<String>(branch.value);
+    }
     if (created.present) {
       map['created'] = Variable<DateTime>(created.value);
     }
@@ -867,6 +913,7 @@ class MembersCompanion extends UpdateCompanion<MemberRow> {
           ..write('rfidCardId: $rfidCardId, ')
           ..write('email: $email, ')
           ..write('emergencyContact: $emergencyContact, ')
+          ..write('branch: $branch, ')
           ..write('created: $created, ')
           ..write('updated: $updated, ')
           ..write('syncedAt: $syncedAt, ')
@@ -902,6 +949,7 @@ typedef $$MembersTableCreateCompanionBuilder =
       Value<String?> rfidCardId,
       Value<String?> email,
       Value<String?> emergencyContact,
+      Value<String?> branch,
       Value<DateTime?> created,
       Value<DateTime?> updated,
       required DateTime syncedAt,
@@ -921,6 +969,7 @@ typedef $$MembersTableUpdateCompanionBuilder =
       Value<String?> rfidCardId,
       Value<String?> email,
       Value<String?> emergencyContact,
+      Value<String?> branch,
       Value<DateTime?> created,
       Value<DateTime?> updated,
       Value<DateTime> syncedAt,
@@ -993,6 +1042,11 @@ class $$MembersTableFilterComposer
 
   ColumnFilters<String> get emergencyContact => $composableBuilder(
     column: $table.emergencyContact,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get branch => $composableBuilder(
+    column: $table.branch,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1081,6 +1135,11 @@ class $$MembersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get branch => $composableBuilder(
+    column: $table.branch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get created => $composableBuilder(
     column: $table.created,
     builder: (column) => ColumnOrderings(column),
@@ -1150,6 +1209,9 @@ class $$MembersTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get branch =>
+      $composableBuilder(column: $table.branch, builder: (column) => column);
+
   GeneratedColumn<DateTime> get created =>
       $composableBuilder(column: $table.created, builder: (column) => column);
 
@@ -1200,6 +1262,7 @@ class $$MembersTableTableManager
                 Value<String?> rfidCardId = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> emergencyContact = const Value.absent(),
+                Value<String?> branch = const Value.absent(),
                 Value<DateTime?> created = const Value.absent(),
                 Value<DateTime?> updated = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
@@ -1217,6 +1280,7 @@ class $$MembersTableTableManager
                 rfidCardId: rfidCardId,
                 email: email,
                 emergencyContact: emergencyContact,
+                branch: branch,
                 created: created,
                 updated: updated,
                 syncedAt: syncedAt,
@@ -1236,6 +1300,7 @@ class $$MembersTableTableManager
                 Value<String?> rfidCardId = const Value.absent(),
                 Value<String?> email = const Value.absent(),
                 Value<String?> emergencyContact = const Value.absent(),
+                Value<String?> branch = const Value.absent(),
                 Value<DateTime?> created = const Value.absent(),
                 Value<DateTime?> updated = const Value.absent(),
                 required DateTime syncedAt,
@@ -1253,6 +1318,7 @@ class $$MembersTableTableManager
                 rfidCardId: rfidCardId,
                 email: email,
                 emergencyContact: emergencyContact,
+                branch: branch,
                 created: created,
                 updated: updated,
                 syncedAt: syncedAt,

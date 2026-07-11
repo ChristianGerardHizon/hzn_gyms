@@ -33,12 +33,16 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
     required int page,
     required int perPage,
     String sort = 'name',
+    String? branchId,
   }) {
     final offset = (page - 1) * perPage;
-    return (select(members)
-          ..orderBy([(m) => _orderingTerm(m, sort)])
-          ..limit(perPage, offset: offset))
-        .get();
+    final query = select(members)
+      ..orderBy([(m) => _orderingTerm(m, sort)])
+      ..limit(perPage, offset: offset);
+    if (branchId != null) {
+      query.where((m) => m.branch.equals(branchId));
+    }
+    return query.get();
   }
 
   /// Searches cached members with pagination.
@@ -48,21 +52,29 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
     required int page,
     required int perPage,
     String sort = 'name',
+    String? branchId,
   }) {
     final pattern = '%$query%';
     final offset = (page - 1) * perPage;
 
-    return (select(members)
-          ..where((m) => _searchExpression(m, fields, pattern))
-          ..orderBy([(m) => _orderingTerm(m, sort)])
-          ..limit(perPage, offset: offset))
-        .get();
+    final q = select(members)
+      ..where((m) {
+        final search = _searchExpression(m, fields, pattern);
+        if (branchId == null) return search;
+        return search & m.branch.equals(branchId);
+      })
+      ..orderBy([(m) => _orderingTerm(m, sort)])
+      ..limit(perPage, offset: offset);
+    return q.get();
   }
 
   /// Counts all cached members.
-  Future<int> countAll() async {
+  Future<int> countAll({String? branchId}) async {
     final countExpr = members.id.count();
     final query = selectOnly(members)..addColumns([countExpr]);
+    if (branchId != null) {
+      query.where(members.branch.equals(branchId));
+    }
     final row = await query.getSingle();
     return row.read(countExpr) ?? 0;
   }
@@ -71,12 +83,17 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
   Future<int> countSearch(
     String query, {
     List<String> fields = const ['name', 'mobileNumber'],
+    String? branchId,
   }) async {
     final pattern = '%$query%';
     final countExpr = members.id.count();
     final queryBuilder = selectOnly(members)
       ..addColumns([countExpr])
-      ..where(_searchExpression(members, fields, pattern));
+      ..where(() {
+        final search = _searchExpression(members, fields, pattern);
+        if (branchId == null) return search;
+        return search & members.branch.equals(branchId);
+      }());
 
     final row = await queryBuilder.getSingle();
     return row.read(countExpr) ?? 0;

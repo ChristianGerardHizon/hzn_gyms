@@ -152,9 +152,9 @@ Future<DashboardMembersPage> dashboardMembersPage(
     filter.searchFields(searchQuery, ['name', 'mobileNumber']);
   }
 
-  // Branch filter
+  // Branch filter (member home branch)
   if (branchId != null) {
-    filter.relation('membershipBranch', branchId);
+    filter.relation('branch', branchId);
   }
 
   // Status filter (server-side via the view's expirationDate)

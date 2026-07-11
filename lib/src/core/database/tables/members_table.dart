@@ -15,6 +15,7 @@ class Members extends Table {
   TextColumn get rfidCardId => text().nullable()();
   TextColumn get email => text().nullable()();
   TextColumn get emergencyContact => text().nullable()();
+  TextColumn get branch => text().nullable()();
   DateTimeColumn get created => dateTime().nullable()();
   DateTimeColumn get updated => dateTime().nullable()();
   DateTimeColumn get syncedAt => dateTime()();

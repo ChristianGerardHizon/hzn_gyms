@@ -38,14 +38,16 @@ class MemberLocalDataSource {
     int page = 1,
     int perPage = 20,
     String? sort,
+    String? branchId,
   }) async {
     final sortValue = sort ?? 'name';
     final rows = await _dao.getPaginated(
       page: page,
       perPage: perPage,
       sort: sortValue,
+      branchId: branchId,
     );
-    final totalItems = await _dao.countAll();
+    final totalItems = await _dao.countAll(branchId: branchId);
     final totalPages = totalItems == 0 ? 0 : (totalItems / perPage).ceil();
 
     return PaginatedResult(
@@ -63,6 +65,7 @@ class MemberLocalDataSource {
     int page = 1,
     int perPage = 20,
     String? sort,
+    String? branchId,
   }) async {
     final searchFields = fields ?? ['name', 'mobileNumber'];
     final sortValue = sort ?? 'name';
@@ -72,8 +75,13 @@ class MemberLocalDataSource {
       page: page,
       perPage: perPage,
       sort: sortValue,
+      branchId: branchId,
     );
-    final totalItems = await _dao.countSearch(query, fields: searchFields);
+    final totalItems = await _dao.countSearch(
+      query,
+      fields: searchFields,
+      branchId: branchId,
+    );
     final totalPages = totalItems == 0 ? 0 : (totalItems / perPage).ceil();
 
     return PaginatedResult(
@@ -135,6 +143,7 @@ class MemberLocalDataSource {
       rfidCardId: row.rfidCardId,
       email: row.email,
       emergencyContact: row.emergencyContact,
+      branch: row.branch,
       created: row.created,
       updated: row.updated,
     );
@@ -154,6 +163,7 @@ class MemberLocalDataSource {
       rfidCardId: Value(_emptyToNull(dto.rfidCardId)),
       email: Value(_emptyToNull(dto.email)),
       emergencyContact: Value(_emptyToNull(dto.emergencyContact)),
+      branch: Value(_emptyToNull(dto.branch)),
       created: Value(_parseDate(dto.created)),
       updated: Value(_parseDate(dto.updated)),
       syncedAt: Value(syncedAt),
@@ -174,6 +184,7 @@ class MemberLocalDataSource {
       rfidCardId: Value(member.rfidCardId),
       email: Value(member.email),
       emergencyContact: Value(member.emergencyContact),
+      branch: Value(member.branch),
       created: Value(member.created),
       updated: Value(member.updated),
       syncedAt: Value(syncedAt),

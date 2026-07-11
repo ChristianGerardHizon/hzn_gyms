@@ -133,6 +133,12 @@ class MemberMapper extends ClassMapperBase<Member> {
     _$emergencyContact,
     opt: true,
   );
+  static String? _$branch(Member v) => v.branch;
+  static const Field<Member, String> _f$branch = Field(
+    'branch',
+    _$branch,
+    opt: true,
+  );
   static DateTime? _$created(Member v) => v.created;
   static const Field<Member, DateTime> _f$created = Field(
     'created',
@@ -160,6 +166,7 @@ class MemberMapper extends ClassMapperBase<Member> {
     #rfidCardId: _f$rfidCardId,
     #email: _f$email,
     #emergencyContact: _f$emergencyContact,
+    #branch: _f$branch,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -178,6 +185,7 @@ class MemberMapper extends ClassMapperBase<Member> {
       rfidCardId: data.dec(_f$rfidCardId),
       email: data.dec(_f$email),
       emergencyContact: data.dec(_f$emergencyContact),
+      branch: data.dec(_f$branch),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -242,6 +250,7 @@ abstract class MemberCopyWith<$R, $In extends Member, $Out>
     String? rfidCardId,
     String? email,
     String? emergencyContact,
+    String? branch,
     DateTime? created,
     DateTime? updated,
   });
@@ -268,6 +277,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     Object? rfidCardId = $none,
     Object? email = $none,
     Object? emergencyContact = $none,
+    Object? branch = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -284,6 +294,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
       if (rfidCardId != $none) #rfidCardId: rfidCardId,
       if (email != $none) #email: email,
       if (emergencyContact != $none) #emergencyContact: emergencyContact,
+      if (branch != $none) #branch: branch,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -302,6 +313,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     rfidCardId: data.get(#rfidCardId, or: $value.rfidCardId),
     email: data.get(#email, or: $value.email),
     emergencyContact: data.get(#emergencyContact, or: $value.emergencyContact),
+    branch: data.get(#branch, or: $value.branch),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

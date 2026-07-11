@@ -126,6 +126,7 @@ class _MemberEditForm extends HookConsumerWidget {
         remarks: values['remarks'] as String?,
         rfidCardId: member.rfidCardId,
         addedBy: member.addedBy,
+        branch: member.branch,
       );
 
       final success = await ref
@@ -198,6 +199,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
       isSaving.value = true;
       final values = formKey.currentState!.value;
 
+      final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
       final memberData = Member(
         id: '',
         name: values['name'] as String,
@@ -208,6 +210,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
         address: values['address'] as String?,
         emergencyContact: values['emergencyContact'] as String?,
         remarks: values['remarks'] as String?,
+        branch: branchId.isEmpty ? null : branchId,
       );
 
       // 1. Create member (with photo if selected)
@@ -240,7 +243,6 @@ class _MemberCreateWizard extends HookConsumerWidget {
       Sale? createdSale;
       if (selectedMembership.value != null) {
         final plan = selectedMembership.value!;
-        final branchId = ref.read(currentBranchIdProvider) ?? '';
         final auth = ref.read(currentAuthProvider);
         final startDate = DateTime.now();
         final endDate = startDate.add(Duration(days: plan.durationDays));

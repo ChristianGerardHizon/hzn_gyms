@@ -10,6 +10,7 @@ import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/members_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../../dashboard/presentation/controllers/todays_sales_controller.dart';
 import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
 import '../../domain/cart_item.dart';
@@ -659,6 +660,7 @@ class _QuickAddMemberDialog extends HookConsumerWidget {
         id: '',
         name: values['name'] as String,
         mobileNumber: values['mobileNumber'] as String,
+        branch: ref.read(effectiveBranchIdForWriteProvider),
       );
 
       final controller = ref.read(membersControllerProvider.notifier);
