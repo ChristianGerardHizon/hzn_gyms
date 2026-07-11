@@ -14,6 +14,7 @@ class MembersListPage extends ConsumerWidget {
     final membersAsync = ref.watch(paginatedMembersControllerProvider);
 
     return membersAsync.when(
+      skipLoadingOnReload: true,
       data: (paginatedState) => MemberListPanel(
         members: paginatedState.items,
         totalCount: paginatedState.totalItems,

@@ -89,7 +89,10 @@ class PaginatedUsersController extends _$PaginatedUsersController {
 
   /// Refreshes the list (respects current search).
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncValue.loading();
+    }
 
     final result = _currentSearchQuery != null
         ? await _repository.searchPaginated(
@@ -105,13 +108,15 @@ class PaginatedUsersController extends _$PaginatedUsersController {
 
     state = result.fold(
       (failure) => AsyncError(failure, StackTrace.current),
-      (paginated) => AsyncData(PaginatedState<User>(
-        items: paginated.items,
-        currentPage: paginated.page,
-        totalItems: paginated.totalItems,
-        totalPages: paginated.totalPages,
-        hasReachedEnd: !paginated.hasMore,
-      )),
+      (paginated) => AsyncData(
+        PaginatedState<User>(
+          items: paginated.items,
+          currentPage: paginated.page,
+          totalItems: paginated.totalItems,
+          totalPages: paginated.totalPages,
+          hasReachedEnd: !paginated.hasMore,
+        ),
+      ),
     );
   }
 
@@ -124,8 +129,7 @@ class PaginatedUsersController extends _$PaginatedUsersController {
     _currentSearchQuery = query;
     _currentSearchFields = fields;
 
-    state = const AsyncValue.loading();
-
+    // Keep previous data so the list panel (and search input) stay mounted.
     final result = await _repository.searchPaginated(
       query,
       fields: fields,
@@ -135,13 +139,15 @@ class PaginatedUsersController extends _$PaginatedUsersController {
 
     state = result.fold(
       (failure) => AsyncError(failure, StackTrace.current),
-      (paginated) => AsyncData(PaginatedState<User>(
-        items: paginated.items,
-        currentPage: paginated.page,
-        totalItems: paginated.totalItems,
-        totalPages: paginated.totalPages,
-        hasReachedEnd: !paginated.hasMore,
-      )),
+      (paginated) => AsyncData(
+        PaginatedState<User>(
+          items: paginated.items,
+          currentPage: paginated.page,
+          totalItems: paginated.totalItems,
+          totalPages: paginated.totalPages,
+          hasReachedEnd: !paginated.hasMore,
+        ),
+      ),
     );
   }
 
@@ -155,46 +161,43 @@ class PaginatedUsersController extends _$PaginatedUsersController {
   /// Creates a new user.
   Future<User?> createUser(User user, String password) async {
     final result = await _repository.create(user, password);
-    return result.fold(
-      (failure) => null,
-      (newUser) {
-        state.whenData((currentState) {
-          state = AsyncValue.data(currentState.prependItem(newUser));
-        });
-        return newUser;
-      },
-    );
+    return result.fold((failure) => null, (newUser) {
+      state.whenData((currentState) {
+        state = AsyncValue.data(currentState.prependItem(newUser));
+      });
+      return newUser;
+    });
   }
 
   /// Updates an existing user.
   Future<bool> updateUser(User user) async {
     final result = await _repository.update(user);
-    return result.fold(
-      (failure) => false,
-      (updated) {
-        state.whenData((currentState) {
-          state = AsyncValue.data(
-            currentState.updateItem(updated, (u) => u.id == updated.id),
-          );
-        });
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (updated) {
+      state.whenData((currentState) {
+        state = AsyncValue.data(
+          currentState.updateItem(updated, (u) => u.id == updated.id),
+        );
+      });
+      return true;
+    });
   }
 
   /// Deletes a user.
   Future<bool> deleteUser(String id) async {
     final result = await _repository.delete(id);
-    return result.fold(
-      (failure) => false,
-      (_) {
-        state.whenData((currentState) {
-          state = AsyncValue.data(
-            currentState.removeItem((u) => u.id == id),
-          );
-        });
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (_) {
+      state.whenData((currentState) {
+        state = AsyncValue.data(currentState.removeItem((u) => u.id == id));
+      });
+      return true;
+    });
+  }
+
+  /// Resets a user's password (admin action).
+  ///
+  /// Returns `null` on success, or an error message on failure.
+  Future<String?> resetPassword(String userId, String newPassword) async {
+    final result = await _repository.resetPassword(userId, newPassword);
+    return result.fold((failure) => failure.message, (_) => null);
   }
 }

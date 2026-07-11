@@ -48,7 +48,7 @@ final class ProductCategoriesControllerProvider
 }
 
 String _$productCategoriesControllerHash() =>
-    r'4b4957a1b8036d22db4504615b34be2585a85ab5';
+    r'6c796ed86f417664a1f174cb7d89b4a25c579b3d';
 
 /// Controller for managing product category list state.
 ///

@@ -9,10 +9,7 @@ import 'dialogs/edit_role_dialog.dart';
 
 /// Detail panel for viewing a role in tablet layout.
 class UserRoleDetailPanel extends ConsumerWidget {
-  const UserRoleDetailPanel({
-    super.key,
-    required this.role,
-  });
+  const UserRoleDetailPanel({super.key, required this.role});
 
   final UserRole role;
 
@@ -119,13 +116,17 @@ class UserRoleDetailPanel extends ConsumerWidget {
   }
 
   void _showDeleteConfirmation(
-      BuildContext context, WidgetRef ref, UserRole role) {
+    BuildContext context,
+    WidgetRef ref,
+    UserRole role,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete'),
-        content:
-            Text('Are you sure you want to delete the "${role.name}" role?'),
+        content: Text(
+          'Are you sure you want to delete the "${role.name}" role?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

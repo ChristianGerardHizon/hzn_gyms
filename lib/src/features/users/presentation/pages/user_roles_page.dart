@@ -23,9 +23,9 @@ class UserRolesPage extends HookConsumerWidget {
     final isTablet = Breakpoints.isTabletOrLarger(context);
 
     return rolesAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      skipLoadingOnReload: true,
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(
           child: Column(
@@ -58,9 +58,9 @@ class UserRolesPage extends HookConsumerWidget {
         final selectedRole = selectedRoleId.value == null
             ? null
             : roles.cast<UserRole?>().firstWhere(
-                  (role) => role?.id == selectedRoleId.value,
-                  orElse: () => null,
-                );
+                (role) => role?.id == selectedRoleId.value,
+                orElse: () => null,
+              );
 
         final listPanel = UserRoleListPanel(
           roles: roles,
@@ -92,7 +92,10 @@ class UserRolesPage extends HookConsumerWidget {
   }
 
   void _showDeleteConfirmation(
-      BuildContext context, WidgetRef ref, UserRole role) {
+    BuildContext context,
+    WidgetRef ref,
+    UserRole role,
+  ) {
     if (role.isSystem) {
       showErrorSnackBar(context, message: 'System roles cannot be deleted');
       return;
@@ -102,8 +105,9 @@ class UserRolesPage extends HookConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete'),
-        content:
-            Text('Are you sure you want to delete the "${role.name}" role?'),
+        content: Text(
+          'Are you sure you want to delete the "${role.name}" role?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

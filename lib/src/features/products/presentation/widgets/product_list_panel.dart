@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/foundation/sort_config.dart';
+import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/routing/routes/products.routes.dart';
@@ -51,26 +52,35 @@ class ProductListPanel extends HookConsumerWidget {
         ref.read(paginatedProductsControllerProvider.notifier);
     final sortConfig = ref.watch(productSortControllerProvider);
 
-    // Search is active from the controller
-    final isSearchActive = paginatedController.isSearchActive;
-
     // Get selected product ID from current route
     final routerState = GoRouterState.of(context);
     final selectedProductId = routerState.pathParameters['id'];
 
     void performSearch() {
       final query = searchController.text.trim();
-      if (query.isEmpty) return;
+      if (query.isEmpty) {
+        if (paginatedController.isSearchActive) {
+          paginatedController.clearSearch();
+        }
+        return;
+      }
 
       final fields = ref.read(productSearchFieldsProvider).toList();
       paginatedController.search(query, fields: fields);
     }
 
-    void clearSearch() {
-      searchController.clear();
-      searchText.value = '';
-      ref.read(productSearchFieldsProvider.notifier).reset();
-      paginatedController.clearSearch();
+    final debouncedSearch = useDebouncedCallback<String>((_) => performSearch());
+
+    void onSearchTextChanged(String text) {
+      searchText.value = text;
+      debouncedSearch.cancel();
+      if (text.trim().isEmpty) {
+        if (paginatedController.isSearchActive) {
+          paginatedController.clearSearch();
+        }
+        return;
+      }
+      debouncedSearch.call(text);
     }
 
     // Infinite scroll hook
@@ -107,23 +117,15 @@ class ProductListPanel extends HookConsumerWidget {
           // Search
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: isSearchActive
-                ? _ActiveSearchChip(
-                    query: paginatedController.currentSearchQuery ?? '',
-                    fieldCount: activeFieldCount,
-                    sortConfig: sortConfig,
-                    onClear: clearSearch,
-                    onSortPressed: () => _showSortDialog(context, ref),
-                  )
-                : _SearchInput(
-                    controller: searchController,
-                    fieldCount: activeFieldCount,
-                    sortConfig: sortConfig,
-                    onSearch: performSearch,
-                    onTextChanged: (text) => searchText.value = text,
-                    searchText: searchText.value,
-                    onSortPressed: () => _showSortDialog(context, ref),
-                  ),
+            child: _SearchInput(
+              controller: searchController,
+              fieldCount: activeFieldCount,
+              sortConfig: sortConfig,
+              onSearch: performSearch,
+              onTextChanged: onSearchTextChanged,
+              searchText: searchText.value,
+              onSortPressed: () => _showSortDialog(context, ref),
+            ),
           ),
 
           // Product list
@@ -223,104 +225,6 @@ void _showSortDialog(BuildContext context, WidgetRef ref) {
       ref.read(productSortControllerProvider.notifier).setSort(config);
     },
   );
-}
-
-class _ActiveSearchChip extends StatelessWidget {
-  const _ActiveSearchChip({
-    required this.query,
-    required this.fieldCount,
-    required this.sortConfig,
-    required this.onClear,
-    required this.onSortPressed,
-  });
-
-  final String query;
-  final int fieldCount;
-  final SortConfig sortConfig;
-  final VoidCallback onClear;
-  final VoidCallback onSortPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final t = Translations.of(context);
-
-    return Row(
-      children: [
-        Expanded(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              isDense: true,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '"$query"',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (fieldCount > 1) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '$fieldCount fields',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: onClear,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Icon(
-                    Icons.close,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        IconButton.filledTonal(
-          icon: Icon(
-            sortConfig.descending ? Icons.arrow_downward : Icons.arrow_upward,
-          ),
-          onPressed: onSortPressed,
-          tooltip: t.common.sort,
-        ),
-      ],
-    );
-  }
 }
 
 class _SearchInput extends StatelessWidget {

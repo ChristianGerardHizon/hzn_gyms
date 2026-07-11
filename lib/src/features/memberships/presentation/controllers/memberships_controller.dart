@@ -27,7 +27,10 @@ class MembershipsController extends _$MembershipsController {
   /// Refreshes the membership list.
   Future<void> refresh() async {
     _repository.invalidateCache();
-    state = const AsyncLoading();
+    // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
 
     final branchId = ref.read(currentBranchIdProvider);
     final result = await _repository.fetchAll(branchId: branchId);

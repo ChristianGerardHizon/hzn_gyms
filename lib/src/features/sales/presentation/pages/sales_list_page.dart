@@ -16,6 +16,7 @@ class SalesListPage extends ConsumerWidget {
     final paginatedAsync = ref.watch(paginatedSalesControllerProvider);
 
     return paginatedAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),

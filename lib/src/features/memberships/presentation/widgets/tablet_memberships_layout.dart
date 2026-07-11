@@ -25,6 +25,7 @@ class TabletMembershipsLayout extends ConsumerWidget {
     final selectedMembershipId = routerState.pathParameters['id'];
 
     return membershipsAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Column(

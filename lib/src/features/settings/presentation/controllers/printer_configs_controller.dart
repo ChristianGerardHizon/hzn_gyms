@@ -24,7 +24,10 @@ class PrinterConfigsController extends _$PrinterConfigsController {
 
   /// Refreshes the printer config list.
   Future<void> refresh() async {
-    state = const AsyncLoading();
+    // Avoid wiping previous data so list UIs stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
 
     final result = await _repository.fetchAll();
 

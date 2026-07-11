@@ -28,6 +28,7 @@ class TabletMembersLayout extends ConsumerWidget {
     final selectedMemberId = routerState.pathParameters['id'];
 
     return membersAsync.when(
+      skipLoadingOnReload: true,
       loading: () => Row(
         children: [
           const SizedBox(

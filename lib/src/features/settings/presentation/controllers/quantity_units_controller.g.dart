@@ -38,7 +38,7 @@ final class QuantityUnitsControllerProvider
 }
 
 String _$quantityUnitsControllerHash() =>
-    r'2364fc73f899da6099c3b945cb1f4b24b8377572';
+    r'faf392b77ba3d54745f09caed9c3314a3a4738c3';
 
 /// Controller for managing quantity units list in settings.
 

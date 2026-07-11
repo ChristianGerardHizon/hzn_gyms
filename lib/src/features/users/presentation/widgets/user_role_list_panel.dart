@@ -32,24 +32,11 @@ class UserRoleListPanel extends HookConsumerWidget {
 
     final searchController = useTextEditingController();
     final searchText = useState('');
-    final appliedQuery = useState('');
 
-    final isSearchActive = appliedQuery.value.isNotEmpty;
-    final filteredRoles =
-        isSearchActive ? _filterRoles(roles, appliedQuery.value) : roles;
+    final query = searchText.value.trim();
+    final isSearchActive = query.isNotEmpty;
+    final filteredRoles = isSearchActive ? _filterRoles(roles, query) : roles;
     final totalCount = filteredRoles.length;
-
-    void performSearch() {
-      final query = searchController.text.trim();
-      if (query.isEmpty) return;
-      appliedQuery.value = query;
-    }
-
-    void clearSearch() {
-      searchController.clear();
-      searchText.value = '';
-      appliedQuery.value = '';
-    }
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -67,10 +54,7 @@ class UserRoleListPanel extends HookConsumerWidget {
               children: [
                 Text(t.navigation.roles, style: theme.textTheme.titleLarge),
                 const Spacer(),
-                Text(
-                  '$totalCount total',
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text('$totalCount total', style: theme.textTheme.bodySmall),
               ],
             ),
           ),
@@ -78,17 +62,11 @@ class UserRoleListPanel extends HookConsumerWidget {
           // Search
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: isSearchActive
-                ? _ActiveSearchChip(
-                    query: appliedQuery.value,
-                    onClear: clearSearch,
-                  )
-                : _SearchInput(
-                    controller: searchController,
-                    onSearch: performSearch,
-                    onTextChanged: (text) => searchText.value = text,
-                    searchText: searchText.value,
-                  ),
+            child: _SearchInput(
+              controller: searchController,
+              onTextChanged: (text) => searchText.value = text,
+              searchText: searchText.value,
+            ),
           ),
 
           // Roles list
@@ -108,7 +86,7 @@ class UserRoleListPanel extends HookConsumerWidget {
                         const SizedBox(height: 16),
                         Text(
                           isSearchActive
-                              ? 'No roles match "${appliedQuery.value}"'
+                              ? 'No roles match "$query"'
                               : 'No roles found',
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleLarge?.copyWith(
@@ -230,11 +208,7 @@ class _RoleListTile extends StatelessWidget {
           const PopupMenuItem(
             value: 'edit',
             child: Row(
-              children: [
-                Icon(Icons.edit),
-                SizedBox(width: 8),
-                Text('Edit'),
-              ],
+              children: [Icon(Icons.edit), SizedBox(width: 8), Text('Edit')],
             ),
           ),
           if (!role.isSystem)
@@ -257,80 +231,14 @@ class _RoleListTile extends StatelessWidget {
   }
 }
 
-class _ActiveSearchChip extends StatelessWidget {
-  const _ActiveSearchChip({
-    required this.query,
-    required this.onClear,
-  });
-
-  final String query;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Expanded(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              isDense: true,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '"$query"',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: onClear,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Icon(
-                    Icons.close,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _SearchInput extends StatelessWidget {
   const _SearchInput({
     required this.controller,
-    required this.onSearch,
     required this.onTextChanged,
     required this.searchText,
   });
 
   final TextEditingController controller;
-  final VoidCallback onSearch;
   final ValueChanged<String> onTextChanged;
   final String searchText;
 
@@ -344,7 +252,6 @@ class _SearchInput extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: onTextChanged,
-            onSubmitted: (_) => onSearch(),
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: '${t.common.search}...',
@@ -381,8 +288,9 @@ List<UserRole> _filterRoles(List<UserRole> roles, String query) {
   return roles.where((role) {
     final nameMatch = role.name.toLowerCase().contains(normalizedQuery);
     final description = role.description ?? '';
-    final descriptionMatch =
-        description.toLowerCase().contains(normalizedQuery);
+    final descriptionMatch = description.toLowerCase().contains(
+      normalizedQuery,
+    );
     return nameMatch || descriptionMatch;
   }).toList();
 }

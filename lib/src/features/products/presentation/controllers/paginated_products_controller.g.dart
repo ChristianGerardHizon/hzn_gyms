@@ -42,7 +42,7 @@ final class PaginatedProductsControllerProvider
 }
 
 String _$paginatedProductsControllerHash() =>
-    r'49bd90423cd59495e7eb0f2980a722d44d64e8bd';
+    r'0c238bc005a7c48d9009d63038b4e3720c8a5aa5';
 
 /// Controller for managing paginated products list.
 

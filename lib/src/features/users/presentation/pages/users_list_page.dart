@@ -23,6 +23,7 @@ class UsersListPage extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: paginatedAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(

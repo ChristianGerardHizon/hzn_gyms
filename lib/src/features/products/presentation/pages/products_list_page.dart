@@ -13,6 +13,7 @@ class ProductsListPage extends ConsumerWidget {
     final productsAsync = ref.watch(paginatedProductsControllerProvider);
 
     return productsAsync.when(
+      skipLoadingOnReload: true,
       data: (state) => ProductListPanel(
         products: state.items,
         totalCount: state.totalItems,

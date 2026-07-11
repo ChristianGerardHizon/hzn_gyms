@@ -38,7 +38,7 @@ final class PaginatedSalesControllerProvider
 }
 
 String _$paginatedSalesControllerHash() =>
-    r'85cbab7f2e59f281db91f29c4f09e464248e87db';
+    r'74c1713127a56e9fce02f6502edc9176c5e78cd6';
 
 /// Controller for managing paginated sales list.
 

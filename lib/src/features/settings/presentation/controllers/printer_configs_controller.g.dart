@@ -44,7 +44,7 @@ final class PrinterConfigsControllerProvider
 }
 
 String _$printerConfigsControllerHash() =>
-    r'd39e06de8e80adc3020c119471b55e4986cd39a7';
+    r'ba22254a3d5d669e06fab2799d5140da45f36ae1';
 
 /// Controller for managing printer configuration list state.
 ///
