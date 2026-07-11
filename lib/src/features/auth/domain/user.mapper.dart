@@ -47,6 +47,13 @@ class UserMapper extends ClassMapperBase<User> {
     _$branch,
     opt: true,
   );
+  static List<String> _$allowedBranches(User v) => v.allowedBranches;
+  static const Field<User, List<String>> _f$allowedBranches = Field(
+    'allowedBranches',
+    _$allowedBranches,
+    opt: true,
+    def: const [],
+  );
 
   @override
   final MappableFields<User> fields = const {
@@ -56,6 +63,7 @@ class UserMapper extends ClassMapperBase<User> {
     #avatarUrl: _f$avatarUrl,
     #verified: _f$verified,
     #branch: _f$branch,
+    #allowedBranches: _f$allowedBranches,
   };
 
   static User _instantiate(DecodingData data) {
@@ -66,6 +74,7 @@ class UserMapper extends ClassMapperBase<User> {
       avatarUrl: data.dec(_f$avatarUrl),
       verified: data.dec(_f$verified),
       branch: data.dec(_f$branch),
+      allowedBranches: data.dec(_f$allowedBranches),
     );
   }
 
@@ -115,6 +124,8 @@ extension UserValueCopy<$R, $Out> on ObjectCopyWith<$R, User, $Out> {
 
 abstract class UserCopyWith<$R, $In extends User, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches;
   $R call({
     String? id,
     String? name,
@@ -122,6 +133,7 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     String? avatarUrl,
     bool? verified,
     String? branch,
+    List<String>? allowedBranches,
   });
   UserCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -133,6 +145,13 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
   @override
   late final ClassMapperBase<User> $mapper = UserMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches => ListCopyWith(
+    $value.allowedBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranches: v),
+  );
+  @override
   $R call({
     String? id,
     String? name,
@@ -140,6 +159,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     Object? avatarUrl = $none,
     bool? verified,
     Object? branch = $none,
+    List<String>? allowedBranches,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -148,6 +168,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (avatarUrl != $none) #avatarUrl: avatarUrl,
       if (verified != null) #verified: verified,
       if (branch != $none) #branch: branch,
+      if (allowedBranches != null) #allowedBranches: allowedBranches,
     }),
   );
   @override
@@ -158,6 +179,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     avatarUrl: data.get(#avatarUrl, or: $value.avatarUrl),
     verified: data.get(#verified, or: $value.verified),
     branch: data.get(#branch, or: $value.branch),
+    allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
   );
 
   @override

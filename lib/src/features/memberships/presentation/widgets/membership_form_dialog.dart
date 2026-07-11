@@ -60,7 +60,7 @@ class MembershipFormDialog extends HookConsumerWidget {
       final values = formKey.currentState!.value;
 
       final branchId =
-          membership?.branchId ?? ref.read(currentBranchIdProvider) ?? '';
+          membership?.branchId ?? ref.read(effectiveBranchIdForWriteProvider) ?? '';
 
       final membershipData = Membership(
         id: membership?.id ?? '',

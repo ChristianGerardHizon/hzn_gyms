@@ -8,10 +8,7 @@ import '../widgets/tablet_users_layout.dart';
 /// - Mobile: Passes through the child (list or detail page)
 /// - Tablet: Shows two-pane layout with list and detail side by side
 class UsersShell extends StatelessWidget {
-  const UsersShell({
-    super.key,
-    required this.child,
-  });
+  const UsersShell({super.key, required this.child});
 
   /// The child widget from the router (detail page or placeholder).
   final Widget child;

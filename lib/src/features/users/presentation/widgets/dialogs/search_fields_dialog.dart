@@ -21,93 +21,93 @@ class UserSearchFieldsDialog extends ConsumerWidget {
       child: ConstrainedDialogContent(
         maxWidth: DialogConstraints.compactMaxWidth,
         child: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => context.pop(),
-                ),
-                Expanded(
-                  child: Text(
-                    t.fields.searchFields,
-                    style: theme.textTheme.titleLarge,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: OutlinedButton(
-                    onPressed: () {
-                      ref.read(userSearchFieldsProvider.notifier).reset();
-                    },
-                    child: Text(t.common.reset),
-                  ),
-                ),
-                FilledButton(
-                  onPressed: () => context.pop(),
-                  child: Text(t.common.done),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Row(
                 children: [
-                  const SizedBox(height: 16),
-
-                  Text(
-                    t.fields.searchFieldsHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => context.pop(),
+                  ),
+                  Expanded(
+                    child: Text(
+                      t.fields.searchFields,
+                      style: theme.textTheme.titleLarge,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Field checkboxes
-                  ...userSearchableFields.map((field) {
-                    final isSelected = selectedFields.contains(field);
-                    final isLastSelected =
-                        isSelected && selectedFields.length == 1;
-
-                    return CheckboxListTile(
-                      value: isSelected,
-                      onChanged: isLastSelected
-                          ? null // Can't deselect the last field
-                          : (_) => ref
-                              .read(userSearchFieldsProvider.notifier)
-                              .toggleField(field),
-                      title: Text(_getFieldLabel(field, t)),
-                      subtitle: isLastSelected
-                          ? Text(
-                              t.fields.atLeastOneRequired,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                              ),
-                            )
-                          : null,
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }),
-
-                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: OutlinedButton(
+                      onPressed: () {
+                        ref.read(userSearchFieldsProvider.notifier).reset();
+                      },
+                      child: Text(t.common.reset),
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed: () => context.pop(),
+                    child: Text(t.common.done),
+                  ),
+                  const SizedBox(width: 8),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
+
+            const SizedBox(height: 8),
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 16),
+
+                    Text(
+                      t.fields.searchFieldsHint,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Field checkboxes
+                    ...userSearchableFields.map((field) {
+                      final isSelected = selectedFields.contains(field);
+                      final isLastSelected =
+                          isSelected && selectedFields.length == 1;
+
+                      return CheckboxListTile(
+                        value: isSelected,
+                        onChanged: isLastSelected
+                            ? null // Can't deselect the last field
+                            : (_) => ref
+                                  .read(userSearchFieldsProvider.notifier)
+                                  .toggleField(field),
+                        title: Text(_getFieldLabel(field, t)),
+                        subtitle: isLastSelected
+                            ? Text(
+                                t.fields.atLeastOneRequired,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              )
+                            : null,
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

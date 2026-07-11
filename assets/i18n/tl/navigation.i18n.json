@@ -17,5 +17,6 @@
     "memberships": "Mga Membership",
     "system": "Sistema",
     "account": "Account",
-    "noBranch": "Walang Sangay"
+    "noBranch": "Walang Sangay",
+    "allBranches": "Lahat ng Sangay"
 }

@@ -17,10 +17,7 @@ class AuthLoadingPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Assets.icons.appIconTransparent.image(
-              width: 80,
-              height: 80,
-            ),
+            Assets.icons.appIconTransparent.image(width: 80, height: 80),
             const SizedBox(height: 24),
             Text(
               t.common.appName,
@@ -31,9 +28,9 @@ class AuthLoadingPage extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               t.auth.signingIn,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
           ],
         ),

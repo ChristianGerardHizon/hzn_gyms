@@ -9,6 +9,7 @@ import '../../../data/repositories/user_repository.dart';
 import '../../../domain/user.dart';
 import '../../controllers/user_provider.dart';
 import '../dialogs/edit_user_dialog.dart';
+import '../dialogs/reset_password_dialog.dart';
 import '../user_avatar.dart';
 
 /// Details tab content showing comprehensive user information.
@@ -100,10 +101,7 @@ class UserDetailsTab extends HookConsumerWidget {
   }) {
     return Stack(
       children: [
-        UserAvatar(
-          user: user,
-          radius: radius,
-        ),
+        UserAvatar(user: user, radius: radius),
         // Camera overlay button
         Positioned(
           right: 0,
@@ -117,10 +115,7 @@ class UserDetailsTab extends HookConsumerWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.surface,
-                  width: 2,
-                ),
+                border: Border.all(color: theme.colorScheme.surface, width: 2),
               ),
               child: isUploading.value
                   ? SizedBox(
@@ -196,11 +191,7 @@ class UserDetailsTab extends HookConsumerWidget {
 
   Widget _buildUserDetailsSection(ThemeData theme) {
     final items = <_DetailItem>[
-      _DetailItem(
-        icon: Icons.person,
-        label: 'Name',
-        value: user.name,
-      ),
+      _DetailItem(icon: Icons.person, label: 'Name', value: user.name),
       _DetailItem(
         icon: Icons.alternate_email,
         label: 'Username',
@@ -213,8 +204,13 @@ class UserDetailsTab extends HookConsumerWidget {
       ),
       _DetailItem(
         icon: Icons.business,
-        label: 'Branch',
+        label: 'Default Branch',
         value: user.displayBranch,
+      ),
+      _DetailItem(
+        icon: Icons.store,
+        label: 'Allowed Branches',
+        value: user.displayAllowedBranches,
       ),
       _DetailItem(
         icon: Icons.verified_user,
@@ -264,11 +260,7 @@ class UserDetailsTab extends HookConsumerWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(
-            item.icon,
-            size: 20,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(item.icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -316,9 +308,7 @@ class UserDetailsTab extends HookConsumerWidget {
               label: const Text('Edit Details'),
             ),
             FilledButton.tonalIcon(
-              onPressed: () {
-                showWarningSnackBar(context, message: 'Reset password coming soon');
-              },
+              onPressed: () => showResetPasswordDialog(context, user),
               icon: const Icon(Icons.lock_reset),
               label: const Text('Reset Password'),
             ),

@@ -160,13 +160,22 @@ class UserOverviewTab extends StatelessWidget {
               hasValue: user.roleId != null,
             ),
             const SizedBox(height: 12),
-            // Branch
+            // Default branch
             _buildAssignmentItem(
               context,
               icon: Icons.business,
-              label: 'Branch',
+              label: 'Default Branch',
               value: user.displayBranch,
               hasValue: user.branchId != null,
+            ),
+            const SizedBox(height: 12),
+            // Allowed branches
+            _buildAssignmentItem(
+              context,
+              icon: Icons.store,
+              label: 'Allowed Branches',
+              value: user.displayAllowedBranches,
+              hasValue: user.allowedBranchIds.isNotEmpty,
             ),
           ],
         ),

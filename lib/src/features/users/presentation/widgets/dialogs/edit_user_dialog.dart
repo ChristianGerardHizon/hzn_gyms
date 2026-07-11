@@ -34,6 +34,7 @@ class EditUserDialog extends HookConsumerWidget {
         'username': user.username,
         'role': user.roleId,
         'branch': user.branchId,
+        'allowedBranches': user.allowedBranchIds,
       },
     );
 
@@ -60,6 +61,17 @@ class EditUserDialog extends HookConsumerWidget {
       final values = formKey.currentState!.value;
       isSaving.value = true;
 
+      final defaultBranchId = values['branch'] as String?;
+      final allowedRaw = values['allowedBranches'];
+      var allowedBranchIds = allowedRaw is List
+          ? allowedRaw.map((e) => e.toString()).toList()
+          : <String>[];
+      if (defaultBranchId != null &&
+          defaultBranchId.isNotEmpty &&
+          !allowedBranchIds.contains(defaultBranchId)) {
+        allowedBranchIds = [...allowedBranchIds, defaultBranchId];
+      }
+
       // Create updated user object (preserve existing values not in form)
       final updatedUser = User(
         id: user.id,
@@ -68,7 +80,10 @@ class EditUserDialog extends HookConsumerWidget {
         avatar: user.avatar,
         verified: user.verified,
         roleId: values['role'] as String?,
-        branchId: values['branch'] as String?,
+        branchId: defaultBranchId,
+        branchName: user.branchName,
+        allowedBranchIds: allowedBranchIds,
+        allowedBranchNames: user.allowedBranchNames,
         isDeleted: user.isDeleted,
         created: user.created,
         updated: user.updated,
@@ -111,6 +126,7 @@ class EditUserDialog extends HookConsumerWidget {
         'username': user.username,
         'role': user.roleId,
         'branch': user.branchId,
+        'allowedBranches': user.allowedBranchIds,
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,14 +270,15 @@ class EditUserDialog extends HookConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Branch dropdown
+          // Default branch dropdown
           branchesAsync.when(
             data: (branches) => FormBuilderDropdown<String>(
               name: 'branch',
               decoration: const InputDecoration(
-                labelText: 'Branch',
+                labelText: 'Default Branch',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.business),
+                helperText: 'Home branch used when creating records',
               ),
               enabled: !isSaving.value,
               items: branches.map((branch) {
@@ -270,10 +287,20 @@ class EditUserDialog extends HookConsumerWidget {
                   child: Text(branch.name),
                 );
               }).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                final current =
+                    formKey.currentState?.fields['allowedBranches']?.value
+                        as List<String>?;
+                final next = {...?current, value}.toList();
+                formKey.currentState?.fields['allowedBranches']?.didChange(
+                  next,
+                );
+              },
             ),
             loading: () => const TextField(
               decoration: InputDecoration(
-                labelText: 'Branch',
+                labelText: 'Default Branch',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.business),
                 suffixIcon: SizedBox(
@@ -289,13 +316,48 @@ class EditUserDialog extends HookConsumerWidget {
             ),
             error: (_, __) => const TextField(
               decoration: InputDecoration(
-                labelText: 'Branch',
+                labelText: 'Default Branch',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.business),
                 errorText: 'Failed to load branches',
               ),
               enabled: false,
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Allowed branches multi-select
+          branchesAsync.when(
+            data: (branches) => FormBuilderCheckboxGroup<String>(
+              name: 'allowedBranches',
+              decoration: const InputDecoration(
+                labelText: 'Allowed Branches',
+                border: OutlineInputBorder(),
+                helperText: 'Branches this user can switch to',
+              ),
+              enabled: !isSaving.value,
+              orientation: OptionsOrientation.vertical,
+              options: branches
+                  .map(
+                    (branch) => FormBuilderFieldOption(
+                      value: branch.id,
+                      child: Text(branch.name),
+                    ),
+                  )
+                  .toList(),
+              validator: (value) {
+                final defaultId =
+                    formKey.currentState?.fields['branch']?.value as String?;
+                if (defaultId != null &&
+                    defaultId.isNotEmpty &&
+                    (value == null || !value.contains(defaultId))) {
+                  return 'Must include the default branch';
+                }
+                return null;
+              },
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
           const SizedBox(height: 24),
 
@@ -343,7 +405,8 @@ class EditUserDialog extends HookConsumerWidget {
     'name': 'Name',
     'username': 'Username',
     'role': 'Role',
-    'branch': 'Branch',
+    'branch': 'Default Branch',
+    'allowedBranches': 'Allowed Branches',
   };
 }
 

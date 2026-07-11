@@ -51,7 +51,7 @@ class CartController extends _$CartController {
   Future<CartState> build() async {
     // Watch so the cart reloads once the working branch becomes available.
     // Using read() here left the cart stuck empty when build ran before branch load.
-    final branchId = ref.watch(currentBranchIdProvider);
+    final branchId = ref.watch(effectiveBranchIdForWriteProvider);
 
     if (branchId == null) {
       return const CartState();
@@ -84,7 +84,7 @@ class CartController extends _$CartController {
       return currentState!.cartId;
     }
 
-    final branchId = ref.read(currentBranchIdProvider);
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
     final userId = ref.read(currentAuthProvider)?.user.id;
 
     if (branchId == null) return null;

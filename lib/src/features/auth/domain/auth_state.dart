@@ -15,10 +15,7 @@ class AuthState with AuthStateMappable {
   /// The authenticated user record.
   final User user;
 
-  const AuthState({
-    required this.token,
-    required this.user,
-  });
+  const AuthState({required this.token, required this.user});
 
   /// Whether the user's account is verified.
   bool get isVerified => user.verified;

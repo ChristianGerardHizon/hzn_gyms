@@ -18,6 +18,8 @@ class User with UserMappable {
     this.roleName,
     this.branchId,
     this.branchName,
+    this.allowedBranchIds = const [],
+    this.allowedBranchNames = const [],
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -44,11 +46,17 @@ class User with UserMappable {
   /// Role name (expanded from FK).
   final String? roleName;
 
-  /// FK to Branch.
+  /// Default/home branch FK.
   final String? branchId;
 
-  /// Branch name (expanded from FK).
+  /// Default branch name (expanded from FK).
   final String? branchName;
+
+  /// Branch IDs the user may switch to.
+  final List<String> allowedBranchIds;
+
+  /// Allowed branch names (expanded), aligned with [allowedBranchIds] when available.
+  final List<String> allowedBranchNames;
 
   /// Soft delete flag.
   final bool isDeleted;
@@ -67,6 +75,16 @@ class User with UserMappable {
 
   /// Display branch name or default text.
   String get displayBranch => branchName ?? 'No Branch';
+
+  /// Display allowed branches as a comma-separated list.
+  String get displayAllowedBranches {
+    if (allowedBranchNames.isNotEmpty) {
+      return allowedBranchNames.join(', ');
+    }
+    if (allowedBranchIds.isEmpty) return 'No branches';
+    if (allowedBranchIds.length == 1) return displayBranch;
+    return '$displayBranch (+${allowedBranchIds.length - 1} more)';
+  }
 
   /// Get user initials from name.
   String get initials {

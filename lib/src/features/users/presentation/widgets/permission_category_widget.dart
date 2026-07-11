@@ -48,9 +48,9 @@ class PermissionCategoryWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final permissionKeys = permissions.map((p) => p.key).toList();
 
-    final selectedCount = permissions.where(
-      (p) => selectedPermissions.contains(p.key),
-    ).length;
+    final selectedCount = permissions
+        .where((p) => selectedPermissions.contains(p.key))
+        .length;
     final allSelected = selectedCount == permissions.length;
     final someSelected = selectedCount > 0 && !allSelected;
 
@@ -166,10 +166,7 @@ class _PermissionTile extends StatelessWidget {
     return CheckboxListTile(
       value: isSelected,
       onChanged: enabled ? onChanged : null,
-      title: Text(
-        permission.name,
-        style: theme.textTheme.bodyMedium,
-      ),
+      title: Text(permission.name, style: theme.textTheme.bodyMedium),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

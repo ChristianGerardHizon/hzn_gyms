@@ -389,6 +389,9 @@ class Translations$navigation$en {
 
 	/// en: 'No Branch'
 	String get noBranch => 'No Branch';
+
+	/// en: 'All Branches'
+	String get allBranches => 'All Branches';
 }
 
 // Path: sort
@@ -589,6 +592,7 @@ extension on Translations {
 			'navigation.system' => 'System',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'No Branch',
+			'navigation.allBranches' => 'All Branches',
 			'sort.sortBy' => 'Sort By',
 			'sort.direction' => 'Direction',
 			'sort.ascending' => 'Ascending',

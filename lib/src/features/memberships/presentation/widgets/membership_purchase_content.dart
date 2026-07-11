@@ -130,7 +130,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
 
       isPurchasing.value = true;
 
-      final branchId = ref.read(currentBranchIdProvider) ?? '';
+      final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
       final auth = ref.read(currentAuthProvider);
       final startDate = DateTime.now();
       final endDate = startDate.add(Duration(days: plan.durationDays));

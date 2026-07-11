@@ -123,7 +123,12 @@ class _MobileDashboardHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final branch = ref.watch(currentBranchControllerProvider).value;
+    final selection = ref.watch(currentBranchControllerProvider).value;
+    final branchLabel = selection == null
+        ? null
+        : selection.isAll
+            ? 'All Branches'
+            : selection.branch?.name;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -146,7 +151,7 @@ class _MobileDashboardHeader extends ConsumerWidget {
             ],
           ),
           // Show current branch if available
-          if (branch != null)
+          if (branchLabel != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Row(
@@ -158,7 +163,7 @@ class _MobileDashboardHeader extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    branch.name,
+                    branchLabel,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.outline,
                     ),

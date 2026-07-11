@@ -193,6 +193,7 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get system => 'Sistema';
 	@override String get account => 'Account';
 	@override String get noBranch => 'Walang Sangay';
+	@override String get allBranches => 'Lahat ng Sangay';
 }
 
 // Path: sort
@@ -345,6 +346,7 @@ extension on TranslationsTl {
 			'navigation.system' => 'Sistema',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'Walang Sangay',
+			'navigation.allBranches' => 'Lahat ng Sangay',
 			'sort.sortBy' => 'Ayusin Ayon Sa',
 			'sort.direction' => 'Direksyon',
 			'sort.ascending' => 'Pataas',

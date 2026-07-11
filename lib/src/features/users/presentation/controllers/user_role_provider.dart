@@ -11,8 +11,5 @@ Future<UserRole?> userRole(Ref ref, String id) async {
   final repository = ref.read(userRoleRepositoryProvider);
   final result = await repository.fetchOne(id);
 
-  return result.fold(
-    (failure) => null,
-    (role) => role,
-  );
+  return result.fold((failure) => null, (role) => role);
 }

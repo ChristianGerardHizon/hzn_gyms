@@ -45,7 +45,7 @@ final class CsvImportControllerProvider
 }
 
 String _$csvImportControllerHash() =>
-    r'6df35161f6ba201747d0bcede18f681d05c29e0a';
+    r'5614038d8064f0455afad1e9fd85070383cba7ab';
 
 /// Controller for managing CSV product import.
 

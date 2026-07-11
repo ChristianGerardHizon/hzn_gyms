@@ -68,6 +68,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     _$branch,
     opt: true,
   );
+  static List<String> _$allowedBranches(UserDto v) => v.allowedBranches;
+  static const Field<UserDto, List<String>> _f$allowedBranches = Field(
+    'allowedBranches',
+    _$allowedBranches,
+    opt: true,
+    def: const [],
+  );
   static bool _$isDeleted(UserDto v) => v.isDeleted;
   static const Field<UserDto, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -99,6 +106,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     _$branchName,
     opt: true,
   );
+  static List<String> _$allowedBranchNames(UserDto v) => v.allowedBranchNames;
+  static const Field<UserDto, List<String>> _f$allowedBranchNames = Field(
+    'allowedBranchNames',
+    _$allowedBranchNames,
+    opt: true,
+    def: const [],
+  );
 
   @override
   final MappableFields<UserDto> fields = const {
@@ -112,11 +126,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     #verified: _f$verified,
     #role: _f$role,
     #branch: _f$branch,
+    #allowedBranches: _f$allowedBranches,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
     #roleName: _f$roleName,
     #branchName: _f$branchName,
+    #allowedBranchNames: _f$allowedBranchNames,
   };
 
   static UserDto _instantiate(DecodingData data) {
@@ -131,11 +147,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
       verified: data.dec(_f$verified),
       role: data.dec(_f$role),
       branch: data.dec(_f$branch),
+      allowedBranches: data.dec(_f$allowedBranches),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
       roleName: data.dec(_f$roleName),
       branchName: data.dec(_f$branchName),
+      allowedBranchNames: data.dec(_f$allowedBranchNames),
     );
   }
 
@@ -196,6 +214,10 @@ extension UserDtoValueCopy<$R, $Out> on ObjectCopyWith<$R, UserDto, $Out> {
 
 abstract class UserDtoCopyWith<$R, $In extends UserDto, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranchNames;
   $R call({
     String? id,
     String? collectionId,
@@ -207,11 +229,13 @@ abstract class UserDtoCopyWith<$R, $In extends UserDto, $Out>
     bool? verified,
     String? role,
     String? branch,
+    List<String>? allowedBranches,
     bool? isDeleted,
     String? created,
     String? updated,
     String? roleName,
     String? branchName,
+    List<String>? allowedBranchNames,
   });
   UserDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -225,6 +249,20 @@ class _UserDtoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<UserDto> $mapper =
       UserDtoMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches => ListCopyWith(
+    $value.allowedBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranches: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranchNames => ListCopyWith(
+    $value.allowedBranchNames,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranchNames: v),
+  );
+  @override
   $R call({
     String? id,
     String? collectionId,
@@ -236,11 +274,13 @@ class _UserDtoCopyWithImpl<$R, $Out>
     bool? verified,
     Object? role = $none,
     Object? branch = $none,
+    List<String>? allowedBranches,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
     Object? roleName = $none,
     Object? branchName = $none,
+    List<String>? allowedBranchNames,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -253,11 +293,13 @@ class _UserDtoCopyWithImpl<$R, $Out>
       if (verified != null) #verified: verified,
       if (role != $none) #role: role,
       if (branch != $none) #branch: branch,
+      if (allowedBranches != null) #allowedBranches: allowedBranches,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
       if (roleName != $none) #roleName: roleName,
       if (branchName != $none) #branchName: branchName,
+      if (allowedBranchNames != null) #allowedBranchNames: allowedBranchNames,
     }),
   );
   @override
@@ -272,11 +314,16 @@ class _UserDtoCopyWithImpl<$R, $Out>
     verified: data.get(#verified, or: $value.verified),
     role: data.get(#role, or: $value.role),
     branch: data.get(#branch, or: $value.branch),
+    allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
     roleName: data.get(#roleName, or: $value.roleName),
     branchName: data.get(#branchName, or: $value.branchName),
+    allowedBranchNames: data.get(
+      #allowedBranchNames,
+      or: $value.allowedBranchNames,
+    ),
   );
 
   @override

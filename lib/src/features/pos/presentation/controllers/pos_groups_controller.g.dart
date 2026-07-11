@@ -46,7 +46,7 @@ final class PosGroupsControllerProvider
 }
 
 String _$posGroupsControllerHash() =>
-    r'e4e2c7839382de363e17253eae2c9bda633d0b81';
+    r'c62b1145098e5afeb3dc48caa0f4bfe9c9edf7de';
 
 /// Controller for managing POS groups for the current branch.
 ///

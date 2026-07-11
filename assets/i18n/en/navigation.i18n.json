@@ -17,5 +17,6 @@
     "memberships": "Memberships",
     "system": "System",
     "account": "Account",
-    "noBranch": "No Branch"
+    "noBranch": "No Branch",
+    "allBranches": "All Branches"
 }
