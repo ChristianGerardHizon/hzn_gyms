@@ -144,6 +144,7 @@ class MembershipRepositoryImpl implements MembershipRepository {
           'price': membership.price,
           'branch': membership.branchId,
           'isActive': membership.isActive,
+          'isFavorite': membership.isFavorite,
         };
 
         final record = await _collection.create(body: body);
@@ -165,6 +166,7 @@ class MembershipRepositoryImpl implements MembershipRepository {
           'price': membership.price,
           'branch': membership.branchId,
           'isActive': membership.isActive,
+          'isFavorite': membership.isFavorite,
         };
 
         final record = await _collection.update(membership.id, body: body);

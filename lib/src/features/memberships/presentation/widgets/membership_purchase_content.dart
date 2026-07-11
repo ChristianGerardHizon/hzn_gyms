@@ -69,6 +69,18 @@ class MembershipPurchaseContent extends HookConsumerWidget {
     final localMembership = useState<Membership?>(null);
     final localAddOns = useState<Set<MembershipAddOn>>({});
     final isPurchasing = useState(false);
+    final searchController = useTextEditingController();
+    final searchQuery = useState('');
+    final showInactive = useState(false);
+
+    useEffect(() {
+      void listener() {
+        searchQuery.value = searchController.text;
+      }
+
+      searchController.addListener(listener);
+      return () => searchController.removeListener(listener);
+    }, [searchController]);
 
     final membershipState = selectedMembership ?? localMembership;
     final addOnsState = selectedAddOns ?? localAddOns;
@@ -210,31 +222,26 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         Expanded(
           child: membershipsAsync.when(
             data: (memberships) {
-              final activePlans = memberships.where((m) => m.isActive).toList();
-
-              if (activePlans.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.card_membership_outlined,
-                        size: 48,
-                        color: theme.colorScheme.onSurfaceVariant.withValues(
-                          alpha: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No active membership plans available',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+              void sortPlans(List<Membership> plans) {
+                plans.sort((a, b) {
+                  if (a.isFavorite != b.isFavorite) {
+                    return a.isFavorite ? -1 : 1;
+                  }
+                  return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+                });
               }
+
+              final activePlans =
+                  memberships.where((m) => m.isActive).toList();
+              sortPlans(activePlans);
+
+              final inactivePlans =
+                  memberships.where((m) => !m.isActive).toList();
+              sortPlans(inactivePlans);
+
+              final visiblePlans = showInactive.value
+                  ? [...activePlans, ...inactivePlans]
+                  : activePlans;
 
               if (skipPlanSelection) {
                 final plan = membershipState.value;
@@ -280,51 +287,181 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                 );
               }
 
-              return ListView(
-                padding: const EdgeInsets.all(8),
-                children: [
-                  // Plan selection
-                  ...activePlans.map((plan) {
-                    final isSelected = membershipState.value?.id == plan.id;
+              final query = searchQuery.value.toLowerCase().trim();
+              final filteredPlans = query.isEmpty
+                  ? visiblePlans
+                  : visiblePlans.where((m) {
+                      return m.name.toLowerCase().contains(query) ||
+                          (m.description?.toLowerCase().contains(query) ??
+                              false) ||
+                          m.durationDisplay.toLowerCase().contains(query);
+                    }).toList();
 
-                    return Card(
-                      elevation: isSelected ? 2 : 0,
-                      color: isSelected
-                          ? theme.colorScheme.primaryContainer
-                          : null,
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.card_membership,
-                            color: isSelected
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSurfaceVariant,
+              final hasInactive = inactivePlans.isNotEmpty;
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search),
+                            hintText: showInactive.value
+                                ? 'Search all membership plans...'
+                                : 'Search membership plans...',
+                            border: const OutlineInputBorder(),
+                            isDense: true,
+                            suffixIcon: searchQuery.value.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () => searchController.clear(),
+                                  )
+                                : null,
                           ),
                         ),
-                        title: Text(plan.name),
-                        subtitle: Text(
-                          '${plan.durationDisplay} - ${plan.price.toCurrency()}',
-                        ),
-                        trailing: isSelected
-                            ? Icon(
-                                Icons.check_circle,
-                                color: theme.colorScheme.primary,
-                              )
-                            : null,
-                        onTap: () => membershipState.value = plan,
-                      ),
-                    );
-                  }),
-
-                  // Add-ons section (only when plan is selected)
-                  if (membershipState.value != null)
-                    AddOnSelectionSection(
-                      membershipId: membershipState.value!.id,
-                      selectedAddOns: addOnsState,
+                        if (hasInactive) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: FilterChip(
+                              selected: showInactive.value,
+                              showCheckmark: false,
+                              avatar: Icon(
+                                showInactive.value
+                                    ? Icons.visibility
+                                    : Icons.visibility_off_outlined,
+                                size: 16,
+                              ),
+                              label: Text(
+                                showInactive.value
+                                    ? 'Including inactive'
+                                    : 'Include inactive',
+                              ),
+                              labelStyle: theme.textTheme.labelMedium,
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              onSelected: (selected) {
+                                showInactive.value = selected;
+                              },
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(8),
+                      children: [
+                        if (filteredPlans.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: Text(
+                                query.isEmpty
+                                    ? (showInactive.value
+                                        ? 'No membership plans available'
+                                        : 'No active membership plans available')
+                                    : 'No plans match "${searchQuery.value}"',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          )
+                        else
+                          ...filteredPlans.map((plan) {
+                            final isSelected =
+                                membershipState.value?.id == plan.id;
+
+                            return Card(
+                              elevation: isSelected ? 2 : 0,
+                              color: isSelected
+                                  ? theme.colorScheme.primaryContainer
+                                  : null,
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme
+                                          .colorScheme.surfaceContainerHighest,
+                                  child: Icon(
+                                    Icons.card_membership,
+                                    color: isSelected
+                                        ? theme.colorScheme.onPrimary
+                                        : theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                title: Row(
+                                  children: [
+                                    Expanded(child: Text(plan.name)),
+                                    if (!plan.isActive) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.surfaceContainerHighest,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          'Inactive',
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                subtitle: Text(
+                                  '${plan.durationDisplay} - ${plan.price.toCurrency()}',
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (plan.isFavorite)
+                                      Icon(
+                                        Icons.star,
+                                        size: 20,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    if (isSelected) ...[
+                                      if (plan.isFavorite)
+                                        const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                onTap: () => membershipState.value = plan,
+                              ),
+                            );
+                          }),
+
+                        // Add-ons section (only when plan is selected)
+                        if (membershipState.value != null)
+                          AddOnSelectionSection(
+                            membershipId: membershipState.value!.id,
+                            selectedAddOns: addOnsState,
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },

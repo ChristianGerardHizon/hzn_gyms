@@ -61,6 +61,13 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     opt: true,
     def: true,
   );
+  static bool _$isFavorite(MembershipDto v) => v.isFavorite;
+  static const Field<MembershipDto, bool> _f$isFavorite = Field(
+    'isFavorite',
+    _$isFavorite,
+    opt: true,
+    def: false,
+  );
   static String? _$created(MembershipDto v) => v.created;
   static const Field<MembershipDto, String> _f$created = Field(
     'created',
@@ -85,6 +92,7 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     #price: _f$price,
     #branch: _f$branch,
     #isActive: _f$isActive,
+    #isFavorite: _f$isFavorite,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -100,6 +108,7 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
       price: data.dec(_f$price),
       branch: data.dec(_f$branch),
       isActive: data.dec(_f$isActive),
+      isFavorite: data.dec(_f$isFavorite),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -177,6 +186,7 @@ abstract class MembershipDtoCopyWith<$R, $In extends MembershipDto, $Out>
     num? price,
     String? branch,
     bool? isActive,
+    bool? isFavorite,
     String? created,
     String? updated,
   });
@@ -202,6 +212,7 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     num? price,
     String? branch,
     bool? isActive,
+    bool? isFavorite,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -215,6 +226,7 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
       if (price != null) #price: price,
       if (branch != null) #branch: branch,
       if (isActive != null) #isActive: isActive,
+      if (isFavorite != null) #isFavorite: isFavorite,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -230,6 +242,7 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     price: data.get(#price, or: $value.price),
     branch: data.get(#branch, or: $value.branch),
     isActive: data.get(#isActive, or: $value.isActive),
+    isFavorite: data.get(#isFavorite, or: $value.isFavorite),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

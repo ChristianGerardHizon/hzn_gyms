@@ -18,6 +18,7 @@ class MembershipDto with MembershipDtoMappable {
   final num price;
   final String branch;
   final bool isActive;
+  final bool isFavorite;
   final String? created;
   final String? updated;
 
@@ -31,6 +32,7 @@ class MembershipDto with MembershipDtoMappable {
     required this.price,
     required this.branch,
     this.isActive = true,
+    this.isFavorite = false,
     this.created,
     this.updated,
   });
@@ -47,6 +49,7 @@ class MembershipDto with MembershipDtoMappable {
       price: record.getDoubleValue('price'),
       branch: record.getStringValue('branch'),
       isActive: record.getBoolValue('isActive'),
+      isFavorite: record.getBoolValue('isFavorite'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
@@ -63,6 +66,7 @@ class MembershipDto with MembershipDtoMappable {
       price: price,
       branchId: branch,
       isActive: isActive,
+      isFavorite: isFavorite,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );
