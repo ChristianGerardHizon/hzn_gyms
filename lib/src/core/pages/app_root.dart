@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
+import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/organization.routes.dart';
@@ -111,6 +112,9 @@ class _AppRootState extends ConsumerState<AppRoot> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep PocketBase health polling alive for the authenticated shell.
+    ref.watch(pbConnectivityProvider);
+
     final isMobile = Breakpoints.isMobile(context);
 
     return PopScope(

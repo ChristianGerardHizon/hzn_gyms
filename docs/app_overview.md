@@ -503,6 +503,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 11 | PB Connectivity | Polls PocketBase `/api/health` to expose online/offline status; shown on AppVersionIndicator |
 | Feb 17 | Member Cards | Physical ID cards (RFID/barcode) linked to members with status management; card scan check-in on check-in page with backward compatibility for legacy rfidCardId |
 | Feb 16 | Membership Add-Ons | Add-on options per membership plan (e.g., Treadmill, Coach, Pool) with pricing, selectable during purchase |
 | Feb 12 | Dashboard Adaptation | Replaced laundry metrics with gym KPIs (sales, check-ins, active members, new members), added expiring memberships section |

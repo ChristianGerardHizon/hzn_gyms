@@ -60,12 +60,18 @@ Use `flutter run` for local development; run `build_runner` and `slang` after mo
 - See `CLAUDE.md` for code patterns (Riverpod, routing, models) when making architectural changes.
 
 ### PocketBase Schema Changes
-- **Do NOT create manual migration files** in `server/pb_migrations/`.
-- Apply schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API** or admin UI.
-- Credentials: `.env` (`PB_LOCAL_*` for local, `PB_STAGING_*` for staging).
-- Auth: `POST /api/collections/_superusers/auth-with-password` → use returned `token`.
-- Update: `PATCH /api/collections/{nameOrId}` with the changed fields (e.g. `indexes` array).
-- PocketBase auto-generates migrations from API/UI changes; never hand-write `.js` migration files.
+
+**IMPORTANT RULE: NEVER create, edit, delete, rename, or rewrite any file under `server/pb_migrations/`.**
+
+- Do **not** hand-write migration scripts
+- Do **not** "fix" a failing migration by editing the `.js` file
+- Do **not** add schema changes by writing a new migration file
+- Apply schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API** or admin UI only
+- If a migration fails: fix via Admin API and let PocketBase regenerate migrations — never patch the `.js` file
+- Credentials: `.env` (`PB_LOCAL_*` for local, `PB_STAGING_*` for staging)
+- Auth: `POST /api/collections/_superusers/auth-with-password` → use returned `token`
+- Update: `PATCH /api/collections/{nameOrId}` with the changed fields (e.g. `indexes` array)
+- PocketBase auto-generates migrations from API/UI changes; leave generated files alone unless a human explicitly asks otherwise
 
 
 ## grepai - Semantic Code Search

@@ -19,7 +19,15 @@ This is **ebe_gym** - a Flutter multi-platform gym management system. The applic
 
 ### PocketBase Schema Changes
 
-**IMPORTANT: Do NOT create manual migration files in `server/pb_migrations/`.** Apply all PocketBase schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API**.
+**IMPORTANT RULE: NEVER create, edit, delete, rename, or rewrite any file under `server/pb_migrations/`.**
+
+- Do **not** hand-write migration scripts
+- Do **not** "fix" a failing migration by editing the `.js` file
+- Do **not** add schema changes by writing a new migration file
+
+Apply all PocketBase schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API** or admin UI only. PocketBase auto-generates migration files from those changes — leave generated files alone unless a human explicitly asks otherwise.
+
+If a migration fails: diagnose the query/schema issue, fix it via the Admin API (e.g. PATCH the collection), and let PocketBase regenerate migrations. Never patch the broken `.js` file yourself.
 
 Credentials are in `.env`:
 - Local: `PB_LOCAL_URL`, `PB_LOCAL_EMAIL`, `PB_LOCAL_PASSWORD`
@@ -41,8 +49,6 @@ curl -s -X PATCH "$PB_LOCAL_URL/api/collections/{collectionName}" \
   -H "Content-Type: application/json" \
   -d '{"indexes":["CREATE INDEX idx_name ON collectionName (field1, field2)"]}'
 ```
-
-PocketBase auto-generates migration files when changes are made through the API or admin UI. Never hand-write `.js` files in `server/pb_migrations/`.
 
 ## Architecture
 
