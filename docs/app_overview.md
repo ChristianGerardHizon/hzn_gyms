@@ -37,6 +37,7 @@ Member check-in system for tracking gym visits.
 
 - **Features**:
   - Card scan input (RFID/barcode) for quick check-in via member cards
+  - Global RFID keyboard-wedge listener when logged in (any screen); status icon above logout
   - Member search by name or mobile number
   - Active membership status display
   - Manual check-in with membership validation
@@ -503,6 +504,9 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 11 | Member branch | Added `branch` FK on members; backfilled all to Talisay; members list + dashboard filter by selected branch |
+| Jul 11 | Global RFID listener | App-wide HID scanner check-in when logged in; success/error alerts; green/red listening status icon above logout (red on web) |
+| Jul 11 | Multi-branch users | Users keep a default `branch` plus `allowedBranches`; non-admins switch among allowed; admins can pick any branch or All |
 | Jul 11 | PB Connectivity | Polls PocketBase `/api/health` to expose online/offline status; shown on AppVersionIndicator |
 | Feb 17 | Member Cards | Physical ID cards (RFID/barcode) linked to members with status management; card scan check-in on check-in page with backward compatibility for legacy rfidCardId |
 | Feb 16 | Membership Add-Ons | Add-on options per membership plan (e.g., Treadmill, Coach, Pool) with pricing, selectable during purchase |
