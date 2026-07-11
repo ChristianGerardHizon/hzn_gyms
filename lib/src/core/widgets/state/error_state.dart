@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 /// Example:
 /// ```dart
 /// ErrorState(
-///   message: 'Failed to load appointments',
+///   message: 'Failed to load members',
 ///   onRetry: () => ref.read(controller.notifier).refresh(),
 /// )
 /// ```

@@ -19,12 +19,21 @@ Future<List<MemberMembership>> expiringMemberships(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
   final pb = ref.read(pocketbaseProvider);
   final now = DateTime.now();
-  final sevenDaysLater = now.add(const Duration(days: 7));
+  final startOfToday = DateTime(now.year, now.month, now.day);
+  final endOfSevenDayWindow = DateTime(
+    now.year,
+    now.month,
+    now.day + 7,
+    23,
+    59,
+    59,
+    999,
+  );
 
   final filter = PBFilter()
       .equals('status', 'active')
-      .greaterOrEqual('endDate', now)
-      .lessOrEqual('endDate', sevenDaysLater);
+      .greaterOrEqual('endDate', startOfToday)
+      .lessOrEqual('endDate', endOfSevenDayWindow);
   if (branchId != null) {
     filter.relation('branch', branchId);
   }

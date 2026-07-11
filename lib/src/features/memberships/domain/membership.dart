@@ -16,6 +16,7 @@ class Membership with MembershipMappable {
     required this.branchId,
     this.description,
     this.isActive = true,
+    this.isFavorite = false,
     this.created,
     this.updated,
   });
@@ -40,6 +41,9 @@ class Membership with MembershipMappable {
 
   /// Whether this plan is currently offered.
   final bool isActive;
+
+  /// Whether this plan is pinned as a favorite in selection lists.
+  final bool isFavorite;
 
   /// Creation timestamp.
   final DateTime? created;

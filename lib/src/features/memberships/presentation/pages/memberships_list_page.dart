@@ -13,6 +13,7 @@ class MembershipsListPage extends ConsumerWidget {
     final membershipsAsync = ref.watch(membershipsControllerProvider);
 
     return membershipsAsync.when(
+      skipLoadingOnReload: true,
       data: (memberships) => MembershipListPanel(memberships: memberships),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(

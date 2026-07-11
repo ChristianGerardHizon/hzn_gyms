@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -50,6 +51,13 @@ class MembershipMapper extends ClassMapperBase<Membership> {
     opt: true,
     def: true,
   );
+  static bool _$isFavorite(Membership v) => v.isFavorite;
+  static const Field<Membership, bool> _f$isFavorite = Field(
+    'isFavorite',
+    _$isFavorite,
+    opt: true,
+    def: false,
+  );
   static DateTime? _$created(Membership v) => v.created;
   static const Field<Membership, DateTime> _f$created = Field(
     'created',
@@ -72,6 +80,7 @@ class MembershipMapper extends ClassMapperBase<Membership> {
     #branchId: _f$branchId,
     #description: _f$description,
     #isActive: _f$isActive,
+    #isFavorite: _f$isFavorite,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -85,6 +94,7 @@ class MembershipMapper extends ClassMapperBase<Membership> {
       branchId: data.dec(_f$branchId),
       description: data.dec(_f$description),
       isActive: data.dec(_f$isActive),
+      isFavorite: data.dec(_f$isFavorite),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -158,6 +168,7 @@ abstract class MembershipCopyWith<$R, $In extends Membership, $Out>
     String? branchId,
     String? description,
     bool? isActive,
+    bool? isFavorite,
     DateTime? created,
     DateTime? updated,
   });
@@ -181,6 +192,7 @@ class _MembershipCopyWithImpl<$R, $Out>
     String? branchId,
     Object? description = $none,
     bool? isActive,
+    bool? isFavorite,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -192,6 +204,7 @@ class _MembershipCopyWithImpl<$R, $Out>
       if (branchId != null) #branchId: branchId,
       if (description != $none) #description: description,
       if (isActive != null) #isActive: isActive,
+      if (isFavorite != null) #isFavorite: isFavorite,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -205,6 +218,7 @@ class _MembershipCopyWithImpl<$R, $Out>
     branchId: data.get(#branchId, or: $value.branchId),
     description: data.get(#description, or: $value.description),
     isActive: data.get(#isActive, or: $value.isActive),
+    isFavorite: data.get(#isFavorite, or: $value.isFavorite),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

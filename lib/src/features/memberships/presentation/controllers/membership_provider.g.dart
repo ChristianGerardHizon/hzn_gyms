@@ -15,19 +15,25 @@ final membershipProvider = MembershipFamily._();
 
 /// Provider for a single membership plan by ID.
 
-final class MembershipProvider extends $FunctionalProvider<
-        AsyncValue<Membership?>, Membership?, FutureOr<Membership?>>
+final class MembershipProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Membership?>,
+          Membership?,
+          FutureOr<Membership?>
+        >
     with $FutureModifier<Membership?>, $FutureProvider<Membership?> {
   /// Provider for a single membership plan by ID.
-  MembershipProvider._(
-      {required MembershipFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'membershipProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  MembershipProvider._({
+    required MembershipFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'membershipProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$membershipHash();
@@ -42,16 +48,13 @@ final class MembershipProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<Membership?> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<Membership?> create(Ref ref) {
     final argument = this.argument as String;
-    return membership(
-      ref,
-      argument,
-    );
+    return membership(ref, argument);
   }
 
   @override
@@ -72,19 +75,17 @@ String _$membershipHash() => r'ba3fff279bd3d4d3f64d8a1ada12835323a4c2ef';
 final class MembershipFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Membership?>, String> {
   MembershipFamily._()
-      : super(
-          retry: null,
-          name: r'membershipProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'membershipProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for a single membership plan by ID.
 
-  MembershipProvider call(
-    String id,
-  ) =>
+  MembershipProvider call(String id) =>
       MembershipProvider._(argument: id, from: this);
 
   @override

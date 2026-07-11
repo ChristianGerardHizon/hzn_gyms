@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/routing/routes/sales.routes.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
-import '../../../sales/presentation/widgets/record_payment_sheet.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 
 /// Section displaying quick action buttons on the dashboard.
 ///
@@ -72,7 +72,7 @@ class QuickActionsSection extends ConsumerWidget {
                     if (result?.sale != null &&
                         result?.totalPrice != null &&
                         context.mounted) {
-                      await showRecordPaymentSheet(
+                      await showRecordPaymentDialog(
                         context,
                         sale: result!.sale!,
                         balanceDue: result.totalPrice!,

@@ -6,6 +6,7 @@ task.md
 key.properties
 keystore-secrets.txt
 github_secrets.txt
+.env
 *.log
 *.pyc
 *.swp

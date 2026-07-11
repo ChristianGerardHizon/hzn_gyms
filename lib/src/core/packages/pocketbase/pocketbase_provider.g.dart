@@ -24,15 +24,15 @@ final class PbDebugControllerProvider
   ///
   /// Stores the preference in secure storage and provides methods to toggle.
   PbDebugControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'pbDebugControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pbDebugControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$pbDebugControllerHash();
@@ -54,11 +54,14 @@ abstract class _$PbDebugController extends $AsyncNotifier<bool> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<bool>, bool>,
-        AsyncValue<bool>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -84,15 +87,15 @@ final class PocketbaseProvider
   /// The instance uses the URL resolved from --dart-define=ENV or falls back
   /// to kDebugMode-based selection.
   PocketbaseProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'pocketbaseProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pocketbaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$pocketbaseHash();

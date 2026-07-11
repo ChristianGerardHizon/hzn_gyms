@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
 import '../utils/breakpoints.dart';
@@ -52,10 +53,17 @@ class TabletNavRail extends ConsumerWidget {
                 alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: IconButton(
-                    icon: const Icon(Icons.logout),
-                    tooltip: t.auth.logoutButton,
-                    onPressed: () => _confirmLogout(context, ref, t),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const RfidListenerStatusIcon(),
+                      const SizedBox(height: 8),
+                      IconButton(
+                        icon: const Icon(Icons.logout),
+                        tooltip: t.auth.logoutButton,
+                        onPressed: () => _confirmLogout(context, ref, t),
+                      ),
+                    ],
                   ),
                 ),
               ),

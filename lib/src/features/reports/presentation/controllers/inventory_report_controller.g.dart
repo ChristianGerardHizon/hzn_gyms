@@ -17,21 +17,26 @@ final inventoryReportProvider = InventoryReportProvider._();
 /// Fetches and provides inventory report data.
 /// Note: Inventory report doesn't use date filtering - it shows current state.
 
-final class InventoryReportProvider extends $FunctionalProvider<
-        AsyncValue<InventoryReport>, InventoryReport, FutureOr<InventoryReport>>
+final class InventoryReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<InventoryReport>,
+          InventoryReport,
+          FutureOr<InventoryReport>
+        >
     with $FutureModifier<InventoryReport>, $FutureProvider<InventoryReport> {
   /// Fetches and provides inventory report data.
   /// Note: Inventory report doesn't use date filtering - it shows current state.
   InventoryReportProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'inventoryReportProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'inventoryReportProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$inventoryReportHash();
@@ -39,8 +44,8 @@ final class InventoryReportProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<InventoryReport> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<InventoryReport> create(Ref ref) {

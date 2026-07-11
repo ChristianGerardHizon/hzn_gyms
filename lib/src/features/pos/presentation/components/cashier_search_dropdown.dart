@@ -363,7 +363,7 @@ class _SearchResultTile extends StatelessWidget {
     final productRepo = ref.read(productRepositoryProvider);
     final result = await productRepo.fetchOne(item.id);
 
-    result.fold((_) {}, (product) {
+    await result.fold((_) async {}, (product) async {
       if (!context.mounted) return;
       final cartNotifier = ref.read(cartControllerProvider.notifier);
 
@@ -371,29 +371,35 @@ class _SearchResultTile extends StatelessWidget {
         showLotSelectionDialog(
           context,
           product: product,
-          onLotSelected: (lot, quantity) {
+          onLotSelected: (lot, quantity) async {
             if (product.isVariablePrice) {
-              showVariablePriceDialog(context, productName: product.name)
-                  .then((price) {
-                if (price != null) {
-                  cartNotifier.addToCartWithLot(product, lot, quantity,
-                      customPrice: price);
-                }
-              });
+              final price = await showVariablePriceDialog(
+                context,
+                productName: product.name,
+              );
+              if (price != null) {
+                await cartNotifier.addToCartWithLot(
+                  product,
+                  lot,
+                  quantity,
+                  customPrice: price,
+                );
+              }
             } else {
-              cartNotifier.addToCartWithLot(product, lot, quantity);
+              await cartNotifier.addToCartWithLot(product, lot, quantity);
             }
           },
         );
       } else if (product.isVariablePrice) {
-        showVariablePriceDialog(context, productName: product.name)
-            .then((price) {
-          if (price != null) {
-            cartNotifier.addToCart(product, customPrice: price);
-          }
-        });
+        final price = await showVariablePriceDialog(
+          context,
+          productName: product.name,
+        );
+        if (price != null) {
+          await cartNotifier.addToCart(product, customPrice: price);
+        }
       } else {
-        cartNotifier.addToCart(product);
+        await cartNotifier.addToCart(product);
       }
     });
   }

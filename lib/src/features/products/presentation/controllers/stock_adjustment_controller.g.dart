@@ -27,15 +27,15 @@ final class StockAdjustmentControllerProvider
   /// Provides methods to adjust product and lot quantities with
   /// automatic adjustment record creation for audit trail.
   StockAdjustmentControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'stockAdjustmentControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'stockAdjustmentControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$stockAdjustmentControllerHash();
@@ -59,11 +59,14 @@ abstract class _$StockAdjustmentController extends $AsyncNotifier<void> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<void>, void>,
-        AsyncValue<void>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

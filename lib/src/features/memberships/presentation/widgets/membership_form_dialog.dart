@@ -44,6 +44,7 @@ class MembershipFormDialog extends HookConsumerWidget {
             'durationDays': membership!.durationDays.toString(),
             'price': membership!.price.toString(),
             'isActive': membership!.isActive,
+            'isFavorite': membership!.isFavorite,
           }
         : null;
 
@@ -59,7 +60,7 @@ class MembershipFormDialog extends HookConsumerWidget {
       final values = formKey.currentState!.value;
 
       final branchId =
-          membership?.branchId ?? ref.read(currentBranchIdProvider) ?? '';
+          membership?.branchId ?? ref.read(effectiveBranchIdForWriteProvider) ?? '';
 
       final membershipData = Membership(
         id: membership?.id ?? '',
@@ -70,6 +71,7 @@ class MembershipFormDialog extends HookConsumerWidget {
         price: num.tryParse(values['price']?.toString() ?? '') ?? 0,
         branchId: branchId,
         isActive: values['isActive'] as bool? ?? true,
+        isFavorite: values['isFavorite'] as bool? ?? false,
       );
 
       final controller = ref.read(membershipsControllerProvider.notifier);
@@ -167,6 +169,17 @@ class MembershipFormDialog extends HookConsumerWidget {
                 name: 'isActive',
                 initialValue: membership?.isActive ?? true,
                 title: const Text('Active'),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                ),
+              ),
+              FormBuilderSwitch(
+                name: 'isFavorite',
+                initialValue: membership?.isFavorite ?? false,
+                title: const Text('Favorite'),
+                subtitle: const Text(
+                  'Show at the top when selecting a plan for new members',
+                ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),

@@ -1,0 +1,27 @@
+---
+description: Never create or modify PocketBase migration files
+alwaysApply: true
+---
+
+# IMPORTANT: PocketBase Migrations — Never Create or Modify
+
+**CRITICAL RULE: Never create, edit, delete, rename, or rewrite any file under `server/pb_migrations/`.**
+
+- Do **not** hand-write `.js` migration scripts
+- Do **not** "fix" a migration by editing it
+- Do **not** add schema changes by writing a new migration file
+
+## Correct approach
+
+Apply all PocketBase schema changes (collections, fields, indexes, views, API rules) via the **PocketBase Admin API** or admin UI only.
+
+Credentials are in `.env` (`PB_LOCAL_*` / `PB_STAGING_*`).
+
+PocketBase auto-generates migration files from API/UI changes. Those generated files must be left alone unless the human explicitly asks otherwise.
+
+## If a migration fails
+
+- Diagnose the query/schema issue
+- Fix via Admin API (PATCH the collection)
+- Let PocketBase regenerate migrations
+- Do **not** patch the broken `.js` file yourself

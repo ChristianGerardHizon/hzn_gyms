@@ -46,11 +46,7 @@ class _CheckInSuccessDialog extends HookWidget {
     }, []);
 
     return AlertDialog(
-      icon: const Icon(
-        Icons.check_circle,
-        color: Colors.green,
-        size: 48,
-      ),
+      icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
       title: const Text('Check-In Successful'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -65,8 +61,7 @@ class _CheckInSuccessDialog extends HookWidget {
           const SizedBox(height: 8),
           if (!hasActiveMembership)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),

@@ -75,7 +75,28 @@ class CartView extends ConsumerWidget {
                       children: [
                         ...cartItems.map((item) {
                           final product = item.product;
-                          if (product == null) return const SizedBox.shrink();
+                          if (product == null) {
+                            // Still show the line if expand failed so the cart
+                            // doesn't look empty after a successful add.
+                            return ListTile(
+                              title: Text(
+                                item.productId.isNotEmpty
+                                    ? 'Product ${item.productId}'
+                                    : 'Unknown product',
+                              ),
+                              subtitle: Text(
+                                'Qty ${item.quantity} · ${item.total.toCurrency()}',
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: isSyncing
+                                    ? null
+                                    : () => ref
+                                        .read(cartControllerProvider.notifier)
+                                        .removeItemById(item.id),
+                              ),
+                            );
+                          }
 
                           return _buildProductItemCard(
                             context, ref, theme, item, product, isSyncing);

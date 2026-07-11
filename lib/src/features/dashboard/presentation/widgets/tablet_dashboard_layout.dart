@@ -26,7 +26,12 @@ class TabletDashboardLayout extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final branch = ref.watch(currentBranchControllerProvider).value;
+    final selection = ref.watch(currentBranchControllerProvider).value;
+    final branchLabel = selection == null
+        ? null
+        : selection.isAll
+            ? 'All Branches'
+            : selection.branch?.name;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -66,7 +71,7 @@ class TabletDashboardLayout extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                  if (branch != null)
+                  if (branchLabel != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Row(
@@ -78,7 +83,7 @@ class TabletDashboardLayout extends HookConsumerWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            branch.name,
+                            branchLabel,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.outline,
                             ),

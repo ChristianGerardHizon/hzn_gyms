@@ -23,7 +23,10 @@ class BranchesController extends _$BranchesController {
 
   /// Refreshes the branch list.
   Future<void> refresh() async {
-    state = const AsyncLoading();
+    // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
 
     final result = await _repository.fetchAll();
 

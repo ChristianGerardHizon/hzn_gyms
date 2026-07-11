@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/foundation/paginated_state.dart';
+import '../../../../core/foundation/type_defs.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../data/local/member_local_data_source.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
 import 'member_sort_controller.dart';
@@ -12,6 +17,8 @@ part 'paginated_members_controller.g.dart';
 @Riverpod(keepAlive: true)
 class PaginatedMembersController extends _$PaginatedMembersController {
   MemberRepository get _repository => ref.read(memberRepositoryProvider);
+  MemberLocalDataSource get _localDataSource =>
+      ref.read(memberLocalDataSourceProvider);
 
   // Track current search state
   String? _currentSearchQuery;
@@ -20,6 +27,54 @@ class PaginatedMembersController extends _$PaginatedMembersController {
   /// Gets the current sort string from the sort controller.
   String get _currentSort =>
       ref.read(memberSortControllerProvider).toSortString();
+
+  /// Gets the current branch filter string for PocketBase.
+  String? get _branchFilter => ref.read(currentBranchFilterProvider);
+
+  /// Gets the current branch ID for local cache filtering.
+  String? get _branchId => ref.read(currentBranchIdProvider);
+
+  PaginatedState<Member> _toPaginatedState(
+    PaginatedResult<Member> result, {
+    bool hasReachedEnd = false,
+  }) {
+    return PaginatedState<Member>(
+      items: result.items,
+      currentPage: result.page,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
+      hasReachedEnd: hasReachedEnd || !result.hasMore,
+    );
+  }
+
+  Future<PaginatedResult<Member>?> _loadCachedPage({
+    required int page,
+    String? query,
+    List<String>? fields,
+  }) async {
+    if (query != null && query.isNotEmpty) {
+      return _localDataSource.searchPaginated(
+        query,
+        fields: fields,
+        page: page,
+        perPage: Pagination.membersPageSize,
+        sort: _currentSort,
+        branchId: _branchId,
+      );
+    }
+
+    return _localDataSource.getPaginated(
+      page: page,
+      perPage: Pagination.membersPageSize,
+      sort: _currentSort,
+      branchId: _branchId,
+    );
+  }
+
+  void _triggerBackgroundSync() {
+    // Fire-and-forget full sync so search and load-more can use local data.
+    unawaited(_repository.syncAllMembers(sort: _currentSort));
+  }
 
   @override
   Future<PaginatedState<Member>> build() async {
@@ -31,21 +86,35 @@ class PaginatedMembersController extends _$PaginatedMembersController {
       refresh();
     });
 
+    // Listen to branch changes and refresh (clear stale items immediately)
+    ref.listen(currentBranchFilterProvider, (_, __) {
+      state = const AsyncValue.loading();
+      refresh();
+    });
+
+    final cached = await _loadCachedPage(page: 1);
+    if (cached != null && cached.items.isNotEmpty) {
+      state = AsyncData(_toPaginatedState(cached));
+    }
+
     final result = await _repository.fetchPaginated(
       page: 1,
-      perPage: Pagination.defaultPageSize,
+      perPage: Pagination.membersPageSize,
       sort: _currentSort,
+      filter: _branchFilter,
     );
 
     return result.fold(
-      (failure) => throw failure,
-      (paginated) => PaginatedState<Member>(
-        items: paginated.items,
-        currentPage: paginated.page,
-        totalItems: paginated.totalItems,
-        totalPages: paginated.totalPages,
-        hasReachedEnd: !paginated.hasMore,
-      ),
+      (failure) {
+        if (cached != null && cached.items.isNotEmpty) {
+          return _toPaginatedState(cached);
+        }
+        throw failure;
+      },
+      (paginated) {
+        _triggerBackgroundSync();
+        return _toPaginatedState(paginated);
+      },
     );
   }
 
@@ -73,13 +142,15 @@ class PaginatedMembersController extends _$PaginatedMembersController {
             _currentSearchQuery!,
             fields: _currentSearchFields,
             page: nextPage,
-            perPage: Pagination.defaultPageSize,
+            perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _branchFilter,
           )
         : await _repository.fetchPaginated(
             page: nextPage,
-            perPage: Pagination.defaultPageSize,
+            perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _branchFilter,
           );
 
     result.fold(
@@ -101,34 +172,53 @@ class PaginatedMembersController extends _$PaginatedMembersController {
 
   /// Refreshes the list (respects current search and sort).
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    final cached = state.value;
+    if (cached == null || cached.items.isEmpty) {
+      state = const AsyncValue.loading();
+    }
+
+    final cachedPage = await _loadCachedPage(
+      page: 1,
+      query: _currentSearchQuery,
+      fields: _currentSearchFields,
+    );
+    if (cachedPage != null &&
+        cachedPage.items.isNotEmpty &&
+        (cached == null || cached.items.isEmpty)) {
+      state = AsyncData(_toPaginatedState(cachedPage));
+    }
 
     final result = _currentSearchQuery != null
         ? await _repository.searchPaginated(
             _currentSearchQuery!,
             fields: _currentSearchFields,
             page: 1,
-            perPage: Pagination.defaultPageSize,
+            perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _branchFilter,
           )
         : await _repository.fetchPaginated(
             page: 1,
-            perPage: Pagination.defaultPageSize,
+            perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _branchFilter,
           );
 
     result.fold(
       (failure) {
+        if (cached != null && cached.items.isNotEmpty) {
+          state = AsyncData(cached);
+          return;
+        }
+        if (cachedPage != null && cachedPage.items.isNotEmpty) {
+          state = AsyncData(_toPaginatedState(cachedPage));
+          return;
+        }
         state = AsyncError(failure, StackTrace.current);
       },
       (paginated) {
-        state = AsyncData(PaginatedState<Member>(
-          items: paginated.items,
-          currentPage: paginated.page,
-          totalItems: paginated.totalItems,
-          totalPages: paginated.totalPages,
-          hasReachedEnd: !paginated.hasMore,
-        ));
+        _triggerBackgroundSync();
+        state = AsyncData(_toPaginatedState(paginated));
       },
     );
   }
@@ -142,28 +232,32 @@ class PaginatedMembersController extends _$PaginatedMembersController {
     _currentSearchQuery = query;
     _currentSearchFields = fields;
 
-    state = const AsyncValue.loading();
+    final cached = await _loadCachedPage(page: 1, query: query, fields: fields);
+    if (cached != null && cached.items.isNotEmpty) {
+      state = AsyncData(_toPaginatedState(cached));
+    }
+    // Otherwise keep previous data so the list panel (and search input) stay mounted.
 
     final result = await _repository.searchPaginated(
       query,
       fields: fields,
       page: 1,
-      perPage: Pagination.defaultPageSize,
+      perPage: Pagination.membersPageSize,
       sort: _currentSort,
+      filter: _branchFilter,
     );
 
     result.fold(
       (failure) {
+        if (cached != null && cached.items.isNotEmpty) {
+          state = AsyncData(_toPaginatedState(cached));
+          return;
+        }
         state = AsyncError(failure, StackTrace.current);
       },
       (paginated) {
-        state = AsyncData(PaginatedState<Member>(
-          items: paginated.items,
-          currentPage: paginated.page,
-          totalItems: paginated.totalItems,
-          totalPages: paginated.totalPages,
-          hasReachedEnd: !paginated.hasMore,
-        ));
+        _triggerBackgroundSync();
+        state = AsyncData(_toPaginatedState(paginated));
       },
     );
   }
@@ -178,46 +272,35 @@ class PaginatedMembersController extends _$PaginatedMembersController {
   /// Creates a new member.
   Future<Member?> createMember(Member member) async {
     final result = await _repository.create(member);
-    return result.fold(
-      (failure) => null,
-      (created) {
-        state.whenData((currentState) {
-          state = AsyncValue.data(currentState.prependItem(created));
-        });
-        return created;
-      },
-    );
+    return result.fold((failure) => null, (created) {
+      state.whenData((currentState) {
+        state = AsyncValue.data(currentState.prependItem(created));
+      });
+      return created;
+    });
   }
 
   /// Updates an existing member.
   Future<bool> updateMember(Member member) async {
     final result = await _repository.update(member);
-    return result.fold(
-      (failure) => false,
-      (updated) {
-        state.whenData((currentState) {
-          state = AsyncValue.data(
-            currentState.updateItem(updated, (m) => m.id == updated.id),
-          );
-        });
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (updated) {
+      state.whenData((currentState) {
+        state = AsyncValue.data(
+          currentState.updateItem(updated, (m) => m.id == updated.id),
+        );
+      });
+      return true;
+    });
   }
 
   /// Deletes a member.
   Future<bool> deleteMember(String id) async {
     final result = await _repository.delete(id);
-    return result.fold(
-      (failure) => false,
-      (_) {
-        state.whenData((currentState) {
-          state = AsyncValue.data(
-            currentState.removeItem((m) => m.id == id),
-          );
-        });
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (_) {
+      state.whenData((currentState) {
+        state = AsyncValue.data(currentState.removeItem((m) => m.id == id));
+      });
+      return true;
+    });
   }
 }

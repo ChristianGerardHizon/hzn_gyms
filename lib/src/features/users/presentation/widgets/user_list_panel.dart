@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/foundation/paginated_state.dart';
+import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
@@ -43,25 +44,37 @@ class UserListPanel extends HookConsumerWidget {
     // Watch providers
     final searchFields = ref.watch(userSearchFieldsProvider);
     final activeFieldCount = searchFields.length;
-    final paginatedController =
-        ref.read(paginatedUsersControllerProvider.notifier);
-
-    // Search is active from the controller
-    final isSearchActive = paginatedController.isSearchActive;
+    final paginatedController = ref.read(
+      paginatedUsersControllerProvider.notifier,
+    );
 
     void performSearch() {
       final query = searchController.text.trim();
-      if (query.isEmpty) return;
+      if (query.isEmpty) {
+        if (paginatedController.isSearchActive) {
+          paginatedController.clearSearch();
+        }
+        return;
+      }
 
       final fields = ref.read(userSearchFieldsProvider).toList();
       paginatedController.search(query, fields: fields);
     }
 
-    void clearSearch() {
-      searchController.clear();
-      searchText.value = '';
-      ref.read(userSearchFieldsProvider.notifier).reset();
-      paginatedController.clearSearch();
+    final debouncedSearch = useDebouncedCallback<String>(
+      (_) => performSearch(),
+    );
+
+    void onSearchTextChanged(String text) {
+      searchText.value = text;
+      debouncedSearch.cancel();
+      if (text.trim().isEmpty) {
+        if (paginatedController.isSearchActive) {
+          paginatedController.clearSearch();
+        }
+        return;
+      }
+      debouncedSearch.call(text);
     }
 
     // Infinite scroll hook
@@ -72,164 +85,73 @@ class UserListPanel extends HookConsumerWidget {
     );
 
     return Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Row(
-              children: [
-                Text(t.navigation.users, style: theme.textTheme.titleLarge),
-                const Spacer(),
-                Text(
-                  '${paginatedState.totalItems} total',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-
-          // Search
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: isSearchActive
-                ? _ActiveSearchChip(
-                    query: paginatedController.currentSearchQuery ?? '',
-                    fieldCount: activeFieldCount,
-                    onClear: clearSearch,
-                  )
-                : _SearchInput(
-                    controller: searchController,
-                    fieldCount: activeFieldCount,
-                    onSearch: performSearch,
-                    onTextChanged: (text) => searchText.value = text,
-                    searchText: searchText.value,
-                  ),
-          ),
-
-          // User list
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: onRefresh,
-              child: ListView.builder(
-                controller: scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                // +1 for the end indicator
-                itemCount: paginatedState.items.length + 1,
-                itemBuilder: (context, index) {
-                  // Last item is the end indicator
-                  if (index == paginatedState.items.length) {
-                    return EndOfListIndicator(
-                      isLoadingMore: paginatedState.isLoadingMore,
-                      hasReachedEnd: paginatedState.hasReachedEnd,
-                    );
-                  }
-
-                  final user = paginatedState.items[index];
-                  final isSelected = user.id == selectedId;
-
-                  return ListTile(
-                    leading: UserAvatar(user: user),
-                    title: Text(
-                      user.name,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text('${user.displayRole} - ${user.username}'),
-                    selected: isSelected,
-                    selectedTileColor: theme.colorScheme.primaryContainer,
-                    trailing:
-                        isSelected ? const Icon(Icons.chevron_right) : null,
-                    onTap: () => onUserTap(user),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      );
-  }
-}
-
-class _ActiveSearchChip extends StatelessWidget {
-  const _ActiveSearchChip({
-    required this.query,
-    required this.fieldCount,
-    required this.onClear,
-  });
-
-  final String query;
-  final int fieldCount;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
       children: [
+        // Header
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: theme.colorScheme.surfaceContainerHighest,
+          child: Row(
+            children: [
+              Text(t.navigation.users, style: theme.textTheme.titleLarge),
+              const Spacer(),
+              Text(
+                '${paginatedState.totalItems} total',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+
+        // Search
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _SearchInput(
+            controller: searchController,
+            fieldCount: activeFieldCount,
+            onSearch: performSearch,
+            onTextChanged: onSearchTextChanged,
+            searchText: searchText.value,
+          ),
+        ),
+
+        // User list
         Expanded(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              isDense: true,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '"$query"',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (fieldCount > 1) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '$fieldCount fields',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView.builder(
+              controller: scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              // +1 for the end indicator
+              itemCount: paginatedState.items.length + 1,
+              itemBuilder: (context, index) {
+                // Last item is the end indicator
+                if (index == paginatedState.items.length) {
+                  return EndOfListIndicator(
+                    isLoadingMore: paginatedState.isLoadingMore,
+                    hasReachedEnd: paginatedState.hasReachedEnd,
+                  );
+                }
+
+                final user = paginatedState.items[index];
+                final isSelected = user.id == selectedId;
+
+                return ListTile(
+                  leading: UserAvatar(user: user),
+                  title: Text(
+                    user.name,
+                    style: TextStyle(
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
-                ],
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: onClear,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Icon(
-                    Icons.close,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+                  subtitle: Text('${user.displayRole} - ${user.username}'),
+                  selected: isSelected,
+                  selectedTileColor: theme.colorScheme.primaryContainer,
+                  trailing: isSelected ? const Icon(Icons.chevron_right) : null,
+                  onTap: () => onUserTap(user),
+                );
+              },
             ),
           ),
         ),

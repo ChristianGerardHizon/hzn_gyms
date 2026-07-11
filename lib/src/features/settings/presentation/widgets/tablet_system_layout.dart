@@ -154,6 +154,7 @@ class _ProductCategoryListWrapper extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: categoriesAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -317,6 +318,7 @@ class _PrinterListWrapper extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: printersAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -453,6 +455,7 @@ class _QuantityUnitListWrapper extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: unitsAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -560,6 +563,7 @@ class _CashierGroupListWrapper extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: groupsAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(

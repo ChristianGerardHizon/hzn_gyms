@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../features/settings/presentation/controllers/current_branch_controller.dart';
+import '../../features/check_in/presentation/widgets/global_rfid_listener.dart';
+import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/organization.routes.dart';
@@ -15,6 +16,7 @@ import '../routing/routes/sales.routes.dart';
 import '../routing/routes/sales_history.routes.dart';
 import '../routing/routes/system.routes.dart';
 import '../utils/breakpoints.dart';
+import '../widgets/branch_switcher.dart';
 import '../widgets/mobile_bottom_nav.dart';
 import '../widgets/mobile_drawer.dart';
 import '../widgets/tablet_nav_rail.dart';
@@ -26,10 +28,7 @@ import '../widgets/tablet_nav_rail.dart';
 /// - Tablet (600-1200px): Navigation rail
 /// - Desktop (>= 1200px): Expanded navigation rail
 class AppRoot extends ConsumerStatefulWidget {
-  const AppRoot({
-    super.key,
-    required this.child,
-  });
+  const AppRoot({super.key, required this.child});
 
   /// The child widget from the router (page content).
   final Widget child;
@@ -111,81 +110,57 @@ class _AppRootState extends ConsumerState<AppRoot> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep PocketBase health polling alive for the authenticated shell.
+    ref.watch(pbConnectivityProvider);
+
     final isMobile = Breakpoints.isMobile(context);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
+    return GlobalRfidListener(
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) return;
 
-        // Check if the router can pop (i.e. we're on a nested page)
-        if (GoRouter.of(context).canPop()) {
-          GoRouter.of(context).pop();
-          return;
-        }
+          // Check if the router can pop (i.e. we're on a nested page)
+          if (GoRouter.of(context).canPop()) {
+            GoRouter.of(context).pop();
+            return;
+          }
 
-        // We're at a root page — confirm exit
-        final shouldExit = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Exit App'),
-            content: const Text(
-              'Are you sure you want to close the app?',
+          // We're at a root page — confirm exit
+          final shouldExit = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Exit App'),
+              content: const Text('Are you sure you want to close the app?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Exit'),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Exit'),
-              ),
-            ],
-          ),
-        );
-        if (shouldExit ?? false) {
-          SystemNavigator.pop();
-        }
-      },
-      child: isMobile
-          ? _buildMobileLayout(context)
-          : _buildTabletLayout(context),
+          );
+          if (shouldExit ?? false) {
+            SystemNavigator.pop();
+          }
+        },
+        child: isMobile
+            ? _buildMobileLayout(context)
+            : _buildTabletLayout(context),
+      ),
     );
   }
 
   Widget _buildBranchBar(BuildContext context) {
-    final theme = Theme.of(context);
-    final branchAsync = ref.watch(currentBranchControllerProvider);
-
-    return branchAsync.when(
-      data: (branch) {
-        if (branch == null) return const SizedBox.shrink();
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          color: theme.colorScheme.surfaceContainerHighest,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.store,
-                size: 14,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                branch.name,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+    return const ColoredBox(
+      // BranchSwitcher supplies its own surface styling.
+      color: Colors.transparent,
+      child: BranchSwitcher(compact: true),
     );
   }
 

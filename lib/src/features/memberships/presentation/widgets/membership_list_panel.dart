@@ -32,12 +32,18 @@ class MembershipListPanel extends HookConsumerWidget {
     }, [searchController]);
 
     final filteredMemberships = searchQuery.value.isEmpty
-        ? memberships
+        ? List<Membership>.from(memberships)
         : memberships.where((m) {
             final query = searchQuery.value.toLowerCase();
             return m.name.toLowerCase().contains(query) ||
                 (m.description?.toLowerCase().contains(query) ?? false);
           }).toList();
+    filteredMemberships.sort((a, b) {
+      if (a.isFavorite != b.isFavorite) {
+        return a.isFavorite ? -1 : 1;
+      }
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -127,14 +133,26 @@ class MembershipListPanel extends HookConsumerWidget {
   }
 }
 
-class _MembershipListTile extends StatelessWidget {
+class _MembershipListTile extends ConsumerWidget {
   const _MembershipListTile({required this.membership});
 
   final Membership membership;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+
+    Future<void> toggleFavorite() async {
+      final updated = membership.copyWith(isFavorite: !membership.isFavorite);
+      final success = await ref
+          .read(membershipsControllerProvider.notifier)
+          .updateMembership(updated);
+      if (!success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update favorite')),
+        );
+      }
+    }
 
     return ListTile(
       leading: CircleAvatar(
@@ -155,8 +173,11 @@ class _MembershipListTile extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: !membership.isActive
-          ? Chip(
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!membership.isActive)
+            Chip(
               label: Text(
                 'Inactive',
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -165,8 +186,21 @@ class _MembershipListTile extends StatelessWidget {
               ),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
-            )
-          : null,
+            ),
+          IconButton(
+            icon: Icon(
+              membership.isFavorite ? Icons.star : Icons.star_border,
+              color: membership.isFavorite
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            tooltip: membership.isFavorite
+                ? 'Remove from favorites'
+                : 'Add to favorites',
+            onPressed: toggleFavorite,
+          ),
+        ],
+      ),
       onTap: () => MembershipDetailRoute(id: membership.id).go(context),
     );
   }

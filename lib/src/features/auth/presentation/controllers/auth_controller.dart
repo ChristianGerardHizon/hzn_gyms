@@ -101,7 +101,6 @@ class AuthController extends _$AuthController {
     final result = await _repository.requestPasswordReset(email);
     return result.isRight();
   }
-
 }
 
 /// Convenience provider to check if user is authenticated.

@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -64,6 +65,20 @@ class UserMapper extends ClassMapperBase<User> {
     _$branchName,
     opt: true,
   );
+  static List<String> _$allowedBranchIds(User v) => v.allowedBranchIds;
+  static const Field<User, List<String>> _f$allowedBranchIds = Field(
+    'allowedBranchIds',
+    _$allowedBranchIds,
+    opt: true,
+    def: const [],
+  );
+  static List<String> _$allowedBranchNames(User v) => v.allowedBranchNames;
+  static const Field<User, List<String>> _f$allowedBranchNames = Field(
+    'allowedBranchNames',
+    _$allowedBranchNames,
+    opt: true,
+    def: const [],
+  );
   static bool _$isDeleted(User v) => v.isDeleted;
   static const Field<User, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -95,6 +110,8 @@ class UserMapper extends ClassMapperBase<User> {
     #roleName: _f$roleName,
     #branchId: _f$branchId,
     #branchName: _f$branchName,
+    #allowedBranchIds: _f$allowedBranchIds,
+    #allowedBranchNames: _f$allowedBranchNames,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -111,6 +128,8 @@ class UserMapper extends ClassMapperBase<User> {
       roleName: data.dec(_f$roleName),
       branchId: data.dec(_f$branchId),
       branchName: data.dec(_f$branchName),
+      allowedBranchIds: data.dec(_f$allowedBranchIds),
+      allowedBranchNames: data.dec(_f$allowedBranchNames),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -163,6 +182,10 @@ extension UserValueCopy<$R, $Out> on ObjectCopyWith<$R, User, $Out> {
 
 abstract class UserCopyWith<$R, $In extends User, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranchIds;
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranchNames;
   $R call({
     String? id,
     String? name,
@@ -173,6 +196,8 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     String? roleName,
     String? branchId,
     String? branchName,
+    List<String>? allowedBranchIds,
+    List<String>? allowedBranchNames,
     bool? isDeleted,
     DateTime? created,
     DateTime? updated,
@@ -187,6 +212,20 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
   @override
   late final ClassMapperBase<User> $mapper = UserMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranchIds => ListCopyWith(
+    $value.allowedBranchIds,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranchIds: v),
+  );
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranchNames => ListCopyWith(
+    $value.allowedBranchNames,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranchNames: v),
+  );
+  @override
   $R call({
     String? id,
     String? name,
@@ -197,6 +236,8 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     Object? roleName = $none,
     Object? branchId = $none,
     Object? branchName = $none,
+    List<String>? allowedBranchIds,
+    List<String>? allowedBranchNames,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -211,6 +252,8 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (roleName != $none) #roleName: roleName,
       if (branchId != $none) #branchId: branchId,
       if (branchName != $none) #branchName: branchName,
+      if (allowedBranchIds != null) #allowedBranchIds: allowedBranchIds,
+      if (allowedBranchNames != null) #allowedBranchNames: allowedBranchNames,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -227,6 +270,11 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     roleName: data.get(#roleName, or: $value.roleName),
     branchId: data.get(#branchId, or: $value.branchId),
     branchName: data.get(#branchName, or: $value.branchName),
+    allowedBranchIds: data.get(#allowedBranchIds, or: $value.allowedBranchIds),
+    allowedBranchNames: data.get(
+      #allowedBranchNames,
+      or: $value.allowedBranchNames,
+    ),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

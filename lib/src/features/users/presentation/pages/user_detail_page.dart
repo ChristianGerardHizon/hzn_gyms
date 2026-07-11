@@ -11,6 +11,7 @@ import '../../domain/user_tab.dart';
 import '../controllers/paginated_users_controller.dart';
 import '../controllers/user_provider.dart';
 import '../widgets/dialogs/edit_user_dialog.dart';
+import '../widgets/dialogs/reset_password_dialog.dart';
 import '../widgets/tabs/user_details_tab.dart';
 import '../widgets/tabs/user_overview_tab.dart';
 
@@ -41,9 +42,8 @@ class UserDetailPage extends HookConsumerWidget {
     final t = Translations.of(context);
 
     return userAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         appBar: AppBar(
           leading: isTablet
@@ -80,9 +80,7 @@ class UserDetailPage extends HookConsumerWidget {
                       onPressed: () => const UsersRoute().go(context),
                     ),
             ),
-            body: const Center(
-              child: Text('User not found'),
-            ),
+            body: const Center(child: Text('User not found')),
           );
         }
 
@@ -155,7 +153,7 @@ class UserDetailPage extends HookConsumerWidget {
           SimpleDialogOption(
             onPressed: () {
               Navigator.pop(context);
-              _showResetPasswordDialog(context, ref, user);
+              showResetPasswordDialog(context, user);
             },
             child: const ListTile(
               leading: Icon(Icons.lock_reset),
@@ -173,10 +171,14 @@ class UserDetailPage extends HookConsumerWidget {
                 user.verified ? Icons.verified : Icons.verified_outlined,
                 color: user.verified ? Colors.green : null,
               ),
-              title: Text(user.verified ? 'Mark as Unverified' : 'Mark as Verified'),
-              subtitle: Text(user.verified
-                  ? 'Remove verification status'
-                  : 'Manually verify this user\'s account'),
+              title: Text(
+                user.verified ? 'Mark as Unverified' : 'Mark as Verified',
+              ),
+              subtitle: Text(
+                user.verified
+                    ? 'Remove verification status'
+                    : 'Manually verify this user\'s account',
+              ),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -186,11 +188,14 @@ class UserDetailPage extends HookConsumerWidget {
               _showDeleteConfirmation(context, ref, user);
             },
             child: ListTile(
-              leading:
-                  Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
-              title: Text(t.common.delete,
-                  style:
-                      TextStyle(color: Theme.of(context).colorScheme.error)),
+              leading: Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                t.common.delete,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
               contentPadding: EdgeInsets.zero,
             ),
           ),
@@ -199,34 +204,11 @@ class UserDetailPage extends HookConsumerWidget {
     );
   }
 
-  void _showResetPasswordDialog(
-      BuildContext context, WidgetRef ref, User user) {
-    final t = Translations.of(context);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Text('Are you sure you want to reset the password for ${user.name}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              showWarningSnackBar(context, message: 'Password reset functionality coming soon');
-            },
-            child: const Text('Reset'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showToggleVerificationDialog(
-      BuildContext context, WidgetRef ref, User user) {
+    BuildContext context,
+    WidgetRef ref,
+    User user,
+  ) {
     final t = Translations.of(context);
     final newStatus = !user.verified;
 
@@ -234,9 +216,11 @@ class UserDetailPage extends HookConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(newStatus ? 'Verify User' : 'Unverify User'),
-        content: Text(newStatus
-            ? 'Are you sure you want to mark ${user.name} as verified?'
-            : 'Are you sure you want to remove verification status from ${user.name}?'),
+        content: Text(
+          newStatus
+              ? 'Are you sure you want to mark ${user.name} as verified?'
+              : 'Are you sure you want to remove verification status from ${user.name}?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -276,8 +260,7 @@ class UserDetailPage extends HookConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmation(
-      BuildContext context, WidgetRef ref, User user) {
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref, User user) {
     final t = Translations.of(context);
 
     showDialog(

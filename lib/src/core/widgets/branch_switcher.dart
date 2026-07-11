@@ -7,54 +7,115 @@ import '../../features/settings/presentation/controllers/branches_controller.dar
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../i18n/strings.g.dart';
 
-/// Branch switcher widget for the sidebar/drawer.
+/// Branch switcher widget for the sidebar/drawer and tablet bar.
 ///
-/// Shows current branch with optional dropdown for admins.
-/// - For admins: Dropdown to switch between all branches
-/// - For regular users: Display-only (no dropdown)
+/// - Admins: dropdown of all branches plus "All branches"
+/// - Non-admins with multiple allowed branches: dropdown of allowed set
+/// - Non-admins with one (or zero) branch: display-only
 class BranchSwitcher extends HookConsumerWidget {
-  const BranchSwitcher({super.key});
+  const BranchSwitcher({super.key, this.compact = false});
+
+  /// When true, uses tighter padding for the tablet top bar.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final t = Translations.of(context);
     final currentBranchAsync = ref.watch(currentBranchControllerProvider);
     final branchesAsync = ref.watch(branchesControllerProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
 
-    // Check if user can switch branches
     final canSwitchFuture = useMemoized(
-      () => ref.read(currentBranchControllerProvider.notifier).canSwitchBranch(),
-      [currentBranchAsync],
+      () =>
+          ref.read(currentBranchControllerProvider.notifier).canSwitchBranch(),
+      [currentBranchAsync, viewingAll],
     );
     final canSwitchSnapshot = useFuture(canSwitchFuture);
 
+    final canViewAllFuture = useMemoized(
+      () => ref
+          .read(currentBranchControllerProvider.notifier)
+          .canViewAllBranches(),
+      [currentBranchAsync, viewingAll],
+    );
+    final canViewAllSnapshot = useFuture(canViewAllFuture);
+
+    final switchableIdsFuture = useMemoized(
+      () => ref
+          .read(currentBranchControllerProvider.notifier)
+          .switchableBranchIds(),
+      [currentBranchAsync, viewingAll],
+    );
+    final switchableIdsSnapshot = useFuture(switchableIdsFuture);
+
     return currentBranchAsync.when(
-      data: (currentBranch) {
-        if (currentBranch == null) {
-          return _NoBranchDisplay(theme: theme);
-        }
-
+      data: (selection) {
+        final currentBranch = selection.branch;
         final canSwitch = canSwitchSnapshot.data ?? false;
+        final showAllOption = canViewAllSnapshot.data ?? false;
+        final switchableIds = switchableIdsSnapshot.data;
 
-        if (canSwitch) {
-          // Admin: Show dropdown
-          return branchesAsync.when(
-            data: (branches) => _AdminBranchDropdown(
-              currentBranch: currentBranch,
-              branches: branches,
-              onChanged: (branch) {
-                ref
-                    .read(currentBranchControllerProvider.notifier)
-                    .switchBranch(branch.id);
-              },
-            ),
-            loading: () => _BranchDisplay(branch: currentBranch, isLoading: true),
-            error: (_, __) => _BranchDisplay(branch: currentBranch),
-          );
-        } else {
-          // Regular user: Display only
-          return _BranchDisplay(branch: currentBranch);
+        if (!canSwitch) {
+          if (currentBranch == null) {
+            return _NoBranchDisplay(theme: theme, compact: compact);
+          }
+          return _BranchDisplay(branch: currentBranch, compact: compact);
         }
+
+        return branchesAsync.when(
+          data: (allBranches) {
+            // Wait for allowed IDs — never fall back to every branch (leaks
+            // branches non-admins should not see).
+            final ids = switchableIds;
+            if (ids == null) {
+              return currentBranch != null
+                  ? _BranchDisplay(
+                      branch: currentBranch,
+                      isLoading: true,
+                      compact: compact,
+                    )
+                  : const _BranchLoadingState();
+            }
+
+            final options = allBranches
+                .where((b) => ids.contains(b.id))
+                .toList();
+
+            if (options.isEmpty && !showAllOption) {
+              return _NoBranchDisplay(theme: theme, compact: compact);
+            }
+
+            final selectedValue = viewingAll
+                ? allBranchesSentinel
+                : currentBranch?.id;
+
+            return _BranchDropdown(
+              compact: compact,
+              selectedValue: selectedValue,
+              showAllOption: showAllOption,
+              allLabel: t.navigation.allBranches,
+              branches: options,
+              onChanged: (value) {
+                if (value != null) {
+                  ref
+                      .read(currentBranchControllerProvider.notifier)
+                      .switchBranch(value);
+                }
+              },
+            );
+          },
+          loading: () => currentBranch != null
+              ? _BranchDisplay(
+                  branch: currentBranch,
+                  isLoading: true,
+                  compact: compact,
+                )
+              : const _BranchLoadingState(),
+          error: (_, __) => currentBranch != null
+              ? _BranchDisplay(branch: currentBranch, compact: compact)
+              : _NoBranchDisplay(theme: theme, compact: compact),
+        );
       },
       loading: () => const _BranchLoadingState(),
       error: (_, __) => const SizedBox.shrink(),
@@ -62,56 +123,82 @@ class BranchSwitcher extends HookConsumerWidget {
   }
 }
 
-class _AdminBranchDropdown extends StatelessWidget {
-  const _AdminBranchDropdown({
-    required this.currentBranch,
+class _BranchDropdown extends StatelessWidget {
+  const _BranchDropdown({
+    required this.selectedValue,
     required this.branches,
     required this.onChanged,
+    required this.showAllOption,
+    required this.allLabel,
+    this.compact = false,
   });
 
-  final Branch currentBranch;
+  final String? selectedValue;
   final List<Branch> branches;
-  final ValueChanged<Branch> onChanged;
+  final ValueChanged<String?> onChanged;
+  final bool showAllOption;
+  final String allLabel;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final items = <DropdownMenuItem<String>>[
+      if (showAllOption)
+        DropdownMenuItem(
+          value: allBranchesSentinel,
+          child: Row(
+            children: [
+              const Icon(Icons.apps, size: 18),
+              const SizedBox(width: 8),
+              Expanded(child: Text(allLabel, overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+        ),
+      ...branches.map((branch) {
+        return DropdownMenuItem(
+          value: branch.id,
+          child: Row(
+            children: [
+              const Icon(Icons.store, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(branch.name, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        );
+      }),
+    ];
+
+    // Ensure dropdown value exists in items
+    final values = items.map((e) => e.value).toSet();
+    final value = selectedValue != null && values.contains(selectedValue)
+        ? selectedValue
+        : (showAllOption ? allBranchesSentinel : branches.firstOrNull?.id);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 4 : 8,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 0 : 4,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: currentBranch.id,
+          value: value,
           isExpanded: true,
+          isDense: compact,
           icon: const Icon(Icons.swap_horiz, size: 20),
-          items: branches.map((branch) {
-            return DropdownMenuItem(
-              value: branch.id,
-              child: Row(
-                children: [
-                  const Icon(Icons.store, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      branch.name,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
-          onChanged: (branchId) {
-            if (branchId != null) {
-              final branch = branches.firstWhere((b) => b.id == branchId);
-              onChanged(branch);
-            }
-          },
+          items: items,
+          onChanged: onChanged,
         ),
       ),
     );
@@ -122,18 +209,26 @@ class _BranchDisplay extends StatelessWidget {
   const _BranchDisplay({
     required this.branch,
     this.isLoading = false,
+    this.compact = false,
   });
 
   final Branch branch;
   final bool isLoading;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 4 : 8,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
@@ -166,17 +261,24 @@ class _BranchDisplay extends StatelessWidget {
 }
 
 class _NoBranchDisplay extends StatelessWidget {
-  const _NoBranchDisplay({required this.theme});
+  const _NoBranchDisplay({required this.theme, this.compact = false});
 
   final ThemeData theme;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 4 : 8,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
@@ -193,7 +295,9 @@ class _NoBranchDisplay extends StatelessWidget {
             child: Text(
               t.navigation.noBranch,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.5,
+                ),
                 fontStyle: FontStyle.italic,
               ),
               overflow: TextOverflow.ellipsis,

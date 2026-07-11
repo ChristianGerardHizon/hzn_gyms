@@ -70,10 +70,11 @@ class CheckInDto with CheckInDtoMappable {
       branchId: branch,
       checkInTime: parseToLocal(checkInTime) ?? DateTime.now(),
       method: _parseMethod(method),
-      checkedInBy:
-          checkedInBy != null && checkedInBy!.isNotEmpty ? checkedInBy : null,
-      memberMembershipId: memberMembership != null &&
-              memberMembership!.isNotEmpty
+      checkedInBy: checkedInBy != null && checkedInBy!.isNotEmpty
+          ? checkedInBy
+          : null,
+      memberMembershipId:
+          memberMembership != null && memberMembership!.isNotEmpty
           ? memberMembership
           : null,
       memberName: memberName,

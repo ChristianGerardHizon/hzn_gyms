@@ -25,9 +25,7 @@ class ForgotPasswordPage extends HookConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.auth.forgotPasswordTitle),
-      ),
+      appBar: AppBar(title: Text(t.auth.forgotPasswordTitle)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -60,9 +58,9 @@ class ForgotPasswordPage extends HookConsumerWidget {
         const SizedBox(height: 16),
         Text(
           t.auth.resetLinkSent(email: email),
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.grey,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -99,9 +97,9 @@ class ForgotPasswordPage extends HookConsumerWidget {
           const SizedBox(height: 8),
           Text(
             t.auth.forgotPasswordSubtitle,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),

@@ -108,6 +108,7 @@ class _UsersListWrapper extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: usersAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -150,6 +151,7 @@ class _RolesListWrapper extends ConsumerWidget {
     final rolesController = ref.read(userRolesControllerProvider.notifier);
 
     return rolesAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Column(
@@ -232,21 +234,9 @@ class _BranchesListWrapper extends HookConsumerWidget {
     // Search state
     final searchController = useTextEditingController();
     final searchText = useState('');
-    final appliedQuery = useState('');
 
-    final isSearchActive = appliedQuery.value.isNotEmpty;
-
-    void performSearch() {
-      final query = searchController.text.trim();
-      if (query.isEmpty) return;
-      appliedQuery.value = query;
-    }
-
-    void clearSearch() {
-      searchController.clear();
-      searchText.value = '';
-      appliedQuery.value = '';
-    }
+    final query = searchText.value.trim();
+    final isSearchActive = query.isNotEmpty;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -256,6 +246,7 @@ class _BranchesListWrapper extends HookConsumerWidget {
         child: const Icon(Icons.add),
       ),
       body: branchesAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -274,7 +265,7 @@ class _BranchesListWrapper extends HookConsumerWidget {
         ),
         data: (branches) {
           final filteredBranches = isSearchActive
-              ? _filterBranches(branches, appliedQuery.value)
+              ? _filterBranches(branches, query)
               : branches;
           final totalCount = filteredBranches.length;
 
@@ -299,18 +290,12 @@ class _BranchesListWrapper extends HookConsumerWidget {
               // Search
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: isSearchActive
-                    ? _BranchActiveSearchChip(
-                        query: appliedQuery.value,
-                        onClear: clearSearch,
-                      )
-                    : _BranchSearchInput(
-                        controller: searchController,
-                        onSearch: performSearch,
-                        onTextChanged: (text) => searchText.value = text,
-                        searchText: searchText.value,
-                        hintText: '${t.common.search}...',
-                      ),
+                child: _BranchSearchInput(
+                  controller: searchController,
+                  onTextChanged: (text) => searchText.value = text,
+                  searchText: searchText.value,
+                  hintText: '${t.common.search}...',
+                ),
               ),
 
               // List
@@ -330,7 +315,7 @@ class _BranchesListWrapper extends HookConsumerWidget {
                             const SizedBox(height: 16),
                             Text(
                               isSearchActive
-                                  ? 'No branches match "${appliedQuery.value}"'
+                                  ? 'No branches match "$query"'
                                   : 'No branches yet',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.titleLarge?.copyWith(
@@ -418,81 +403,15 @@ class _BranchListTile extends StatelessWidget {
   }
 }
 
-class _BranchActiveSearchChip extends StatelessWidget {
-  const _BranchActiveSearchChip({
-    required this.query,
-    required this.onClear,
-  });
-
-  final String query;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Expanded(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              isDense: true,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '"$query"',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: onClear,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Icon(
-                    Icons.close,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _BranchSearchInput extends StatelessWidget {
   const _BranchSearchInput({
     required this.controller,
-    required this.onSearch,
     required this.onTextChanged,
     required this.searchText,
     required this.hintText,
   });
 
   final TextEditingController controller;
-  final VoidCallback onSearch;
   final ValueChanged<String> onTextChanged;
   final String searchText;
   final String hintText;
@@ -505,7 +424,6 @@ class _BranchSearchInput extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: onTextChanged,
-            onSubmitted: (_) => onSearch(),
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: hintText,

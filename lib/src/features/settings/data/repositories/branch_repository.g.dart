@@ -15,21 +15,25 @@ final branchRepositoryProvider = BranchRepositoryProvider._();
 
 /// Provides the BranchRepository instance.
 
-final class BranchRepositoryProvider extends $FunctionalProvider<
-    BranchRepository,
-    BranchRepository,
-    BranchRepository> with $Provider<BranchRepository> {
+final class BranchRepositoryProvider
+    extends
+        $FunctionalProvider<
+          BranchRepository,
+          BranchRepository,
+          BranchRepository
+        >
+    with $Provider<BranchRepository> {
   /// Provides the BranchRepository instance.
   BranchRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'branchRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'branchRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$branchRepositoryHash();

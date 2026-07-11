@@ -6,25 +6,23 @@ part of 'memberships.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $membershipsShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$membershipsShellRoute];
 
 RouteBase get $membershipsShellRoute => ShellRouteData.$route(
-      factory: $MembershipsShellRouteExtension._fromState,
+  factory: $MembershipsShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/memberships',
+      factory: $MembershipsRoute._fromState,
       routes: [
         GoRouteData.$route(
-          path: '/memberships',
-          factory: $MembershipsRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: ':id',
-              factory: $MembershipDetailRoute._fromState,
-            ),
-          ],
+          path: ':id',
+          factory: $MembershipDetailRoute._fromState,
         ),
       ],
-    );
+    ),
+  ],
+);
 
 extension $MembershipsShellRouteExtension on MembershipsShellRoute {
   static MembershipsShellRoute _fromState(GoRouterState state) =>
@@ -36,9 +34,7 @@ mixin $MembershipsRoute on GoRouteData {
       const MembershipsRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/memberships',
-      );
+  String get location => GoRouteData.$location('/memberships');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -56,16 +52,13 @@ mixin $MembershipsRoute on GoRouteData {
 
 mixin $MembershipDetailRoute on GoRouteData {
   static MembershipDetailRoute _fromState(GoRouterState state) =>
-      MembershipDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      MembershipDetailRoute(id: state.pathParameters['id']!);
 
   MembershipDetailRoute get _self => this as MembershipDetailRoute;
 
   @override
-  String get location => GoRouteData.$location(
-        '/memberships/${Uri.encodeComponent(_self.id)}',
-      );
+  String get location =>
+      GoRouteData.$location('/memberships/${Uri.encodeComponent(_self.id)}');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -19,21 +19,25 @@ final productCategoriesControllerProvider =
 /// Controller for managing product category list state.
 ///
 /// Provides methods for fetching and CRUD operations on product categories.
-final class ProductCategoriesControllerProvider extends $AsyncNotifierProvider<
-    ProductCategoriesController, List<ProductCategory>> {
+final class ProductCategoriesControllerProvider
+    extends
+        $AsyncNotifierProvider<
+          ProductCategoriesController,
+          List<ProductCategory>
+        > {
   /// Controller for managing product category list state.
   ///
   /// Provides methods for fetching and CRUD operations on product categories.
   ProductCategoriesControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productCategoriesControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productCategoriesControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productCategoriesControllerHash();
@@ -44,7 +48,7 @@ final class ProductCategoriesControllerProvider extends $AsyncNotifierProvider<
 }
 
 String _$productCategoriesControllerHash() =>
-    r'4b4957a1b8036d22db4504615b34be2585a85ab5';
+    r'6c796ed86f417664a1f174cb7d89b4a25c579b3d';
 
 /// Controller for managing product category list state.
 ///
@@ -56,13 +60,20 @@ abstract class _$ProductCategoriesController
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref
-        as $Ref<AsyncValue<List<ProductCategory>>, List<ProductCategory>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<ProductCategory>>, List<ProductCategory>>,
-        AsyncValue<List<ProductCategory>>,
-        Object?,
-        Object?>;
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<List<ProductCategory>>, List<ProductCategory>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<ProductCategory>>,
+                List<ProductCategory>
+              >,
+              AsyncValue<List<ProductCategory>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

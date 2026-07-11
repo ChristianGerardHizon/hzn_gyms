@@ -15,22 +15,25 @@ final membershipReportProvider = MembershipReportProvider._();
 
 /// Fetches and provides membership report data.
 
-final class MembershipReportProvider extends $FunctionalProvider<
-        AsyncValue<MembershipReport>,
-        MembershipReport,
-        FutureOr<MembershipReport>>
+final class MembershipReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MembershipReport>,
+          MembershipReport,
+          FutureOr<MembershipReport>
+        >
     with $FutureModifier<MembershipReport>, $FutureProvider<MembershipReport> {
   /// Fetches and provides membership report data.
   MembershipReportProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'membershipReportProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'membershipReportProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$membershipReportHash();
@@ -38,8 +41,8 @@ final class MembershipReportProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<MembershipReport> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<MembershipReport> create(Ref ref) {

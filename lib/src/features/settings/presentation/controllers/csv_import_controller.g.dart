@@ -18,15 +18,15 @@ final class CsvImportControllerProvider
     extends $NotifierProvider<CsvImportController, ImportState> {
   /// Controller for managing CSV product import.
   CsvImportControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'csvImportControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'csvImportControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$csvImportControllerHash();
@@ -45,7 +45,7 @@ final class CsvImportControllerProvider
 }
 
 String _$csvImportControllerHash() =>
-    r'6df35161f6ba201747d0bcede18f681d05c29e0a';
+    r'5614038d8064f0455afad1e9fd85070383cba7ab';
 
 /// Controller for managing CSV product import.
 
@@ -55,8 +55,14 @@ abstract class _$CsvImportController extends $Notifier<ImportState> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<ImportState, ImportState>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<ImportState, ImportState>, ImportState, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ImportState, ImportState>,
+              ImportState,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

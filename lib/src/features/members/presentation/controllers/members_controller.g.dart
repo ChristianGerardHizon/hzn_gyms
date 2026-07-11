@@ -18,15 +18,15 @@ final class MembersControllerProvider
     extends $AsyncNotifierProvider<MembersController, List<Member>> {
   /// Controller for managing the list of members.
   MembersControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'membersControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'membersControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$membersControllerHash();
@@ -36,7 +36,7 @@ final class MembersControllerProvider
   MembersController create() => MembersController();
 }
 
-String _$membersControllerHash() => r'4cec60cbed446842fe04ac44b19524a365ae08b4';
+String _$membersControllerHash() => r'eedce3c8903d68561a16d8ff60881baac4a06afa';
 
 /// Controller for managing the list of members.
 
@@ -46,11 +46,14 @@ abstract class _$MembersController extends $AsyncNotifier<List<Member>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Member>>, List<Member>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<Member>>, List<Member>>,
-        AsyncValue<List<Member>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Member>>, List<Member>>,
+              AsyncValue<List<Member>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

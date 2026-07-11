@@ -154,7 +154,7 @@ class CsvImportController extends _$CsvImportController {
 
     // Step 3: Create products
     final productRepo = ref.read(productRepositoryProvider);
-    final branchId = ref.read(currentBranchIdProvider);
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
     final errors = List<String>.from(state.errors);
     var imported = 0;
     var failed = 0;

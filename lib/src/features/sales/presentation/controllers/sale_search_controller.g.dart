@@ -18,15 +18,15 @@ final class SaleSearchQueryProvider
     extends $NotifierProvider<SaleSearchQuery, String> {
   /// Provider for sale search query state.
   SaleSearchQueryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'saleSearchQueryProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'saleSearchQueryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$saleSearchQueryHash();
@@ -54,8 +54,14 @@ abstract class _$SaleSearchQuery extends $Notifier<String> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<String, String>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<String, String>, String, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -70,15 +76,15 @@ final class SaleSearchFieldsProvider
     extends $NotifierProvider<SaleSearchFields, Set<String>> {
   /// Provider for managing which fields are included in sale search.
   SaleSearchFieldsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'saleSearchFieldsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'saleSearchFieldsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$saleSearchFieldsHash();
@@ -106,8 +112,14 @@ abstract class _$SaleSearchFields extends $Notifier<Set<String>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Set<String>, Set<String>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Set<String>, Set<String>>, Set<String>, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

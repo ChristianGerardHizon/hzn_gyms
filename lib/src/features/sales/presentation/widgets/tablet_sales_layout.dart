@@ -31,6 +31,7 @@ class TabletSalesLayout extends ConsumerWidget {
     final selectedSaleId = routerState.pathParameters['id'];
 
     return salesAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Column(

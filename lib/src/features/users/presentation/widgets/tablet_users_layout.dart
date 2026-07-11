@@ -13,10 +13,7 @@ import 'user_list_panel.dart';
 /// Left pane: User list with search
 /// Right pane: User detail from router or empty state
 class TabletUsersLayout extends ConsumerWidget {
-  const TabletUsersLayout({
-    super.key,
-    required this.detailChild,
-  });
+  const TabletUsersLayout({super.key, required this.detailChild});
 
   /// The detail panel content from the router.
   final Widget detailChild;
@@ -49,6 +46,7 @@ class TabletUsersLayout extends ConsumerWidget {
               child: const Icon(Icons.add),
             ),
             body: usersAsync.when(
+              skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(
                 child: Column(

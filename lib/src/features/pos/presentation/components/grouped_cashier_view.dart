@@ -276,19 +276,29 @@ class _ProductGroupCard extends ConsumerWidget {
       showLotSelectionDialog(
         context,
         product: product,
-        onLotSelected: (lot, quantity) {
+        onLotSelected: (lot, quantity) async {
           if (product.isVariablePrice) {
-            showVariablePriceDialog(
+            final price = await showVariablePriceDialog(
               context,
               productName: product.name,
-            ).then((price) {
-              if (price != null) {
-                cartNotifier.addToCartWithLot(product, lot, quantity,
-                    customPrice: price);
+            );
+            if (price != null) {
+              final error = await cartNotifier.addToCartWithLot(
+                product,
+                lot,
+                quantity,
+                customPrice: price,
+              );
+              if (error != null && context.mounted) {
+                showErrorSnackBar(context, message: error);
               }
-            });
+            }
           } else {
-            cartNotifier.addToCartWithLot(product, lot, quantity);
+            final error =
+                await cartNotifier.addToCartWithLot(product, lot, quantity);
+            if (error != null && context.mounted) {
+              showErrorSnackBar(context, message: error);
+            }
           }
         },
       );
@@ -296,13 +306,21 @@ class _ProductGroupCard extends ConsumerWidget {
       showVariablePriceDialog(
         context,
         productName: product.name,
-      ).then((price) {
+      ).then((price) async {
         if (price != null) {
-          cartNotifier.addToCart(product, customPrice: price);
+          final error =
+              await cartNotifier.addToCart(product, customPrice: price);
+          if (error != null && context.mounted) {
+            showErrorSnackBar(context, message: error);
+          }
         }
       });
     } else {
-      cartNotifier.addToCart(product);
+      cartNotifier.addToCart(product).then((error) {
+        if (error != null && context.mounted) {
+          showErrorSnackBar(context, message: error);
+        }
+      });
     }
   }
 }

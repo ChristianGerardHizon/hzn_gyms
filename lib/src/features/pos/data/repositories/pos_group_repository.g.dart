@@ -12,20 +12,24 @@ part of 'pos_group_repository.dart';
 @ProviderFor(posGroupRepository)
 final posGroupRepositoryProvider = PosGroupRepositoryProvider._();
 
-final class PosGroupRepositoryProvider extends $FunctionalProvider<
-    PosGroupRepository,
-    PosGroupRepository,
-    PosGroupRepository> with $Provider<PosGroupRepository> {
+final class PosGroupRepositoryProvider
+    extends
+        $FunctionalProvider<
+          PosGroupRepository,
+          PosGroupRepository,
+          PosGroupRepository
+        >
+    with $Provider<PosGroupRepository> {
   PosGroupRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'posGroupRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'posGroupRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$posGroupRepositoryHash();
@@ -33,8 +37,8 @@ final class PosGroupRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<PosGroupRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   PosGroupRepository create(Ref ref) {

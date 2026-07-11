@@ -23,6 +23,7 @@ class MemberDto with MemberDtoMappable {
   final String? rfidCardId;
   final String? email;
   final String? emergencyContact;
+  final String? branch;
   final String? created;
   final String? updated;
 
@@ -41,6 +42,7 @@ class MemberDto with MemberDtoMappable {
     this.rfidCardId,
     this.email,
     this.emergencyContact,
+    this.branch,
     this.created,
     this.updated,
   });
@@ -62,6 +64,7 @@ class MemberDto with MemberDtoMappable {
       rfidCardId: record.getStringValue('rfidCardId'),
       email: record.getStringValue('email'),
       emergencyContact: record.getStringValue('emergencyContact'),
+      branch: record.getStringValue('branch'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
@@ -73,19 +76,22 @@ class MemberDto with MemberDtoMappable {
       id: id,
       name: name,
       photo: _buildPhotoUrl(baseUrl),
-      mobileNumber:
-          mobileNumber != null && mobileNumber!.isNotEmpty ? mobileNumber : null,
+      mobileNumber: mobileNumber != null && mobileNumber!.isNotEmpty
+          ? mobileNumber
+          : null,
       dateOfBirth: parseToLocal(dateOfBirth),
       address: address != null && address!.isNotEmpty ? address : null,
       sex: _parseSex(sex),
       remarks: remarks != null && remarks!.isNotEmpty ? remarks : null,
       addedBy: addedBy != null && addedBy!.isNotEmpty ? addedBy : null,
-      rfidCardId:
-          rfidCardId != null && rfidCardId!.isNotEmpty ? rfidCardId : null,
+      rfidCardId: rfidCardId != null && rfidCardId!.isNotEmpty
+          ? rfidCardId
+          : null,
       email: email != null && email!.isNotEmpty ? email : null,
       emergencyContact: emergencyContact != null && emergencyContact!.isNotEmpty
           ? emergencyContact
           : null,
+      branch: branch != null && branch!.isNotEmpty ? branch : null,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

@@ -257,28 +257,33 @@ class _ProductCard extends ConsumerWidget {
       showLotSelectionDialog(
         context,
         product: product,
-        onLotSelected: (lot, quantity) {
+        onLotSelected: (lot, quantity) async {
           if (product.isVariablePrice) {
             // Variable-price + lot-tracked: prompt for price after lot selection
-            showVariablePriceDialog(
+            final price = await showVariablePriceDialog(
               context,
               productName: product.name,
-            ).then((price) {
-              if (price != null) {
-                cartNotifier.addToCartWithLot(
-                  product,
-                  lot,
-                  quantity,
-                  customPrice: price,
-                );
+            );
+            if (price != null) {
+              final error = await cartNotifier.addToCartWithLot(
+                product,
+                lot,
+                quantity,
+                customPrice: price,
+              );
+              if (error != null && context.mounted) {
+                showErrorSnackBar(context, message: error);
               }
-            });
+            }
           } else {
-            cartNotifier.addToCartWithLot(
+            final error = await cartNotifier.addToCartWithLot(
               product,
               lot,
               quantity,
             );
+            if (error != null && context.mounted) {
+              showErrorSnackBar(context, message: error);
+            }
           }
         },
       );
@@ -287,14 +292,22 @@ class _ProductCard extends ConsumerWidget {
       showVariablePriceDialog(
         context,
         productName: product.name,
-      ).then((price) {
+      ).then((price) async {
         if (price != null) {
-          cartNotifier.addToCart(product, customPrice: price);
+          final error =
+              await cartNotifier.addToCart(product, customPrice: price);
+          if (error != null && context.mounted) {
+            showErrorSnackBar(context, message: error);
+          }
         }
       });
     } else {
       // Regular add to cart for non-lot products
-      cartNotifier.addToCart(product);
+      cartNotifier.addToCart(product).then((error) {
+        if (error != null && context.mounted) {
+          showErrorSnackBar(context, message: error);
+        }
+      });
     }
   }
 

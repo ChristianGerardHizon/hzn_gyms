@@ -18,7 +18,7 @@ class PosGroupsController extends _$PosGroupsController {
 
   @override
   Future<List<PosGroup>> build() async {
-    final branchId = ref.watch(currentBranchIdProvider);
+    final branchId = ref.watch(effectiveBranchIdForWriteProvider);
     if (branchId == null) return [];
 
     final result = await _repository.fetchGroupsWithItems(branchId);
@@ -31,9 +31,12 @@ class PosGroupsController extends _$PosGroupsController {
   /// Refreshes the group list.
   Future<void> refresh() async {
     _repository.invalidateCache();
-    state = const AsyncLoading();
+    // Avoid wiping previous data so list UIs stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
 
-    final branchId = ref.read(currentBranchIdProvider);
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
     if (branchId == null) {
       state = const AsyncData([]);
       return;
@@ -51,7 +54,7 @@ class PosGroupsController extends _$PosGroupsController {
   ///
   /// Returns `null` on success, or an error message string on failure.
   Future<String?> createGroup(String name) async {
-    final branchId = ref.read(currentBranchIdProvider);
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
     if (branchId == null) {
       return 'No branch selected';
     }

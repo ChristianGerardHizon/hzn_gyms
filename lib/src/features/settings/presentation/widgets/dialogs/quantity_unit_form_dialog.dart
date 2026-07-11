@@ -6,19 +6,15 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
-import '../../../../../core/i18n/strings.g.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
-import '../../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form_feedback.dart';
 import '../../../../quantity_units/domain/quantity_unit.dart';
 import '../../controllers/quantity_units_controller.dart';
 
 /// Dialog for creating or editing a quantity unit.
 class QuantityUnitFormDialog extends HookConsumerWidget {
-  const QuantityUnitFormDialog({
-    super.key,
-    this.unit,
-  });
+  const QuantityUnitFormDialog({super.key, this.unit});
 
   final QuantityUnit? unit;
 
@@ -26,9 +22,6 @@ class QuantityUnitFormDialog extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final t = Translations.of(context);
-
     // Form key
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final dirtyGuard = useFormDirtyGuard(
@@ -108,185 +101,116 @@ class QuantityUnitFormDialog extends HookConsumerWidget {
       }
     }
 
-    return DialogCloseHandler(
-      onClose: (ctx) => dirtyGuard.confirmDiscard(ctx),
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: dirtyGuard.onPopInvokedWithResult,
-        child: ConstrainedDialogContent(
-          child: Column(
+    return FormDialogScaffold(
+      title: isEditing ? 'Edit Quantity Unit' : 'New Quantity Unit',
+      formKey: formKey,
+      dirtyGuard: dirtyGuard,
+      isSaving: isSaving.value,
+      onSave: (_) => handleSave(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Name field
+          FormBuilderTextField(
+            name: 'name',
+            initialValue: unit?.name,
+            decoration: const InputDecoration(
+              labelText: 'Name *',
+              hintText: 'e.g., kilograms',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.straighten),
+            ),
+            enabled: !isSaving.value,
+            validator: FormBuilderValidators.required(
+              errorText: 'Name is required',
+            ),
+            textInputAction: TextInputAction.next,
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
+
+          // Short forms row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: isSaving.value
-                          ? null
-                          : () async {
-                              if (await dirtyGuard.confirmDiscard(context)) {
-                                if (context.mounted) context.pop();
-                              }
-                            },
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEditing ? 'Edit Quantity Unit' : 'New Quantity Unit',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: TextButton(
-                        onPressed: isSaving.value
-                            ? null
-                            : () async {
-                                if (await dirtyGuard.confirmDiscard(context)) {
-                                  if (context.mounted) context.pop();
-                                }
-                              },
-                        child: Text(t.common.cancel),
-                      ),
-                    ),
-                    FilledButton(
-                      onPressed: isSaving.value ? null : handleSave,
-                      child: isSaving.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(t.common.save),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
+              Expanded(
+                child: FormBuilderTextField(
+                  name: 'shortSingular',
+                  initialValue: unit?.shortSingular,
+                  decoration: const InputDecoration(
+                    labelText: 'Short Singular *',
+                    hintText: 'e.g., kg',
+                    border: OutlineInputBorder(),
+                  ),
+                  enabled: !isSaving.value,
+                  validator: FormBuilderValidators.required(
+                    errorText: 'Required',
+                  ),
+                  textInputAction: TextInputAction.next,
                 ),
               ),
-
-              const SizedBox(height: 8),
-
-              // Content
+              const SizedBox(width: 16),
               Expanded(
-                child: FormBuilder(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-
-                        // Name field
-                        FormBuilderTextField(
-                          name: 'name',
-                          initialValue: unit?.name,
-                          decoration: const InputDecoration(
-                            labelText: 'Name *',
-                            hintText: 'e.g., kilograms',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.straighten),
-                          ),
-                          enabled: !isSaving.value,
-                          validator: FormBuilderValidators.required(
-                            errorText: 'Name is required',
-                          ),
-                          textInputAction: TextInputAction.next,
-                          autofocus: true,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Short forms row
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: FormBuilderTextField(
-                                name: 'shortSingular',
-                                initialValue: unit?.shortSingular,
-                                decoration: const InputDecoration(
-                                  labelText: 'Short Singular *',
-                                  hintText: 'e.g., kg',
-                                  border: OutlineInputBorder(),
-                                ),
-                                enabled: !isSaving.value,
-                                validator: FormBuilderValidators.required(
-                                  errorText: 'Required',
-                                ),
-                                textInputAction: TextInputAction.next,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: FormBuilderTextField(
-                                name: 'shortPlural',
-                                initialValue: unit?.shortPlural,
-                                decoration: const InputDecoration(
-                                  labelText: 'Short Plural *',
-                                  hintText: 'e.g., kg',
-                                  border: OutlineInputBorder(),
-                                ),
-                                enabled: !isSaving.value,
-                                validator: FormBuilderValidators.required(
-                                  errorText: 'Required',
-                                ),
-                                textInputAction: TextInputAction.next,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Long forms row
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: FormBuilderTextField(
-                                name: 'longSingular',
-                                initialValue: unit?.longSingular,
-                                decoration: const InputDecoration(
-                                  labelText: 'Long Singular *',
-                                  hintText: 'e.g., kilogram',
-                                  border: OutlineInputBorder(),
-                                ),
-                                enabled: !isSaving.value,
-                                validator: FormBuilderValidators.required(
-                                  errorText: 'Required',
-                                ),
-                                textInputAction: TextInputAction.next,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: FormBuilderTextField(
-                                name: 'longPlural',
-                                initialValue: unit?.longPlural,
-                                decoration: const InputDecoration(
-                                  labelText: 'Long Plural *',
-                                  hintText: 'e.g., kilograms',
-                                  border: OutlineInputBorder(),
-                                ),
-                                enabled: !isSaving.value,
-                                validator: FormBuilderValidators.required(
-                                  errorText: 'Required',
-                                ),
-                                textInputAction: TextInputAction.done,
-                                onSubmitted: (_) => handleSave(),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                child: FormBuilderTextField(
+                  name: 'shortPlural',
+                  initialValue: unit?.shortPlural,
+                  decoration: const InputDecoration(
+                    labelText: 'Short Plural *',
+                    hintText: 'e.g., kg',
+                    border: OutlineInputBorder(),
                   ),
+                  enabled: !isSaving.value,
+                  validator: FormBuilderValidators.required(
+                    errorText: 'Required',
+                  ),
+                  textInputAction: TextInputAction.next,
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+
+          // Long forms row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: FormBuilderTextField(
+                  name: 'longSingular',
+                  initialValue: unit?.longSingular,
+                  decoration: const InputDecoration(
+                    labelText: 'Long Singular *',
+                    hintText: 'e.g., kilogram',
+                    border: OutlineInputBorder(),
+                  ),
+                  enabled: !isSaving.value,
+                  validator: FormBuilderValidators.required(
+                    errorText: 'Required',
+                  ),
+                  textInputAction: TextInputAction.next,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: FormBuilderTextField(
+                  name: 'longPlural',
+                  initialValue: unit?.longPlural,
+                  decoration: const InputDecoration(
+                    labelText: 'Long Plural *',
+                    hintText: 'e.g., kilograms',
+                    border: OutlineInputBorder(),
+                  ),
+                  enabled: !isSaving.value,
+                  validator: FormBuilderValidators.required(
+                    errorText: 'Required',
+                  ),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => handleSave(),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -301,10 +225,7 @@ class QuantityUnitFormDialog extends HookConsumerWidget {
 }
 
 /// Shows the quantity unit form dialog.
-void showQuantityUnitFormDialog(
-  BuildContext context, {
-  QuantityUnit? unit,
-}) {
+void showQuantityUnitFormDialog(BuildContext context, {QuantityUnit? unit}) {
   showConstrainedDialog(
     context: context,
     builder: (context) => QuantityUnitFormDialog(unit: unit),

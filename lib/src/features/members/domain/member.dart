@@ -39,6 +39,7 @@ class Member with MemberMappable {
     this.rfidCardId,
     this.email,
     this.emergencyContact,
+    this.branch,
     this.created,
     this.updated,
   });
@@ -78,6 +79,9 @@ class Member with MemberMappable {
 
   /// Emergency contact info (optional).
   final String? emergencyContact;
+
+  /// Branch FK ID (home branch).
+  final String? branch;
 
   /// Creation timestamp.
   final DateTime? created;

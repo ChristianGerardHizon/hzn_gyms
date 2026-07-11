@@ -42,8 +42,9 @@ class RecentCheckInsList extends ConsumerWidget {
                 Icon(
                   Icons.how_to_reg_outlined,
                   size: 64,
-                  color: theme.colorScheme.onSurfaceVariant
-                      .withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.3,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -65,10 +66,7 @@ class RecentCheckInsList extends ConsumerWidget {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final checkIn = checkIns[index];
-              return _CheckInListTile(
-                checkIn: checkIn,
-                timeFormat: timeFormat,
-              );
+              return _CheckInListTile(checkIn: checkIn, timeFormat: timeFormat);
             },
           ),
         );
@@ -78,10 +76,7 @@ class RecentCheckInsList extends ConsumerWidget {
 }
 
 class _CheckInListTile extends StatelessWidget {
-  const _CheckInListTile({
-    required this.checkIn,
-    required this.timeFormat,
-  });
+  const _CheckInListTile({required this.checkIn, required this.timeFormat});
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
@@ -93,11 +88,7 @@ class _CheckInListTile extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: Colors.green.withValues(alpha: 0.15),
-        child: const Icon(
-          Icons.how_to_reg,
-          color: Colors.green,
-          size: 20,
-        ),
+        child: const Icon(Icons.how_to_reg, color: Colors.green, size: 20),
       ),
       title: Text(checkIn.memberName ?? 'Unknown Member'),
       subtitle: Text(

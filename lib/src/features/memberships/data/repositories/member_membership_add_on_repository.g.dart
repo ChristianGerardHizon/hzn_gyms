@@ -16,22 +16,25 @@ final memberMembershipAddOnRepositoryProvider =
 
 /// Provides the MemberMembershipAddOnRepository instance.
 
-final class MemberMembershipAddOnRepositoryProvider extends $FunctionalProvider<
-        MemberMembershipAddOnRepository,
-        MemberMembershipAddOnRepository,
-        MemberMembershipAddOnRepository>
+final class MemberMembershipAddOnRepositoryProvider
+    extends
+        $FunctionalProvider<
+          MemberMembershipAddOnRepository,
+          MemberMembershipAddOnRepository,
+          MemberMembershipAddOnRepository
+        >
     with $Provider<MemberMembershipAddOnRepository> {
   /// Provides the MemberMembershipAddOnRepository instance.
   MemberMembershipAddOnRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'memberMembershipAddOnRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memberMembershipAddOnRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$memberMembershipAddOnRepositoryHash();
@@ -39,8 +42,8 @@ final class MemberMembershipAddOnRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<MemberMembershipAddOnRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   MemberMembershipAddOnRepository create(Ref ref) {
@@ -51,8 +54,9 @@ final class MemberMembershipAddOnRepositoryProvider extends $FunctionalProvider<
   Override overrideWithValue(MemberMembershipAddOnRepository value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride:
-          $SyncValueProvider<MemberMembershipAddOnRepository>(value),
+      providerOverride: $SyncValueProvider<MemberMembershipAddOnRepository>(
+        value,
+      ),
     );
   }
 }

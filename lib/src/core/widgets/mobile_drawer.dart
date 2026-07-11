@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/check_in/presentation/controllers/rfid_listener_status.dart';
+import '../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
@@ -147,6 +149,19 @@ class MobileDrawer extends ConsumerWidget {
             ),
 
             const Divider(),
+
+            // RFID listener status (above logout)
+            ListTile(
+              leading: const RfidListenerStatusIcon(),
+              title: const Text('RFID scanner'),
+              subtitle: Text(
+                ref.watch(rfidListenerStatusControllerProvider) ==
+                        RfidListenerStatus.listening
+                    ? 'Listening'
+                    : 'Unavailable',
+              ),
+              dense: true,
+            ),
 
             // Logout
             _DrawerItem(

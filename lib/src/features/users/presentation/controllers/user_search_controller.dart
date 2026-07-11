@@ -3,10 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'user_search_controller.g.dart';
 
 /// Available search fields for users.
-const userSearchableFields = [
-  'name',
-  'username',
-];
+const userSearchableFields = ['name', 'username'];
 
 /// Provider for user search query state.
 @riverpod

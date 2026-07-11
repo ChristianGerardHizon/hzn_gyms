@@ -15,21 +15,25 @@ final memberRepositoryProvider = MemberRepositoryProvider._();
 
 /// Provides the MemberRepository instance.
 
-final class MemberRepositoryProvider extends $FunctionalProvider<
-    MemberRepository,
-    MemberRepository,
-    MemberRepository> with $Provider<MemberRepository> {
+final class MemberRepositoryProvider
+    extends
+        $FunctionalProvider<
+          MemberRepository,
+          MemberRepository,
+          MemberRepository
+        >
+    with $Provider<MemberRepository> {
   /// Provides the MemberRepository instance.
   MemberRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'memberRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memberRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$memberRepositoryHash();
@@ -53,4 +57,4 @@ final class MemberRepositoryProvider extends $FunctionalProvider<
   }
 }
 
-String _$memberRepositoryHash() => r'cf765c937712c9e0bdf945a5d380e96ab4e5d56c';
+String _$memberRepositoryHash() => r'818783e2f2324816721c996928dfff351ded9645';

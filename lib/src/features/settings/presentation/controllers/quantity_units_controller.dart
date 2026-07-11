@@ -26,7 +26,10 @@ class QuantityUnitsController extends _$QuantityUnitsController {
 
   /// Refreshes the quantity units list.
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    // Avoid wiping previous data so list UIs stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncValue.loading();
+    }
     state = await AsyncValue.guard(_fetchUnits);
   }
 

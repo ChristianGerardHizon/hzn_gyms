@@ -90,7 +90,8 @@ All system users with role-based access.
 | `avatar` | String | No | Avatar filename |
 | `verified` | bool | Yes | Email verification status |
 | `role` | String (FK) | Yes | FK to UserRole |
-| `branch` | String (FK) | No | FK to Branch |
+| `branch` | String (FK) | No | Default/home branch FK to Branch |
+| `allowedBranches` | List\<String\> (FK) | No | Multi-relation to Branch — branches the user may switch to |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
@@ -99,7 +100,8 @@ All system users with role-based access.
 
 **Relationships:**
 - `role` -> UserRole
-- `branch` -> Branch (optional)
+- `branch` -> Branch (optional default)
+- `allowedBranches` -> Branch[] (optional)
 
 ---
 
@@ -159,11 +161,15 @@ Gym members.
 | `rfidCardId` | String | No | RFID card ID for check-in |
 | `email` | String | No | Email address |
 | `emergencyContact` | String | No | Emergency contact info |
+| `branch` | String (FK) | No | FK to Branch (home branch) |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
 **Collection:** `members`
+
+**Relationships:**
+- `branch` -> Branch
 
 **Referenced by:** MemberMembership, CheckIn, Sale
 

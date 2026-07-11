@@ -12,11 +12,11 @@
     "sales": "Cashier",
     "salesHistory": "Mga Benta",
     "organization": "Organisasyon",
-    "services": "Mga Serbisyo",
     "checkIn": "Check-In",
     "members": "Mga Miyembro",
     "memberships": "Mga Membership",
     "system": "Sistema",
     "account": "Account",
-    "noBranch": "Walang Sangay"
+    "noBranch": "Walang Sangay",
+    "allBranches": "Lahat ng Sangay"
 }

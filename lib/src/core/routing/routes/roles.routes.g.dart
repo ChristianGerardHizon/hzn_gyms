@@ -6,22 +6,16 @@ part of 'roles.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $rolesRoute,
-    ];
+List<RouteBase> get $appRoutes => [$rolesRoute];
 
-RouteBase get $rolesRoute => GoRouteData.$route(
-      path: '/roles',
-      factory: $RolesRoute._fromState,
-    );
+RouteBase get $rolesRoute =>
+    GoRouteData.$route(path: '/roles', factory: $RolesRoute._fromState);
 
 mixin $RolesRoute on GoRouteData {
   static RolesRoute _fromState(GoRouterState state) => const RolesRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/roles',
-      );
+  String get location => GoRouteData.$location('/roles');
 
   @override
   void go(BuildContext context) => context.go(location);

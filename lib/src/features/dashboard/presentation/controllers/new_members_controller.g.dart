@@ -29,15 +29,15 @@ final class TodaysNewMembersCountProvider
   /// Queries the members collection with a date filter on `created`.
   /// Members are global (no branch filter).
   TodaysNewMembersCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'todaysNewMembersCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todaysNewMembersCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$todaysNewMembersCountHash();

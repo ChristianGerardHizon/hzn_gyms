@@ -13,6 +13,7 @@ class CachedAvatar extends StatelessWidget {
     this.placeholder,
     this.placeholderIcon = Icons.person,
     this.onTap,
+    this.thumbSize,
   });
 
   /// The URL of the image to display. If null, shows the placeholder.
@@ -31,6 +32,22 @@ class CachedAvatar extends StatelessWidget {
   /// Optional callback when the avatar is tapped.
   final VoidCallback? onTap;
 
+  /// When set, requests a PocketBase server-side thumbnail of this pixel size
+  /// (square) instead of the full-resolution image. This dramatically reduces
+  /// download size for small avatars in lists.
+  final int? thumbSize;
+
+  /// Builds the effective image URL, appending a PocketBase `thumb=WxH`
+  /// query parameter when [thumbSize] is provided.
+  String? _resolveImageUrl() {
+    final url = imageUrl;
+    if (url == null || url.isEmpty) return null;
+    final size = thumbSize;
+    if (size == null) return url;
+    final separator = url.contains('?') ? '&' : '?';
+    return '$url${separator}thumb=${size}x$size';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -47,14 +64,23 @@ class CachedAvatar extends StatelessWidget {
 
     final placeholderWidget = placeholder ?? defaultPlaceholder;
 
-    if (imageUrl == null || imageUrl!.isEmpty) {
+    final resolvedUrl = _resolveImageUrl();
+
+    if (resolvedUrl == null) {
       return onTap != null
           ? GestureDetector(onTap: onTap, child: placeholderWidget)
           : placeholderWidget;
     }
 
+    // Decode to roughly 2x the display size for crisp rendering on hi-dpi
+    // screens while keeping memory usage low.
+    final memCacheSize =
+        thumbSize != null ? thumbSize! * 2 : (radius * 2 * 3).round();
+
     final avatar = CachedNetworkImage(
-      imageUrl: imageUrl!,
+      imageUrl: resolvedUrl,
+      memCacheWidth: memCacheSize,
+      memCacheHeight: memCacheSize,
       imageBuilder: (context, imageProvider) => CircleAvatar(
         radius: radius,
         backgroundImage: imageProvider,

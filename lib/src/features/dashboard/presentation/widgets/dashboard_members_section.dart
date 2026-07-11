@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
+import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../controllers/dashboard_members_controller.dart';
 
@@ -21,13 +22,17 @@ class DashboardMembersSection extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rawSearchInput = useState('');
     final debouncedQuery = useState('');
-    final currentPage = useState(1);
     final allMembers = useState(<DashboardMember>[]);
     final totalItems = useState(0);
+    final totalPages = useState(0);
+    final loadedUpToPage = useState(0);
     final hasMore = useState(true);
     final isLoadingMore = useState(false);
     final hasLoadedOnce = useState(false);
     final statusFilter = useState(MemberStatusFilter.all);
+    final loadPerf = useRef<PerfTimer?>(null);
+    final prefetchInFlight = useRef(<int>{});
+    final prefetchGeneration = useRef(0);
 
     // Debounce search input by 400ms
     useEffect(() {
@@ -43,36 +48,135 @@ class DashboardMembersSection extends HookConsumerWidget {
 
     // Reset pagination when debounced query or filter changes
     useEffect(() {
-      currentPage.value = 1;
+      loadedUpToPage.value = 0;
+      totalPages.value = 0;
       hasMore.value = true;
+      isLoadingMore.value = false;
+      prefetchInFlight.value = <int>{};
+      prefetchGeneration.value++;
+      loadPerf.value?.finish('CANCELLED (filter/search changed)');
+      loadPerf.value = null;
       return null;
     }, [debouncedQuery.value, statusFilter.value]);
 
-    // Fetch the current page (now with server-side filtering)
+    // Always watch page 1; later pages are prefetched into local state.
     final query = debouncedQuery.value.isEmpty ? null : debouncedQuery.value;
     final pageAsync = ref.watch(
       dashboardMembersPageProvider(
-        page: currentPage.value,
+        page: 1,
         searchQuery: query,
         statusFilter: statusFilter.value,
       ),
     );
 
-    // When new page data arrives, append it to the list
+    Future<void> prefetchAhead(int basePage) async {
+      final generation = prefetchGeneration.value;
+      final pagesToFetch = <int>[
+        for (var p = basePage + 1; p <= basePage + 2; p++)
+          if (p <= totalPages.value &&
+              p > loadedUpToPage.value &&
+              !prefetchInFlight.value.contains(p))
+            p,
+      ];
+      if (pagesToFetch.isEmpty) return;
+
+      prefetchInFlight.value = {
+        ...prefetchInFlight.value,
+        ...pagesToFetch,
+      };
+
+      try {
+        final results = await Future.wait(
+          pagesToFetch.map(
+            (pageNum) => ref.read(
+              dashboardMembersPageProvider(
+                page: pageNum,
+                searchQuery: query,
+                statusFilter: statusFilter.value,
+              ).future,
+            ),
+          ),
+        );
+
+        if (generation != prefetchGeneration.value) return;
+
+        results.sort((a, b) => a.page.compareTo(b.page));
+
+        var members = allMembers.value;
+        final existingIds = members.map((m) => m.id).toSet();
+        for (final page in results) {
+          final newItems =
+              page.items.where((m) => !existingIds.contains(m.id)).toList();
+          if (newItems.isNotEmpty) {
+            members = [...members, ...newItems];
+            existingIds.addAll(newItems.map((m) => m.id));
+          }
+          totalItems.value = page.totalItems;
+          totalPages.value = page.totalPages;
+        }
+        allMembers.value = members;
+
+        final highestFetched = results.last.page;
+        if (highestFetched > loadedUpToPage.value) {
+          loadedUpToPage.value = highestFetched;
+        }
+        hasMore.value = loadedUpToPage.value < totalPages.value;
+      } finally {
+        final next = {...prefetchInFlight.value}
+          ..removeAll(pagesToFetch);
+        prefetchInFlight.value = next;
+        if (prefetchInFlight.value.isEmpty) {
+          isLoadingMore.value = false;
+        }
+      }
+    }
+
+    // Track provider lifecycle for performance debugging.
+    useEffect(() {
+      if (pageAsync.isLoading) {
+        loadPerf.value ??= PerfTimer(
+          'dashboardMembersSection p1 '
+          '${statusFilter.value.name}'
+          '${query != null ? ' q="$query"' : ''}',
+        );
+        loadPerf.value!.checkpoint('provider loading');
+      } else if (pageAsync.hasError) {
+        loadPerf.value?.checkpoint('provider error: ${pageAsync.error}');
+        loadPerf.value?.finish('FAILED');
+        loadPerf.value = null;
+      }
+      return null;
+    }, [pageAsync.isLoading, pageAsync.hasError, pageAsync.error]);
+
+    // When page 1 arrives after a reset, replace the list and silently
+    // prefetch pages 2–3 so two pages stay buffered ahead.
     useEffect(() {
       pageAsync.whenData((page) {
-        if (currentPage.value == 1) {
-          allMembers.value = page.items;
-        } else {
-          final existingIds = allMembers.value.map((m) => m.id).toSet();
-          final newItems =
-              page.items.where((m) => !existingIds.contains(m.id));
-          allMembers.value = [...allMembers.value, ...newItems];
-        }
+        // Ignore re-emissions once this query has been initialized; otherwise
+        // page-1 data would wipe already-prefetched pages from the list.
+        if (loadedUpToPage.value > 0) return;
+
+        loadPerf.value?.checkpoint(
+          'provider data received (${page.items.length} items)',
+        );
+
+        allMembers.value = page.items;
         totalItems.value = page.totalItems;
+        totalPages.value = page.totalPages;
+        loadedUpToPage.value = 1;
         hasMore.value = page.hasMore;
         isLoadingMore.value = false;
         hasLoadedOnce.value = true;
+
+        loadPerf.value?.checkpoint(
+          'UI state updated (${allMembers.value.length} members shown)',
+        );
+        loadPerf.value?.finish();
+        loadPerf.value = null;
+
+        if (page.hasMore) {
+          unawaited(prefetchAhead(1));
+        }
       });
       return null;
     }, [pageAsync]);
@@ -82,7 +186,7 @@ class DashboardMembersSection extends HookConsumerWidget {
 
     // Show loading indicator in the grid area while searching/filtering
     final isSearchLoading =
-        pageAsync.isLoading && currentPage.value == 1 && hasLoadedOnce.value;
+        pageAsync.isLoading && hasLoadedOnce.value;
 
     return SliverMainAxisGroup(
       slivers: [
@@ -220,7 +324,7 @@ class DashboardMembersSection extends HookConsumerWidget {
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) {
                 final crossAxisCount =
-                    constraints.crossAxisExtent > 600 ? 4 : 3;
+                    constraints.crossAxisExtent > 600 ? 4 : 2;
                 return SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
@@ -230,14 +334,20 @@ class DashboardMembersSection extends HookConsumerWidget {
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      // Auto-fetch next page when building items near the end
+                      // When near the end of the buffered list, prefetch the
+                      // next 2 pages so at least 2 pages stay ahead.
                       if (index >= allMembers.value.length - 4 &&
-                          hasMore.value &&
-                          !isLoadingMore.value &&
-                          !pageAsync.isLoading) {
+                          hasMore.value) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!hasMore.value) return;
+                          // Show a spinner if the user has caught up to in-flight
+                          // background fetches.
+                          if (prefetchInFlight.value.isNotEmpty) {
+                            isLoadingMore.value = true;
+                            return;
+                          }
                           isLoadingMore.value = true;
-                          currentPage.value = currentPage.value + 1;
+                          unawaited(prefetchAhead(loadedUpToPage.value));
                         });
                       }
                       return _DashboardMemberCard(
@@ -251,8 +361,11 @@ class DashboardMembersSection extends HookConsumerWidget {
             ),
           ),
         ],
-        // Loading indicator while fetching next page
-        if (hasMore.value && (isLoadingMore.value || pageAsync.isLoading))
+        // Loading indicator only when the user is waiting on more pages
+        // (silent background prefetch does not show this).
+        if (hasMore.value &&
+            isLoadingMore.value &&
+            prefetchInFlight.value.isNotEmpty)
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
@@ -309,13 +422,7 @@ class _DashboardMemberCard extends StatelessWidget {
                 children: [
                   CachedImage(
                       imageUrl: _thumbnailUrl(dashboardMember.photo)),
-                  if (isExpired)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: _DaysLeftBadge(days: 0),
-                    )
-                  else if (days != null && days <= 7)
+                  if (days != null && (isExpired || days <= 7))
                     Positioned(
                       top: 6,
                       left: 6,
@@ -339,9 +446,9 @@ class _DashboardMemberCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    dashboardMember.membershipEndDate != null
+                    dashboardMember.expirationDate != null
                         ? DateFormat('MMM d, y')
-                            .format(dashboardMember.membershipEndDate!)
+                            .format(dashboardMember.expirationDate!)
                         : 'No membership',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: isExpired
@@ -377,12 +484,15 @@ class _DaysLeftBadge extends StatelessWidget {
     if (days == null) {
       label = 'No membership';
       backgroundColor = Colors.grey.shade700;
-    } else if (days! <= 0) {
+    } else if (days == 0) {
+      label = 'Expires today';
+      backgroundColor = Colors.orange.shade700;
+    } else if (days! < 0) {
       label = 'Expired';
       backgroundColor = Colors.red.shade700;
     } else if (days == 1) {
       label = '1 day left';
-      backgroundColor = Colors.red.shade700;
+      backgroundColor = Colors.orange.shade700;
     } else {
       label = '$days days left';
       backgroundColor = Colors.orange.shade700;

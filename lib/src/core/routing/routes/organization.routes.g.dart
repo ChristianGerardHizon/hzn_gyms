@@ -6,51 +6,49 @@ part of 'organization.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $organizationShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$organizationShellRoute];
 
 RouteBase get $organizationShellRoute => ShellRouteData.$route(
-      factory: $OrganizationShellRouteExtension._fromState,
+  factory: $OrganizationShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/organization',
+      factory: $OrganizationRoute._fromState,
       routes: [
         GoRouteData.$route(
-          path: '/organization',
-          factory: $OrganizationRoute._fromState,
+          path: 'users',
+          factory: $OrganizationUsersRoute._fromState,
           routes: [
             GoRouteData.$route(
-              path: 'users',
-              factory: $OrganizationUsersRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $OrganizationUserDetailRoute._fromState,
-                ),
-              ],
+              path: ':id',
+              factory: $OrganizationUserDetailRoute._fromState,
             ),
+          ],
+        ),
+        GoRouteData.$route(
+          path: 'roles',
+          factory: $OrganizationRolesRoute._fromState,
+          routes: [
             GoRouteData.$route(
-              path: 'roles',
-              factory: $OrganizationRolesRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $OrganizationRoleDetailRoute._fromState,
-                ),
-              ],
+              path: ':id',
+              factory: $OrganizationRoleDetailRoute._fromState,
             ),
+          ],
+        ),
+        GoRouteData.$route(
+          path: 'branches',
+          factory: $OrganizationBranchesRoute._fromState,
+          routes: [
             GoRouteData.$route(
-              path: 'branches',
-              factory: $OrganizationBranchesRoute._fromState,
-              routes: [
-                GoRouteData.$route(
-                  path: ':id',
-                  factory: $OrganizationBranchDetailRoute._fromState,
-                ),
-              ],
+              path: ':id',
+              factory: $OrganizationBranchDetailRoute._fromState,
             ),
           ],
         ),
       ],
-    );
+    ),
+  ],
+);
 
 extension $OrganizationShellRouteExtension on OrganizationShellRoute {
   static OrganizationShellRoute _fromState(GoRouterState state) =>
@@ -62,9 +60,7 @@ mixin $OrganizationRoute on GoRouteData {
       const OrganizationRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/organization',
-      );
+  String get location => GoRouteData.$location('/organization');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -85,9 +81,7 @@ mixin $OrganizationUsersRoute on GoRouteData {
       const OrganizationUsersRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/organization/users',
-      );
+  String get location => GoRouteData.$location('/organization/users');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -114,11 +108,9 @@ mixin $OrganizationUserDetailRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-        '/organization/users/${Uri.encodeComponent(_self.id)}',
-        queryParams: {
-          if (_self.tab != null) 'tab': _self.tab,
-        },
-      );
+    '/organization/users/${Uri.encodeComponent(_self.id)}',
+    queryParams: {if (_self.tab != null) 'tab': _self.tab},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -139,9 +131,7 @@ mixin $OrganizationRolesRoute on GoRouteData {
       const OrganizationRolesRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/organization/roles',
-      );
+  String get location => GoRouteData.$location('/organization/roles');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -159,16 +149,14 @@ mixin $OrganizationRolesRoute on GoRouteData {
 
 mixin $OrganizationRoleDetailRoute on GoRouteData {
   static OrganizationRoleDetailRoute _fromState(GoRouterState state) =>
-      OrganizationRoleDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      OrganizationRoleDetailRoute(id: state.pathParameters['id']!);
 
   OrganizationRoleDetailRoute get _self => this as OrganizationRoleDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/organization/roles/${Uri.encodeComponent(_self.id)}',
-      );
+    '/organization/roles/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -189,9 +177,7 @@ mixin $OrganizationBranchesRoute on GoRouteData {
       const OrganizationBranchesRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/organization/branches',
-      );
+  String get location => GoRouteData.$location('/organization/branches');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -209,17 +195,15 @@ mixin $OrganizationBranchesRoute on GoRouteData {
 
 mixin $OrganizationBranchDetailRoute on GoRouteData {
   static OrganizationBranchDetailRoute _fromState(GoRouterState state) =>
-      OrganizationBranchDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+      OrganizationBranchDetailRoute(id: state.pathParameters['id']!);
 
   OrganizationBranchDetailRoute get _self =>
       this as OrganizationBranchDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/organization/branches/${Uri.encodeComponent(_self.id)}',
-      );
+    '/organization/branches/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -72,9 +72,8 @@ class UserRepositoryImpl implements UserRepository {
 
   UserRepositoryImpl(this._pb);
 
-  RecordService get _collection =>
-      _pb.collection(PocketBaseCollections.users);
-  String get _expand => 'role,branch';
+  RecordService get _collection => _pb.collection(PocketBaseCollections.users);
+  String get _expand => 'role,branch,allowedBranches';
 
   // Cache for user list
   List<User>? _cachedUsers;
@@ -113,30 +112,28 @@ class UserRepositoryImpl implements UserRepository {
       return Right(_cachedUsers!);
     }
 
-    return TaskEither.tryCatch(
-      () async {
-        final baseFilter = PBFilters.active.build();
-        final filterString =
-            filter != null ? '$baseFilter && $filter' : baseFilter;
+    return TaskEither.tryCatch(() async {
+      final baseFilter = PBFilters.active.build();
+      final filterString = filter != null
+          ? '$baseFilter && $filter'
+          : baseFilter;
 
-        final records = await _collection.getFullList(
-          expand: _expand,
-          filter: filterString,
-          sort: sort ?? '-created',
-        );
+      final records = await _collection.getFullList(
+        expand: _expand,
+        filter: filterString,
+        sort: sort ?? '-created',
+      );
 
-        final users = records.map(_toEntity).toList();
+      final users = records.map(_toEntity).toList();
 
-        // Update cache
-        _cachedUsers = users;
-        _cacheTimestamp = DateTime.now();
-        _cachedFilter = filter;
-        _cachedSort = sort;
+      // Update cache
+      _cachedUsers = users;
+      _cacheTimestamp = DateTime.now();
+      _cachedFilter = filter;
+      _cachedSort = sort;
 
-        return users;
-      },
-      Failure.handle,
-    ).run();
+      return users;
+    }, Failure.handle).run();
   }
 
   @override
@@ -146,126 +143,111 @@ class UserRepositoryImpl implements UserRepository {
     String? filter,
     String? sort,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final baseFilter = PBFilters.active.build();
-        final filterString =
-            filter != null ? '$baseFilter && $filter' : baseFilter;
+    return TaskEither.tryCatch(() async {
+      final baseFilter = PBFilters.active.build();
+      final filterString = filter != null
+          ? '$baseFilter && $filter'
+          : baseFilter;
 
-        final result = await _collection.getList(
-          page: page,
-          perPage: perPage,
-          expand: _expand,
-          filter: filterString,
-          sort: sort ?? '-created',
-        );
+      final result = await _collection.getList(
+        page: page,
+        perPage: perPage,
+        expand: _expand,
+        filter: filterString,
+        sort: sort ?? '-created',
+      );
 
-        return PaginatedResult<User>(
-          items: result.items.map(_toEntity).toList(),
-          page: result.page,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
-        );
-      },
-      Failure.handle,
-    ).run();
+      return PaginatedResult<User>(
+        items: result.items.map(_toEntity).toList(),
+        page: result.page,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      );
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<User> fetchOne(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'User ID cannot be empty',
-            null,
-            'invalid_user_id',
-          );
-        }
+    return TaskEither.tryCatch(() async {
+      if (id.isEmpty) {
+        throw const DataFailure(
+          'User ID cannot be empty',
+          null,
+          'invalid_user_id',
+        );
+      }
 
-        final record = await _collection.getOne(id, expand: _expand);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.getOne(id, expand: _expand);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<User> create(User user, String password) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'username': user.username,
-          'name': user.name,
-          'password': password,
-          'passwordConfirm': password,
-          'role': user.roleId,
-          'branch': user.branchId,
-          'isDeleted': false,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'username': user.username,
+        'name': user.name,
+        'password': password,
+        'passwordConfirm': password,
+        'role': user.roleId,
+        'branch': user.branchId,
+        'allowedBranches': user.allowedBranchIds,
+        'isDeleted': false,
+      };
 
-        final record = await _collection.create(body: body, expand: _expand);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body, expand: _expand);
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<User> update(User user) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'username': user.username,
-          'name': user.name,
-          'role': user.roleId,
-          'branch': user.branchId,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'username': user.username,
+        'name': user.name,
+        'role': user.roleId,
+        'branch': user.branchId,
+        'allowedBranches': user.allowedBranchIds,
+      };
 
-        final record =
-            await _collection.update(user.id, body: body, expand: _expand);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.update(
+        user.id,
+        body: body,
+        expand: _expand,
+      );
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> delete(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _collection.update(id, body: {'isDeleted': true});
-        invalidateCache();
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      await _collection.update(id, body: {'isDeleted': true});
+      invalidateCache();
+    }, Failure.handle).run();
   }
 
   @override
-  FutureEither<List<User>> search(
-    String query, {
-    List<String>? fields,
-  }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final searchFields = fields ?? ['name', 'username'];
-        final filter = PBFilter()
-            .notDeleted()
-            .searchFields(query, searchFields)
-            .build();
+  FutureEither<List<User>> search(String query, {List<String>? fields}) async {
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'username'];
+      final filter = PBFilter()
+          .notDeleted()
+          .searchFields(query, searchFields)
+          .build();
 
-        final records = await _collection.getFullList(
-          expand: _expand,
-          filter: filter,
-          sort: 'name',
-        );
+      final records = await _collection.getFullList(
+        expand: _expand,
+        filter: filter,
+        sort: 'name',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 
   @override
@@ -275,59 +257,50 @@ class UserRepositoryImpl implements UserRepository {
     int page = 1,
     int perPage = Pagination.defaultPageSize,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final searchFields = fields ?? ['name', 'username'];
-        final filter = PBFilter()
-            .notDeleted()
-            .searchFields(query, searchFields)
-            .build();
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'username'];
+      final filter = PBFilter()
+          .notDeleted()
+          .searchFields(query, searchFields)
+          .build();
 
-        final result = await _collection.getList(
-          page: page,
-          perPage: perPage,
-          expand: _expand,
-          filter: filter,
-          sort: 'name',
-        );
+      final result = await _collection.getList(
+        page: page,
+        perPage: perPage,
+        expand: _expand,
+        filter: filter,
+        sort: 'name',
+      );
 
-        return PaginatedResult<User>(
-          items: result.items.map(_toEntity).toList(),
-          page: result.page,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
-        );
-      },
-      Failure.handle,
-    ).run();
+      return PaginatedResult<User>(
+        items: result.items.map(_toEntity).toList(),
+        page: result.page,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      );
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<User> updateAvatar(String id, http.MultipartFile file) async {
-    return TaskEither.tryCatch(
-      () async {
-        final record = await _collection.update(
-          id,
-          files: [file],
-          expand: _expand,
-        );
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      final record = await _collection.update(
+        id,
+        files: [file],
+        expand: _expand,
+      );
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> resetPassword(String userId, String newPassword) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _collection.update(userId, body: {
-          'password': newPassword,
-          'passwordConfirm': newPassword,
-        });
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      await _collection.update(
+        userId,
+        body: {'password': newPassword, 'passwordConfirm': newPassword},
+      );
+    }, Failure.handle).run();
   }
 }

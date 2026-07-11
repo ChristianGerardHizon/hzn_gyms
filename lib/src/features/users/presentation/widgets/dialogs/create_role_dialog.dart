@@ -6,9 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
-import '../../../../../core/i18n/strings.g.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
-import '../../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form_feedback.dart';
 import '../../../domain/user_role.dart';
 import '../../controllers/user_roles_controller.dart';
@@ -21,7 +20,6 @@ class CreateRoleDialog extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final t = Translations.of(context);
 
     // Form key
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
@@ -80,176 +78,100 @@ class CreateRoleDialog extends HookConsumerWidget {
       }
     }
 
-    return DialogCloseHandler(
-      onClose: (ctx) => dirtyGuard.confirmDiscard(ctx),
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: dirtyGuard.onPopInvokedWithResult,
-        child: ConstrainedDialogContent(
-          child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: isSaving.value
-                        ? null
-                        : () async {
-                            if (await dirtyGuard.confirmDiscard(context)) {
-                              if (context.mounted) context.pop();
-                            }
-                          },
-                  ),
-                  Expanded(
-                    child:
-                        Text('Create Role', style: theme.textTheme.titleLarge),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: TextButton(
-                      onPressed: isSaving.value
-                          ? null
-                          : () async {
-                              if (await dirtyGuard.confirmDiscard(context)) {
-                                if (context.mounted) context.pop();
-                              }
-                            },
-                      child: Text(t.common.cancel),
-                    ),
-                  ),
-                  FilledButton(
-                    onPressed: isSaving.value ? null : handleSave,
-                    child: isSaving.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(t.common.save),
-                  ),
-                  const SizedBox(width: 8),
-                ],
+    return FormDialogScaffold(
+      title: 'Create Role',
+      formKey: formKey,
+      dirtyGuard: dirtyGuard,
+      isSaving: isSaving.value,
+      onSave: (_) => handleSave(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // === BASIC INFORMATION SECTION ===
+          _SectionHeader(
+            title: 'Role Information',
+            icon: Icons.admin_panel_settings,
+          ),
+          const SizedBox(height: 16),
+
+          // Name (required)
+          FormBuilderTextField(
+            name: 'name',
+            decoration: const InputDecoration(
+              labelText: 'Role Name *',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.badge),
+            ),
+            enabled: !isSaving.value,
+            textCapitalization: TextCapitalization.words,
+            validator: FormBuilderValidators.required(
+              errorText: 'Role name is required',
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Description
+          FormBuilderTextField(
+            name: 'description',
+            decoration: const InputDecoration(
+              labelText: 'Description',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.description),
+            ),
+            enabled: !isSaving.value,
+            maxLines: 2,
+          ),
+          const SizedBox(height: 24),
+
+          // === PERMISSIONS SECTION ===
+          _SectionHeader(title: 'Permissions', icon: Icons.security),
+          const SizedBox(height: 8),
+
+          // Permission count badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              '${selectedPermissions.value.length} permission${selectedPermissions.value.length == 1 ? '' : 's'} selected',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+          const SizedBox(height: 16),
 
-            const SizedBox(height: 8),
-
-            // Content
-            Expanded(
-              child: FormBuilder(
-                key: formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
-
-                      // === BASIC INFORMATION SECTION ===
-                      _SectionHeader(
-                        title: 'Role Information',
-                        icon: Icons.admin_panel_settings,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Name (required)
-                      FormBuilderTextField(
-                        name: 'name',
-                        decoration: const InputDecoration(
-                          labelText: 'Role Name *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.badge),
-                        ),
-                        enabled: !isSaving.value,
-                        textCapitalization: TextCapitalization.words,
-                        validator: FormBuilderValidators.required(
-                          errorText: 'Role name is required',
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Description
-                      FormBuilderTextField(
-                        name: 'description',
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.description),
-                        ),
-                        enabled: !isSaving.value,
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // === PERMISSIONS SECTION ===
-                      _SectionHeader(
-                        title: 'Permissions',
-                        icon: Icons.security,
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Permission count badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          '${selectedPermissions.value.length} permission${selectedPermissions.value.length == 1 ? '' : 's'} selected',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Permission categories
-                      ...Permissions.allPermissionsByCategory.entries
-                          .map((entry) {
-                        return PermissionCategoryWidget(
-                          category: entry.key,
-                          permissions: entry.value,
-                          selectedPermissions: selectedPermissions.value,
-                          enabled: !isSaving.value,
-                          onChanged: (permission, selected) {
-                            final newSet =
-                                Set<String>.from(selectedPermissions.value);
-                            if (selected) {
-                              newSet.add(permission);
-                            } else {
-                              newSet.remove(permission);
-                            }
-                            selectedPermissions.value = newSet;
-                          },
-                          onSelectAll: (permissions, selectAll) {
-                            final newSet =
-                                Set<String>.from(selectedPermissions.value);
-                            if (selectAll) {
-                              newSet.addAll(permissions);
-                            } else {
-                              newSet.removeAll(permissions);
-                            }
-                            selectedPermissions.value = newSet;
-                          },
-                        );
-                      }),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          // Permission categories
+          ...Permissions.allPermissionsByCategory.entries.map((entry) {
+            return PermissionCategoryWidget(
+              category: entry.key,
+              permissions: entry.value,
+              selectedPermissions: selectedPermissions.value,
+              enabled: !isSaving.value,
+              onChanged: (permission, selected) {
+                final newSet = Set<String>.from(selectedPermissions.value);
+                if (selected) {
+                  newSet.add(permission);
+                } else {
+                  newSet.remove(permission);
+                }
+                selectedPermissions.value = newSet;
+              },
+              onSelectAll: (permissions, selectAll) {
+                final newSet = Set<String>.from(selectedPermissions.value);
+                if (selectAll) {
+                  newSet.addAll(permissions);
+                } else {
+                  newSet.removeAll(permissions);
+                }
+                selectedPermissions.value = newSet;
+              },
+            );
+          }),
+        ],
       ),
     );
   }
@@ -267,10 +189,7 @@ class CreateRoleDialog extends HookConsumerWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.icon,
-  });
+  const _SectionHeader({required this.title, required this.icon});
 
   final String title;
   final IconData icon;

@@ -16,21 +16,25 @@ final memberMembershipRepositoryProvider =
 
 /// Provides the MemberMembershipRepository instance.
 
-final class MemberMembershipRepositoryProvider extends $FunctionalProvider<
-    MemberMembershipRepository,
-    MemberMembershipRepository,
-    MemberMembershipRepository> with $Provider<MemberMembershipRepository> {
+final class MemberMembershipRepositoryProvider
+    extends
+        $FunctionalProvider<
+          MemberMembershipRepository,
+          MemberMembershipRepository,
+          MemberMembershipRepository
+        >
+    with $Provider<MemberMembershipRepository> {
   /// Provides the MemberMembershipRepository instance.
   MemberMembershipRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'memberMembershipRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'memberMembershipRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$memberMembershipRepositoryHash();
@@ -38,8 +42,8 @@ final class MemberMembershipRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<MemberMembershipRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   MemberMembershipRepository create(Ref ref) {

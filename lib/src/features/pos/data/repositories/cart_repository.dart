@@ -60,7 +60,7 @@ class CartRepositoryImpl implements CartRepository {
           'branch': cart.branchId,
           'status': cart.status,
           'user': cart.userId,
-          'total_amount': cart.totalAmount,
+          'totalAmount': cart.totalAmount,
         };
         final record = await _carts.create(body: body);
         return _toCartEntity(record);
@@ -102,7 +102,7 @@ class CartRepositoryImpl implements CartRepository {
           'branch': cart.branchId,
           'status': cart.status,
           'user': cart.userId,
-          'total_amount': cart.totalAmount,
+          'totalAmount': cart.totalAmount,
         };
         final record = await _carts.update(cart.id, body: body);
         return _toCartEntity(record);

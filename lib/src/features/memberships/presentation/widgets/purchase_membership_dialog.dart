@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
+import '../controllers/member_memberships_controller.dart';
 import 'membership_purchase_content.dart';
 
 /// Result returned when a membership is purchased successfully.
 class MembershipPurchaseResult {
-  const MembershipPurchaseResult({required this.sale, required this.totalPrice});
+  const MembershipPurchaseResult({
+    required this.sale,
+    required this.totalPrice,
+  });
   final Sale sale;
   final num totalPrice;
 }
@@ -20,14 +26,48 @@ Future<MembershipPurchaseResult?> showPurchaseMembershipDialog(
   BuildContext context, {
   required String memberId,
   required String memberName,
+  String? preselectedMembershipId,
+  bool isRenewal = false,
 }) {
   return showConstrainedDialog<MembershipPurchaseResult>(
     context: context,
     builder: (context) => PurchaseMembershipDialog(
       memberId: memberId,
       memberName: memberName,
+      preselectedMembershipId: preselectedMembershipId,
+      isRenewal: isRenewal,
     ),
   );
+}
+
+/// Opens the purchase (or renew) flow and records payment when complete.
+Future<void> purchaseMembershipAndRecordPayment(
+  BuildContext context,
+  WidgetRef ref, {
+  required String memberId,
+  required String memberName,
+  String? preselectedMembershipId,
+  bool isRenewal = false,
+}) async {
+  final result = await showPurchaseMembershipDialog(
+    context,
+    memberId: memberId,
+    memberName: memberName,
+    preselectedMembershipId: preselectedMembershipId,
+    isRenewal: isRenewal,
+  );
+
+  if (result == null) return;
+
+  ref.invalidate(memberMembershipsControllerProvider(memberId));
+
+  if (context.mounted) {
+    await showRecordPaymentDialog(
+      context,
+      sale: result.sale,
+      balanceDue: result.totalPrice,
+    );
+  }
 }
 
 class PurchaseMembershipDialog extends StatelessWidget {
@@ -35,10 +75,14 @@ class PurchaseMembershipDialog extends StatelessWidget {
     super.key,
     required this.memberId,
     required this.memberName,
+    this.preselectedMembershipId,
+    this.isRenewal = false,
   });
 
   final String memberId;
   final String memberName;
+  final String? preselectedMembershipId;
+  final bool isRenewal;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +110,9 @@ class PurchaseMembershipDialog extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Purchase Membership',
+                                isRenewal
+                                    ? 'Renew Membership'
+                                    : 'Purchase Membership',
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 4),
@@ -93,13 +139,15 @@ class PurchaseMembershipDialog extends StatelessWidget {
                     child: MembershipPurchaseContent(
                       memberId: memberId,
                       memberName: memberName,
+                      preselectedMembershipId: preselectedMembershipId,
+                      isRenewal: isRenewal,
                       onPurchased: (sale, totalPrice) =>
                           Navigator.of(context).pop(
-                        MembershipPurchaseResult(
-                          sale: sale,
-                          totalPrice: totalPrice,
-                        ),
-                      ),
+                            MembershipPurchaseResult(
+                              sale: sale,
+                              totalPrice: totalPrice,
+                            ),
+                          ),
                     ),
                   ),
                 ],

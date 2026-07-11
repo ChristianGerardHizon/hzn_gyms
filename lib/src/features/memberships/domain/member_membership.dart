@@ -1,5 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
+import '../../../core/utils/date_utils.dart';
+
 part 'member_membership.mapper.dart';
 
 /// Status of a member's membership subscription.
@@ -92,16 +94,17 @@ class MemberMembership with MemberMembershipMappable {
   bool get isCurrentlyActive {
     if (status != MemberMembershipStatus.active) return false;
     final now = DateTime.now();
-    return now.isAfter(startDate) && now.isBefore(endDate);
+    return now.isAfter(startDate) && !isBeforeToday(endDate);
   }
 
   /// Whether this subscription has expired based on date.
-  bool get isExpired => DateTime.now().isAfter(endDate);
+  ///
+  /// The end date is inclusive — still active through that calendar day.
+  bool get isExpired => isBeforeToday(endDate);
 
-  /// Days remaining until expiry (0 if expired).
+  /// Days remaining until expiry (`0` on the expiration day).
   int get daysRemaining {
-    final now = DateTime.now();
-    if (now.isAfter(endDate)) return 0;
-    return endDate.difference(now).inDays;
+    final days = calendarDaysUntil(endDate);
+    return days < 0 ? 0 : days;
   }
 }

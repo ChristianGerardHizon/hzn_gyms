@@ -15,24 +15,27 @@ final productAdjustmentsProvider = ProductAdjustmentsFamily._();
 
 /// Provider for product adjustments by product ID.
 
-final class ProductAdjustmentsProvider extends $FunctionalProvider<
-        AsyncValue<List<ProductAdjustment>>,
-        List<ProductAdjustment>,
-        FutureOr<List<ProductAdjustment>>>
+final class ProductAdjustmentsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ProductAdjustment>>,
+          List<ProductAdjustment>,
+          FutureOr<List<ProductAdjustment>>
+        >
     with
         $FutureModifier<List<ProductAdjustment>>,
         $FutureProvider<List<ProductAdjustment>> {
   /// Provider for product adjustments by product ID.
-  ProductAdjustmentsProvider._(
-      {required ProductAdjustmentsFamily super.from,
-      required String super.argument})
-      : super(
-          retry: null,
-          name: r'productAdjustmentsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  ProductAdjustmentsProvider._({
+    required ProductAdjustmentsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'productAdjustmentsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$productAdjustmentsHash();
@@ -47,16 +50,13 @@ final class ProductAdjustmentsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<ProductAdjustment>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<ProductAdjustment>> create(Ref ref) {
     final argument = this.argument as String;
-    return productAdjustments(
-      ref,
-      argument,
-    );
+    return productAdjustments(ref, argument);
   }
 
   @override
@@ -78,19 +78,17 @@ String _$productAdjustmentsHash() =>
 final class ProductAdjustmentsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<ProductAdjustment>>, String> {
   ProductAdjustmentsFamily._()
-      : super(
-          retry: null,
-          name: r'productAdjustmentsProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'productAdjustmentsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for product adjustments by product ID.
 
-  ProductAdjustmentsProvider call(
-    String productId,
-  ) =>
+  ProductAdjustmentsProvider call(String productId) =>
       ProductAdjustmentsProvider._(argument: productId, from: this);
 
   @override
@@ -104,19 +102,23 @@ final productAdjustmentsControllerProvider =
     ProductAdjustmentsControllerFamily._();
 
 /// Controller for managing product adjustments list.
-final class ProductAdjustmentsControllerProvider extends $AsyncNotifierProvider<
-    ProductAdjustmentsController, List<ProductAdjustment>> {
+final class ProductAdjustmentsControllerProvider
+    extends
+        $AsyncNotifierProvider<
+          ProductAdjustmentsController,
+          List<ProductAdjustment>
+        > {
   /// Controller for managing product adjustments list.
-  ProductAdjustmentsControllerProvider._(
-      {required ProductAdjustmentsControllerFamily super.from,
-      required String super.argument})
-      : super(
-          retry: null,
-          name: r'productAdjustmentsControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  ProductAdjustmentsControllerProvider._({
+    required ProductAdjustmentsControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'productAdjustmentsControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$productAdjustmentsControllerHash();
@@ -152,25 +154,24 @@ String _$productAdjustmentsControllerHash() =>
 final class ProductAdjustmentsControllerFamily extends $Family
     with
         $ClassFamilyOverride<
-            ProductAdjustmentsController,
-            AsyncValue<List<ProductAdjustment>>,
-            List<ProductAdjustment>,
-            FutureOr<List<ProductAdjustment>>,
-            String> {
+          ProductAdjustmentsController,
+          AsyncValue<List<ProductAdjustment>>,
+          List<ProductAdjustment>,
+          FutureOr<List<ProductAdjustment>>,
+          String
+        > {
   ProductAdjustmentsControllerFamily._()
-      : super(
-          retry: null,
-          name: r'productAdjustmentsControllerProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'productAdjustmentsControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Controller for managing product adjustments list.
 
-  ProductAdjustmentsControllerProvider call(
-    String productId,
-  ) =>
+  ProductAdjustmentsControllerProvider call(String productId) =>
       ProductAdjustmentsControllerProvider._(argument: productId, from: this);
 
   @override
@@ -184,24 +185,27 @@ abstract class _$ProductAdjustmentsController
   late final _$args = ref.$arg as String;
   String get productId => _$args;
 
-  FutureOr<List<ProductAdjustment>> build(
-    String productId,
-  );
+  FutureOr<List<ProductAdjustment>> build(String productId);
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref
-        as $Ref<AsyncValue<List<ProductAdjustment>>, List<ProductAdjustment>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<ProductAdjustment>>,
-            List<ProductAdjustment>>,
-        AsyncValue<List<ProductAdjustment>>,
-        Object?,
-        Object?>;
-    element.handleCreate(
-        ref,
-        () => build(
-              _$args,
-            ));
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<List<ProductAdjustment>>,
+              List<ProductAdjustment>
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<ProductAdjustment>>,
+                List<ProductAdjustment>
+              >,
+              AsyncValue<List<ProductAdjustment>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
   }
 }
