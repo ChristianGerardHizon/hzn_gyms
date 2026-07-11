@@ -197,9 +197,10 @@ The SSH user needs write access to:
 The SSH user needs passwordless sudo for restarting PocketBase services. Add to `/etc/sudoers.d/deploy`:
 
 ```
-deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pocketbase_ebegym-staging.service
-deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart pocketbase_ebegym.service
+deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_ebegym.service, /bin/systemctl restart pocketbase_ebegym-staging.service
 ```
+
+Configured on the server as `/etc/sudoers.d/deploy-ebegym`.
 
 ---
 

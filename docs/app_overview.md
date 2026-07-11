@@ -504,6 +504,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 11 | Domain migration | Staging/prod moved to `*.ebegym.hznsystems.com`; GitHub deploy secrets + fallback API URLs updated |
 | Jul 11 | Member branch | Added `branch` FK on members; backfilled all to Talisay; members list + dashboard filter by selected branch |
 | Jul 11 | Global RFID listener | App-wide HID scanner check-in when logged in; success/error alerts; green/red listening status icon above logout (red on web) |
 | Jul 11 | Multi-branch users | Users keep a default `branch` plus `allowedBranches`; non-admins switch among allowed; admins can pick any branch or All |

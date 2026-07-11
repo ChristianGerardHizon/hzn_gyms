@@ -9,7 +9,7 @@ import '../packages/pocketbase/pocketbase_provider.dart';
 ///
 /// Shows:
 /// - Online/offline status from PocketBase health
-/// - Server domain: `staging.ebegym.com`
+/// - Server domain: `staging.ebegym.hznsystems.com`
 /// - Version and build number: `v1.0.0+1`
 /// - Environment badge (only for non-prod): `DEV` or `STAGING`
 class AppVersionIndicator extends ConsumerWidget {

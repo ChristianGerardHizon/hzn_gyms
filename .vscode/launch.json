@@ -23,7 +23,7 @@
             "args": [
                 "--web-port=8000",
                 "--dart-define=ENV=staging",
-                "--dart-define=API_URL=https://staging.ebegym.sannjoseanimalclinic.com"
+                "--dart-define=API_URL=https://staging.ebegym.hznsystems.com"
             ]
         },
         {

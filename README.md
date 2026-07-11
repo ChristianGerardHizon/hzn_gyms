@@ -411,8 +411,8 @@ The app supports multiple deployment environments via `--dart-define`:
 | Environment | URL | Usage |
 |-------------|-----|-------|
 | `dev` | `http://127.0.0.1:8090` | Local development |
-| `staging` | `https://staging.ebegym.com` | Staging/QA |
-| `prod` | `https://ebegym.com` | Production |
+| `staging` | `https://staging.ebegym.hznsystems.com` | Staging/QA |
+| `prod` | `https://ebegym.hznsystems.com` | Production |
 
 ### VS Code Launch Configs
 
