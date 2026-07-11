@@ -106,7 +106,7 @@ class DashboardMembersPage {
   bool get hasMore => page < totalPages;
 }
 
-const _pageSize = 12;
+const _pageSize = 20;
 
 String _dashboardMembersSort(MemberStatusFilter statusFilter) {
   switch (statusFilter) {
