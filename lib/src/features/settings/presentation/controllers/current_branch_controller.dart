@@ -220,21 +220,35 @@ String? currentBranchId(Ref ref) {
 
 /// Convenience provider for branch filter string.
 ///
-/// Returns a filter string like `branch = "id"` or null if no branch / All.
+/// Returns `branch = "id" && isDeleted = false` for a concrete branch,
+/// `isDeleted = false` when viewing All branches, or null while unset/loading.
 @Riverpod(keepAlive: true)
 String? currentBranchFilter(Ref ref) {
-  final branchId = ref.watch(currentBranchIdProvider);
+  final selection = ref.watch(currentBranchControllerProvider).value;
+  if (selection == null) return null;
+  if (selection.isAll) return PBFilters.active.build();
+  final branchId = selection.branch?.id;
   if (branchId == null) return null;
   return PBFilters.forBranch(branchId).build();
 }
 
 /// Branch ID to use when creating/updating records that require a branch.
 ///
-/// Uses the current concrete branch when set; when "All" is selected (or no
-/// current branch), falls back to the authenticated user's default branch.
+/// Uses the current concrete branch when set. Returns null while "All" is
+/// selected (writes must pick a specific branch). When no selection is set,
+/// falls back to the authenticated user's default branch.
 @Riverpod(keepAlive: true)
 String? effectiveBranchIdForWrite(Ref ref) {
-  final currentId = ref.watch(currentBranchIdProvider);
+  final selection = ref.watch(currentBranchControllerProvider).value;
+  if (selection == null) {
+    final auth = ref.watch(currentAuthProvider);
+    final defaultId = auth?.user.branch;
+    if (defaultId != null && defaultId.isNotEmpty) return defaultId;
+    return null;
+  }
+  if (selection.isAll) return null;
+
+  final currentId = selection.branch?.id;
   if (currentId != null && currentId.isNotEmpty) return currentId;
 
   final auth = ref.watch(currentAuthProvider);

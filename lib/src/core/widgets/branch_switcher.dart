@@ -65,7 +65,19 @@ class BranchSwitcher extends HookConsumerWidget {
 
         return branchesAsync.when(
           data: (allBranches) {
-            final ids = switchableIds ?? allBranches.map((b) => b.id).toList();
+            // Wait for allowed IDs — never fall back to every branch (leaks
+            // branches non-admins should not see).
+            final ids = switchableIds;
+            if (ids == null) {
+              return currentBranch != null
+                  ? _BranchDisplay(
+                      branch: currentBranch,
+                      isLoading: true,
+                      compact: compact,
+                    )
+                  : const _BranchLoadingState();
+            }
+
             final options = allBranches
                 .where((b) => ids.contains(b.id))
                 .toList();

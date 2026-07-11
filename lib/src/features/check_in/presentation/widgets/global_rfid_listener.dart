@@ -81,9 +81,24 @@ class _GlobalRfidListenerState extends ConsumerState<GlobalRfidListener> {
     _inScanMode = false;
   }
 
+  /// True when an editable text field currently has focus.
+  bool _isTextInputFocused() {
+    final focus = FocusManager.instance.primaryFocus;
+    final context = focus?.context;
+    if (context == null) return false;
+    return context.widget is EditableText ||
+        context.findAncestorStateOfType<EditableTextState>() != null;
+  }
+
   bool _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
     if (_isProcessing || _dialogOpen) return false;
+
+    // Never steal keystrokes from focused text fields (search, login, POS).
+    if (_isTextInputFocused()) {
+      _resetBuffer();
+      return false;
+    }
 
     final isEnter =
         event.logicalKey == LogicalKeyboardKey.enter ||
@@ -126,7 +141,7 @@ class _GlobalRfidListenerState extends ConsumerState<GlobalRfidListener> {
     _lastKeyTime = now;
 
     // Once we treat input as a scanner burst, consume keys so they do not
-    // leak into focused text fields.
+    // leak into unfocused widgets.
     return _inScanMode;
   }
 

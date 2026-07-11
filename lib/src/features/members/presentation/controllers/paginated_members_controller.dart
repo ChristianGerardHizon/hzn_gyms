@@ -86,8 +86,9 @@ class PaginatedMembersController extends _$PaginatedMembersController {
       refresh();
     });
 
-    // Listen to branch changes and refresh
+    // Listen to branch changes and refresh (clear stale items immediately)
     ref.listen(currentBranchFilterProvider, (_, __) {
+      state = const AsyncValue.loading();
       refresh();
     });
 

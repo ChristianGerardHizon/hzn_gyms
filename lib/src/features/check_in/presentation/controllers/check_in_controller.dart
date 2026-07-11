@@ -47,6 +47,8 @@ class CheckInController extends _$CheckInController {
     String? checkedInBy,
     String? notes,
   }) async {
+    if (ref.read(viewingAllBranchesProvider)) return null;
+
     final branchId = ref.read(effectiveBranchIdForWriteProvider);
     if (branchId == null) return null;
 
@@ -73,6 +75,10 @@ class CheckInController extends _$CheckInController {
   Future<CardCheckInResult> cardCheckIn({
     required String cardValue,
   }) async {
+    if (ref.read(viewingAllBranchesProvider)) {
+      return const CardCheckInNoBranch();
+    }
+
     final branchId = ref.read(effectiveBranchIdForWriteProvider);
     if (branchId == null) return const CardCheckInNoBranch();
 
