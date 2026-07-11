@@ -29,6 +29,7 @@ class PbConnectivity extends _$PbConnectivity {
   /// Forces an immediate health check and reschedules the poll timer.
   Future<void> checkNow() async {
     final online = await _checkHealth();
+    if (!ref.mounted) return;
     state = AsyncData(online);
     _scheduleNext(online);
   }
@@ -44,13 +45,17 @@ class PbConnectivity extends _$PbConnectivity {
 
   void _scheduleNext(bool online) {
     _timer?.cancel();
+    // Timer callbacks are synchronous; kick off async work explicitly.
     _timer = Timer(
       online ? _onlineInterval : _offlineInterval,
-      () async {
-        final next = await _checkHealth();
-        state = AsyncData(next);
-        _scheduleNext(next);
-      },
+      () => unawaited(_poll()),
     );
+  }
+
+  Future<void> _poll() async {
+    final next = await _checkHealth();
+    if (!ref.mounted) return;
+    state = AsyncData(next);
+    _scheduleNext(next);
   }
 }
