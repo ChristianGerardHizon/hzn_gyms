@@ -14,11 +14,10 @@ import '../../../../core/widgets/form_feedback.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/presentation/controllers/member_memberships_controller.dart';
+import '../../../memberships/presentation/widgets/member_membership_detail_dialog.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
 import '../../../check_in/presentation/controllers/member_check_ins_controller.dart';
-import '../../../pos/data/repositories/sales_repository.dart';
-import '../../../pos/domain/sale.dart';
-import '../../../sales/presentation/widgets/record_payment_dialog.dart';
+import '../../../sales/presentation/controllers/member_sales_provider.dart';
 import '../controllers/member_provider.dart';
 import '../controllers/members_controller.dart';
 import '../controllers/paginated_members_controller.dart';
@@ -29,10 +28,7 @@ import '../widgets/member_form_dialog.dart';
 
 /// Member detail page showing member information and sales history.
 class MemberDetailPage extends HookConsumerWidget {
-  const MemberDetailPage({
-    super.key,
-    required this.memberId,
-  });
+  const MemberDetailPage({super.key, required this.memberId});
 
   final String memberId;
 
@@ -123,19 +119,15 @@ class MemberDetailPage extends HookConsumerWidget {
                               children: [
                                 Text(
                                   member.name,
-                                  style:
-                                      theme.textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: theme.textTheme.headlineSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 if (member.mobileNumber != null &&
                                     member.mobileNumber!.isNotEmpty)
                                   Text(
                                     member.mobileNumber!,
-                                    style:
-                                        theme.textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                               ],
@@ -154,8 +146,7 @@ class MemberDetailPage extends HookConsumerWidget {
                       _InfoRow(label: 'Name', value: member.name),
                       if (member.mobileNumber != null &&
                           member.mobileNumber!.isNotEmpty)
-                        _InfoRow(
-                            label: 'Mobile', value: member.mobileNumber!),
+                        _InfoRow(label: 'Mobile', value: member.mobileNumber!),
                       if (member.email != null && member.email!.isNotEmpty)
                         _InfoRow(label: 'Email', value: member.email!),
                       if (member.dateOfBirth != null)
@@ -165,8 +156,7 @@ class MemberDetailPage extends HookConsumerWidget {
                         ),
                       if (member.sex != null)
                         _InfoRow(label: 'Sex', value: member.sex!.displayName),
-                      if (member.address != null &&
-                          member.address!.isNotEmpty)
+                      if (member.address != null && member.address!.isNotEmpty)
                         _InfoRow(label: 'Address', value: member.address!),
                       if (member.emergencyContact != null &&
                           member.emergencyContact!.isNotEmpty)
@@ -176,10 +166,8 @@ class MemberDetailPage extends HookConsumerWidget {
                         ),
                       if (member.rfidCardId != null &&
                           member.rfidCardId!.isNotEmpty)
-                        _InfoRow(
-                            label: 'RFID Card', value: member.rfidCardId!),
-                      if (member.remarks != null &&
-                          member.remarks!.isNotEmpty)
+                        _InfoRow(label: 'RFID Card', value: member.rfidCardId!),
+                      if (member.remarks != null && member.remarks!.isNotEmpty)
                         _InfoRow(label: 'Remarks', value: member.remarks!),
                     ],
                   ),
@@ -197,10 +185,7 @@ class MemberDetailPage extends HookConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'ID Cards',
-                            style: theme.textTheme.titleMedium,
-                          ),
+                          Text('ID Cards', style: theme.textTheme.titleMedium),
                           FilledButton.tonalIcon(
                             onPressed: () async {
                               final result = await showAddCardDialog(
@@ -241,34 +226,22 @@ class MemberDetailPage extends HookConsumerWidget {
                             style: theme.textTheme.titleMedium,
                           ),
                           FilledButton.tonalIcon(
-                            onPressed: () async {
-                              final result =
-                                  await showPurchaseMembershipDialog(
-                                context,
-                                memberId: memberId,
-                                memberName: member.name,
-                              );
-                              if (result != null) {
-                                ref.invalidate(
-                                  memberMembershipsControllerProvider(
-                                      memberId),
-                                );
-                                if (context.mounted) {
-                                  await showRecordPaymentDialog(
-                                    context,
-                                    sale: result.sale,
-                                    balanceDue: result.totalPrice,
-                                  );
-                                }
-                              }
-                            },
+                            onPressed: () => purchaseMembershipAndRecordPayment(
+                              context,
+                              ref,
+                              memberId: memberId,
+                              memberName: member.name,
+                            ),
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text('Purchase'),
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _MemberMembershipsSection(memberId: memberId),
+                      _MemberMembershipsSection(
+                        memberId: memberId,
+                        memberName: member.name,
+                      ),
                     ],
                   ),
                 ),
@@ -301,10 +274,7 @@ class MemberDetailPage extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Sales History',
-                        style: theme.textTheme.titleMedium,
-                      ),
+                      Text('Sales History', style: theme.textTheme.titleMedium),
                       const SizedBox(height: 16),
                       _MemberSalesHistory(memberId: memberId),
                     ],
@@ -336,10 +306,7 @@ class MemberDetailPage extends HookConsumerWidget {
   }) {
     return Stack(
       children: [
-        CachedAvatar(
-          imageUrl: photoUrl,
-          radius: radius,
-        ),
+        CachedAvatar(imageUrl: photoUrl, radius: radius),
         Positioned(
           right: 0,
           bottom: 0,
@@ -352,10 +319,7 @@ class MemberDetailPage extends HookConsumerWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.surface,
-                  width: 2,
-                ),
+                border: Border.all(color: theme.colorScheme.surface, width: 2),
               ),
               child: isUploading.value
                   ? SizedBox(
@@ -434,10 +398,7 @@ class MemberDetailPage extends HookConsumerWidget {
     final member = ref.read(memberProvider(memberId)).value;
     if (member == null) return;
 
-    final result = await showMemberFormDialog(
-      context,
-      member: member,
-    );
+    final result = await showMemberFormDialog(context, member: member);
 
     if (result != null) {
       ref.invalidate(memberProvider(memberId));
@@ -457,8 +418,7 @@ class MemberDetailPage extends HookConsumerWidget {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Delete Member'),
-          content:
-              const Text('Are you sure you want to delete this member?'),
+          content: const Text('Are you sure you want to delete this member?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -493,14 +453,19 @@ class MemberDetailPage extends HookConsumerWidget {
 
 /// Widget that displays a member's memberships.
 class _MemberMembershipsSection extends ConsumerWidget {
-  const _MemberMembershipsSection({required this.memberId});
+  const _MemberMembershipsSection({
+    required this.memberId,
+    required this.memberName,
+  });
 
   final String memberId;
+  final String memberName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final membershipsAsync =
-        ref.watch(memberMembershipsControllerProvider(memberId));
+    final membershipsAsync = ref.watch(
+      memberMembershipsControllerProvider(memberId),
+    );
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM dd, yyyy');
 
@@ -511,9 +476,8 @@ class _MemberMembershipsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => Center(
-        child: Text('Error loading memberships: $error'),
-      ),
+      error: (error, _) =>
+          Center(child: Text('Error loading memberships: $error')),
       data: (memberships) {
         if (memberships.isEmpty) {
           return Center(
@@ -524,8 +488,9 @@ class _MemberMembershipsSection extends ConsumerWidget {
                   Icon(
                     Icons.card_membership_outlined,
                     size: 48,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -547,14 +512,20 @@ class _MemberMembershipsSection extends ConsumerWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final mm = memberships[index];
-            final effectiveExpired = mm.isExpired &&
-                mm.status == MemberMembershipStatus.active;
+            final effectiveExpired =
+                mm.isExpired && mm.status == MemberMembershipStatus.active;
             final statusColor = effectiveExpired
                 ? Colors.orange
                 : _statusColor(mm.status);
 
             return ListTile(
               contentPadding: EdgeInsets.zero,
+              onTap: () => showMemberMembershipDetailDialog(
+                context,
+                memberMembership: mm,
+                memberId: memberId,
+                memberName: memberName,
+              ),
               leading: CircleAvatar(
                 backgroundColor: statusColor.withValues(alpha: 0.15),
                 child: Icon(
@@ -582,9 +553,7 @@ class _MemberMembershipsSection extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      effectiveExpired
-                          ? 'Expired'
-                          : mm.status.displayName,
+                      effectiveExpired ? 'Expired' : mm.status.displayName,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: statusColor,
                         fontWeight: FontWeight.w600,
@@ -642,9 +611,8 @@ class _MemberCheckInsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => Center(
-        child: Text('Error loading check-ins: $error'),
-      ),
+      error: (error, _) =>
+          Center(child: Text('Error loading check-ins: $error')),
       data: (checkIns) {
         if (checkIns.isEmpty) {
           return Center(
@@ -655,8 +623,9 @@ class _MemberCheckInsSection extends ConsumerWidget {
                   Icon(
                     Icons.how_to_reg_outlined,
                     size: 48,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -714,24 +683,19 @@ class _MemberSalesHistory extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final salesRepo = ref.watch(salesRepositoryProvider);
+    final salesAsync = ref.watch(memberSalesProvider(memberId));
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
 
-    return FutureBuilder<List<Sale>>(
-      future: _fetchMemberSales(salesRepo),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        final sales = snapshot.data ?? [];
-
+    return salesAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, _) => Center(child: Text('Error loading sales: $error')),
+      data: (sales) {
         if (sales.isEmpty) {
           return Center(
             child: Padding(
@@ -741,8 +705,9 @@ class _MemberSalesHistory extends ConsumerWidget {
                   Icon(
                     Icons.receipt_long_outlined,
                     size: 48,
-                    color:
-                        theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -827,14 +792,6 @@ class _MemberSalesHistory extends ConsumerWidget {
       },
     );
   }
-
-  Future<List<Sale>> _fetchMemberSales(SalesRepository salesRepo) async {
-    final result = await salesRepo.getSalesByCustomer(memberId);
-    return result.fold(
-      (failure) => [],
-      (sales) => sales,
-    );
-  }
 }
 
 /// Widget that displays a member's ID cards.
@@ -856,9 +813,7 @@ class _MemberCardsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => Center(
-        child: Text('Error loading cards: $error'),
-      ),
+      error: (error, _) => Center(child: Text('Error loading cards: $error')),
       data: (cards) {
         if (cards.isEmpty) {
           return Center(
@@ -869,8 +824,9 @@ class _MemberCardsSection extends ConsumerWidget {
                   Icon(
                     Icons.credit_card_outlined,
                     size: 48,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -898,21 +854,14 @@ class _MemberCardsSection extends ConsumerWidget {
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
                 backgroundColor: statusColor.withValues(alpha: 0.15),
-                child: Icon(
-                  Icons.credit_card,
-                  color: statusColor,
-                  size: 20,
-                ),
+                child: Icon(Icons.credit_card, color: statusColor, size: 20),
               ),
               title: Text(card.label ?? card.cardValue),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (card.label != null)
-                    Text(
-                      card.cardValue,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    Text(card.cardValue, style: theme.textTheme.bodySmall),
                   if (card.created != null)
                     Text(
                       'Issued ${dateFormat.format(card.created!)}',
@@ -959,8 +908,10 @@ class _MemberCardsSection extends ConsumerWidget {
                         const PopupMenuItem(
                           value: 'lost',
                           child: ListTile(
-                            leading:
-                                Icon(Icons.report_problem, color: Colors.orange),
+                            leading: Icon(
+                              Icons.report_problem,
+                              color: Colors.orange,
+                            ),
                             title: Text('Report Lost'),
                             dense: true,
                             contentPadding: EdgeInsets.zero,
@@ -1003,8 +954,9 @@ class _MemberCardsSection extends ConsumerWidget {
     String action,
     MemberCard card,
   ) async {
-    final controller =
-        ref.read(memberCardsControllerProvider(memberId).notifier);
+    final controller = ref.read(
+      memberCardsControllerProvider(memberId).notifier,
+    );
 
     switch (action) {
       case 'deactivate':
@@ -1022,7 +974,10 @@ class _MemberCardsSection extends ConsumerWidget {
           if (success) {
             showSuccessSnackBar(context, message: 'Card reported as lost');
           } else {
-            showErrorSnackBar(context, message: 'Failed to report card as lost');
+            showErrorSnackBar(
+              context,
+              message: 'Failed to report card as lost',
+            );
           }
         }
       case 'delete':
@@ -1031,7 +986,8 @@ class _MemberCardsSection extends ConsumerWidget {
           builder: (context) => AlertDialog(
             title: const Text('Delete Card'),
             content: const Text(
-                'Are you sure you want to delete this card? This cannot be undone.'),
+              'Are you sure you want to delete this card? This cannot be undone.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -1084,12 +1040,7 @@ class _InfoRow extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
         ],
       ),
     );

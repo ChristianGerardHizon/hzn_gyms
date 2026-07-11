@@ -17,6 +17,7 @@ Future<Member?> member(Ref ref, String id) async {
     // Revalidate in the background without blocking the cached result.
     Future(() async {
       final result = await repository.fetchOne(id);
+      if (!ref.mounted) return;
       result.fold((_) => null, (_) => ref.invalidateSelf());
     });
     return cached;

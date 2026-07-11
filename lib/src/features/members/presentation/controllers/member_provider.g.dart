@@ -62,7 +62,7 @@ final class MemberProvider
   }
 }
 
-String _$memberHash() => r'8bd39b7d8c4f33d95e15b6dd6bd7280a694195b7';
+String _$memberHash() => r'398253d04ca3d3199bca0660c7176c006a8d6b51';
 
 /// Provider for a single member by ID.
 
