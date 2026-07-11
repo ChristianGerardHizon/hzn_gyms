@@ -49,33 +49,31 @@ class CartController extends _$CartController {
 
   @override
   Future<CartState> build() async {
-    // Try to load existing active cart for current working branch
-    final branchId = ref.read(currentBranchIdProvider);
+    // Watch so the cart reloads once the working branch becomes available.
+    // Using read() here left the cart stuck empty when build ran before branch load.
+    final branchId = ref.watch(currentBranchIdProvider);
 
     if (branchId == null) {
       return const CartState();
     }
 
-    // Check for existing active cart
     final result = await _cartRepo.getActiveCarts(branchId);
-    return result.fold(
-      (failure) => const CartState(),
-      (carts) async {
-        if (carts.isEmpty) {
-          return const CartState();
-        }
+    final carts = result.fold(
+      (failure) => <Cart>[],
+      (carts) => carts,
+    );
+    if (carts.isEmpty) {
+      return const CartState();
+    }
 
-        // Load items from the most recent active cart
-        final cart = carts.first;
-        final itemsResult = await _cartRepo.getCartItems(cart.id);
-        return itemsResult.fold(
-          (failure) => CartState(cartId: cart.id),
-          (items) => CartState(
-            cartId: cart.id,
-            items: items,
-          ),
-        );
-      },
+    final cart = carts.first;
+    final itemsResult = await _cartRepo.getCartItems(cart.id);
+    return itemsResult.fold(
+      (failure) => CartState(cartId: cart.id),
+      (items) => CartState(
+        cartId: cart.id,
+        items: items,
+      ),
     );
   }
 
@@ -113,9 +111,13 @@ class CartController extends _$CartController {
 
   /// Adds a product to the cart (for non-lot-tracked products).
   /// For variable-price products, [customPrice] must be provided.
-  Future<void> addToCart(Product product, {num? customPrice}) async {
+  ///
+  /// Returns `null` on success, or an error message on failure.
+  Future<String?> addToCart(Product product, {num? customPrice}) async {
     final currentState = state.value;
-    if (currentState == null) return;
+    if (currentState == null) {
+      return 'Cart is still loading. Please try again.';
+    }
 
     // Check if a matching item already exists:
     // - For variable-price products, match on productId + customPrice
@@ -127,51 +129,48 @@ class CartController extends _$CartController {
     });
 
     if (existingIndex >= 0) {
-      // Update quantity of existing item
       final existingItem = currentState.items[existingIndex];
       final newQuantity = existingItem.quantity + 1;
       await updateQuantityById(existingItem.id, newQuantity.toInt());
-    } else {
-      // Add new item
-      state = AsyncData(currentState.copyWith(isSyncing: true));
-
-      // Ensure cart exists in backend
-      final cartId = await _ensureCart();
-      if (cartId == null) {
-        state = AsyncData(currentState.copyWith(isSyncing: false));
-        return;
-      }
-
-      // Create cart item in backend
-      final cartItem = CartItem(
-        cartId: cartId,
-        productId: product.id,
-        product: product,
-        quantity: 1,
-        customPrice: customPrice,
-      );
-
-      final result = await _cartRepo.addCartItem(cartItem);
-      result.fold(
-        (failure) {
-          // Rollback on failure - keep local state but mark sync failed
-          state = AsyncData(currentState.copyWith(isSyncing: false));
-        },
-        (createdItem) {
-          // Preserve customPrice if the server didn't return it
-          // (PocketBase may default to 0 which the DTO strips)
-          final item = createdItem.customPrice == null && customPrice != null
-              ? createdItem.copyWith(customPrice: customPrice)
-              : createdItem;
-          final newItems = <CartItem>[...currentState.items, item];
-          state = AsyncData(currentState.copyWith(
-            cartId: cartId,
-            items: newItems,
-            isSyncing: false,
-          ));
-        },
-      );
+      return null;
     }
+
+    state = AsyncData(currentState.copyWith(isSyncing: true));
+
+    final cartId = await _ensureCart();
+    if (cartId == null) {
+      state = AsyncData(currentState.copyWith(isSyncing: false));
+      return 'Could not create cart. Check that a branch is selected.';
+    }
+
+    final cartItem = CartItem(
+      cartId: cartId,
+      productId: product.id,
+      product: product,
+      quantity: 1,
+      customPrice: customPrice,
+    );
+
+    final result = await _cartRepo.addCartItem(cartItem);
+    return result.fold(
+      (failure) {
+        state = AsyncData(currentState.copyWith(isSyncing: false));
+        return failure.messageString;
+      },
+      (createdItem) {
+        // Preserve fields the server may omit (expand/customPrice defaults)
+        final item = createdItem.copyWith(
+          customPrice: createdItem.customPrice ?? customPrice,
+          product: createdItem.product ?? product,
+        );
+        state = AsyncData(currentState.copyWith(
+          cartId: cartId,
+          items: <CartItem>[...currentState.items, item],
+          isSyncing: false,
+        ));
+        return null;
+      },
+    );
   }
 
   /// Adds a product with a specific lot to the cart.
@@ -179,14 +178,18 @@ class CartController extends _$CartController {
   /// For lot-tracked products, items are identified by both productId AND lotId.
   /// This means the same product from different lots creates separate cart items.
   /// For variable-price products, [customPrice] must be provided.
-  Future<void> addToCartWithLot(
+  ///
+  /// Returns `null` on success, or an error message on failure.
+  Future<String?> addToCartWithLot(
     Product product,
     ProductLot lot,
     int quantity, {
     num? customPrice,
   }) async {
     final currentState = state.value;
-    if (currentState == null) return;
+    if (currentState == null) {
+      return 'Cart is still loading. Please try again.';
+    }
 
     // Check if same product+lot combination exists in cart
     final existingIndex = currentState.items.indexWhere(
@@ -194,14 +197,11 @@ class CartController extends _$CartController {
     );
 
     if (existingIndex >= 0) {
-      // Update quantity of existing item (respecting lot stock limits)
       final existingItem = currentState.items[existingIndex];
       final newQuantity = existingItem.quantity + quantity;
 
-      // Validate against lot stock
       if (newQuantity > lot.quantity) {
-        // Can't add more than available in lot
-        return;
+        return 'Not enough stock in this lot';
       }
 
       await updateQuantityWithLot(
@@ -209,47 +209,46 @@ class CartController extends _$CartController {
         lot,
         newQuantity.toInt(),
       );
-    } else {
-      // Add new item with lot info
-      state = AsyncData(currentState.copyWith(isSyncing: true));
-
-      // Ensure cart exists in backend
-      final cartId = await _ensureCart();
-      if (cartId == null) {
-        state = AsyncData(currentState.copyWith(isSyncing: false));
-        return;
-      }
-
-      // Create cart item with lot info
-      final cartItem = CartItem(
-        cartId: cartId,
-        productId: product.id,
-        product: product,
-        quantity: quantity,
-        customPrice: customPrice,
-        productLotId: lot.id,
-        lotNumber: lot.lotNumber,
-      );
-
-      final result = await _cartRepo.addCartItem(cartItem);
-      result.fold(
-        (failure) {
-          state = AsyncData(currentState.copyWith(isSyncing: false));
-        },
-        (createdItem) {
-          // Preserve customPrice if the server didn't return it
-          final item = createdItem.customPrice == null && customPrice != null
-              ? createdItem.copyWith(customPrice: customPrice)
-              : createdItem;
-          final newItems = <CartItem>[...currentState.items, item];
-          state = AsyncData(currentState.copyWith(
-            cartId: cartId,
-            items: newItems,
-            isSyncing: false,
-          ));
-        },
-      );
+      return null;
     }
+
+    state = AsyncData(currentState.copyWith(isSyncing: true));
+
+    final cartId = await _ensureCart();
+    if (cartId == null) {
+      state = AsyncData(currentState.copyWith(isSyncing: false));
+      return 'Could not create cart. Check that a branch is selected.';
+    }
+
+    final cartItem = CartItem(
+      cartId: cartId,
+      productId: product.id,
+      product: product,
+      quantity: quantity,
+      customPrice: customPrice,
+      productLotId: lot.id,
+      lotNumber: lot.lotNumber,
+    );
+
+    final result = await _cartRepo.addCartItem(cartItem);
+    return result.fold(
+      (failure) {
+        state = AsyncData(currentState.copyWith(isSyncing: false));
+        return failure.messageString;
+      },
+      (createdItem) {
+        final item = createdItem.copyWith(
+          customPrice: createdItem.customPrice ?? customPrice,
+          product: createdItem.product ?? product,
+        );
+        state = AsyncData(currentState.copyWith(
+          cartId: cartId,
+          items: <CartItem>[...currentState.items, item],
+          isSyncing: false,
+        ));
+        return null;
+      },
+    );
   }
 
   /// Updates the quantity of a lot-tracked item in the cart.
@@ -284,7 +283,10 @@ class CartController extends _$CartController {
       },
       (syncedItem) {
         final newItems = [...currentState.items];
-        newItems[index] = syncedItem;
+        newItems[index] = syncedItem.copyWith(
+          product: syncedItem.product ?? item.product,
+          customPrice: syncedItem.customPrice ?? item.customPrice,
+        );
         state = AsyncData(currentState.copyWith(
           items: newItems,
           isSyncing: false,
@@ -413,11 +415,11 @@ class CartController extends _$CartController {
         state = AsyncData(currentState.copyWith(isSyncing: false));
       },
       (syncedItem) {
-        // Preserve customPrice if the server didn't return it
-        final finalItem = syncedItem.customPrice == null &&
-                item.customPrice != null
-            ? syncedItem.copyWith(customPrice: item.customPrice)
-            : syncedItem;
+        // Preserve fields the server may omit
+        final finalItem = syncedItem.copyWith(
+          customPrice: syncedItem.customPrice ?? item.customPrice,
+          product: syncedItem.product ?? item.product,
+        );
         final newItems = [...currentState.items];
         newItems[index] = finalItem;
         state = AsyncData(currentState.copyWith(
