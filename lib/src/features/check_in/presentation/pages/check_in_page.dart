@@ -10,7 +10,9 @@ import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../domain/card_check_in_result.dart';
 import '../controllers/check_in_controller.dart';
+import '../widgets/check_in_error_dialog.dart';
 import '../widgets/check_in_success_dialog.dart';
 import '../widgets/last_check_in_panel.dart';
 import '../widgets/recent_check_ins_list.dart';
@@ -71,13 +73,11 @@ class CheckInPage extends HookConsumerWidget {
       // Fetch active membership
       final mmRepo = ref.read(memberMembershipRepositoryProvider);
       final result = await mmRepo.fetchActive(member.id);
-      result.fold(
-        (_) => activeMembership.value = null,
-        (memberships) {
-          activeMembership.value =
-              memberships.isNotEmpty ? memberships.first : null;
-        },
-      );
+      result.fold((_) => activeMembership.value = null, (memberships) {
+        activeMembership.value = memberships.isNotEmpty
+            ? memberships.first
+            : null;
+      });
     }
 
     void clearSelection() {
@@ -154,17 +154,46 @@ class CheckInPage extends HookConsumerWidget {
 
       isCardCheckingIn.value = false;
 
-      if (result != null && context.mounted) {
-        clearSelection();
-        await showCheckInSuccessDialog(
-          context,
-          memberName: result.memberName,
-          hasActiveMembership: true,
-        );
-        if (context.mounted) {
+      if (!context.mounted) return;
+
+      switch (result) {
+        case CardCheckInSuccess(:final memberName):
+          clearSelection();
+          await showCheckInSuccessDialog(
+            context,
+            memberName: memberName,
+            hasActiveMembership: true,
+          );
+          if (context.mounted) {
+            inputFocusNode.requestFocus();
+          }
+          return;
+        case CardCheckInNoActiveMembership(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: 'No Active Membership',
+            message:
+                '$memberName has no active membership and cannot check in.',
+          );
+          inputController.clear();
           inputFocusNode.requestFocus();
-        }
-        return;
+          return;
+        case CardCheckInNoBranch():
+          await showCheckInErrorDialog(
+            context,
+            title: 'Select a Branch',
+            message:
+                'Choose a specific branch before checking in. '
+                '"All branches" cannot be used for check-in.',
+          );
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInFailed():
+          showErrorSnackBar(context, message: 'Failed to check in');
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInCardNotFound():
+          break;
       }
 
       // Not an exact card match — keep name search results if any.
@@ -209,11 +238,11 @@ class CheckInPage extends HookConsumerWidget {
                       ),
                     )
                   : inputController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: clearSelection,
-                        )
-                      : null,
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: clearSelection,
+                    )
+                  : null,
             ),
             enabled: !isBusy,
             onChanged: (query) {
@@ -228,8 +257,7 @@ class CheckInPage extends HookConsumerWidget {
           ),
 
           // Search results dropdown
-          if (searchResults.value.isNotEmpty &&
-              selectedMember.value == null)
+          if (searchResults.value.isNotEmpty && selectedMember.value == null)
             Card(
               margin: const EdgeInsets.only(top: 4),
               child: ConstrainedBox(
@@ -241,17 +269,16 @@ class CheckInPage extends HookConsumerWidget {
                     final member = searchResults.value[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor:
-                            theme.colorScheme.primaryContainer,
+                        backgroundColor: theme.colorScheme.primaryContainer,
                         child: Icon(
                           Icons.person,
-                          color:
-                              theme.colorScheme.onPrimaryContainer,
+                          color: theme.colorScheme.onPrimaryContainer,
                           size: 20,
                         ),
                       ),
                       title: Text(member.name),
-                      subtitle: member.mobileNumber != null &&
+                      subtitle:
+                          member.mobileNumber != null &&
                               member.mobileNumber!.isNotEmpty
                           ? Text(member.mobileNumber!)
                           : null,
@@ -281,9 +308,8 @@ class CheckInPage extends HookConsumerWidget {
             _SelectedMemberCard(
               member: selectedMember.value!,
               activeMembership: activeMembership.value,
-              onViewProfile: () => MemberDetailRoute(
-                id: selectedMember.value!.id,
-              ).go(context),
+              onViewProfile: () =>
+                  MemberDetailRoute(id: selectedMember.value!.id).go(context),
             ),
             const SizedBox(height: 16),
 
@@ -313,8 +339,7 @@ class CheckInPage extends HookConsumerWidget {
               SizedBox(
                 height: 56,
                 child: FilledButton.icon(
-                  onPressed:
-                      isCheckingIn.value ? null : handleCheckIn,
+                  onPressed: isCheckingIn.value ? null : handleCheckIn,
                   icon: isCheckingIn.value
                       ? const SizedBox(
                           width: 20,
@@ -326,9 +351,7 @@ class CheckInPage extends HookConsumerWidget {
                         )
                       : const Icon(Icons.how_to_reg, size: 24),
                   label: Text(
-                    isCheckingIn.value
-                        ? 'Checking in...'
-                        : 'Check In',
+                    isCheckingIn.value ? 'Checking in...' : 'Check In',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.onPrimary,
                     ),
@@ -345,8 +368,7 @@ class CheckInPage extends HookConsumerWidget {
       return Column(
         children: [
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Icon(
@@ -372,8 +394,9 @@ class CheckInPage extends HookConsumerWidget {
 
     final isMobile = Breakpoints.isMobile(context);
     final todaysCheckIns = ref.watch(checkInControllerProvider).value ?? [];
-    final latestCheckIn =
-        todaysCheckIns.isNotEmpty ? todaysCheckIns.first : null;
+    final latestCheckIn = todaysCheckIns.isNotEmpty
+        ? todaysCheckIns.first
+        : null;
 
     // Sidebar for tablet/desktop: last check-in details
     Widget buildSidebar() {
@@ -385,8 +408,9 @@ class CheckInPage extends HookConsumerWidget {
               Icon(
                 Icons.how_to_reg_outlined,
                 size: 64,
-                color: theme.colorScheme.onSurfaceVariant
-                    .withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -453,10 +477,7 @@ class CheckInPage extends HookConsumerWidget {
                 ),
                 const VerticalDivider(width: 1),
                 // Right: last check-in details sidebar
-                Expanded(
-                  flex: 2,
-                  child: buildSidebar(),
-                ),
+                Expanded(flex: 2, child: buildSidebar()),
               ],
             ),
     );
@@ -555,7 +576,7 @@ class _SelectedMemberCard extends StatelessWidget {
                         Text(
                           hasActiveMembership
                               ? activeMembership!.membershipName ??
-                                  'Active Membership'
+                                    'Active Membership'
                               : 'No Active Membership',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,

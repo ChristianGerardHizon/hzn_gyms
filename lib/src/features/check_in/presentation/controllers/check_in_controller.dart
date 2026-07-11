@@ -2,9 +2,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../member_cards/data/repositories/member_card_repository.dart';
 import '../../../members/data/repositories/member_repository.dart';
+import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
+import '../../../memberships/domain/member_membership.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/repositories/check_in_repository.dart';
+import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in.dart';
 
 part 'check_in_controller.g.dart';
@@ -16,15 +19,11 @@ class CheckInController extends _$CheckInController {
 
   @override
   Future<List<CheckIn>> build() async {
+    // null branchId = "All branches" (no filter)
     final branchId = ref.watch(currentBranchIdProvider);
-    if (branchId == null) return [];
-
     final result = await _repository.fetchTodaysCheckIns(branchId);
 
-    return result.fold(
-      (failure) => throw failure,
-      (checkIns) => checkIns,
-    );
+    return result.fold((failure) => throw failure, (checkIns) => checkIns);
   }
 
   /// Refreshes today's check-in list.
@@ -33,11 +32,6 @@ class CheckInController extends _$CheckInController {
     state = const AsyncLoading();
 
     final branchId = ref.read(currentBranchIdProvider);
-    if (branchId == null) {
-      state = const AsyncData([]);
-      return;
-    }
-
     final result = await _repository.fetchTodaysCheckIns(branchId);
 
     state = result.fold(
@@ -53,7 +47,7 @@ class CheckInController extends _$CheckInController {
     String? checkedInBy,
     String? notes,
   }) async {
-    final branchId = ref.read(currentBranchIdProvider);
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
     if (branchId == null) return null;
 
     final result = await _repository.checkIn(
@@ -65,13 +59,10 @@ class CheckInController extends _$CheckInController {
       notes: notes,
     );
 
-    return result.fold(
-      (failure) => null,
-      (checkIn) {
-        refresh();
-        return checkIn;
-      },
-    );
+    return result.fold((failure) => null, (checkIn) {
+      refresh();
+      return checkIn;
+    });
   }
 
   /// Records a check-in using a card value (RFID/barcode).
@@ -79,14 +70,11 @@ class CheckInController extends _$CheckInController {
   /// Looks up the card in `memberCards` collection first, then falls back
   /// to searching the legacy `rfidCardId` field on members for backward
   /// compatibility.
-  ///
-  /// Returns a record containing the [CheckIn] and member name on success,
-  /// or `null` with an error message on failure.
-  Future<({CheckIn checkIn, String memberName})?> cardCheckIn({
+  Future<CardCheckInResult> cardCheckIn({
     required String cardValue,
   }) async {
-    final branchId = ref.read(currentBranchIdProvider);
-    if (branchId == null) return null;
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
+    if (branchId == null) return const CardCheckInNoBranch();
 
     // 1. Look up card in memberCards collection
     final cardRepo = ref.read(memberCardRepositoryProvider);
@@ -103,9 +91,14 @@ class CheckInController extends _$CheckInController {
     } else {
       // 2. Fallback: search by legacy rfidCardId on member
       final memberRepo = ref.read(memberRepositoryProvider);
-      final searchResult =
-          await memberRepo.search(cardValue, fields: ['rfidCardId']);
-      final members = searchResult.fold((_) => <dynamic>[], (m) => m);
+      final searchResult = await memberRepo.search(
+        cardValue,
+        fields: ['rfidCardId'],
+      );
+      final members = searchResult.fold(
+        (_) => <Member>[],
+        (m) => m,
+      );
       if (members.isNotEmpty) {
         final member = members.first;
         memberId = member.id;
@@ -113,14 +106,21 @@ class CheckInController extends _$CheckInController {
       }
     }
 
-    if (memberId == null) return null;
+    if (memberId == null) return const CardCheckInCardNotFound();
+
+    final resolvedName = memberName ?? 'Member';
 
     // 3. Check for active membership
     final mmRepo = ref.read(memberMembershipRepositoryProvider);
     final mmResult = await mmRepo.fetchActive(memberId);
-    final activeMemberships = mmResult.fold((_) => <dynamic>[], (m) => m);
+    final activeMemberships = mmResult.fold(
+      (_) => <MemberMembership>[],
+      (m) => m,
+    );
 
-    if (activeMemberships.isEmpty) return null;
+    if (activeMemberships.isEmpty) {
+      return CardCheckInNoActiveMembership(memberName: resolvedName);
+    }
 
     final activeMembership = activeMemberships.first;
 
@@ -133,10 +133,13 @@ class CheckInController extends _$CheckInController {
     );
 
     return result.fold(
-      (failure) => null,
+      (failure) => const CardCheckInFailed(),
       (checkIn) {
         refresh();
-        return (checkIn: checkIn, memberName: memberName ?? 'Member');
+        return CardCheckInSuccess(
+          checkIn: checkIn,
+          memberName: resolvedName,
+        );
       },
     );
   }

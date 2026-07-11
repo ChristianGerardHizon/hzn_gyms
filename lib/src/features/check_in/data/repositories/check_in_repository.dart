@@ -25,8 +25,8 @@ abstract class CheckInRepository {
     String? notes,
   });
 
-  /// Fetches today's check-ins for a branch.
-  FutureEither<List<CheckIn>> fetchTodaysCheckIns(String branchId);
+  /// Fetches today's check-ins for a branch, or all branches when [branchId] is null.
+  FutureEither<List<CheckIn>> fetchTodaysCheckIns(String? branchId);
 
   /// Fetches check-ins for a specific member.
   FutureEither<List<CheckIn>> fetchByMember(String memberId);
@@ -83,76 +83,70 @@ class CheckInRepositoryImpl implements CheckInRepository {
     String? memberMembershipId,
     String? notes,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'member': memberId,
-          'branch': branchId,
-          'checkInTime': DateTime.now().toUtcIso8601(),
-          'method': method.name,
-          'checkedInBy': checkedInBy,
-          'memberMembership': memberMembershipId,
-          'notes': notes,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'member': memberId,
+        'branch': branchId,
+        'checkInTime': DateTime.now().toUtcIso8601(),
+        'method': method.name,
+        'checkedInBy': checkedInBy,
+        'memberMembership': memberMembershipId,
+        'notes': notes,
+      };
 
-        final record = await _collection.create(body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body);
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
-  FutureEither<List<CheckIn>> fetchTodaysCheckIns(String branchId) async {
-    if (_isCacheValid(branchId)) {
+  FutureEither<List<CheckIn>> fetchTodaysCheckIns(String? branchId) async {
+    final cacheKey = branchId ?? '__ALL__';
+    if (_isCacheValid(cacheKey)) {
       return Right(_cachedTodaysCheckIns!);
     }
 
-    return TaskEither.tryCatch(
-      () async {
-        final now = DateTime.now();
-        final startOfDay = DateTime(now.year, now.month, now.day);
-        final endOfDay = startOfDay.add(const Duration(days: 1));
+    return TaskEither.tryCatch(() async {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
 
-        final filter = PBFilter()
-            .relation('branch', branchId)
-            .after('checkInTime', startOfDay)
-            .before('checkInTime', endOfDay);
+      var filter = PBFilter()
+          .after('checkInTime', startOfDay)
+          .before('checkInTime', endOfDay);
+      if (branchId != null && branchId.isNotEmpty) {
+        filter = filter.relation('branch', branchId);
+      }
 
-        final records = await _collection.getFullList(
-          filter: filter.build(),
-          sort: '-checkInTime',
-          expand: 'member',
-        );
+      final records = await _collection.getFullList(
+        filter: filter.build(),
+        sort: '-checkInTime',
+        expand: 'member',
+      );
 
-        final checkIns = records.map(_toEntity).toList();
+      final checkIns = records.map(_toEntity).toList();
 
-        _cachedTodaysCheckIns = checkIns;
-        _cacheTimestamp = DateTime.now();
-        _cachedBranchId = branchId;
+      _cachedTodaysCheckIns = checkIns;
+      _cacheTimestamp = DateTime.now();
+      _cachedBranchId = cacheKey;
 
-        return checkIns;
-      },
-      Failure.handle,
-    ).run();
+      return checkIns;
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<List<CheckIn>> fetchByMember(String memberId) async {
-    return TaskEither.tryCatch(
-      () async {
-        final filter = PBFilter().relation('member', memberId);
+    return TaskEither.tryCatch(() async {
+      final filter = PBFilter().relation('member', memberId);
 
-        final records = await _collection.getFullList(
-          filter: filter.build(),
-          sort: '-checkInTime',
-          expand: 'member',
-        );
+      final records = await _collection.getFullList(
+        filter: filter.build(),
+        sort: '-checkInTime',
+        expand: 'member',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 }

@@ -1,0 +1,27 @@
+import 'package:flutter/material.dart';
+
+/// Shows an error dialog after a failed RFID/card check-in.
+Future<void> showCheckInErrorDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) {
+  return showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      icon: Icon(
+        Icons.error_outline,
+        color: Theme.of(context).colorScheme.error,
+        size: 48,
+      ),
+      title: Text(title),
+      content: Text(message, textAlign: TextAlign.center),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
