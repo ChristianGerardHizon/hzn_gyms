@@ -165,6 +165,16 @@ class MemberListPanel extends HookConsumerWidget {
                             ),
                           )
                         : null,
+                    trailing: member.isPendingSync
+                        ? Tooltip(
+                            message: 'Pending sync',
+                            child: Icon(
+                              Icons.cloud_upload_outlined,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        : null,
                     selected: isSelected,
                     selectedTileColor: theme.colorScheme.primaryContainer,
                     onTap: () =>

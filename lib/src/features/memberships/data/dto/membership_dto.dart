@@ -60,8 +60,9 @@ class MembershipDto with MembershipDtoMappable {
     return Membership(
       id: id,
       name: name,
-      description:
-          description != null && description!.isNotEmpty ? description : null,
+      description: description != null && description!.isNotEmpty
+          ? description
+          : null,
       durationDays: durationDays,
       price: price,
       branchId: branch,

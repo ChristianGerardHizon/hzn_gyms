@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_products_controller.dart';
 import 'empty_product_state.dart';
 import 'product_list_panel.dart';
@@ -32,20 +33,9 @@ class TabletProductsLayout extends ConsumerWidget {
     return productsAsync.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            Text('Error: ${error.toString()}'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => productsController.refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, stack) => ErrorState.fromError(
+        error,
+        onRetry: () => productsController.refresh(),
       ),
       data: (paginatedState) => Row(
         children: [

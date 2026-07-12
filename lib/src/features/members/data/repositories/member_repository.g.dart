@@ -8,12 +8,12 @@ part of 'member_repository.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provides the MemberRepository instance.
+/// Provides the [MemberRepository] instance.
 
 @ProviderFor(memberRepository)
 final memberRepositoryProvider = MemberRepositoryProvider._();
 
-/// Provides the MemberRepository instance.
+/// Provides the [MemberRepository] instance.
 
 final class MemberRepositoryProvider
     extends
@@ -23,7 +23,7 @@ final class MemberRepositoryProvider
           MemberRepository
         >
     with $Provider<MemberRepository> {
-  /// Provides the MemberRepository instance.
+  /// Provides the [MemberRepository] instance.
   MemberRepositoryProvider._()
     : super(
         from: null,
@@ -57,4 +57,4 @@ final class MemberRepositoryProvider
   }
 }
 
-String _$memberRepositoryHash() => r'818783e2f2324816721c996928dfff351ded9645';
+String _$memberRepositoryHash() => r'c97975dc2e3d3c138730a36f07ee7843ccd2dac4';

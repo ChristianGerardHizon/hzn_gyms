@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../pos/presentation/services/thermal_print_service.dart';
 import '../../data/repositories/printer_config_repository.dart';
 import '../../domain/printer_config.dart';
@@ -84,23 +85,7 @@ class PrinterConfigDetailPanel extends ConsumerWidget {
 
         final result = snapshot.data!;
         return result.fold(
-          (failure) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: theme.colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load printer',
-                  style: theme.textTheme.titleMedium,
-                ),
-              ],
-            ),
-          ),
+          (failure) => ErrorState.fromError(failure, compact: true),
           (config) => _PrinterDetailContent(config: config),
         );
       },

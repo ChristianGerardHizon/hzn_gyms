@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../products/domain/product_category.dart';
 import '../controllers/product_categories_controller.dart';
 
@@ -203,7 +204,13 @@ class ProductCategoryDetailPanel extends HookConsumerWidget {
       ),
       body: categoriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Error loading categories')),
+        error: (error, _) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => ref
+              .read(productCategoriesControllerProvider.notifier)
+              .refresh(),
+        ),
         data: (categories) {
           // Filter out self and children to prevent circular reference
           final availableParents = categories.where((c) {

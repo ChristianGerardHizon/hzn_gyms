@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -18,6 +19,7 @@ import '../../../features/dashboard/presentation/widgets/tablet_dashboard_layout
 import '../../../features/dashboard/presentation/widgets/dashboard_footer.dart';
 import '../../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../../utils/breakpoints.dart';
+import '../../widgets/scroll_to_top_button.dart';
 
 part 'dashboard.routes.g.dart';
 
@@ -41,12 +43,30 @@ class DashboardRoute extends GoRouteData with $DashboardRoute {
 ///
 /// On tablet: Shows single-pane overview layout
 /// On mobile: Shows single-column list
-class DashboardPage extends ConsumerWidget {
+class DashboardPage extends HookConsumerWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isTablet = Breakpoints.isTabletOrLarger(context);
+    final scrollController = useScrollController();
+    final branchAsync = ref.watch(currentBranchControllerProvider);
+
+    // Hide stale KPIs / members while switching branch (not on first resolve).
+    if (branchAsync.isLoading && branchAsync.hasValue) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Switching branch...'),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (isTablet) {
       return const Scaffold(
@@ -56,61 +76,67 @@ class DashboardPage extends ConsumerWidget {
 
     // Mobile: CustomScrollView so the members grid is virtualized
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(inventoryAlertsSummaryProvider);
-          ref.invalidate(todaySalesSummaryProvider);
-          ref.invalidate(todaysCheckInsCountProvider);
-          ref.invalidate(activeMembersCountProvider);
-          ref.invalidate(todaysNewMembersCountProvider);
-          ref.invalidate(expiringMembershipsProvider);
-          ref.invalidate(dashboardMembersPageProvider);
-          ref.invalidate(productsNearExpirationCountProvider);
-          ref.invalidate(productsExpiredCountProvider);
-          ref.invalidate(lowStockProductsCountProvider);
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // Header + KPI + Quick Actions
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    _MobileDashboardHeader(),
-                    SizedBox(height: 16),
-                    KpiSummarySection(),
-                    SizedBox(height: 20),
-                    QuickActionsSection(),
-                    SizedBox(height: 24),
-                  ],
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(inventoryAlertsSummaryProvider);
+              ref.invalidate(todaySalesSummaryProvider);
+              ref.invalidate(todaysCheckInsCountProvider);
+              ref.invalidate(activeMembersCountProvider);
+              ref.invalidate(todaysNewMembersCountProvider);
+              ref.invalidate(expiringMembershipsProvider);
+              ref.invalidate(dashboardMembersPageProvider);
+              ref.invalidate(productsNearExpirationCountProvider);
+              ref.invalidate(productsExpiredCountProvider);
+              ref.invalidate(lowStockProductsCountProvider);
+            },
+            child: CustomScrollView(
+              controller: scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Header + KPI + Quick Actions
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        _MobileDashboardHeader(),
+                        SizedBox(height: 16),
+                        KpiSummarySection(),
+                        SizedBox(height: 20),
+                        QuickActionsSection(),
+                        SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            // Members Section (virtualized slivers)
-            const DashboardMembersSection(),
+                // Members Section (virtualized slivers)
+                const DashboardMembersSection(),
 
-            // Inventory Alerts + Footer
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    SizedBox(height: 24),
-                    InventoryAlertsSection(),
-                    SizedBox(height: 24),
-                    DashboardFooter(),
-                    SizedBox(height: 16),
-                  ],
+                // Inventory Alerts + Footer
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SizedBox(height: 24),
+                        InventoryAlertsSection(),
+                        SizedBox(height: 24),
+                        DashboardFooter(),
+                        SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          ScrollToTopButton(scrollController: scrollController),
+        ],
       ),
     );
   }

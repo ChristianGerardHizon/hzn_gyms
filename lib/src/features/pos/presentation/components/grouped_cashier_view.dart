@@ -33,11 +33,12 @@ class GroupedCashierView extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width < 400
-            ? 3
-            : width < 600
+        // Mobile: 2 columns, Tablet: 4-5 columns, Large: 6+ columns
+        final crossAxisCount = width < 600
+            ? 2
+            : width < 900
                 ? 4
-                : width < 900
+                : width < 1200
                     ? 5
                     : 6;
 

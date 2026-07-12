@@ -11,8 +11,5 @@ Future<Membership?> membership(Ref ref, String id) async {
   final repository = ref.read(membershipRepositoryProvider);
   final result = await repository.fetchOne(id);
 
-  return result.fold(
-    (failure) => null,
-    (membership) => membership,
-  );
+  return result.fold((failure) => null, (membership) => membership);
 }

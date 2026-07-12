@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_members_controller.dart';
 import 'member_list_panel.dart';
 import 'member_list_skeleton.dart';
@@ -43,22 +44,11 @@ class TabletMembersLayout extends ConsumerWidget {
           ),
         ],
       ),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            Text('Error: ${error.toString()}'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => ref
-                  .read(paginatedMembersControllerProvider.notifier)
-                  .refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, stack) => ErrorState.fromError(
+        error,
+        onRetry: () => ref
+            .read(paginatedMembersControllerProvider.notifier)
+            .refresh(),
       ),
       data: (paginatedState) => Row(
         children: [

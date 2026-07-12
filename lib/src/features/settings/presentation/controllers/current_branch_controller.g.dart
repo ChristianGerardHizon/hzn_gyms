@@ -50,7 +50,7 @@ final class CurrentBranchControllerProvider
 }
 
 String _$currentBranchControllerHash() =>
-    r'7cefcc05ba23f44e79a9ec6e572212c80b59c167';
+    r'ec70cb682c155e32953f44ea60fed5d85312e316';
 
 /// Controller for managing the current working branch.
 ///
@@ -182,21 +182,24 @@ String _$currentBranchIdHash() => r'dd457fa7bdc31f57c2153247e3976e7a0f88db10';
 
 /// Convenience provider for branch filter string.
 ///
-/// Returns a filter string like `branch = "id"` or null if no branch / All.
+/// Returns `branch = "id" && isDeleted = false` for a concrete branch,
+/// `isDeleted = false` when viewing All branches, or null while unset/loading.
 
 @ProviderFor(currentBranchFilter)
 final currentBranchFilterProvider = CurrentBranchFilterProvider._();
 
 /// Convenience provider for branch filter string.
 ///
-/// Returns a filter string like `branch = "id"` or null if no branch / All.
+/// Returns `branch = "id" && isDeleted = false` for a concrete branch,
+/// `isDeleted = false` when viewing All branches, or null while unset/loading.
 
 final class CurrentBranchFilterProvider
     extends $FunctionalProvider<String?, String?, String?>
     with $Provider<String?> {
   /// Convenience provider for branch filter string.
   ///
-  /// Returns a filter string like `branch = "id"` or null if no branch / All.
+  /// Returns `branch = "id" && isDeleted = false` for a concrete branch,
+  /// `isDeleted = false` when viewing All branches, or null while unset/loading.
   CurrentBranchFilterProvider._()
     : super(
         from: null,
@@ -231,28 +234,31 @@ final class CurrentBranchFilterProvider
 }
 
 String _$currentBranchFilterHash() =>
-    r'ff9f628f86fd25ae80daf902e8b4a25457a0c5ba';
+    r'f0afd8e12d2e8114a3d20e70c42709f85999633d';
 
 /// Branch ID to use when creating/updating records that require a branch.
 ///
-/// Uses the current concrete branch when set; when "All" is selected (or no
-/// current branch), falls back to the authenticated user's default branch.
+/// Uses the current concrete branch when set. Returns null while "All" is
+/// selected (writes must pick a specific branch). When no selection is set,
+/// falls back to the authenticated user's default branch.
 
 @ProviderFor(effectiveBranchIdForWrite)
 final effectiveBranchIdForWriteProvider = EffectiveBranchIdForWriteProvider._();
 
 /// Branch ID to use when creating/updating records that require a branch.
 ///
-/// Uses the current concrete branch when set; when "All" is selected (or no
-/// current branch), falls back to the authenticated user's default branch.
+/// Uses the current concrete branch when set. Returns null while "All" is
+/// selected (writes must pick a specific branch). When no selection is set,
+/// falls back to the authenticated user's default branch.
 
 final class EffectiveBranchIdForWriteProvider
     extends $FunctionalProvider<String?, String?, String?>
     with $Provider<String?> {
   /// Branch ID to use when creating/updating records that require a branch.
   ///
-  /// Uses the current concrete branch when set; when "All" is selected (or no
-  /// current branch), falls back to the authenticated user's default branch.
+  /// Uses the current concrete branch when set. Returns null while "All" is
+  /// selected (writes must pick a specific branch). When no selection is set,
+  /// falls back to the authenticated user's default branch.
   EffectiveBranchIdForWriteProvider._()
     : super(
         from: null,
@@ -287,4 +293,4 @@ final class EffectiveBranchIdForWriteProvider
 }
 
 String _$effectiveBranchIdForWriteHash() =>
-    r'56b916caa15c89d115192fb28fb85584eb9cd857';
+    r'fd1808e4ce13be56b6171419db4c4f4e35b5cbdd';

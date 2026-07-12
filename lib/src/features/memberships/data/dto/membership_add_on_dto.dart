@@ -55,8 +55,9 @@ class MembershipAddOnDto with MembershipAddOnDtoMappable {
       id: id,
       membershipId: membership,
       name: name,
-      description:
-          description != null && description!.isNotEmpty ? description : null,
+      description: description != null && description!.isNotEmpty
+          ? description
+          : null,
       price: price,
       isActive: isActive,
       created: parseToLocal(created),

@@ -381,6 +381,9 @@ class Translations$navigation$en {
 	/// en: 'Memberships'
 	String get memberships => 'Memberships';
 
+	/// en: 'Outbox'
+	String get outbox => 'Outbox';
+
 	/// en: 'System'
 	String get system => 'System';
 
@@ -589,6 +592,7 @@ extension on Translations {
 			'navigation.checkIn' => 'Check-In',
 			'navigation.members' => 'Members',
 			'navigation.memberships' => 'Memberships',
+			'navigation.outbox' => 'Outbox',
 			'navigation.system' => 'System',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'No Branch',

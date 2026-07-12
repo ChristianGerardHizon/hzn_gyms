@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
+import '../../../../core/widgets/state/empty_state.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_members_controller.dart';
 
 /// Section displaying members as a virtualized grid of photo cards.
@@ -34,6 +36,12 @@ class DashboardMembersSection extends HookConsumerWidget {
     final prefetchInFlight = useRef(<int>{});
     final prefetchGeneration = useRef(0);
 
+    // Branch scope — local list state must reset when this changes, otherwise
+    // page-1 updates are ignored once [loadedUpToPage] > 0.
+    final branchId = ref.watch(currentBranchIdProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branchScopeKey = viewingAll ? 'all' : (branchId ?? 'none');
+
     // Debounce search input by 400ms
     useEffect(() {
       if (rawSearchInput.value.isEmpty) {
@@ -46,18 +54,22 @@ class DashboardMembersSection extends HookConsumerWidget {
       return timer.cancel;
     }, [rawSearchInput.value]);
 
-    // Reset pagination when debounced query or filter changes
+    // Reset pagination when branch, search, or status filter changes so we
+    // never keep showing members from the previous scope.
     useEffect(() {
+      allMembers.value = [];
+      totalItems.value = 0;
       loadedUpToPage.value = 0;
       totalPages.value = 0;
       hasMore.value = true;
       isLoadingMore.value = false;
+      hasLoadedOnce.value = false;
       prefetchInFlight.value = <int>{};
       prefetchGeneration.value++;
-      loadPerf.value?.finish('CANCELLED (filter/search changed)');
+      loadPerf.value?.finish('CANCELLED (branch/filter/search changed)');
       loadPerf.value = null;
       return null;
-    }, [debouncedQuery.value, statusFilter.value]);
+    }, [branchScopeKey, debouncedQuery.value, statusFilter.value]);
 
     // Always watch page 1; later pages are prefetched into local state.
     final query = debouncedQuery.value.isEmpty ? null : debouncedQuery.value;
@@ -151,6 +163,10 @@ class DashboardMembersSection extends HookConsumerWidget {
     // When page 1 arrives after a reset, replace the list and silently
     // prefetch pages 2–3 so two pages stay buffered ahead.
     useEffect(() {
+      // Skip while refreshing — previous AsyncData would re-seed the list
+      // with the old branch's members right after a branch-scope reset.
+      if (pageAsync.isLoading) return null;
+
       pageAsync.whenData((page) {
         // Ignore re-emissions once this query has been initialized; otherwise
         // page-1 data would wipe already-prefetched pages from the list.
@@ -179,10 +195,12 @@ class DashboardMembersSection extends HookConsumerWidget {
         }
       });
       return null;
-    }, [pageAsync]);
+    }, [pageAsync, branchScopeKey]);
 
-    // Initial loading state (never loaded any data yet)
-    final isInitialLoad = !hasLoadedOnce.value && pageAsync.isLoading;
+    // Full loading state after branch/search/filter reset (or first visit).
+    // Until page 1 has been applied for the current scope, never show the
+    // previous scope's cards (list was cleared) or a false empty state.
+    final isInitialLoad = !hasLoadedOnce.value && !pageAsync.hasError;
 
     // Show loading indicator in the grid area while searching/filtering
     final isSearchLoading =
@@ -291,16 +309,10 @@ class DashboardMembersSection extends HookConsumerWidget {
         else if (allMembers.value.isEmpty && !pageAsync.isLoading)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text(
-                  statusFilter.value != MemberStatusFilter.all
-                      ? 'No ${statusFilter.value.label.toLowerCase()} members found'
-                      : 'No members found',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: _DashboardMembersEmptyState(
+                hasSearch: debouncedQuery.value.isNotEmpty,
+                statusFilter: statusFilter.value,
               ),
             ),
           )
@@ -379,6 +391,55 @@ class DashboardMembersSection extends HookConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Empty state for the dashboard members grid.
+class _DashboardMembersEmptyState extends StatelessWidget {
+  const _DashboardMembersEmptyState({
+    required this.hasSearch,
+    required this.statusFilter,
+  });
+
+  final bool hasSearch;
+  final MemberStatusFilter statusFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final (:icon, :title, :subtitle) = switch ((hasSearch, statusFilter)) {
+      (true, _) => (
+          icon: Icons.search_off_rounded,
+          title: 'No members found',
+          subtitle: 'Try a different name or clear your search',
+        ),
+      (false, MemberStatusFilter.active) => (
+          icon: Icons.person_off_outlined,
+          title: 'No active members',
+          subtitle: 'No members currently have an active membership',
+        ),
+      (false, MemberStatusFilter.expiringSoon) => (
+          icon: Icons.event_busy_outlined,
+          title: 'None expiring soon',
+          subtitle: 'No memberships expire within the next 7 days',
+        ),
+      (false, MemberStatusFilter.expired) => (
+          icon: Icons.hourglass_disabled_outlined,
+          title: 'No expired members',
+          subtitle: 'There are no members with expired memberships',
+        ),
+      (false, MemberStatusFilter.all) => (
+          icon: Icons.people_outline,
+          title: 'No members yet',
+          subtitle: 'Registered members will appear here',
+        ),
+    };
+
+    return EmptyState(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      iconSize: 56,
     );
   }
 }

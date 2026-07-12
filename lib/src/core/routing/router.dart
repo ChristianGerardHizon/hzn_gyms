@@ -9,6 +9,7 @@ import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
 import 'routes/organization.routes.dart';
+import 'routes/outbox.routes.dart';
 import 'routes/products.routes.dart';
 import 'routes/members.routes.dart';
 import 'routes/memberships.routes.dart';
@@ -56,6 +57,7 @@ GoRouter router(Ref ref) {
           $salesShellRoute,
           $reportsRoute,
           $organizationShellRoute,
+          $outboxRoute,
           $systemShellRoute,
         ],
       ),

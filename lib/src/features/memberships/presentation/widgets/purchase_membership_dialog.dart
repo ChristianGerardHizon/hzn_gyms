@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../core/widgets/form_feedback.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../controllers/member_memberships_controller.dart';
@@ -11,11 +12,17 @@ import 'membership_purchase_content.dart';
 /// Result returned when a membership is purchased successfully.
 class MembershipPurchaseResult {
   const MembershipPurchaseResult({
-    required this.sale,
+    this.sale,
     required this.totalPrice,
+    this.queuedOffline = false,
   });
-  final Sale sale;
+
+  /// Null when the renewal was excluded from sales (no receipt created).
+  final Sale? sale;
   final num totalPrice;
+  final bool queuedOffline;
+
+  bool get excludedFromSales => sale == null;
 }
 
 /// Shows a dialog for purchasing a membership for a member.
@@ -61,10 +68,24 @@ Future<void> purchaseMembershipAndRecordPayment(
 
   ref.invalidate(memberMembershipsControllerProvider(memberId));
 
+  if (result.excludedFromSales) {
+    return;
+  }
+
+  if (result.queuedOffline) {
+    if (context.mounted) {
+      showInfoSnackBar(
+        context,
+        message: 'Membership queued — record payment once synced and online.',
+      );
+    }
+    return;
+  }
+
   if (context.mounted) {
     await showRecordPaymentDialog(
       context,
-      sale: result.sale,
+      sale: result.sale!,
       balanceDue: result.totalPrice,
     );
   }
@@ -141,13 +162,15 @@ class PurchaseMembershipDialog extends StatelessWidget {
                       memberName: memberName,
                       preselectedMembershipId: preselectedMembershipId,
                       isRenewal: isRenewal,
-                      onPurchased: (sale, totalPrice) =>
-                          Navigator.of(context).pop(
-                            MembershipPurchaseResult(
-                              sale: sale,
-                              totalPrice: totalPrice,
-                            ),
-                          ),
+                      onPurchased:
+                          (sale, totalPrice, {queuedOffline = false}) =>
+                              Navigator.of(context).pop(
+                                MembershipPurchaseResult(
+                                  sale: sale,
+                                  totalPrice: totalPrice,
+                                  queuedOffline: queuedOffline,
+                                ),
+                              ),
                     ),
                   ),
                 ],

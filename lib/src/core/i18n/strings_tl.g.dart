@@ -190,6 +190,7 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get checkIn => 'Check-In';
 	@override String get members => 'Mga Miyembro';
 	@override String get memberships => 'Mga Membership';
+	@override String get outbox => 'Outbox';
 	@override String get system => 'Sistema';
 	@override String get account => 'Account';
 	@override String get noBranch => 'Walang Sangay';
@@ -343,6 +344,7 @@ extension on TranslationsTl {
 			'navigation.checkIn' => 'Check-In',
 			'navigation.members' => 'Mga Miyembro',
 			'navigation.memberships' => 'Mga Membership',
+			'navigation.outbox' => 'Outbox',
 			'navigation.system' => 'Sistema',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'Walang Sangay',

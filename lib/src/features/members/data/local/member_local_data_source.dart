@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -7,6 +10,7 @@ import '../../../../core/database/database_provider.dart';
 import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../../core/sync/sync_status.dart';
 import '../../domain/member.dart';
 import '../dto/member_dto.dart';
 
@@ -93,29 +97,79 @@ class MemberLocalDataSource {
   }
 
   /// Upserts members from DTOs (preserves raw photo filenames).
-  Future<void> upsertFromDtos(Iterable<MemberDto> dtos) async {
+  ///
+  /// Skips IDs that already have pending/failed/conflict local state so a
+  /// server refresh cannot wipe offline edits or local photo paths.
+  Future<void> upsertFromDtos(
+    Iterable<MemberDto> dtos, {
+    SyncStatus syncStatus = SyncStatus.synced,
+  }) async {
+    final unsyncedIds = syncStatus == SyncStatus.synced
+        ? await _dao.getUnsyncedIds()
+        : const <String>{};
     final now = DateTime.now();
-    final companions = dtos.map((dto) => _mapDtoToCompanion(dto, now)).toList();
-    await _dao.upsertMembers(companions);
-  }
-
-  /// Upserts members from domain entities.
-  Future<void> upsertMembers(Iterable<Member> members) async {
-    final now = DateTime.now();
-    final companions = members
-        .map((member) => _mapMemberToCompanion(member, now))
+    final companions = dtos
+        .where((dto) => !unsyncedIds.contains(dto.id))
+        .map((dto) => _mapDtoToCompanion(dto, now, syncStatus: syncStatus))
         .toList();
     await _dao.upsertMembers(companions);
   }
 
-  /// Replaces the entire cache with the provided DTOs.
+  /// Upserts members from domain entities.
+  Future<void> upsertMembers(
+    Iterable<Member> members, {
+    SyncStatus syncStatus = SyncStatus.synced,
+    String? localPhotoPath,
+  }) async {
+    final now = DateTime.now();
+    final companions = members
+        .map(
+          (member) => _mapMemberToCompanion(
+            member,
+            now,
+            syncStatus: syncStatus,
+            localPhotoPath: localPhotoPath,
+          ),
+        )
+        .toList();
+    await _dao.upsertMembers(companions);
+  }
+
+  /// Saves a photo to local app documents for offline display.
+  Future<String> saveLocalPhoto({
+    required String memberId,
+    required List<int> bytes,
+    required String filename,
+  }) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final photosDir = Directory('${dir.path}/member_photos');
+    if (!await photosDir.exists()) {
+      await photosDir.create(recursive: true);
+    }
+    final path = '${photosDir.path}/$memberId-$filename';
+    await File(path).writeAsBytes(bytes);
+    return path;
+  }
+
+  /// Replaces the synced cache with the provided DTOs.
+  ///
+  /// Pending/failed/conflict local members are preserved across the refresh.
   Future<void> replaceAllFromDtos(Iterable<MemberDto> dtos) async {
+    final unsynced = await _dao.getUnsynced();
     await _dao.clearAll();
     await upsertFromDtos(dtos);
+    if (unsynced.isNotEmpty) {
+      await _dao.upsertMembers(
+        unsynced.map(_mapRowToCompanion).toList(),
+      );
+    }
   }
 
   /// Deletes a member from the cache.
   Future<void> deleteMember(String id) => _dao.deleteMember(id);
+
+  /// Clears synced cached members only (keeps offline pending edits).
+  Future<void> clearSynced() => _dao.clearSynced();
 
   /// Clears all cached members.
   Future<void> clearAll() => _dao.clearAll();
@@ -125,15 +179,37 @@ class MemberLocalDataSource {
     return (await _dao.countAll()) > 0;
   }
 
+  MembersCompanion _mapRowToCompanion(MemberRow row) {
+    return MembersCompanion(
+      id: Value(row.id),
+      name: Value(row.name),
+      photoFile: Value(row.photoFile),
+      mobileNumber: Value(row.mobileNumber),
+      dateOfBirth: Value(row.dateOfBirth),
+      address: Value(row.address),
+      sex: Value(row.sex),
+      remarks: Value(row.remarks),
+      addedBy: Value(row.addedBy),
+      rfidCardId: Value(row.rfidCardId),
+      email: Value(row.email),
+      emergencyContact: Value(row.emergencyContact),
+      branch: Value(row.branch),
+      created: Value(row.created),
+      updated: Value(row.updated),
+      syncedAt: Value(row.syncedAt),
+      syncStatus: Value(row.syncStatus),
+      localPhotoPath: Value(row.localPhotoPath),
+    );
+  }
+
   Member _mapRowToEntity(MemberRow row) {
+    final syncStatus = SyncStatus.fromString(row.syncStatus);
+    final photo = _resolvePhoto(row, syncStatus);
+
     return Member(
       id: row.id,
       name: row.name,
-      photo: _buildPhotoUrl(
-        photoFile: row.photoFile,
-        id: row.id,
-        updated: row.updated,
-      ),
+      photo: photo,
       mobileNumber: row.mobileNumber,
       dateOfBirth: row.dateOfBirth,
       address: row.address,
@@ -146,10 +222,28 @@ class MemberLocalDataSource {
       branch: row.branch,
       created: row.created,
       updated: row.updated,
+      syncStatus: syncStatus,
     );
   }
 
-  MembersCompanion _mapDtoToCompanion(MemberDto dto, DateTime syncedAt) {
+  String? _resolvePhoto(MemberRow row, SyncStatus syncStatus) {
+    if (syncStatus != SyncStatus.synced &&
+        row.localPhotoPath != null &&
+        row.localPhotoPath!.isNotEmpty) {
+      return row.localPhotoPath;
+    }
+    return _buildPhotoUrl(
+      photoFile: row.photoFile,
+      id: row.id,
+      updated: row.updated,
+    );
+  }
+
+  MembersCompanion _mapDtoToCompanion(
+    MemberDto dto,
+    DateTime syncedAt, {
+    SyncStatus syncStatus = SyncStatus.synced,
+  }) {
     return MembersCompanion(
       id: Value(dto.id),
       name: Value(dto.name),
@@ -167,10 +261,16 @@ class MemberLocalDataSource {
       created: Value(_parseDate(dto.created)),
       updated: Value(_parseDate(dto.updated)),
       syncedAt: Value(syncedAt),
+      syncStatus: Value(syncStatus.name),
     );
   }
 
-  MembersCompanion _mapMemberToCompanion(Member member, DateTime syncedAt) {
+  MembersCompanion _mapMemberToCompanion(
+    Member member,
+    DateTime syncedAt, {
+    SyncStatus syncStatus = SyncStatus.synced,
+    String? localPhotoPath,
+  }) {
     return MembersCompanion(
       id: Value(member.id),
       name: Value(member.name),
@@ -188,6 +288,10 @@ class MemberLocalDataSource {
       created: Value(member.created),
       updated: Value(member.updated),
       syncedAt: Value(syncedAt),
+      syncStatus: Value(syncStatus.name),
+      localPhotoPath: localPhotoPath == null
+          ? const Value.absent()
+          : Value(localPhotoPath),
     );
   }
 

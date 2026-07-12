@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/users.routes.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_users_controller.dart';
 import '../widgets/dialogs/create_user_dialog.dart';
 import '../widgets/user_list_panel.dart';
@@ -25,22 +26,11 @@ class UsersListPage extends ConsumerWidget {
       body: paginatedAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref
-                    .read(paginatedUsersControllerProvider.notifier)
-                    .refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => ref
+              .read(paginatedUsersControllerProvider.notifier)
+              .refresh(),
         ),
         data: (paginatedState) => UserListPanel(
           paginatedState: paginatedState,

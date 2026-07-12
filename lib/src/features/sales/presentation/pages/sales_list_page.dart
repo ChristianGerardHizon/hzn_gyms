@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/sales_history.routes.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_sales_controller.dart';
 import '../widgets/sale_list_panel.dart';
 
@@ -21,22 +22,10 @@ class SalesListPage extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref
-                    .read(paginatedSalesControllerProvider.notifier)
-                    .refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          onRetry: () =>
+              ref.read(paginatedSalesControllerProvider.notifier).refresh(),
         ),
       ),
       data: (paginatedState) => SaleListPanel(

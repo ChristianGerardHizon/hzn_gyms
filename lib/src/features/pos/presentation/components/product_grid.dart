@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../products/domain/product.dart';
@@ -33,7 +34,7 @@ class ProductGrid extends ConsumerWidget {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return ErrorState.fromError(snapshot.error!, compact: true);
         }
 
         final result = snapshot.data;
@@ -42,7 +43,7 @@ class ProductGrid extends ConsumerWidget {
         }
 
         return result.fold(
-          (failure) => Center(child: Text('Error: ${failure.message}')),
+          (failure) => ErrorState.fromError(failure, compact: true),
           (products) {
             if (products.isEmpty) {
               return Center(
@@ -72,13 +73,13 @@ class ProductGrid extends ConsumerWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 // Responsive columns based on available width
-                // Mobile: 3 columns, Tablet: 4-5 columns, Large: 6+ columns
+                // Mobile: 2 columns, Tablet: 4-5 columns, Large: 6+ columns
                 final width = constraints.maxWidth;
-                final crossAxisCount = width < 400
-                    ? 3
-                    : width < 600
+                final crossAxisCount = width < 600
+                    ? 2
+                    : width < 900
                         ? 4
-                        : width < 900
+                        : width < 1200
                             ? 5
                             : 6;
 

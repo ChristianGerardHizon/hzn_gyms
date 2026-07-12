@@ -11,6 +11,7 @@ import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/presentation/controllers/member_memberships_controller.dart';
@@ -291,7 +292,7 @@ class MemberDetailPage extends HookConsumerWidget {
       ),
       error: (error, stack) => Scaffold(
         appBar: AppBar(automaticallyImplyLeading: !isTablet),
-        body: Center(child: Text('Error: $error')),
+        body: ErrorState.fromError(error),
       ),
     );
   }
@@ -476,8 +477,7 @@ class _MemberMembershipsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) =>
-          Center(child: Text('Error loading memberships: $error')),
+      error: (error, _) => ErrorState.fromError(error, compact: true),
       data: (memberships) {
         if (memberships.isEmpty) {
           return Center(
@@ -611,8 +611,7 @@ class _MemberCheckInsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) =>
-          Center(child: Text('Error loading check-ins: $error')),
+      error: (error, _) => ErrorState.fromError(error, compact: true),
       data: (checkIns) {
         if (checkIns.isEmpty) {
           return Center(
@@ -694,7 +693,7 @@ class _MemberSalesHistory extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => Center(child: Text('Error loading sales: $error')),
+      error: (error, _) => ErrorState.fromError(error, compact: true),
       data: (sales) {
         if (sales.isEmpty) {
           return Center(
@@ -813,7 +812,7 @@ class _MemberCardsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => Center(child: Text('Error loading cards: $error')),
+      error: (error, _) => ErrorState.fromError(error, compact: true),
       data: (cards) {
         if (cards.isEmpty) {
           return Center(

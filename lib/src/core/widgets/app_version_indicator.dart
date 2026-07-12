@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../packages/app_info/app_info_provider.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
+import 'outbox_pending_sheet.dart';
 
 /// Reusable widget displaying server domain, app version, and environment.
 ///
@@ -41,6 +42,9 @@ class AppVersionIndicator extends ConsumerWidget {
           ),
           error: (_, __) => const _ConnectivityStatus(isOnline: false),
         ),
+        const SizedBox(height: 4),
+
+        const OutboxPendingBadge(),
         const SizedBox(height: 4),
 
         // Server domain
@@ -119,10 +123,7 @@ class _ConnectivityStatus extends StatelessWidget {
         Container(
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
         Text(

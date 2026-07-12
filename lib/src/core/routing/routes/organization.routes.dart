@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../widgets/form_feedback.dart';
+import '../../widgets/state/error_state.dart';
 import '../../../features/organization/presentation/pages/organization_shell.dart';
 import '../../../features/settings/domain/branch.dart';
 import '../../../features/settings/presentation/controllers/branches_controller.dart';
@@ -310,22 +311,11 @@ class _OrganizationUsersListPage extends ConsumerWidget {
       ),
       body: paginatedAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref
-                    .read(paginatedUsersControllerProvider.notifier)
-                    .refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => ref
+              .read(paginatedUsersControllerProvider.notifier)
+              .refresh(),
         ),
         data: (paginatedState) => UserListPanel(
           paginatedState: paginatedState,
@@ -365,21 +355,10 @@ class _OrganizationRolesListPage extends ConsumerWidget {
       ),
       body: rolesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () =>
-                    ref.read(userRolesControllerProvider.notifier).refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () =>
+              ref.read(userRolesControllerProvider.notifier).refresh(),
         ),
         data: (roles) => UserRoleListPanel(
           roles: roles,
@@ -454,15 +433,11 @@ class _RoleDetailWrapper extends ConsumerWidget {
       ),
       error: (error, stack) => Scaffold(
         appBar: AppBar(),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () =>
+              ref.read(userRolesControllerProvider.notifier).refresh(),
         ),
       ),
       data: (roles) {
@@ -515,21 +490,10 @@ class _OrganizationBranchesListPage extends ConsumerWidget {
       ),
       body: branchesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () =>
-                    ref.read(branchesControllerProvider.notifier).refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () =>
+              ref.read(branchesControllerProvider.notifier).refresh(),
         ),
         data: (branches) {
           if (branches.isEmpty) {

@@ -1,6 +1,21 @@
 # Offline Mode Rules
 
-Status: proposed / not yet implemented. This doc defines rules for offline-first behavior before any code is written.
+Status: **partial** — outbox implemented for member create/update (with photo) and membership renew for existing members. Payment recording remains online-only.
+
+## Implemented (Jul 2026)
+
+- Generic Drift `outbox` table + sync worker (FIFO, `dependsOnId` ordering)
+- Member create/update offline with local photo attachments
+- Membership renew offline (sale → saleItems → memberMembership → addOns chain; sale steps skipped when “Exclude from sales” is checked)
+- Drift read cache for membership plans + add-ons (required for offline renew)
+- Pending sync count UI in app shell; member list pending badge
+- Client-generated PocketBase ids (15-char) on creates to avoid ID remapping
+
+## Not yet implemented
+
+- Offline create-member + membership wizard combo (member must sync first)
+- Offline payment recording
+- Check-in / POS product sales offline
 
 ## Goals
 
@@ -17,11 +32,11 @@ Offline support is scoped to a small set of high-value flows (member lookup, che
 - Schema (conceptual):
   ```
   outbox(
-    id,              // uuid, generated client-side
+    id,              // client id, generated locally
     entityType,      // "member" | "membership" | "sale" | ...
     operation,       // create | update | void
     payload,         // json
-    clientRecordId,  // matches local record's id
+    clientRecordId,  // matches local/PB record id (≤15 chars)
     dependsOnId,     // nullable, points to another outbox entry
     status,          // pending | synced | failed | conflict
     createdAt,
@@ -30,7 +45,7 @@ Offline support is scoped to a small set of high-value flows (member lookup, che
   )
   ```
 - Sync worker drains outbox FIFO, respects `dependsOnId` ordering (e.g. membership entry won't send until its member entry is `synced`).
-- **Use client-generated UUIDs as the real PocketBase record id at creation time** (PB allows custom id on create). Avoids local-id → server-id remapping entirely.
+- **Use client-generated PocketBase ids (15-char `[a-z0-9]`) as the real record id at creation time** (PB allows custom id on create; default max length is 15). Avoids local-id → server-id remapping entirely.
 
 ### Sync status tracking
 - Every offline-created/edited local record carries a `_syncStatus` (pending/synced/conflict/error) in the local DB layer only — not part of the PocketBase schema.
@@ -60,7 +75,7 @@ Cascading failure is not a reason to block a feature. Member and membership are 
 |---|---|---|---|---|
 | Member lookup / list | Yes | — | — | Cache-first, background refresh when online |
 | Member details | Yes | — | — | |
-| Member creation | Yes | Yes | Yes | No shared resource, client UUID, unrestricted |
+| Member creation | Yes | Yes | Yes | No shared resource, client PB id, unrestricted |
 | Membership creation (no capacity cap, e.g. standard plan) | Yes | Yes | Yes | Depends on member outbox entry via `dependsOnId` |
 | Membership creation (capacity-limited, e.g. class/slot cap) | Yes | Yes (soft) | Yes | Queued optimistically; flagged pending-capacity; reconciled + alerted on sync if oversold |
 | Check-in | Yes | Yes | — | High-value flow, no shared resource, safe offline |

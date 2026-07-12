@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/routing/routes/system.routes.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../products/domain/product_category.dart';
 import '../controllers/product_categories_controller.dart';
 
@@ -41,20 +42,10 @@ class ProductCategoryListPanel extends HookConsumerWidget {
       body: categoriesAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => controller.refresh(),
         ),
         data: (categories) {
           final filteredCategories = isSearchActive

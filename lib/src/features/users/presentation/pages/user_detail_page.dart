@@ -6,6 +6,7 @@ import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/routing/routes/users.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/user.dart';
 import '../../domain/user_tab.dart';
 import '../controllers/paginated_users_controller.dart';
@@ -53,20 +54,9 @@ class UserDetailPage extends HookConsumerWidget {
                   onPressed: () => const UsersRoute().go(context),
                 ),
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error loading user: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(userProvider(userId)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          onRetry: () => ref.invalidate(userProvider(userId)),
         ),
       ),
       data: (user) {

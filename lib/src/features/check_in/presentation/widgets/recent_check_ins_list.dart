@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
 
@@ -17,21 +18,9 @@ class RecentCheckInsList extends ConsumerWidget {
 
     return checkInsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 8),
-            Text('Error: $error'),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () =>
-                  ref.read(checkInControllerProvider.notifier).refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, _) => ErrorState.fromError(
+        error,
+        onRetry: () => ref.read(checkInControllerProvider.notifier).refresh(),
       ),
       data: (checkIns) {
         if (checkIns.isEmpty) {

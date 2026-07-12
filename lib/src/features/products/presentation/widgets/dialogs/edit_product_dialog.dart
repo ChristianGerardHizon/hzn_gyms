@@ -10,6 +10,7 @@ import '../../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form/form_section_header.dart';
 import '../../../../../core/widgets/form_feedback.dart';
+import '../../../../../core/widgets/state/error_state.dart';
 import '../../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../domain/product.dart';
 import '../../controllers/paginated_products_controller.dart';
@@ -132,24 +133,10 @@ class EditProductDialog extends HookConsumerWidget {
               ),
             ),
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: theme.colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error: $error'),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.pop(),
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
+              child: ErrorState.fromError(
+                error,
+                compact: true,
+                onRetry: () => ref.invalidate(productProvider(productId)),
               ),
             ),
           ],

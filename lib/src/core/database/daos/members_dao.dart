@@ -104,6 +104,30 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
     return (delete(members)..where((m) => m.id.equals(id))).go();
   }
 
+  /// Returns members that still have local pending/failed/conflict sync state.
+  Future<List<MemberRow>> getUnsynced() {
+    return (select(members)..where(
+          (m) =>
+              m.syncStatus.equals('pending') |
+              m.syncStatus.equals('failed') |
+              m.syncStatus.equals('conflict'),
+        ))
+        .get();
+  }
+
+  /// Returns IDs of members with non-synced local state.
+  Future<Set<String>> getUnsyncedIds() async {
+    final rows = await getUnsynced();
+    return rows.map((r) => r.id).toSet();
+  }
+
+  /// Clears only synced cached members, preserving pending offline edits.
+  Future<void> clearSynced() {
+    return (delete(
+      members,
+    )..where((m) => m.syncStatus.equals('synced'))).go();
+  }
+
   /// Clears all cached members.
   Future<void> clearAll() {
     return delete(members).go();

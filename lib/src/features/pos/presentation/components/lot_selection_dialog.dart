@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../products/domain/product.dart';
 import '../../../products/domain/product_lot.dart';
 import '../../../products/presentation/controllers/product_lots_controller.dart';
@@ -106,9 +107,7 @@ class LotSelectionDialog extends HookConsumerWidget {
           Expanded(
             child: lotsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Text('Error loading lots: $error'),
-              ),
+              error: (error, _) => ErrorState.fromError(error, compact: true),
               data: (lots) {
                 // Filter and sort lots (FEFO - oldest expiration first)
                 final availableLots = _getAvailableLotsFEFO(lots);

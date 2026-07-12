@@ -12,11 +12,7 @@ Future<List<MemberMembershipAddOn>> memberMembershipAddOns(
   String memberMembershipId,
 ) async {
   final repository = ref.read(memberMembershipAddOnRepositoryProvider);
-  final result =
-      await repository.fetchByMemberMembership(memberMembershipId);
+  final result = await repository.fetchByMemberMembership(memberMembershipId);
 
-  return result.fold(
-    (failure) => [],
-    (addOns) => addOns,
-  );
+  return result.fold((failure) => [], (addOns) => addOns);
 }

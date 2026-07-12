@@ -13,8 +13,9 @@ part 'dashboard_members_controller.g.dart';
 /// Membership status filter for the dashboard grid.
 enum MemberStatusFilter {
   all('All'),
-  expired('Expired'),
-  expiringSoon('Expiring Soon');
+  active('Active'),
+  expiringSoon('Expiring Soon'),
+  expired('Expired');
 
   const MemberStatusFilter(this.label);
   final String label;
@@ -114,10 +115,11 @@ String _dashboardMembersSort(MemberStatusFilter statusFilter) {
       // Upcoming first (soonest expiration, like Expiring Soon), then expired
       // when scrolling — no date-range limit.
       return 'membershipSortTier,membershipSortOrder,name';
-    case MemberStatusFilter.expired:
-      return '-expirationDate,name';
+    case MemberStatusFilter.active:
     case MemberStatusFilter.expiringSoon:
       return 'expirationDate,name';
+    case MemberStatusFilter.expired:
+      return '-expirationDate,name';
   }
 }
 
@@ -172,14 +174,18 @@ Future<DashboardMembersPage> dashboardMembersPage(
   switch (statusFilter) {
     case MemberStatusFilter.all:
       break;
-    case MemberStatusFilter.expired:
-      // End date before today (expiration day is still valid)
-      filter.lessThan('expirationDate', startOfToday);
+    case MemberStatusFilter.active:
+      // Non-expired memberships (expiration day is still valid)
+      filter.greaterOrEqual('expirationDate', startOfToday);
       break;
     case MemberStatusFilter.expiringSoon:
       // From today through the next 7 calendar days (inclusive)
       filter.greaterOrEqual('expirationDate', startOfToday);
       filter.lessOrEqual('expirationDate', endOfSevenDayWindow);
+      break;
+    case MemberStatusFilter.expired:
+      // End date before today (expiration day is still valid)
+      filter.lessThan('expirationDate', startOfToday);
       break;
   }
 
