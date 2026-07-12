@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
+import '../../../../core/widgets/state/empty_state.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_members_controller.dart';
 
@@ -308,16 +309,10 @@ class DashboardMembersSection extends HookConsumerWidget {
         else if (allMembers.value.isEmpty && !pageAsync.isLoading)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text(
-                  statusFilter.value != MemberStatusFilter.all
-                      ? 'No ${statusFilter.value.label.toLowerCase()} members found'
-                      : 'No members found',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: _DashboardMembersEmptyState(
+                hasSearch: debouncedQuery.value.isNotEmpty,
+                statusFilter: statusFilter.value,
               ),
             ),
           )
@@ -396,6 +391,55 @@ class DashboardMembersSection extends HookConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Empty state for the dashboard members grid.
+class _DashboardMembersEmptyState extends StatelessWidget {
+  const _DashboardMembersEmptyState({
+    required this.hasSearch,
+    required this.statusFilter,
+  });
+
+  final bool hasSearch;
+  final MemberStatusFilter statusFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final (:icon, :title, :subtitle) = switch ((hasSearch, statusFilter)) {
+      (true, _) => (
+          icon: Icons.search_off_rounded,
+          title: 'No members found',
+          subtitle: 'Try a different name or clear your search',
+        ),
+      (false, MemberStatusFilter.active) => (
+          icon: Icons.person_off_outlined,
+          title: 'No active members',
+          subtitle: 'No members currently have an active membership',
+        ),
+      (false, MemberStatusFilter.expiringSoon) => (
+          icon: Icons.event_busy_outlined,
+          title: 'None expiring soon',
+          subtitle: 'No memberships expire within the next 7 days',
+        ),
+      (false, MemberStatusFilter.expired) => (
+          icon: Icons.hourglass_disabled_outlined,
+          title: 'No expired members',
+          subtitle: 'There are no members with expired memberships',
+        ),
+      (false, MemberStatusFilter.all) => (
+          icon: Icons.people_outline,
+          title: 'No members yet',
+          subtitle: 'Registered members will appear here',
+        ),
+    };
+
+    return EmptyState(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      iconSize: 56,
     );
   }
 }
