@@ -63,6 +63,10 @@ class SalesRepositoryImpl implements SalesRepository {
 
   SalesRepositoryImpl(this._pb);
 
+  /// Columns needed for list / history rows (avoids shipping notes, etc.).
+  static const _listFields =
+      'id,receiptNumber,branch,cashier,totalAmount,status,isPaid,member,customerName,created,updated';
+
   RecordService get _sales => _pb.collection(PocketBaseCollections.sales);
   RecordService get _saleItems =>
       _pb.collection(PocketBaseCollections.saleItems);
@@ -185,6 +189,7 @@ class SalesRepositoryImpl implements SalesRepository {
         final records = await _sales.getFullList(
           filter: filter.isEmpty ? null : filter,
           sort: '-created',
+          fields: _listFields,
         );
         return records.map(_toSaleEntity).toList();
       },
@@ -220,6 +225,7 @@ class SalesRepositoryImpl implements SalesRepository {
           perPage: perPage,
           filter: filter,
           sort: sort ?? '-created',
+          fields: _listFields,
         );
 
         return PaginatedResult<Sale>(
@@ -258,6 +264,7 @@ class SalesRepositoryImpl implements SalesRepository {
           perPage: perPage,
           filter: combinedFilter,
           sort: sort ?? '-created',
+          fields: _listFields,
         );
 
         return PaginatedResult<Sale>(
@@ -278,6 +285,7 @@ class SalesRepositoryImpl implements SalesRepository {
         final records = await _sales.getFullList(
           filter: 'member = "$customerId"',
           sort: '-created',
+          fields: _listFields,
         );
         return records.map(_toSaleEntity).toList();
       },

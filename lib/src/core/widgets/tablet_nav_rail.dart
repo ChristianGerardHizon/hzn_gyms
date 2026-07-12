@@ -5,7 +5,9 @@ import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
+import '../sync/outbox_sync_worker.dart';
 import '../utils/breakpoints.dart';
+import 'outbox_queue_badge.dart';
 
 /// Navigation rail for tablet and desktop layouts.
 ///
@@ -28,6 +30,8 @@ class TabletNavRail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final isLargeTablet = Breakpoints.isTabletLargeOrLarger(context);
+    // Rebuild destinations when queue count changes (NavigationRail caches icons).
+    ref.watch(outboxPendingCountProvider);
 
     return SingleChildScrollView(
       child: ConstrainedBox(
@@ -113,6 +117,15 @@ class TabletNavRail extends ConsumerWidget {
                 icon: const Icon(Icons.business_outlined),
                 selectedIcon: const Icon(Icons.business),
                 label: Text(t.navigation.organization),
+              ),
+              NavigationRailDestination(
+                icon: const OutboxQueueBadge(
+                  child: Icon(Icons.cloud_sync_outlined),
+                ),
+                selectedIcon: const OutboxQueueBadge(
+                  child: Icon(Icons.cloud_sync),
+                ),
+                label: Text(t.navigation.outbox),
               ),
               NavigationRailDestination(
                 icon: const Icon(Icons.settings_outlined),

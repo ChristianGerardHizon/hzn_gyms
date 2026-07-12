@@ -8,6 +8,44 @@ part of 'database_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Ensures the Drift database is opened and migrated.
+
+@ProviderFor(appDatabaseReady)
+final appDatabaseReadyProvider = AppDatabaseReadyProvider._();
+
+/// Ensures the Drift database is opened and migrated.
+
+final class AppDatabaseReadyProvider
+    extends $FunctionalProvider<AsyncValue<void>, void, FutureOr<void>>
+    with $FutureModifier<void>, $FutureProvider<void> {
+  /// Ensures the Drift database is opened and migrated.
+  AppDatabaseReadyProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appDatabaseReadyProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appDatabaseReadyHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<void> create(Ref ref) {
+    return appDatabaseReady(ref);
+  }
+}
+
+String _$appDatabaseReadyHash() => r'6184203d5a032825ce7b81771b9e01b0ede6f959';
+
 /// Provides a singleton [AppDatabase] instance for the app lifetime.
 
 @ProviderFor(appDatabase)

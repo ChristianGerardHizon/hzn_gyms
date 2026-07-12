@@ -78,6 +78,25 @@ class MembersController extends _$MembersController {
     });
   }
 
+  /// Updates member details and optional photo.
+  Future<bool> updateMemberWithPhoto(
+    Member member, {
+    http.MultipartFile? photo,
+  }) async {
+    final updateResult = await _repository.update(member);
+    return updateResult.fold((failure) => false, (updated) async {
+      if (photo != null) {
+        final photoResult = await _repository.updatePhoto(member.id, photo);
+        return photoResult.fold((failure) => false, (_) {
+          refresh();
+          return true;
+        });
+      }
+      refresh();
+      return true;
+    });
+  }
+
   /// Deletes a member.
   Future<bool> deleteMember(String id) async {
     final result = await _repository.delete(id);

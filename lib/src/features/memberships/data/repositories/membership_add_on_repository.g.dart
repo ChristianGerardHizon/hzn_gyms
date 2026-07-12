@@ -59,4 +59,4 @@ final class MembershipAddOnRepositoryProvider
 }
 
 String _$membershipAddOnRepositoryHash() =>
-    r'5e57ebcc1dae2b84372508cddb19c3665a703e59';
+    r'99699db9355960e015baf218cc2e787558e3683f';

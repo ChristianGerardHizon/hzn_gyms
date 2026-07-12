@@ -10,10 +10,7 @@ import 'membership_list_panel.dart';
 /// Left pane: Membership plan list with search
 /// Right pane: Membership detail from router or empty state
 class TabletMembershipsLayout extends ConsumerWidget {
-  const TabletMembershipsLayout({
-    super.key,
-    required this.detailContent,
-  });
+  const TabletMembershipsLayout({super.key, required this.detailContent});
 
   final Widget detailContent;
 

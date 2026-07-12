@@ -19,6 +19,8 @@ class Members extends Table {
   DateTimeColumn get created => dateTime().nullable()();
   DateTimeColumn get updated => dateTime().nullable()();
   DateTimeColumn get syncedAt => dateTime()();
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
+  TextColumn get localPhotoPath => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

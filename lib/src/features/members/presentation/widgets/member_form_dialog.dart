@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ import '../../../memberships/presentation/widgets/membership_purchase_content.da
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/member.dart';
 import '../controllers/members_controller.dart';
+import '../controllers/member_provider.dart';
 import '../controllers/paginated_members_controller.dart';
 
 /// Result from the member form dialog.
@@ -91,6 +93,8 @@ class _MemberEditForm extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final isSaving = useState(false);
+    final photoBytes = useState<Uint8List?>(null);
+    final selectedPhoto = useState<XFile?>(null);
 
     final initialValues = <String, dynamic>{
       'name': member.name,
@@ -129,11 +133,21 @@ class _MemberEditForm extends HookConsumerWidget {
         branch: member.branch,
       );
 
+      http.MultipartFile? photoFile;
+      if (photoBytes.value != null && selectedPhoto.value != null) {
+        photoFile = http.MultipartFile.fromBytes(
+          'photo',
+          photoBytes.value!,
+          filename: selectedPhoto.value!.name,
+        );
+      }
+
       final success = await ref
           .read(membersControllerProvider.notifier)
-          .updateMember(memberData);
+          .updateMemberWithPhoto(memberData, photo: photoFile);
 
       ref.read(paginatedMembersControllerProvider.notifier).refresh();
+      ref.invalidate(memberProvider(member.id));
 
       isSaving.value = false;
 
@@ -159,7 +173,48 @@ class _MemberEditForm extends HookConsumerWidget {
       dirtyGuard: dirtyGuard,
       isSaving: isSaving.value,
       onSave: handleSave,
-      child: _MemberFormFields(member: member),
+      child: Column(
+        children: [
+          Center(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundImage: _editFormPhotoProvider(
+                    photoBytes: photoBytes.value,
+                    memberPhoto: member.photo,
+                  ),
+                  child: photoBytes.value == null && member.photo == null
+                      ? const Icon(Icons.person, size: 48)
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 85,
+                    );
+                    if (image != null) {
+                      selectedPhoto.value = image;
+                      photoBytes.value = await image.readAsBytes();
+                    }
+                  },
+                  icon: const Icon(Icons.photo_camera),
+                  label: Text(
+                    photoBytes.value != null ? 'Change Photo' : 'Update Photo',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _MemberFormFields(member: member),
+        ],
+      ),
     );
   }
 }
@@ -1079,4 +1134,14 @@ class _MemberFormFields extends StatelessWidget {
       ],
     );
   }
+}
+
+ImageProvider<Object>? _editFormPhotoProvider({
+  required Uint8List? photoBytes,
+  required String? memberPhoto,
+}) {
+  if (photoBytes != null) return MemoryImage(photoBytes);
+  if (memberPhoto == null || memberPhoto.isEmpty) return null;
+  if (memberPhoto.startsWith('/')) return FileImage(File(memberPhoto));
+  return NetworkImage(memberPhoto);
 }

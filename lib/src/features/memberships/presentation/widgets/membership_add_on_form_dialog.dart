@@ -21,10 +21,8 @@ Future<bool?> showMembershipAddOnFormDialog(
 }) {
   return showConstrainedDialog<bool>(
     context: context,
-    builder: (context) => MembershipAddOnFormDialog(
-      membershipId: membershipId,
-      addOn: addOn,
-    ),
+    builder: (context) =>
+        MembershipAddOnFormDialog(membershipId: membershipId, addOn: addOn),
   );
 }
 
@@ -107,57 +105,54 @@ class MembershipAddOnFormDialog extends HookConsumerWidget {
     }
 
     return FormDialogScaffold(
-          title: isEditing ? 'Edit Add-On' : 'New Add-On',
-          formKey: formKey,
-          dirtyGuard: dirtyGuard,
-          isSaving: isSaving.value,
-          onSave: handleSave,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FormBuilderTextField(
-                name: 'name',
-                initialValue: addOn?.name,
-                decoration: const InputDecoration(labelText: 'Name *'),
-                validator: FormBuilderValidators.required(),
-                textInputAction: TextInputAction.next,
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 16),
-              FormBuilderTextField(
-                name: 'description',
-                initialValue: addOn?.description,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 2,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 16),
-              FormBuilderTextField(
-                name: 'price',
-                initialValue: addOn?.price.toString() ?? '',
-                decoration: const InputDecoration(
-                  labelText: 'Price *',
-                  prefixText: '\u20B1 ',
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.numeric(),
-                ]),
-                textInputAction: TextInputAction.done,
-              ),
-              const SizedBox(height: 16),
-              FormBuilderSwitch(
-                name: 'isActive',
-                initialValue: addOn?.isActive ?? true,
-                title: const Text('Active'),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                ),
-              ),
-            ],
+      title: isEditing ? 'Edit Add-On' : 'New Add-On',
+      formKey: formKey,
+      dirtyGuard: dirtyGuard,
+      isSaving: isSaving.value,
+      onSave: handleSave,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FormBuilderTextField(
+            name: 'name',
+            initialValue: addOn?.name,
+            decoration: const InputDecoration(labelText: 'Name *'),
+            validator: FormBuilderValidators.required(),
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.words,
           ),
+          const SizedBox(height: 16),
+          FormBuilderTextField(
+            name: 'description',
+            initialValue: addOn?.description,
+            decoration: const InputDecoration(labelText: 'Description'),
+            maxLines: 2,
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 16),
+          FormBuilderTextField(
+            name: 'price',
+            initialValue: addOn?.price.toString() ?? '',
+            decoration: const InputDecoration(
+              labelText: 'Price *',
+              prefixText: '\u20B1 ',
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(),
+              FormBuilderValidators.numeric(),
+            ]),
+            textInputAction: TextInputAction.done,
+          ),
+          const SizedBox(height: 16),
+          FormBuilderSwitch(
+            name: 'isActive',
+            initialValue: addOn?.isActive ?? true,
+            title: const Text('Active'),
+            decoration: const InputDecoration(border: InputBorder.none),
+          ),
+        ],
+      ),
     );
   }
 }

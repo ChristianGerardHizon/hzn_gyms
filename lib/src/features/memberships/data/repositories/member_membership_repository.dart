@@ -98,47 +98,38 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
       return Right(_memberCache[memberId]!);
     }
 
-    return TaskEither.tryCatch(
-      () async {
-        final filter = PBFilter().relation('member', memberId);
+    return TaskEither.tryCatch(() async {
+      final filter = PBFilter().relation('member', memberId);
 
-        final records = await _collection.getFullList(
-          filter: filter.build(),
-          sort: '-startDate',
-          expand: 'member,membership',
-        );
+      final records = await _collection.getFullList(
+        filter: filter.build(),
+        sort: '-startDate',
+        expand: 'member,membership',
+      );
 
-        final memberships = records.map(_toEntity).toList();
+      final memberships = records.map(_toEntity).toList();
 
-        _memberCache[memberId] = memberships;
-        _memberCacheTimestamps[memberId] = DateTime.now();
+      _memberCache[memberId] = memberships;
+      _memberCacheTimestamps[memberId] = DateTime.now();
 
-        return memberships;
-      },
-      Failure.handle,
-    ).run();
+      return memberships;
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<MemberMembership> fetchOne(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'Member membership ID cannot be empty',
-            null,
-            'invalid_member_membership_id',
-          );
-        }
-
-        final record = await _collection.getOne(
-          id,
-          expand: 'member,membership',
+    return TaskEither.tryCatch(() async {
+      if (id.isEmpty) {
+        throw const DataFailure(
+          'Member membership ID cannot be empty',
+          null,
+          'invalid_member_membership_id',
         );
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      }
+
+      final record = await _collection.getOne(id, expand: 'member,membership');
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
@@ -152,26 +143,23 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     String? soldBy,
     String? notes,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'member': memberId,
-          'membership': membershipId,
-          'startDate': startDate.toUtcIso8601(),
-          'endDate': endDate.toUtcIso8601(),
-          'status': 'active',
-          'branch': branchId,
-          if (saleId != null) 'saleId': saleId,
-          'soldBy': soldBy,
-          'notes': notes,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'member': memberId,
+        'membership': membershipId,
+        'startDate': startDate.toUtcIso8601(),
+        'endDate': endDate.toUtcIso8601(),
+        'status': 'active',
+        'branch': branchId,
+        if (saleId != null) 'saleId': saleId,
+        'soldBy': soldBy,
+        'notes': notes,
+      };
 
-        final record = await _collection.create(body: body);
-        _invalidateMemberCache(memberId);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body);
+      _invalidateMemberCache(memberId);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
@@ -180,18 +168,15 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     MemberMembershipStatus? status,
     String? notes,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{};
-        if (status != null) body['status'] = status.name;
-        if (notes != null) body['notes'] = notes;
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{};
+      if (status != null) body['status'] = status.name;
+      if (notes != null) body['notes'] = notes;
 
-        final record = await _collection.update(id, body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.update(id, body: body);
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
@@ -201,24 +186,21 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
 
   @override
   FutureEither<List<MemberMembership>> fetchActive(String memberId) async {
-    return TaskEither.tryCatch(
-      () async {
-        final now = DateTime.now();
-        final filter = PBFilter()
-            .relation('member', memberId)
-            .equals('status', 'active')
-            .before('startDate', now)
-            .after('endDate', now);
+    return TaskEither.tryCatch(() async {
+      final now = DateTime.now();
+      final filter = PBFilter()
+          .relation('member', memberId)
+          .equals('status', 'active')
+          .before('startDate', now)
+          .after('endDate', now);
 
-        final records = await _collection.getFullList(
-          filter: filter.build(),
-          sort: '-endDate',
-          expand: 'member,membership',
-        );
+      final records = await _collection.getFullList(
+        filter: filter.build(),
+        sort: '-endDate',
+        expand: 'member,membership',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 }

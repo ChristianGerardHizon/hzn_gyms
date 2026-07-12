@@ -10,10 +10,7 @@ import 'membership_form_dialog.dart';
 
 /// List panel for displaying membership plans with search and create.
 class MembershipListPanel extends HookConsumerWidget {
-  const MembershipListPanel({
-    super.key,
-    required this.memberships,
-  });
+  const MembershipListPanel({super.key, required this.memberships});
 
   final List<Membership> memberships;
 
@@ -27,6 +24,7 @@ class MembershipListPanel extends HookConsumerWidget {
       void listener() {
         searchQuery.value = searchController.text;
       }
+
       searchController.addListener(listener);
       return () => searchController.removeListener(listener);
     }, [searchController]);
@@ -88,8 +86,9 @@ class MembershipListPanel extends HookConsumerWidget {
                         Icon(
                           Icons.card_membership_outlined,
                           size: 64,
-                          color: theme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(

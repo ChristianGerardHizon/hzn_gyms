@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/widgets/scroll_to_top_button.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/active_members_count_controller.dart';
 import '../controllers/dashboard_members_controller.dart';
@@ -26,101 +28,124 @@ class TabletDashboardLayout extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final selection = ref.watch(currentBranchControllerProvider).value;
+    final scrollController = useScrollController();
+    final branchAsync = ref.watch(currentBranchControllerProvider);
+
+    // Hide stale KPIs / members while switching branch (not on first resolve).
+    if (branchAsync.isLoading && branchAsync.hasValue) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Switching branch...'),
+          ],
+        ),
+      );
+    }
+
+    final selection = branchAsync.value;
     final branchLabel = selection == null
         ? null
         : selection.isAll
             ? 'All Branches'
             : selection.branch?.name;
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(inventoryAlertsSummaryProvider);
-        ref.invalidate(todaySalesSummaryProvider);
-        ref.invalidate(todaysCheckInsCountProvider);
-        ref.invalidate(activeMembersCountProvider);
-        ref.invalidate(todaysNewMembersCountProvider);
-        ref.invalidate(expiringMembershipsProvider);
-        ref.invalidate(dashboardMembersPageProvider);
-        ref.invalidate(productsNearExpirationCountProvider);
-        ref.invalidate(productsExpiredCountProvider);
-        ref.invalidate(lowStockProductsCountProvider);
-      },
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // Header + KPI + Quick Actions
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(inventoryAlertsSummaryProvider);
+            ref.invalidate(todaySalesSummaryProvider);
+            ref.invalidate(todaysCheckInsCountProvider);
+            ref.invalidate(activeMembersCountProvider);
+            ref.invalidate(todaysNewMembersCountProvider);
+            ref.invalidate(expiringMembershipsProvider);
+            ref.invalidate(dashboardMembersPageProvider);
+            ref.invalidate(productsNearExpirationCountProvider);
+            ref.invalidate(productsExpiredCountProvider);
+            ref.invalidate(lowStockProductsCountProvider);
+          },
+          child: CustomScrollView(
+            controller: scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // Header + KPI + Quick Actions
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.dashboard,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Dashboard Overview',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (branchLabel != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Row(
+                      Row(
                         children: [
                           Icon(
-                            Icons.store,
-                            size: 16,
-                            color: theme.colorScheme.outline,
+                            Icons.dashboard,
+                            color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(
-                            branchLabel,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.outline,
+                            'Dashboard Overview',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  const SizedBox(height: 24),
-                  const KpiSummarySection(),
-                  const SizedBox(height: 24),
-                  const QuickActionsSection(),
-                  const SizedBox(height: 24),
-                ],
+                      if (branchLabel != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.store,
+                                size: 16,
+                                color: theme.colorScheme.outline,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                branchLabel,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      const KpiSummarySection(),
+                      const SizedBox(height: 24),
+                      const QuickActionsSection(),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
 
-          // Members Section (virtualized slivers)
-          const DashboardMembersSection(),
+              // Members Section (virtualized slivers)
+              const DashboardMembersSection(),
 
-          // Inventory Alerts + Footer
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  SizedBox(height: 24),
-                  InventoryAlertsSection(),
-                  SizedBox(height: 24),
-                  DashboardFooter(),
-                ],
+              // Inventory Alerts + Footer
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      SizedBox(height: 24),
+                      InventoryAlertsSection(),
+                      SizedBox(height: 24),
+                      DashboardFooter(),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+        ScrollToTopButton(scrollController: scrollController),
+      ],
     );
   }
 }

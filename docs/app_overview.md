@@ -368,6 +368,7 @@ App Root (Shell)
     │   │   └── /organization/roles/:id
     │   └── /organization/branches
     │       └── /organization/branches/:id
+    ├── /outbox (Offline sync queue)
     └── /system (3-panel layout)
         ├── /system/product-categories
         │   └── /system/product-categories/:id
@@ -380,7 +381,7 @@ App Root (Shell)
 | Platform | Component | Description |
 |----------|-----------|-------------|
 | Mobile | Bottom Nav | 3 primary items + More (Dashboard, Check-In, Cashier, More) |
-| Mobile | Drawer | Full menu (10 sections) |
+| Mobile | Drawer | Full menu (11 sections) |
 | Tablet | Navigation Rail | Icons only (72px) |
 | Tablet Large | Expanded Rail | Icons + labels (160px) |
 
@@ -397,7 +398,8 @@ App Root (Shell)
 | 6 | `/memberships` | Memberships | `card_membership` |
 | 7 | `/reports` | Reports | `analytics` |
 | 8 | `/organization` | Organization | `business` |
-| 9 | `/system` | System | `settings` |
+| 9 | `/outbox` | Outbox | `cloud_sync` |
+| 10 | `/system` | System | `settings` |
 
 ---
 
@@ -504,6 +506,9 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 12 | Renew exclude sales | Membership renew dialog can skip creating a sale/receipt (complimentary or admin renewals) |
+| Jul 12 | Outbox nav | Added `/outbox` nav destination to inspect pending offline queue entries with payload details |
+| Jul 12 | Offline outbox | Member create/update (with photo) and membership renew queue to Drift outbox; sync worker drains when online; pending count in app shell |
 | Jul 11 | Domain migration | Staging/prod moved to `*.ebegym.hznsystems.com`; GitHub deploy secrets + fallback API URLs updated |
 | Jul 11 | Member branch | Added `branch` FK on members; backfilled all to Talisay; members list + dashboard filter by selected branch |
 | Jul 11 | Global RFID listener | App-wide HID scanner check-in when logged in; success/error alerts; green/red listening status icon above logout (red on web) |

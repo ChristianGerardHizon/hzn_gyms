@@ -15,10 +15,7 @@ class MembershipAddOnsController extends _$MembershipAddOnsController {
   Future<List<MembershipAddOn>> build(String membershipId) async {
     final result = await _repository.fetchByMembership(membershipId);
 
-    return result.fold(
-      (failure) => throw failure,
-      (addOns) => addOns,
-    );
+    return result.fold((failure) => throw failure, (addOns) => addOns);
   }
 
   /// Refreshes the add-on list.
@@ -37,36 +34,27 @@ class MembershipAddOnsController extends _$MembershipAddOnsController {
   /// Creates a new add-on.
   Future<MembershipAddOn?> createAddOn(MembershipAddOn addOn) async {
     final result = await _repository.create(addOn);
-    return result.fold(
-      (failure) => null,
-      (created) {
-        refresh();
-        return created;
-      },
-    );
+    return result.fold((failure) => null, (created) {
+      refresh();
+      return created;
+    });
   }
 
   /// Updates an existing add-on.
   Future<bool> updateAddOn(MembershipAddOn addOn) async {
     final result = await _repository.update(addOn);
-    return result.fold(
-      (failure) => false,
-      (_) {
-        refresh();
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (_) {
+      refresh();
+      return true;
+    });
   }
 
   /// Deletes an add-on.
   Future<bool> deleteAddOn(String id) async {
     final result = await _repository.delete(id);
-    return result.fold(
-      (failure) => false,
-      (_) {
-        refresh();
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (_) {
+      refresh();
+      return true;
+    });
   }
 }

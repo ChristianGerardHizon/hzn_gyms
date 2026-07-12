@@ -8,6 +8,7 @@ import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
 import 'branch_switcher.dart';
+import 'outbox_queue_badge.dart';
 
 /// Mobile drawer with full navigation menu.
 ///
@@ -142,10 +143,19 @@ class MobileDrawer extends ConsumerWidget {
               onTap: () => _selectAndClose(context, 8),
             ),
             _DrawerItem(
-              icon: Icons.settings,
-              label: t.navigation.system,
+              icon: Icons.cloud_sync,
+              label: t.navigation.outbox,
               selected: selectedIndex == 9,
               onTap: () => _selectAndClose(context, 9),
+              leading: const OutboxQueueBadge(
+                child: Icon(Icons.cloud_sync),
+              ),
+            ),
+            _DrawerItem(
+              icon: Icons.settings,
+              label: t.navigation.system,
+              selected: selectedIndex == 10,
+              onTap: () => _selectAndClose(context, 10),
             ),
 
             const Divider(),
@@ -212,17 +222,19 @@ class _DrawerItem extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.leading,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon),
+      leading: leading ?? Icon(icon),
       title: Text(label),
       selected: selected,
       onTap: onTap,

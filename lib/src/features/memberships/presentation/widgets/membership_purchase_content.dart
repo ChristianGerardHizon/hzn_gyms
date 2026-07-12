@@ -7,6 +7,7 @@ import '../../../../core/widgets/form_feedback.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../data/membership_purchase_orchestrator.dart';
 import '../../data/membership_sale_helper.dart';
 import '../../data/repositories/member_membership_add_on_repository.dart';
 import '../../data/repositories/member_membership_repository.dart';
@@ -42,8 +43,10 @@ class MembershipPurchaseContent extends HookConsumerWidget {
   final String memberName;
 
   /// Called after a successful purchase (standalone mode only).
-  /// Receives the created [Sale] and total price.
-  final void Function(Sale sale, num totalPrice)? onPurchased;
+  ///
+  /// [sale] is null when the renewal was excluded from sales (no receipt).
+  final void Function(Sale? sale, num totalPrice, {bool queuedOffline})?
+  onPurchased;
 
   /// When true, only manages selection state without executing purchase.
   final bool collectOnly;
@@ -69,6 +72,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
     final localMembership = useState<Membership?>(null);
     final localAddOns = useState<Set<MembershipAddOn>>({});
     final isPurchasing = useState(false);
+    final excludeFromSales = useState(false);
     final searchController = useTextEditingController();
     final searchQuery = useState('');
     final showInactive = useState(false);
@@ -132,37 +136,87 @@ class MembershipPurchaseContent extends HookConsumerWidget {
 
       final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
       final auth = ref.read(currentAuthProvider);
-      final startDate = DateTime.now();
-      final endDate = startDate.add(Duration(days: plan.durationDays));
+      final orchestrator = ref.read(membershipPurchaseOrchestratorProvider);
+      final skipSale = isRenewal && excludeFromSales.value;
 
-      // 1. Create a Sale record for this membership purchase
-      final saleResult = await createMembershipSale(
-        ref: ref,
-        memberId: memberId,
-        memberName: memberName,
-        plan: plan,
-        addOns: addOnsState.value,
-        branchId: branchId,
-      );
+      if (orchestrator.shouldQueueOffline) {
+        final result = await orchestrator.purchase(
+          memberId: memberId,
+          memberName: memberName,
+          plan: plan,
+          addOns: addOnsState.value,
+          branchId: branchId,
+          soldBy: auth?.user.id,
+          excludeFromSales: skipSale,
+        );
 
-      Sale? createdSale;
-      saleResult.fold((failure) {}, (sale) => createdSale = sale);
-
-      if (createdSale == null) {
         isPurchasing.value = false;
-        if (context.mounted) {
-          showErrorSnackBar(
-            context,
-            message: 'Failed to create sale for membership',
-            useRootMessenger: false,
-          );
-        }
+
+        result.fold(
+          (failure) {
+            if (context.mounted) {
+              showErrorSnackBar(
+                context,
+                message: 'Failed to queue membership: ${failure.messageString}',
+                useRootMessenger: false,
+              );
+            }
+          },
+          (purchaseResult) {
+            if (context.mounted) {
+              final message = skipSale
+                  ? 'Membership renewal queued (excluded from sales) — will sync when online'
+                  : isRenewal
+                  ? 'Membership renewal queued — will sync when online'
+                  : 'Membership purchase queued — will sync when online';
+              showSuccessSnackBar(
+                context,
+                message: message,
+                useRootMessenger: false,
+              );
+              onPurchased?.call(
+                purchaseResult.sale,
+                purchaseResult.totalPrice,
+                queuedOffline: true,
+              );
+            }
+          },
+        );
         return;
       }
 
-      final saleId = createdSale!.id;
+      final startDate = DateTime.now();
+      final endDate = startDate.add(Duration(days: plan.durationDays));
 
-      // 2. Create MemberMembership record linked to the sale
+      Sale? createdSale;
+
+      if (!skipSale) {
+        // 1. Create a Sale record for this membership purchase
+        final saleResult = await createMembershipSale(
+          ref: ref,
+          memberId: memberId,
+          memberName: memberName,
+          plan: plan,
+          addOns: addOnsState.value,
+          branchId: branchId,
+        );
+
+        saleResult.fold((failure) {}, (sale) => createdSale = sale);
+
+        if (createdSale == null) {
+          isPurchasing.value = false;
+          if (context.mounted) {
+            showErrorSnackBar(
+              context,
+              message: 'Failed to create sale for membership',
+              useRootMessenger: false,
+            );
+          }
+          return;
+        }
+      }
+
+      // 2. Create MemberMembership record (optionally linked to the sale)
       final repo = ref.read(memberMembershipRepositoryProvider);
       final result = await repo.create(
         memberId: memberId,
@@ -170,7 +224,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         startDate: startDate,
         endDate: endDate,
         branchId: branchId,
-        saleId: saleId,
+        saleId: createdSale?.id,
         soldBy: auth?.user.id,
       );
 
@@ -184,7 +238,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         if (context.mounted) {
           showErrorSnackBar(
             context,
-            message: 'Failed to purchase membership',
+            message: skipSale
+                ? 'Failed to renew membership'
+                : 'Failed to purchase membership',
             useRootMessenger: false,
           );
         }
@@ -209,10 +265,12 @@ class MembershipPurchaseContent extends HookConsumerWidget {
       if (context.mounted) {
         showSuccessSnackBar(
           context,
-          message: 'Membership purchased for $memberName',
+          message: skipSale
+              ? 'Membership renewed for $memberName (excluded from sales)'
+              : 'Membership purchased for $memberName',
           useRootMessenger: false,
         );
-        onPurchased?.call(createdSale!, totalPrice);
+        onPurchased?.call(createdSale, totalPrice);
       }
     }
 
@@ -231,12 +289,12 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                 });
               }
 
-              final activePlans =
-                  memberships.where((m) => m.isActive).toList();
+              final activePlans = memberships.where((m) => m.isActive).toList();
               sortPlans(activePlans);
 
-              final inactivePlans =
-                  memberships.where((m) => !m.isActive).toList();
+              final inactivePlans = memberships
+                  .where((m) => !m.isActive)
+                  .toList();
               sortPlans(inactivePlans);
 
               final visiblePlans = showInactive.value
@@ -365,8 +423,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                               child: Text(
                                 query.isEmpty
                                     ? (showInactive.value
-                                        ? 'No membership plans available'
-                                        : 'No active membership plans available')
+                                          ? 'No membership plans available'
+                                          : 'No active membership plans available')
                                     : 'No plans match "${searchQuery.value}"',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
@@ -390,7 +448,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                   backgroundColor: isSelected
                                       ? theme.colorScheme.primary
                                       : theme
-                                          .colorScheme.surfaceContainerHighest,
+                                            .colorScheme
+                                            .surfaceContainerHighest,
                                   child: Icon(
                                     Icons.card_membership,
                                     color: isSelected
@@ -410,17 +469,20 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                         ),
                                         decoration: BoxDecoration(
                                           color: theme
-                                              .colorScheme.surfaceContainerHighest,
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                              .colorScheme
+                                              .surfaceContainerHighest,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Text(
                                           'Inactive',
                                           style: theme.textTheme.labelSmall
                                               ?.copyWith(
-                                            color: theme
-                                                .colorScheme.onSurfaceVariant,
-                                          ),
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
                                         ),
                                       ),
                                     ],
@@ -477,34 +539,64 @@ class MembershipPurchaseContent extends HookConsumerWidget {
           ),
         ),
 
-        // Purchase button (standalone mode only)
+        // Purchase / renew actions (standalone mode only)
         if (!collectOnly)
           Padding(
             padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: membershipState.value != null && !isPurchasing.value
-                    ? handlePurchase
-                    : null,
-                icon: isPurchasing.value
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Icon(isRenewal ? Icons.autorenew : Icons.shopping_cart),
-                label: Text(
-                  membershipState.value != null
-                      ? '${isRenewal ? 'Renew' : 'Purchase'} ${membershipState.value!.name} - ${totalPrice.toCurrency()}'
-                      : isRenewal
-                      ? 'Plan unavailable'
-                      : 'Select a plan',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isRenewal)
+                  CheckboxListTile(
+                    value: excludeFromSales.value,
+                    onChanged: isPurchasing.value
+                        ? null
+                        : (checked) {
+                            excludeFromSales.value = checked ?? false;
+                          },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('Exclude from sales'),
+                    subtitle: Text(
+                      'Renew without creating a sale or receipt',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                if (isRenewal) const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed:
+                        membershipState.value != null && !isPurchasing.value
+                        ? handlePurchase
+                        : null,
+                    icon: isPurchasing.value
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(
+                            isRenewal ? Icons.autorenew : Icons.shopping_cart,
+                          ),
+                    label: Text(
+                      membershipState.value != null
+                          ? excludeFromSales.value && isRenewal
+                                ? 'Renew ${membershipState.value!.name} (no sale)'
+                                : '${isRenewal ? 'Renew' : 'Purchase'} ${membershipState.value!.name} - ${totalPrice.toCurrency()}'
+                          : isRenewal
+                          ? 'Plan unavailable'
+                          : 'Select a plan',
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
       ],

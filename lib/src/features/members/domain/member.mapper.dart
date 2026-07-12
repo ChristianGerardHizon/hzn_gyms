@@ -151,6 +151,12 @@ class MemberMapper extends ClassMapperBase<Member> {
     _$updated,
     opt: true,
   );
+  static SyncStatus? _$syncStatus(Member v) => v.syncStatus;
+  static const Field<Member, SyncStatus> _f$syncStatus = Field(
+    'syncStatus',
+    _$syncStatus,
+    opt: true,
+  );
 
   @override
   final MappableFields<Member> fields = const {
@@ -169,6 +175,7 @@ class MemberMapper extends ClassMapperBase<Member> {
     #branch: _f$branch,
     #created: _f$created,
     #updated: _f$updated,
+    #syncStatus: _f$syncStatus,
   };
 
   static Member _instantiate(DecodingData data) {
@@ -188,6 +195,7 @@ class MemberMapper extends ClassMapperBase<Member> {
       branch: data.dec(_f$branch),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
+      syncStatus: data.dec(_f$syncStatus),
     );
   }
 
@@ -253,6 +261,7 @@ abstract class MemberCopyWith<$R, $In extends Member, $Out>
     String? branch,
     DateTime? created,
     DateTime? updated,
+    SyncStatus? syncStatus,
   });
   MemberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -280,6 +289,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     Object? branch = $none,
     Object? created = $none,
     Object? updated = $none,
+    Object? syncStatus = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -297,6 +307,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
       if (branch != $none) #branch: branch,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
+      if (syncStatus != $none) #syncStatus: syncStatus,
     }),
   );
   @override
@@ -316,6 +327,7 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     branch: data.get(#branch, or: $value.branch),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
+    syncStatus: data.get(#syncStatus, or: $value.syncStatus),
   );
 
   @override

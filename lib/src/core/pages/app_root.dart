@@ -5,9 +5,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/check_in/presentation/widgets/global_rfid_listener.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
+import '../sync/outbox_sync_worker.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/organization.routes.dart';
+import '../routing/routes/outbox.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/members.routes.dart';
 import '../routing/routes/memberships.routes.dart';
@@ -61,7 +63,8 @@ class _AppRootState extends ConsumerState<AppRoot> {
     MembershipsRoute.path, // 6: /memberships
     ReportsRoute.path, // 7: /reports
     OrganizationRoute.path, // 8: /organization
-    SystemRoute.path, // 9: /system
+    OutboxRoute.path, // 9: /outbox
+    SystemRoute.path, // 10: /system
   ];
 
   /// Routes in order of navigation index.
@@ -75,7 +78,8 @@ class _AppRootState extends ConsumerState<AppRoot> {
     MembershipsRoute(), // 6
     ReportsRoute(), // 7
     OrganizationRoute(), // 8
-    SystemRoute(), // 9
+    OutboxRoute(), // 9
+    SystemRoute(), // 10
   ];
 
   /// Gets the selected index based on current route location.
@@ -112,6 +116,8 @@ class _AppRootState extends ConsumerState<AppRoot> {
   Widget build(BuildContext context) {
     // Keep PocketBase health polling alive for the authenticated shell.
     ref.watch(pbConnectivityProvider);
+    // Start outbox sync worker (drains when online).
+    ref.watch(outboxSyncWorkerProvider);
 
     final isMobile = Breakpoints.isMobile(context);
 
