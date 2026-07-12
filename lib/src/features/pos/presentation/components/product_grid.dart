@@ -72,13 +72,13 @@ class ProductGrid extends ConsumerWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 // Responsive columns based on available width
-                // Mobile: 3 columns, Tablet: 4-5 columns, Large: 6+ columns
+                // Mobile: 2 columns, Tablet: 4-5 columns, Large: 6+ columns
                 final width = constraints.maxWidth;
-                final crossAxisCount = width < 400
-                    ? 3
-                    : width < 600
+                final crossAxisCount = width < 600
+                    ? 2
+                    : width < 900
                         ? 4
-                        : width < 900
+                        : width < 1200
                             ? 5
                             : 6;
 
