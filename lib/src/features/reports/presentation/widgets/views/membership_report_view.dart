@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/membership_report.dart';
 import '../../controllers/membership_report_controller.dart';
 import '../charts/bar_chart_widget.dart';
@@ -24,9 +25,7 @@ class MembershipReportView extends ConsumerWidget {
     return reportAsync.when(
       data: (report) => _buildContent(context, report),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Text('Error loading membership report: $error'),
-      ),
+      error: (error, stack) => ErrorState.fromError(error, compact: true),
     );
   }
 

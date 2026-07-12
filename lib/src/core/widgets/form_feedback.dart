@@ -62,7 +62,7 @@ void showFormErrorDialog(
                         '\u2022 ',
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
-                      Expanded(child: Text(error)),
+                      Expanded(child: SelectableText(error)),
                     ],
                   ),
                 ))
@@ -135,7 +135,12 @@ void showErrorSnackBar(
         children: [
           const Icon(Icons.error_outline, color: Colors.white),
           const SizedBox(width: 8),
-          Expanded(child: Text(message)),
+          Expanded(
+            child: SelectableText(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
         ],
       ),
       behavior: SnackBarBehavior.floating,

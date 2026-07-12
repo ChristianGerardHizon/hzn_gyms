@@ -19,6 +19,7 @@ import '../../../features/settings/presentation/controllers/quantity_units_contr
 import '../../../features/settings/presentation/widgets/dialogs/quantity_unit_form_dialog.dart';
 import '../../../features/quantity_units/domain/quantity_unit.dart';
 import '../../utils/breakpoints.dart';
+import '../../widgets/state/error_state.dart';
 
 part 'system.routes.g.dart';
 
@@ -401,20 +402,9 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
       ),
       body: categoriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => controller.refresh(),
         ),
         data: (categories) {
           if (categories.isEmpty) {
@@ -549,20 +539,9 @@ class _MobilePrinterListPage extends ConsumerWidget {
       ),
       body: printersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => controller.refresh(),
         ),
         data: (printers) {
           if (printers.isEmpty) {
@@ -688,20 +667,9 @@ class _MobileQuantityUnitsListPage extends ConsumerWidget {
       ),
       body: unitsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => controller.refresh(),
         ),
         data: (units) {
           if (units.isEmpty) {

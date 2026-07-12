@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../../core/routing/routes/organization.routes.dart';
 import '../../../settings/domain/branch.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
@@ -110,20 +111,10 @@ class _UsersListWrapper extends ConsumerWidget {
       body: usersAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => usersController.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => usersController.refresh(),
         ),
         data: (paginatedState) => UserListPanel(
           paginatedState: paginatedState,
@@ -153,20 +144,10 @@ class _RolesListWrapper extends ConsumerWidget {
     return rolesAsync.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            Text('Error: ${error.toString()}'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => rolesController.refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, stack) => ErrorState.fromError(
+        error,
+        compact: true,
+        onRetry: () => rolesController.refresh(),
       ),
       data: (roles) => UserRoleListPanel(
         roles: roles,
@@ -248,20 +229,10 @@ class _BranchesListWrapper extends HookConsumerWidget {
       body: branchesAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => controller.refresh(),
         ),
         data: (branches) {
           final filteredBranches = isSearchActive

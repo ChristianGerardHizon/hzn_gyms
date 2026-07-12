@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/organization.routes.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/branch.dart';
 import '../controllers/branches_controller.dart';
 import '../widgets/dialogs/branch_form_dialog.dart';
@@ -25,21 +26,10 @@ class BranchesPage extends ConsumerWidget {
       ),
       body: branchesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () =>
-                    ref.read(branchesControllerProvider.notifier).refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () =>
+              ref.read(branchesControllerProvider.notifier).refresh(),
         ),
         data: (branches) {
           if (branches.isEmpty) {

@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
@@ -528,13 +529,10 @@ class MembershipPurchaseContent extends HookConsumerWidget {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (_, __) => Center(
-              child: Text(
-                'Error loading plans',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
+            error: (error, _) => ErrorState.fromError(
+              error,
+              compact: true,
+              onRetry: () => ref.invalidate(membershipsControllerProvider),
             ),
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
 import '../controllers/membership_provider.dart';
@@ -130,7 +131,7 @@ class MembershipDetailPage extends HookConsumerWidget {
       ),
       error: (error, stack) => Scaffold(
         appBar: AppBar(automaticallyImplyLeading: !isTablet),
-        body: Center(child: Text('Error: $error')),
+        body: ErrorState.fromError(error),
       ),
     );
   }
@@ -260,15 +261,11 @@ class _AddOnsSection extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (_, __) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Text(
-                    'Error loading add-ons',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
+              error: (error, _) => ErrorState.fromError(
+                error,
+                compact: true,
+                onRetry: () => ref.invalidate(
+                  membershipAddOnsControllerProvider(membershipId),
                 ),
               ),
             ),

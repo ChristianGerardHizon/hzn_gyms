@@ -15,7 +15,7 @@ Future<void> showCheckInErrorDialog(
         size: 48,
       ),
       title: Text(title),
-      content: Text(message, textAlign: TextAlign.center),
+      content: SelectableText(message, textAlign: TextAlign.center),
       actions: [
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),

@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../pos/presentation/controllers/pos_groups_controller.dart';
 import '../../../pos/presentation/widgets/cashier_group_detail_panel.dart';
 import '../../../products/domain/product_category.dart';
@@ -156,20 +157,10 @@ class _ProductCategoryListWrapper extends ConsumerWidget {
       body: categoriesAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => controller.refresh(),
         ),
         data: (categories) {
           if (categories.isEmpty) {
@@ -320,20 +311,10 @@ class _PrinterListWrapper extends ConsumerWidget {
       body: printersAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => controller.refresh(),
         ),
         data: (printers) {
           if (printers.isEmpty) {
@@ -457,20 +438,10 @@ class _QuantityUnitListWrapper extends ConsumerWidget {
       body: unitsAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => controller.refresh(),
         ),
         data: (units) {
           if (units.isEmpty) {
@@ -565,20 +536,10 @@ class _CashierGroupListWrapper extends ConsumerWidget {
       body: groupsAsync.when(
         skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          compact: true,
+          onRetry: () => controller.refresh(),
         ),
         data: (groups) {
           if (groups.isEmpty) {

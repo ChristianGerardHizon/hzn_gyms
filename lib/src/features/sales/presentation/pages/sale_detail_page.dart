@@ -7,6 +7,7 @@ import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/utils/breakpoints.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/payment_type.dart';
@@ -45,20 +46,9 @@ class SaleDetailPage extends ConsumerWidget {
                   onPressed: () => const SalesHistoryRoute().go(context),
                 ),
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error loading sale: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(saleProvider(saleId)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          onRetry: () => ref.invalidate(saleProvider(saleId)),
         ),
       ),
       data: (sale) {
@@ -209,9 +199,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (error, _) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Error loading items: $error'),
+                  error: (error, _) => ErrorState.fromError(
+                    error,
+                    compact: true,
                   ),
                   data: (items) => items.isEmpty
                       ? const Padding(
@@ -573,9 +563,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                   child: CircularProgressIndicator(),
                 ),
               ),
-              error: (error, _) => Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text('Error loading payments: $error'),
+              error: (error, _) => ErrorState.fromError(
+                error,
+                compact: true,
               ),
               data: (payments) {
                 // Calculate totals

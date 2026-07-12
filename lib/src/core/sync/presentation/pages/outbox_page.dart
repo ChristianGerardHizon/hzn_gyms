@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../widgets/state/error_state.dart';
 import '../../outbox_sync_worker.dart';
 import '../../sync_status.dart';
 
@@ -43,20 +44,9 @@ class OutboxPage extends ConsumerWidget {
       ),
       body: entriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => ref.invalidate(outboxPendingEntriesProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, _) => ErrorState.fromError(
+          error,
+          onRetry: () => ref.invalidate(outboxPendingEntriesProvider),
         ),
         data: (entries) {
           if (entries.isEmpty) {

@@ -16,36 +16,41 @@ sealed class Failure with FailureMappable {
 
   String get messageString {
     final error = message;
-    var returnMessage = 'Something went wrong';
 
     if (error is ClientException) {
-      print(error.toString());
-      final defaultMessage = 'Server Request has failed';
       final data = error.response;
-      returnMessage = data['message'] ?? defaultMessage;
+      final serverMessage = data['message'];
+      if (serverMessage is String && serverMessage.isNotEmpty) {
+        return serverMessage;
+      }
+      if (error.originalError is String &&
+          (error.originalError as String).isNotEmpty) {
+        return error.originalError as String;
+      }
+      if (error.statusCode > 0) {
+        return 'Server request failed (HTTP ${error.statusCode})';
+      }
+      return 'Server request has failed';
     }
 
     if (error is JsonUnsupportedObjectError) {
-      print(error.toString());
-      returnMessage = 'Unsupported Object';
-    }
-
-    if (error is GenericFailure) {
-      print(error.toString());
-      final defaultMessage = 'Generic Failure';
-      final data = error.message;
-      returnMessage = data ?? defaultMessage;
-    }
-
-    if (error is String) {
-      returnMessage = error;
+      return 'Unsupported Object';
     }
 
     if (error is Failure) {
-      returnMessage = error.message;
+      return error.messageString;
     }
 
-    return returnMessage;
+    if (error is String) {
+      return error;
+    }
+
+    if (error != null) {
+      final text = error.toString();
+      if (text.isNotEmpty) return text;
+    }
+
+    return 'Something went wrong';
   }
 
   static const fromMap = FailureMapper.fromMap;

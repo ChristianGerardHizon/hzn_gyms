@@ -4,6 +4,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../cart_controller.dart';
 import 'checkout_dialog.dart';
 import 'variable_price_dialog.dart';
@@ -18,7 +19,7 @@ class CartView extends ConsumerWidget {
 
     return cartAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error: $error')),
+      error: (error, stack) => ErrorState.fromError(error, compact: true),
       data: (cartState) {
         final cartItems = cartState.items;
         final total = cartState.total;

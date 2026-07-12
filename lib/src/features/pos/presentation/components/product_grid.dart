@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../products/domain/product.dart';
@@ -33,7 +34,7 @@ class ProductGrid extends ConsumerWidget {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return ErrorState.fromError(snapshot.error!, compact: true);
         }
 
         final result = snapshot.data;
@@ -42,7 +43,7 @@ class ProductGrid extends ConsumerWidget {
         }
 
         return result.fold(
-          (failure) => Center(child: Text('Error: ${failure.message}')),
+          (failure) => ErrorState.fromError(failure, compact: true),
           (products) {
             if (products.isEmpty) {
               return Center(
