@@ -73,6 +73,9 @@ class OutboxDao extends DatabaseAccessor<AppDatabase> with _$OutboxDaoMixin {
   }
 
   /// Returns the next ready pending entry (FIFO, respects dependencies).
+  ///
+  /// Dependents of [failed]/[conflict] parents are cascade-marked with the
+  /// same status so they do not remain stuck as pending forever.
   Future<OutboxEntryRow?> getNextReady() async {
     final pending =
         await (select(outboxEntries)
@@ -87,10 +90,48 @@ class OutboxDao extends DatabaseAccessor<AppDatabase> with _$OutboxDaoMixin {
         outboxEntries,
       )..where((e) => e.id.equals(entry.dependsOnId!))).getSingleOrNull();
 
-      if (parent != null && parent.status == 'synced') return entry;
+      if (parent == null) {
+        // Parent missing — treat as blocked and surface as failed.
+        await markStatus(
+          entry.id,
+          status: 'failed',
+          lastError: 'Parent outbox entry is missing',
+        );
+        continue;
+      }
+
+      if (parent.status == 'synced') return entry;
+
+      if (parent.status == 'failed' || parent.status == 'conflict') {
+        await markStatus(
+          entry.id,
+          status: parent.status,
+          lastError:
+              parent.lastError ??
+              'Blocked by parent outbox entry (${parent.status})',
+        );
+        continue;
+      }
+
+      // Parent still pending — wait for it.
     }
 
     return null;
+  }
+
+  /// Finds a pending/failed member create outbox entry for [clientRecordId].
+  Future<OutboxEntryRow?> findPendingMemberCreate(String clientRecordId) {
+    return (select(outboxEntries)
+          ..where(
+            (e) =>
+                e.clientRecordId.equals(clientRecordId) &
+                e.entityType.equals('member') &
+                e.operation.equals('create') &
+                (e.status.equals('pending') | e.status.equals('failed')),
+          )
+          ..orderBy([(e) => OrderingTerm.asc(e.createdAt)])
+          ..limit(1))
+        .getSingleOrNull();
   }
 
   /// Marks an outbox entry status.

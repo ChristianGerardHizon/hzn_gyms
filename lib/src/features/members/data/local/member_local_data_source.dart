@@ -97,12 +97,19 @@ class MemberLocalDataSource {
   }
 
   /// Upserts members from DTOs (preserves raw photo filenames).
+  ///
+  /// Skips IDs that already have pending/failed/conflict local state so a
+  /// server refresh cannot wipe offline edits or local photo paths.
   Future<void> upsertFromDtos(
     Iterable<MemberDto> dtos, {
     SyncStatus syncStatus = SyncStatus.synced,
   }) async {
+    final unsyncedIds = syncStatus == SyncStatus.synced
+        ? await _dao.getUnsyncedIds()
+        : const <String>{};
     final now = DateTime.now();
     final companions = dtos
+        .where((dto) => !unsyncedIds.contains(dto.id))
         .map((dto) => _mapDtoToCompanion(dto, now, syncStatus: syncStatus))
         .toList();
     await _dao.upsertMembers(companions);
@@ -144,14 +151,25 @@ class MemberLocalDataSource {
     return path;
   }
 
-  /// Replaces the entire cache with the provided DTOs.
+  /// Replaces the synced cache with the provided DTOs.
+  ///
+  /// Pending/failed/conflict local members are preserved across the refresh.
   Future<void> replaceAllFromDtos(Iterable<MemberDto> dtos) async {
+    final unsynced = await _dao.getUnsynced();
     await _dao.clearAll();
     await upsertFromDtos(dtos);
+    if (unsynced.isNotEmpty) {
+      await _dao.upsertMembers(
+        unsynced.map(_mapRowToCompanion).toList(),
+      );
+    }
   }
 
   /// Deletes a member from the cache.
   Future<void> deleteMember(String id) => _dao.deleteMember(id);
+
+  /// Clears synced cached members only (keeps offline pending edits).
+  Future<void> clearSynced() => _dao.clearSynced();
 
   /// Clears all cached members.
   Future<void> clearAll() => _dao.clearAll();
@@ -159,6 +177,29 @@ class MemberLocalDataSource {
   /// Returns whether the cache has any members.
   Future<bool> hasCachedMembers() async {
     return (await _dao.countAll()) > 0;
+  }
+
+  MembersCompanion _mapRowToCompanion(MemberRow row) {
+    return MembersCompanion(
+      id: Value(row.id),
+      name: Value(row.name),
+      photoFile: Value(row.photoFile),
+      mobileNumber: Value(row.mobileNumber),
+      dateOfBirth: Value(row.dateOfBirth),
+      address: Value(row.address),
+      sex: Value(row.sex),
+      remarks: Value(row.remarks),
+      addedBy: Value(row.addedBy),
+      rfidCardId: Value(row.rfidCardId),
+      email: Value(row.email),
+      emergencyContact: Value(row.emergencyContact),
+      branch: Value(row.branch),
+      created: Value(row.created),
+      updated: Value(row.updated),
+      syncedAt: Value(row.syncedAt),
+      syncStatus: Value(row.syncStatus),
+      localPhotoPath: Value(row.localPhotoPath),
+    );
   }
 
   Member _mapRowToEntity(MemberRow row) {

@@ -146,20 +146,22 @@ class MemberRepositoryImpl implements MemberRepository {
   }
 
   @override
-  Future<void> invalidateCache() => _localDataSource.clearAll();
+  Future<void> invalidateCache() => _localDataSource.clearSynced();
 
   @override
   FutureEither<List<Member>> fetchAll({String? filter, String? sort}) async {
     return TaskEither.tryCatch(() async {
+      final sortValue = sort ?? 'name';
       final records = await _collection.getFullList(
         filter: filter,
-        sort: sort ?? 'name',
+        sort: sortValue,
       );
 
       final dtos = records.map(MemberDto.fromRecord).toList();
       await _localDataSource.replaceAllFromDtos(dtos);
 
-      return dtos.map((dto) => dto.toEntity(baseUrl: _pb.baseURL)).toList();
+      // Read back from cache so pending offline members remain visible.
+      return _localDataSource.getAll(sort: sortValue);
     }, Failure.handle).run();
   }
 

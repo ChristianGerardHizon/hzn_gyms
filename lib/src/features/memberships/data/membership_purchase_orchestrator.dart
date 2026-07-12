@@ -110,6 +110,9 @@ class MembershipPurchaseOrchestrator {
       MemberMembership? syntheticMembership;
 
       await _db.transaction(() async {
+        final memberCreateOutboxId =
+            await _outbox.findPendingMemberCreateId(memberId);
+
         String? saleId;
         String? saleOutboxId;
 
@@ -120,6 +123,7 @@ class MembershipPurchaseOrchestrator {
           saleOutboxId = await _outbox.enqueueCreate(
             entityType: OutboxEntityType.sale,
             clientRecordId: saleId,
+            dependsOnId: memberCreateOutboxId,
             payload: {
               'receiptNumber': receiptNumber,
               'branch': branchId,
@@ -192,7 +196,7 @@ class MembershipPurchaseOrchestrator {
         final mmOutboxId = await _outbox.enqueueCreate(
           entityType: OutboxEntityType.memberMembership,
           clientRecordId: membershipId,
-          dependsOnId: saleOutboxId,
+          dependsOnId: saleOutboxId ?? memberCreateOutboxId,
           payload: {
             'member': memberId,
             'membership': plan.id,

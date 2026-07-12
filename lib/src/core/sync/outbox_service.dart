@@ -152,6 +152,12 @@ class OutboxService {
     return outboxId;
   }
 
+  /// Returns the outbox id of a pending/failed member create for [memberId].
+  Future<String?> findPendingMemberCreateId(String memberId) async {
+    final row = await _dao.findPendingMemberCreate(memberId);
+    return row?.id;
+  }
+
   Future<OutboxAttachmentRow?> getAttachment(String outboxId) =>
       _dao.getAttachment(outboxId);
 
