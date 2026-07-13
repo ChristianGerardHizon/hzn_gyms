@@ -191,6 +191,8 @@ Membership plan templates.
 | `branch` | String (FK) | No | Catalog/home branch FK to Branch |
 | `validBranches` | List\<String\> (FK) | No | Multi-relation to Branch — branches where this plan grants check-in access. Empty = all branches |
 | `isActive` | bool | Yes | Whether plan is currently offered |
+| `isFavorite` | bool | No | Pinned to top of plan selection lists |
+| `memberNotRequired` | bool | No | Day pass / walk-in plan — sold with customer name only (no linked member membership). Default `false` |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
@@ -216,6 +218,7 @@ Add-on options for membership plans (e.g., "Treadmill Access", "Coach/Instructor
 | `name` | String | Yes | Add-on name |
 | `description` | String | No | Add-on description |
 | `price` | num | Yes | Price in PHP |
+| `durationDays` | int | No | Extra days added to the membership end date when selected (e.g. `90` for a 3-month promo). Default `0` (no date change) |
 | `isActive` | bool | No | Whether currently offered |
 | `isDeleted` | bool | No | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
