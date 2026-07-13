@@ -60,4 +60,24 @@ abstract class PocketBaseCollections {
   static const String vwPosSearchItems = 'vw_pos_search_items';
   static const String membersWithMembershipStatus =
       'membersWithMembershipStatus';
+  static const String vwRevenueByItemType = 'vw_revenue_by_item_type';
+  static const String vwCheckinsDailySummary = 'vw_checkins_daily_summary';
+
+  // Period-bucketed report views
+  static const String vwSalesWeeklySummary = 'vw_sales_weekly_summary';
+  static const String vwSalesMonthlySummary = 'vw_sales_monthly_summary';
+  static const String vwSalesYearlySummary = 'vw_sales_yearly_summary';
+  static const String vwRevenueByItemTypeWeekly =
+      'vw_revenue_by_item_type_weekly';
+  static const String vwRevenueByItemTypeMonthly =
+      'vw_revenue_by_item_type_monthly';
+  static const String vwRevenueByItemTypeYearly =
+      'vw_revenue_by_item_type_yearly';
+  static const String vwTopSellingProductsMonthly =
+      'vw_top_selling_products_monthly';
+  static const String vwTopSellingProductsYearly =
+      'vw_top_selling_products_yearly';
+  static const String vwCheckinsWeeklySummary = 'vw_checkins_weekly_summary';
+  static const String vwCheckinsMonthlySummary = 'vw_checkins_monthly_summary';
+  static const String vwCheckinsYearlySummary = 'vw_checkins_yearly_summary';
 }

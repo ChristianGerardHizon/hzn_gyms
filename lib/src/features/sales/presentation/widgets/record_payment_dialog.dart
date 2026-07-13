@@ -216,7 +216,7 @@ class RecordPaymentDialog extends HookConsumerWidget {
                   border: InputBorder.none,
                 ),
                 spacing: 8,
-                options: PaymentType.values
+                options: PaymentType.forRecording
                     .map((type) => FormBuilderChipOption(
                           value: type,
                           child: Text(type.displayName),

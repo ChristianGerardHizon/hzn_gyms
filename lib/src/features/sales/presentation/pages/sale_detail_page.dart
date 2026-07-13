@@ -94,6 +94,8 @@ class _SaleDetailContent extends HookConsumerWidget {
     final paymentsAsync = ref.watch(salePaymentsProvider(sale.id));
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
     final currencyFormat = NumberFormat.currency(symbol: '₱');
+    final headline = sale.detailTitle;
+    final showReceiptSubtitle = headline != sale.receiptNumber;
 
     return Scaffold(
       appBar: AppBar(
@@ -104,7 +106,11 @@ class _SaleDetailContent extends HookConsumerWidget {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => const SalesHistoryRoute().go(context),
               ),
-        title: Text(sale.receiptNumber),
+        title: Text(
+          headline,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.print),
@@ -147,9 +153,23 @@ class _SaleDetailContent extends HookConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  sale.receiptNumber,
-                                  style: theme.textTheme.titleLarge,
+                                  headline,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                if (showReceiptSubtitle) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    sale.receiptNumber,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color:
+                                          theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 4),
                                 Text(
                                   sale.created != null
@@ -166,12 +186,10 @@ class _SaleDetailContent extends HookConsumerWidget {
                         ],
                       ),
                       const Divider(height: 24),
-                      if (sale.customerName != null &&
-                          sale.customerName!.isNotEmpty)
-                        _CustomerInfoRow(
-                          customerName: sale.customerName!,
-                          customerId: sale.customerId,
-                        ),
+                      _CustomerInfoRow(
+                        customerName: sale.customerDisplay,
+                        customerId: sale.customerId,
+                      ),
                       if (sale.notes != null && sale.notes!.isNotEmpty)
                         _InfoRow(
                           icon: Icons.note,

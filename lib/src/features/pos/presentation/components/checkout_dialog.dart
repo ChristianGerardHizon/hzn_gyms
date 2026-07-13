@@ -130,9 +130,10 @@ class CheckoutDialog extends HookConsumerWidget {
                   ))
               .toList();
 
-          // Refresh sales list & dashboard
+          // Refresh sales list & dashboard (include todaySales for Recent Transactions)
           ref.invalidate(paginatedSalesControllerProvider);
           ref.invalidate(todaySalesSummaryProvider);
+          ref.invalidate(todaySalesProvider);
 
           // Close checkout dialog
           context.pop();
@@ -152,6 +153,7 @@ class CheckoutDialog extends HookConsumerWidget {
           ref.invalidate(saleProvider(sale.id));
           ref.invalidate(paginatedSalesControllerProvider);
           ref.invalidate(todaySalesSummaryProvider);
+          ref.invalidate(todaySalesProvider);
 
           Sale receiptSale = sale;
           try {
@@ -516,6 +518,13 @@ class _MemberSelectionCard extends HookConsumerWidget {
                   },
                 ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Leave empty for walk-in customers',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
 

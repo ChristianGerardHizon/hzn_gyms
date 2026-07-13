@@ -1,0 +1,285 @@
+import 'package:ebe_gym/src/features/reports/domain/report_aggregations.dart';
+import 'package:ebe_gym/src/features/reports/domain/report_period.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  group('formatViewDate', () {
+    test('pads month and day', () {
+      expect(formatViewDate(DateTime(2026, 7, 4)), '2026-07-04');
+    });
+  });
+
+  group('calendar boundaries', () {
+    test('startOfWeekMonday is Monday', () {
+      // 2026-07-14 is Tuesday
+      final monday = startOfWeekMonday(DateTime(2026, 7, 14));
+      expect(monday.weekday, DateTime.monday);
+      expect(monday, DateTime(2026, 7, 13));
+    });
+
+    test('endOfWeekSunday is Sunday', () {
+      final sunday = endOfWeekSunday(DateTime(2026, 7, 14));
+      expect(sunday.weekday, DateTime.sunday);
+      expect(sunday.day, 19);
+    });
+
+    test('startOfMonth / endOfMonth', () {
+      expect(startOfMonth(DateTime(2026, 7, 14)), DateTime(2026, 7));
+      final end = endOfMonth(DateTime(2026, 7, 14));
+      expect(end.day, 31);
+      expect(end.month, 7);
+    });
+
+    test('startOfYear / endOfYear', () {
+      expect(startOfYear(DateTime(2026, 7, 14)), DateTime(2026));
+      final end = endOfYear(DateTime(2026, 7, 14));
+      expect(end, DateTime(2026, 12, 31, 23, 59, 59, 999));
+    });
+  });
+
+  group('ReportPeriodSelection calendar ranges', () {
+    test('day starts at midnight today', () {
+      final now = DateTime.now();
+      final selection = ReportPeriodSelection.current(ReportPeriod.day);
+      expect(selection.startDate, DateTime(now.year, now.month, now.day));
+      expect(selection.trendGranularity, TrendGranularity.day);
+    });
+
+    test('weekly is Mon–Sun grain day', () {
+      final selection = ReportPeriodSelection.current(ReportPeriod.weekly);
+      expect(selection.trendGranularity, TrendGranularity.day);
+      expect(selection.startDate.weekday, DateTime.monday);
+    });
+
+    test('monthly grain is week', () {
+      final selection = ReportPeriodSelection.current(ReportPeriod.monthly);
+      expect(selection.trendGranularity, TrendGranularity.week);
+      expect(selection.startDate.day, 1);
+    });
+
+    test('yearly grain is month and starts Jan 1', () {
+      final selection = ReportPeriodSelection.current(ReportPeriod.yearly);
+      expect(selection.trendGranularity, TrendGranularity.month);
+      expect(selection.startDate.month, 1);
+      expect(selection.startDate.day, 1);
+    });
+
+    test('allTime grain is year', () {
+      final selection = ReportPeriodSelection.current(ReportPeriod.allTime);
+      expect(selection.trendGranularity, TrendGranularity.year);
+      expect(selection.startDate.year, 2019);
+    });
+
+    test('withRangeStart snaps week to Monday', () {
+      // 2026-07-15 is Wednesday
+      final selection = ReportPeriodSelection.current(ReportPeriod.weekly)
+          .withRangeStart(DateTime(2026, 7, 15));
+      expect(selection.rangeStart, DateTime(2026, 7, 13));
+      expect(selection.rangeStart.weekday, DateTime.monday);
+    });
+
+    test('withRangeEnd snaps month to month end', () {
+      final selection = ReportPeriodSelection(
+        period: ReportPeriod.monthly,
+        rangeStart: DateTime(2026, 1),
+        rangeEnd: DateTime(2026, 1, 31, 23, 59, 59, 999),
+      ).withRangeEnd(DateTime(2026, 3, 10));
+      expect(selection.rangeEnd.month, 3);
+      expect(selection.rangeEnd.day, 31);
+    });
+
+    test('withRangeStart after end moves end forward', () {
+      final selection = ReportPeriodSelection(
+        period: ReportPeriod.day,
+        rangeStart: DateTime(2026, 7, 1),
+        rangeEnd: DateTime(2026, 7, 1, 23, 59, 59, 999),
+      ).withRangeStart(DateTime(2026, 7, 10));
+      expect(selection.rangeStart, DateTime(2026, 7, 10));
+      expect(startOfDay(selection.rangeEnd), DateTime(2026, 7, 10));
+    });
+
+    test('displayRangeLabel for single month', () {
+      final selection = ReportPeriodSelection(
+        period: ReportPeriod.monthly,
+        rangeStart: DateTime(2026, 7),
+        rangeEnd: DateTime(2026, 7, 31, 23, 59, 59, 999),
+      );
+      expect(selection.displayRangeLabel, 'July 2026');
+    });
+
+    test('withDay sets a single calendar day', () {
+      final selection = ReportPeriodSelection.current(ReportPeriod.day)
+          .withDay(DateTime(2026, 7, 4, 15, 30));
+      expect(selection.rangeStart, DateTime(2026, 7, 4));
+      expect(selection.rangeEnd.day, 4);
+      expect(selection.rangeEnd.hour, 23);
+      expect(selection.displayRangeLabel, contains('Jul 4'));
+    });
+  });
+
+  group('buildSaleDateViewFilter', () {
+    test('includes date range and branch', () {
+      final filter = buildSaleDateViewFilter(
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 2, 1),
+        branchId: 'branch-1',
+      );
+      expect(filter, contains("sale_date >= '2026-01-01'"));
+      expect(filter, contains("sale_date <= '2026-02-01'"));
+      expect(filter, contains('branch = "branch-1"'));
+    });
+
+    test('month filter uses YYYY-MM', () {
+      final filter = buildViewDateRangeFilter(
+        field: 'sale_month',
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 12, 31),
+        asMonth: true,
+      );
+      expect(filter, contains("sale_month >= '2026-01'"));
+      expect(filter, contains("sale_month <= '2026-12'"));
+    });
+
+    test('year filter uses YYYY', () {
+      final filter = buildViewDateRangeFilter(
+        field: 'sale_year',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2026, 12, 31),
+        asYear: true,
+      );
+      expect(filter, contains("sale_year >= '2024'"));
+      expect(filter, contains("sale_year <= '2026'"));
+    });
+  });
+
+  group('zeroFillBuckets', () {
+    test('week returns 7 day buckets', () {
+      final monday = DateTime(2026, 7, 13);
+      final sunday = DateTime(2026, 7, 19);
+      final buckets = zeroFillBuckets(
+        values: {monday: 10},
+        rangeStart: monday,
+        rangeEnd: sunday,
+        grain: TrendGranularity.day,
+      );
+      expect(buckets.length, 7);
+      expect(buckets.first.value, 10);
+      expect(buckets[1].value, 0);
+      expect(buckets.first.label, isNotEmpty);
+    });
+
+    test('year returns 12 month buckets', () {
+      final buckets = zeroFillBuckets(
+        values: {DateTime(2026, 3): 5},
+        rangeStart: DateTime(2026, 1, 1),
+        rangeEnd: DateTime(2026, 12, 31),
+        grain: TrendGranularity.month,
+      );
+      expect(buckets.length, 12);
+      expect(buckets[2].value, 5); // March
+      expect(buckets[0].value, 0);
+      expect(buckets[0].label, 'Jan');
+    });
+
+    test('all time returns year buckets', () {
+      final buckets = zeroFillBuckets(
+        values: {DateTime(2025): 100},
+        rangeStart: DateTime(2024),
+        rangeEnd: DateTime(2026),
+        grain: TrendGranularity.year,
+      );
+      expect(buckets.length, 3);
+      expect(buckets[1].value, 100);
+      expect(buckets[1].label, '2025');
+    });
+  });
+
+  group('parseBucketStart', () {
+    test('parses day and month keys', () {
+      expect(
+        parseBucketStart('2026-07-14', TrendGranularity.day),
+        DateTime(2026, 7, 14),
+      );
+      expect(
+        parseBucketStart('2026-07', TrendGranularity.month),
+        DateTime(2026, 7),
+      );
+      expect(
+        parseBucketStart('2026', TrendGranularity.year),
+        DateTime(2026),
+      );
+    });
+  });
+
+  group('view selectors', () {
+    test('salesSummaryViewFor maps periods', () {
+      expect(salesSummaryViewFor(ReportPeriod.day).collection,
+          'vw_sales_daily_summary');
+      expect(salesSummaryViewFor(ReportPeriod.monthly).collection,
+          'vw_sales_weekly_summary');
+      expect(salesSummaryViewFor(ReportPeriod.yearly).collection,
+          'vw_sales_monthly_summary');
+      expect(salesSummaryViewFor(ReportPeriod.allTime).collection,
+          'vw_sales_yearly_summary');
+    });
+  });
+
+  group('aggregateRevenueByItemType', () {
+    test('groups product membership addon and defaults empty to product', () {
+      final result = aggregateRevenueByItemType([
+        (itemType: 'product', subtotal: 100),
+        (itemType: 'membership', subtotal: 500),
+        (itemType: 'addon', subtotal: 50),
+        (itemType: null, subtotal: 25),
+        (itemType: '', subtotal: 10),
+      ]);
+      expect(result['product'], 135);
+      expect(result['membership'], 500);
+      expect(result['addon'], 50);
+    });
+  });
+
+  group('itemTypeLabel', () {
+    test('maps known types', () {
+      expect(itemTypeLabel('product'), 'Product');
+      expect(itemTypeLabel('membership'), 'Membership');
+      expect(itemTypeLabel('addon'), 'Add-on');
+    });
+  });
+
+  group('classifyNewVsRenewals', () {
+    test('counts first-time vs renewals', () {
+      final period = [
+        (id: 'mm1', memberId: 'm1', created: DateTime(2026, 6, 1)),
+        (id: 'mm2', memberId: 'm2', created: DateTime(2026, 6, 2)),
+      ];
+      final priors = {
+        'm1': [DateTime(2025, 1, 1)],
+        'm2': <DateTime>[],
+      };
+      final result = classifyNewVsRenewals(period, priors);
+      expect(result.renewals, 1);
+      expect(result.newSubscriptions, 1);
+    });
+  });
+
+  group('buildIdOrFilters', () {
+    test('chunks ids', () {
+      final ids = List.generate(3, (i) => 'id$i');
+      final filters = buildIdOrFilters('member', ids, chunkSize: 2);
+      expect(filters.length, 2);
+    });
+  });
+
+  group('aggregateCheckInsByHour', () {
+    test('buckets by hour', () {
+      final result = aggregateCheckInsByHour([
+        DateTime(2026, 1, 1, 9),
+        DateTime(2026, 1, 1, 9, 30),
+        DateTime(2026, 1, 1, 18),
+      ]);
+      expect(result['09'], 2);
+      expect(result['18'], 1);
+    });
+  });
+}

@@ -27,19 +27,14 @@ Home screen with gym metrics and quick actions.
 
 - Responsive layout (single column mobile, single-pane tablet)
 - KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
-- Quick action buttons: Check-In, New Sale, Renew, New Member
+- Quick action buttons: Check-In, Walk-in Sale, Renew, New Member
+- Walk-in Sale opens a cashier dialog on the dashboard (no route change); leave member empty at checkout so the sale shows as "Walk-in"
 - Renew Membership: pick any member, then choose a plan for the current branch; if they still have an active membership, the new period starts the day after it ends
-- Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's full list
+- Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's transactions dialog
 - Members grid: tap a member for a quick-view dialog (details + membership summary, Renew / Purchase, Show full details)
 - Expiring memberships section (memberships expiring within 7 days)
 - Inventory alerts (low stock, expiring products)
 - Pull-to-refresh invalidates all dashboard data
-
-#### Today's Transactions (`/todays-transactions`)
-Full list of sales made today for the current branch (opened from dashboard View All).
-
-- Pull-to-refresh
-- Tap a row to open sale quick view (items, payment status, Record payment when unpaid, Show full details)
 
 #### Check-In (`/check-in`)
 Member check-in system for tracking gym visits.
@@ -114,6 +109,7 @@ Complete POS system for processing product sales.
   - Variable price support for products
   - Multiple payment methods (cash, card, check, etc.)
   - Checkout creates the sale, then opens Record Payment before showing the receipt
+  - **Walk-in customers**: Dashboard **Walk-in Sale** opens a cashier dialog (stays on dashboard). Member is optional at checkout; leave blank to record a sale without a member record (displayed as "Walk-in"). Use Quick Add only when the customer should become a tracked member
   - Receipt generation and printing
 - **Components**:
   - `ProductGrid` - Product selection (default mode)
@@ -134,10 +130,20 @@ View and manage completed transactions.
 - Refund/unrefund functionality with confirmation dialogs
 
 #### Reports (`/reports`)
-Sales and inventory reporting.
+Tabbed analytics hub with period selector (Week / Month / Year / All Time), PDF and CSV export.
 
-- Sales reports with date ranges
-- Inventory reports
+**Mental model — Sales vs Memberships (not duplicate features):**
+- **Sales** = money ledger (receipts & payments). Product POS and membership purchases both create `Sale` records.
+- **Memberships** = access/lifecycle (who can train, on which plan, until when). Plan catalog + subscriptions.
+- Do **not** sum Sales revenue with Membership “plan value” — membership purchases already appear in Sales.
+
+**Tabs:**
+- Period selector: **Day** (today), **Week** (Mon–Sun), **Month** (calendar month), **Year** (Jan–Dec), **All Time** (per year)
+- Trend charts match the period grain (daily / weekly / monthly / yearly) via PocketBase views — Year and All Time do not download every day
+- **Sales** — cash collected, revenue by item type (product / membership / add-on), payment methods, top products, unpaid (AR), staff performance
+- **Inventory** — stock status, low stock, expiration alerts, inventory value (via SQL views)
+- **Members & Memberships** — new members, active base, renewals vs new, expiring soon, churn/lapse, plan mix; plan value sold (labeled separately from cash collected)
+- **Attendance** — check-ins trend, unique members, method mix; peak hours on Day only
 
 ---
 
@@ -280,8 +286,7 @@ Located in `/lib/src/core/`
 - Password Recovery (`/recovery`)
 
 ### Main Navigation
-- **Dashboard**: Home with KPIs, quick actions, recent transactions, inventory alerts
-- **Today's Transactions**: Full list of sales for today (from dashboard View All)
+- **Dashboard**: Home with KPIs, quick actions, recent transactions (View All dialog), inventory alerts
 - **Check-In**: Member search, check-in with membership validation
 - **Cashier/POS**: Product grid and checkout
 - **Sales List**: Transaction history
@@ -360,7 +365,6 @@ App Root (Shell)
 │
 └── Main Shell (with navigation)
     ├── / (Dashboard)
-    ├── /todays-transactions (Today's Transactions)
     ├── /check-in (Check-In)
     ├── /cashier (POS)
     ├── /sales (Sales History)
@@ -520,13 +524,18 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 14 | Dashboard members layout | Members grid header menu: columns scale by screen (mobile 1–2, tablet 2–4, desktop 2–5) plus photo vs name-only; preference stored in Drift |
+| Jul 14 | Walk-in sales | Dashboard Walk-in Sale opens a cashier dialog (stays on dashboard); checkout member optional; sale with no linked member displays as Walk-in |
+| Jul 14 | Report period bucketing | Day/Week/Month/Year/All Time use calendar ranges; charts bucket daily/weekly/monthly/yearly via PB views |
+| Jul 14 | Reports overhaul | Sales vs memberships framing; revenue-by-item-type; attendance tab; AR/renewals/staff; lazy tabs; PB date filters; CSV export |
 | Jul 13 | Void payment | Sale detail payment history can void an individual payment/refund; sale paid status recalculates |
 | Jul 13 | Member quick view | Tap a dashboard member card to open a details dialog with membership summary, Renew/Purchase shortcut, and Show full details |
 | Jul 13 | Sale descriptors | Sales store a `descriptor` (item name or `Member · Plan`) shown as the list title with receipt short code underneath on sales history and dashboard |
 | Jul 13 | Sale quick view | Tap a dashboard sale (recent transactions, today's list, sales KPI) to open a details dialog with items, payment status, Record payment when unpaid, and Show full details |
 | Jul 13 | KPI breakdown dialogs | Tap dashboard KPIs to see aggregate chips (paid/unpaid, check-in method, plan counts) plus the underlying item list |
 | Jul 13 | POS payment step | After completing a product sale checkout, opens Record Payment (same as memberships) before the receipt |
-| Jul 13 | Recent transactions | Collapsible dashboard section under Quick Actions previewing today's sales; View All opens `/todays-transactions` for the full day list |
+| Jul 14 | Today's transactions dialog | Dashboard Recent Transactions View All opens a dialog instead of `/todays-transactions` |
+| Jul 13 | Recent transactions | Collapsible dashboard section under Quick Actions previewing today's sales; View All opens the full-day transactions dialog |
 | Jul 13 | Dashboard renew | Quick Action to pick any member and renew with current-branch plans; new periods stack from the day after an still-active membership ends |
 | Jul 13 | Multi-branch memberships | Plans have `validBranches` (1, many, or all); check-in gated by plan validity at current branch; members list/search are global; dashboard shows members whose membership is valid at the selected branch |
 | Jul 12 | Renew exclude sales | Membership renew dialog can skip creating a sale/receipt (complimentary or admin renewals) |

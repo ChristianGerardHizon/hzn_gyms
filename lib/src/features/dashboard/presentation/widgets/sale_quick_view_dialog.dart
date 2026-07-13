@@ -20,7 +20,7 @@ import '../controllers/todays_sales_controller.dart';
 
 /// Shows a quick-view dialog with sale details, items, and payment actions.
 ///
-/// Used from the dashboard recent transactions and today's sales lists for
+/// Used from the dashboard recent transactions and today's sales dialogs for
 /// fast lookup without navigating to the full sale detail page.
 Future<void> showSaleQuickViewDialog(
   BuildContext context, {
@@ -280,8 +280,7 @@ class _SaleHeader extends StatelessWidget {
           value: sale.isPaid ? 'Paid' : 'No payment yet',
           valueColor: sale.isPaid ? Colors.green : Colors.orange,
         ),
-        if (sale.customerDisplay != null && sale.customerDisplay!.isNotEmpty)
-          _InfoRow(label: 'Customer', value: sale.customerDisplay!),
+        _InfoRow(label: 'Customer', value: sale.customerDisplay),
         if (sale.notes != null && sale.notes!.isNotEmpty)
           _InfoRow(label: 'Notes', value: sale.notes!),
       ],

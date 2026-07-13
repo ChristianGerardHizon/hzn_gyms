@@ -4,13 +4,26 @@ import '../../domain/report_period.dart';
 
 part 'report_period_controller.g.dart';
 
-/// Manages the currently selected report period across all reports.
+/// Manages the selected report period grain and start/end range.
 @Riverpod(keepAlive: true)
 class ReportPeriodController extends _$ReportPeriodController {
   @override
-  ReportPeriod build() => ReportPeriod.monthly;
+  ReportPeriodSelection build() =>
+      ReportPeriodSelection.current(ReportPeriod.monthly);
 
   void setPeriod(ReportPeriod period) {
-    state = period;
+    state = state.withPeriod(period);
+  }
+
+  void setRangeStart(DateTime value) {
+    state = state.withRangeStart(value);
+  }
+
+  void setRangeEnd(DateTime value) {
+    state = state.withRangeEnd(value);
+  }
+
+  void setDay(DateTime value) {
+    state = state.withDay(value);
   }
 }

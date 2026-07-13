@@ -8,12 +8,12 @@ part of 'membership_report_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Fetches and provides membership report data.
+/// Fetches and caches membership report data.
 
 @ProviderFor(membershipReport)
 final membershipReportProvider = MembershipReportProvider._();
 
-/// Fetches and provides membership report data.
+/// Fetches and caches membership report data.
 
 final class MembershipReportProvider
     extends
@@ -23,14 +23,14 @@ final class MembershipReportProvider
           FutureOr<MembershipReport>
         >
     with $FutureModifier<MembershipReport>, $FutureProvider<MembershipReport> {
-  /// Fetches and provides membership report data.
+  /// Fetches and caches membership report data.
   MembershipReportProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'membershipReportProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -50,4 +50,4 @@ final class MembershipReportProvider
   }
 }
 
-String _$membershipReportHash() => r'6ccff289e167654f9f8e14a04d8eb2aadeb074f9';
+String _$membershipReportHash() => r'50a82a5a3fa84bf2ed4c1244c9e895680523e38b';

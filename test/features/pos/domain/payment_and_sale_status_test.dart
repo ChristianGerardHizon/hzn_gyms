@@ -12,6 +12,16 @@ void main() {
     });
   });
 
+  group('PaymentType.forRecording', () {
+    test('includes payment and deposit but not refund', () {
+      expect(
+        PaymentType.forRecording,
+        [PaymentType.payment, PaymentType.deposit],
+      );
+      expect(PaymentType.forRecording, isNot(contains(PaymentType.refund)));
+    });
+  });
+
   group('PaymentMethod.displayName', () {
     test('maps each method', () {
       expect(PaymentMethod.cash.displayName, 'Cash');

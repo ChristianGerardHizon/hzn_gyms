@@ -21,7 +21,6 @@ class TodaySaleListTile extends StatelessWidget {
     final currencyFormat = NumberFormat.currency(symbol: '₱');
     final timeFormat = DateFormat('hh:mm a');
 
-    final customer = sale.customerDisplay;
     final timeLabel =
         sale.created != null ? timeFormat.format(sale.created!) : null;
     final hasDescriptor =
@@ -29,7 +28,7 @@ class TodaySaleListTile extends StatelessWidget {
     final subtitleParts = <String>[
       if (hasDescriptor) sale.shortReceiptNumber,
       if (timeLabel != null) timeLabel,
-      if (!hasDescriptor && customer != null && customer.isNotEmpty) customer,
+      if (!hasDescriptor) sale.customerDisplay,
       sale.isPaid ? 'Paid' : 'Unpaid',
     ];
 

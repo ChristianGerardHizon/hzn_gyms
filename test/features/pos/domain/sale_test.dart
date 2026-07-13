@@ -33,6 +33,40 @@ void main() {
       expect(withDescriptor.listTitle, 'WATER');
       expect(buildSale(receiptNumber: 'S-250101-WXYZ').listTitle, '#WXYZ');
     });
+
+    test('customerDisplay falls back to Walk-in when unlinked', () {
+      expect(buildSale().customerDisplay, 'Walk-in');
+      expect(buildSale().hasCustomer, isFalse);
+      expect(
+        buildSale().copyWith(customerName: '  Jane Doe  ').customerDisplay,
+        'Jane Doe',
+      );
+      expect(
+        buildSale().copyWith(customerName: 'Jane Doe').hasCustomer,
+        isTrue,
+      );
+      expect(
+        buildSale().copyWith(customerId: 'm1').hasCustomer,
+        isTrue,
+      );
+    });
+
+    test('detailTitle prefers descriptor, then customer, then receipt', () {
+      expect(
+        buildSale().copyWith(descriptor: 'WATER +1 more').detailTitle,
+        'WATER +1 more',
+      );
+      expect(
+        buildSale()
+            .copyWith(customerName: 'Jane Doe', descriptor: '  ')
+            .detailTitle,
+        'Jane Doe',
+      );
+      expect(
+        buildSale(receiptNumber: 'S-250101-WXYZ').detailTitle,
+        'S-250101-WXYZ',
+      );
+    });
   });
 
   group('Sale.buildDescriptor', () {

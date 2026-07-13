@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
+import '../../../domain/report_aggregations.dart';
 import '../../../domain/sales_report.dart';
 import '../../controllers/sales_report_controller.dart';
 import '../charts/bar_chart_widget.dart';
@@ -35,30 +36,31 @@ class SalesReportView extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, SalesReport report) {
+    final itemTypeData = Map.fromEntries(
+      report.revenueByItemType.entries.map(
+        (e) => MapEntry(itemTypeLabel(e.key), e.value),
+      ),
+    );
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // KPI Cards
           _buildKpiSection(context, report),
           const SizedBox(height: 24),
-
-          // Revenue Trend Chart
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: LineChartWidget(
                 title: 'Revenue Trend',
-                spots: report.revenueByDay.asMap().entries.map((entry) {
+                spots: report.revenueTrend.asMap().entries.map((entry) {
                   return FlSpot(
                     entry.key.toDouble(),
-                    entry.value.amount.toDouble(),
+                    entry.value.value.toDouble(),
                   );
                 }).toList(),
-                xLabels: report.revenueByDay.map((r) {
-                  return DateFormat('MMM d').format(r.date);
-                }).toList(),
+                xLabels: report.revenueTrend.map((r) => r.label).toList(),
                 yAxisFormatter: (value) =>
                     _currencyFormat.format(value).replaceAll('.00', ''),
                 height: 250,
@@ -66,11 +68,21 @@ class SalesReportView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Charts — stacked on mobile, side-by-side on wider layouts
           LayoutBuilder(
             builder: (context, constraints) {
               final isMobile = constraints.maxWidth < Breakpoints.mobile;
+              final itemTypeChart = itemTypeData.isEmpty
+                  ? const SizedBox.shrink()
+                  : Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: PieChartWidget(
+                          title: 'Revenue by Item Type',
+                          data: itemTypeData,
+                          height: 200,
+                        ),
+                      ),
+                    );
               final paymentMethodChart = Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -102,6 +114,8 @@ class SalesReportView extends ConsumerWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    itemTypeChart,
+                    const SizedBox(height: 16),
                     paymentMethodChart,
                     const SizedBox(height: 16),
                     topProductsChart,
@@ -109,20 +123,28 @@ class SalesReportView extends ConsumerWidget {
                 );
               }
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              return Column(
                 children: [
-                  Expanded(child: paymentMethodChart),
-                  const SizedBox(width: 16),
-                  Expanded(child: topProductsChart),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: itemTypeChart),
+                      const SizedBox(width: 16),
+                      Expanded(child: paymentMethodChart),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  topProductsChart,
                 ],
               );
             },
           ),
           const SizedBox(height: 24),
-
-          // Top Products Table
           _buildTopProductsTable(context, report),
+          if (report.staffPerformance.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            _buildStaffTable(context, report),
+          ],
         ],
       ),
     );
@@ -137,7 +159,7 @@ class SalesReportView extends ConsumerWidget {
           value: _currencyFormat.format(report.totalRevenue),
           icon: Icons.attach_money,
           color: Colors.green,
-          subtitle: 'For selected period',
+          subtitle: 'Cash collected (payments)',
           featured: true,
         ),
         ReportKpiCard(
@@ -145,7 +167,7 @@ class SalesReportView extends ConsumerWidget {
           value: report.transactionCount.toString(),
           icon: Icons.receipt_long_outlined,
           color: Colors.blue,
-          subtitle: 'Total completed sales',
+          subtitle: 'Completed sales',
         ),
         ReportKpiCard(
           title: 'Average Transaction',
@@ -153,6 +175,20 @@ class SalesReportView extends ConsumerWidget {
           icon: Icons.trending_up,
           color: Colors.orange,
           subtitle: 'Per transaction',
+        ),
+        ReportKpiCard(
+          title: 'Unpaid Sales',
+          value: report.unpaidSalesCount.toString(),
+          icon: Icons.money_off_outlined,
+          color: Colors.red,
+          subtitle: 'Accounts receivable',
+        ),
+        ReportKpiCard(
+          title: 'Unpaid Balance',
+          value: _currencyFormat.format(report.unpaidBalance),
+          icon: Icons.account_balance_wallet_outlined,
+          color: Colors.deepOrange,
+          subtitle: 'Outstanding total',
         ),
       ],
     );
@@ -189,6 +225,43 @@ class SalesReportView extends ConsumerWidget {
                     DataCell(Text(product.productName)),
                     DataCell(Text(product.quantity.toString())),
                     DataCell(Text(_currencyFormat.format(product.revenue))),
+                  ]);
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaffTable(BuildContext context, SalesReport report) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Staff Performance',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: const [
+                  DataColumn(label: Text('Staff')),
+                  DataColumn(label: Text('Transactions'), numeric: true),
+                  DataColumn(label: Text('Revenue'), numeric: true),
+                ],
+                rows: report.staffPerformance.map((staff) {
+                  return DataRow(cells: [
+                    DataCell(Text(staff.staffName)),
+                    DataCell(Text(staff.transactionCount.toString())),
+                    DataCell(Text(_currencyFormat.format(staff.revenue))),
                   ]);
                 }).toList(),
               ),

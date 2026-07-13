@@ -8,14 +8,12 @@ part of 'inventory_report_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Fetches and provides inventory report data.
-/// Note: Inventory report doesn't use date filtering - it shows current state.
+/// Fetches and caches inventory report data (current stock snapshot).
 
 @ProviderFor(inventoryReport)
 final inventoryReportProvider = InventoryReportProvider._();
 
-/// Fetches and provides inventory report data.
-/// Note: Inventory report doesn't use date filtering - it shows current state.
+/// Fetches and caches inventory report data (current stock snapshot).
 
 final class InventoryReportProvider
     extends
@@ -25,15 +23,14 @@ final class InventoryReportProvider
           FutureOr<InventoryReport>
         >
     with $FutureModifier<InventoryReport>, $FutureProvider<InventoryReport> {
-  /// Fetches and provides inventory report data.
-  /// Note: Inventory report doesn't use date filtering - it shows current state.
+  /// Fetches and caches inventory report data (current stock snapshot).
   InventoryReportProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'inventoryReportProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -53,4 +50,4 @@ final class InventoryReportProvider
   }
 }
 
-String _$inventoryReportHash() => r'd5f021b7a5a38457dc2a506cc3fa26c5be626f61';
+String _$inventoryReportHash() => r'20871da83c69bd32f840323273c7c27e4fe592f0';

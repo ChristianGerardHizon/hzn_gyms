@@ -71,8 +71,19 @@ class Sale with SaleMappable {
   /// Last update timestamp.
   final DateTime? updated;
 
-  /// Returns display name for customer.
-  String? get customerDisplay => customerName;
+  /// Whether this sale is linked to a named customer / member.
+  bool get hasCustomer {
+    final name = customerName?.trim();
+    return (customerId != null && customerId!.isNotEmpty) ||
+        (name != null && name.isNotEmpty);
+  }
+
+  /// Display label for customer; `"Walk-in"` when none is linked.
+  String get customerDisplay {
+    final name = customerName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return 'Walk-in';
+  }
 
   /// Last 4 characters of the receipt number for compact list display.
   String get shortReceiptNumber {
@@ -87,6 +98,17 @@ class Sale with SaleMappable {
     final value = descriptor?.trim();
     if (value != null && value.isNotEmpty) return value;
     return shortReceiptNumber;
+  }
+
+  /// Primary headline for the sale detail page.
+  ///
+  /// Prefers [descriptor], then [customerName], then the full [receiptNumber].
+  String get detailTitle {
+    final value = descriptor?.trim();
+    if (value != null && value.isNotEmpty) return value;
+    final name = customerName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return receiptNumber;
   }
 
   /// Builds a list descriptor from sale line items.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
-import '../../../../core/routing/routes/todays_transactions.routes.dart';
 import '../../../check_in/domain/check_in.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
 import '../../../members/domain/member.dart';
@@ -15,72 +15,69 @@ import 'kpi_breakdown_dialog.dart';
 import 'sale_quick_view_dialog.dart';
 import 'today_sale_list_tile.dart';
 
+/// Opens today's full transactions dialog (View All from Recent Transactions).
+Future<void> showTodaysTransactionsDialog(BuildContext context) {
+  return showKpiBreakdownDialog(
+    context: context,
+    title: "Today's Transactions",
+    bodyBuilder: _todaysSalesBody,
+  );
+}
+
 /// Opens today's sales KPI breakdown dialog.
 Future<void> showTodaysSalesBreakdownDialog(BuildContext context) {
   return showKpiBreakdownDialog(
     context: context,
     title: "Today's Sales",
     subtitle: 'Breakdown by payment status',
-    actions: [
-      Builder(
-        builder: (dialogContext) => TextButton(
-          onPressed: () {
-            Navigator.of(dialogContext).pop();
-            const TodaysTransactionsRoute().go(context);
-          },
-          child: const Text('View all'),
-        ),
-      ),
-    ],
-    bodyBuilder: (context, ref) {
-      final salesAsync = ref.watch(todaySalesProvider);
-      final currency = NumberFormat.currency(symbol: '₱', decimalDigits: 2);
+    bodyBuilder: _todaysSalesBody,
+  );
+}
 
-      return KpiBreakdownListBody<Sale>(
-        asyncValue: salesAsync,
-        emptyMessage: 'No sales today',
-        emptyIcon: Icons.point_of_sale_outlined,
-        onRetry: () => ref.invalidate(todaySalesProvider),
-        summaryBuilder: (sales) {
-          final total = sales.fold<num>(0, (sum, s) => sum + s.totalAmount);
-          final paid = sales.where((s) => s.isPaid).length;
-          final unpaid = sales.length - paid;
-          return [
-            KpiSummaryChipData(
-              label: 'Revenue',
-              value: currency.format(total),
-              color: Colors.green,
-            ),
-            KpiSummaryChipData(
-              label: 'Transactions',
-              value: sales.length.toString(),
-              color: Colors.green.shade700,
-            ),
-            KpiSummaryChipData(
-              label: 'Paid',
-              value: paid.toString(),
-              color: Colors.teal,
-            ),
-            KpiSummaryChipData(
-              label: 'Unpaid',
-              value: unpaid.toString(),
-              color: Colors.orange,
-            ),
-          ];
-        },
-        itemBuilder: (context, sale) => TodaySaleListTile(
-          sale: sale,
-          onTap: () {
-            Navigator.of(context).pop();
-            showSaleQuickViewDialog(
-              context,
-              saleId: sale.id,
-              fallbackSale: sale,
-            );
-          },
+Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
+  final salesAsync = ref.watch(todaySalesProvider);
+  final currency = NumberFormat.currency(symbol: '₱', decimalDigits: 2);
+
+  return KpiBreakdownListBody<Sale>(
+    asyncValue: salesAsync,
+    emptyMessage: 'No sales today',
+    emptyIcon: Icons.point_of_sale_outlined,
+    onRetry: () => ref.invalidate(todaySalesProvider),
+    summaryBuilder: (sales) {
+      final total = sales.fold<num>(0, (sum, s) => sum + s.totalAmount);
+      final paid = sales.where((s) => s.isPaid).length;
+      final unpaid = sales.length - paid;
+      return [
+        KpiSummaryChipData(
+          label: 'Revenue',
+          value: currency.format(total),
+          color: Colors.green,
         ),
-      );
+        KpiSummaryChipData(
+          label: 'Transactions',
+          value: sales.length.toString(),
+          color: Colors.green.shade700,
+        ),
+        KpiSummaryChipData(
+          label: 'Paid',
+          value: paid.toString(),
+          color: Colors.teal,
+        ),
+        KpiSummaryChipData(
+          label: 'Unpaid',
+          value: unpaid.toString(),
+          color: Colors.orange,
+        ),
+      ];
     },
+    itemBuilder: (context, sale) => TodaySaleListTile(
+      sale: sale,
+      onTap: () => showSaleQuickViewDialog(
+        context,
+        saleId: sale.id,
+        fallbackSale: sale,
+      ),
+    ),
   );
 }
 

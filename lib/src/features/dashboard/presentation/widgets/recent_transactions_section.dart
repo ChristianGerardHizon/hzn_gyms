@@ -3,10 +3,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/routing/routes/todays_transactions.routes.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../sales/presentation/widgets/sale_status_chip.dart';
 import '../controllers/todays_sales_controller.dart';
+import 'kpi_breakdown_dialogs.dart';
 import 'sale_quick_view_dialog.dart';
 
 /// Collapsible dashboard section showing today's recent sales.
@@ -60,7 +60,7 @@ class RecentTransactionsSection extends HookConsumerWidget {
               ),
               const Spacer(),
               TextButton(
-                onPressed: () => const TodaysTransactionsRoute().go(context),
+                onPressed: () => showTodaysTransactionsDialog(context),
                 child: const Text('View All'),
               ),
               IconButton(

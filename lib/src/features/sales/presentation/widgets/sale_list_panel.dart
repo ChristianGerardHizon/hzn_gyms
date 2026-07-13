@@ -148,6 +148,7 @@ class SaleListPanel extends HookConsumerWidget {
                       sale.descriptor!.trim().isNotEmpty;
                   final subtitle = [
                     if (hasDescriptor) sale.shortReceiptNumber,
+                    if (!hasDescriptor) sale.customerDisplay,
                     sale.created != null
                         ? dateFormat.format(sale.created!)
                         : 'Unknown',

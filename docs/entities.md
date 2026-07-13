@@ -472,6 +472,19 @@ Cashier layout groups per branch.
 | `vw_inventory_status` | Aggregated inventory status |
 | `vw_sales_daily_summary` | Daily sales totals |
 | `vw_top_selling_products` | Top selling products |
+| `vw_revenue_by_item_type` | Daily revenue by item type (product / membership / addon) |
+| `vw_revenue_by_item_type_weekly` | Weekly revenue by item type |
+| `vw_revenue_by_item_type_monthly` | Monthly revenue by item type |
+| `vw_revenue_by_item_type_yearly` | Yearly revenue by item type |
+| `vw_checkins_daily_summary` | Daily check-in counts by branch and method |
+| `vw_checkins_weekly_summary` | Weekly check-in counts |
+| `vw_checkins_monthly_summary` | Monthly check-in counts |
+| `vw_checkins_yearly_summary` | Yearly check-in counts |
+| `vw_sales_weekly_summary` | Weekly sales totals by payment method |
+| `vw_sales_monthly_summary` | Monthly sales totals by payment method |
+| `vw_sales_yearly_summary` | Yearly sales totals by payment method |
+| `vw_top_selling_products_monthly` | Monthly top selling products |
+| `vw_top_selling_products_yearly` | Yearly top selling products |
 | `vw_todays_sales` | Today's sales list |
 | `vw_lot_quantity_totals` | Lot quantity aggregates |
 | `vw_low_stock_products` | Low stock alerts |
@@ -484,7 +497,7 @@ Cashier layout groups per branch.
 
 ## Summary
 
-**Total Collections:** 20 (+ 9 view collections)
+**Total Collections:** 20 (+ 22 view collections)
 
 **Enums:**
 

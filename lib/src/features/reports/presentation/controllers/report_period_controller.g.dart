@@ -8,15 +8,15 @@ part of 'report_period_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Manages the currently selected report period across all reports.
+/// Manages the selected report period grain and start/end range.
 
 @ProviderFor(ReportPeriodController)
 final reportPeriodControllerProvider = ReportPeriodControllerProvider._();
 
-/// Manages the currently selected report period across all reports.
+/// Manages the selected report period grain and start/end range.
 final class ReportPeriodControllerProvider
-    extends $NotifierProvider<ReportPeriodController, ReportPeriod> {
-  /// Manages the currently selected report period across all reports.
+    extends $NotifierProvider<ReportPeriodController, ReportPeriodSelection> {
+  /// Manages the selected report period grain and start/end range.
   ReportPeriodControllerProvider._()
     : super(
         from: null,
@@ -36,30 +36,31 @@ final class ReportPeriodControllerProvider
   ReportPeriodController create() => ReportPeriodController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ReportPeriod value) {
+  Override overrideWithValue(ReportPeriodSelection value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<ReportPeriod>(value),
+      providerOverride: $SyncValueProvider<ReportPeriodSelection>(value),
     );
   }
 }
 
 String _$reportPeriodControllerHash() =>
-    r'15814a8e9dd52ef745836ce694dd45779b8aea97';
+    r'ebbffa965fe9f8862742b51051ea8b106c47de8e';
 
-/// Manages the currently selected report period across all reports.
+/// Manages the selected report period grain and start/end range.
 
-abstract class _$ReportPeriodController extends $Notifier<ReportPeriod> {
-  ReportPeriod build();
+abstract class _$ReportPeriodController
+    extends $Notifier<ReportPeriodSelection> {
+  ReportPeriodSelection build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<ReportPeriod, ReportPeriod>;
+    final ref = this.ref as $Ref<ReportPeriodSelection, ReportPeriodSelection>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<ReportPeriod, ReportPeriod>,
-              ReportPeriod,
+              AnyNotifier<ReportPeriodSelection, ReportPeriodSelection>,
+              ReportPeriodSelection,
               Object?,
               Object?
             >;

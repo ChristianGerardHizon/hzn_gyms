@@ -17,7 +17,6 @@ import 'routes/sales.routes.dart';
 import 'routes/sales_history.routes.dart';
 import 'routes/reports.routes.dart';
 import 'routes/system.routes.dart';
-import 'routes/todays_transactions.routes.dart';
 
 part 'router.g.dart';
 
@@ -50,7 +49,6 @@ GoRouter router(Ref ref) {
         builder: (context, state, child) => AppRoot(child: child),
         routes: [
           $dashboardRoute,
-          $todaysTransactionsRoute,
           $checkInRoute,
           $productsShellRoute,
           $membersShellRoute,

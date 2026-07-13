@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/check_in.routes.dart';
-import '../../../../core/routing/routes/sales.routes.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
 import '../../../members/presentation/widgets/member_picker_dialog.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
+import '../../../pos/presentation/components/cashier_dialog.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 
 /// Section displaying quick action buttons on the dashboard.
 ///
 /// Provides fast access to common tasks:
-/// - Open POS/Cashier
+/// - Walk-in sale (cashier dialog, stays on dashboard)
 /// - Show dashboard overview (tablet only)
 class QuickActionsSection extends ConsumerWidget {
   const QuickActionsSection({
@@ -59,10 +59,10 @@ class QuickActionsSection extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(
-                  icon: Icons.point_of_sale,
-                  label: 'New Sale',
+                  icon: Icons.storefront,
+                  label: 'Walk-in Sale',
                   color: Colors.green,
-                  onTap: () => const SalesRoute().go(context),
+                  onTap: () => showCashierDialog(context, ref),
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(

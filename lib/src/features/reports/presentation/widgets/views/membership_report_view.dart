@@ -13,7 +13,7 @@ import '../charts/pie_chart_widget.dart';
 import '../report_kpi_card.dart';
 import '../report_kpi_grid.dart';
 
-/// View displaying the membership report with charts and tables.
+/// View displaying the membership lifecycle report.
 class MembershipReportView extends ConsumerWidget {
   const MembershipReportView({super.key});
 
@@ -26,7 +26,11 @@ class MembershipReportView extends ConsumerWidget {
     return reportAsync.when(
       data: (report) => _buildContent(context, report),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => ErrorState.fromError(error, compact: true),
+      error: (error, stack) => ErrorState.fromError(
+        error,
+        compact: true,
+        onRetry: () => ref.invalidate(membershipReportProvider),
+      ),
     );
   }
 
@@ -36,32 +40,34 @@ class MembershipReportView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // KPI Cards
           _buildKpiSection(context, report),
+          const SizedBox(height: 8),
+          Text(
+            'Plan value is sold amount from sale lines (or catalog fallback). '
+            'Cash collected lives on the Sales tab — do not sum both.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
           const SizedBox(height: 24),
-
-          // Member Registration Trend (Line Chart)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: LineChartWidget(
                 title: 'New Member Registrations',
-                spots: report.registrationsByDay.asMap().entries.map((entry) {
+                spots: report.registrationsTrend.asMap().entries.map((entry) {
                   return FlSpot(
                     entry.key.toDouble(),
-                    entry.value.count.toDouble(),
+                    entry.value.value.toDouble(),
                   );
                 }).toList(),
-                xLabels: report.registrationsByDay.map((r) {
-                  return DateFormat('MMM d').format(r.date);
-                }).toList(),
+                xLabels:
+                    report.registrationsTrend.map((r) => r.label).toList(),
                 height: 250,
               ),
             ),
           ),
           const SizedBox(height: 16),
-
-          // Charts — stacked on mobile, side-by-side on wider layouts
           LayoutBuilder(
             builder: (context, constraints) {
               final isMobile = constraints.maxWidth < Breakpoints.mobile;
@@ -79,7 +85,7 @@ class MembershipReportView extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: BarChartWidget(
-                    title: 'Revenue by Membership Plan',
+                    title: 'Plan Value by Membership',
                     data: report.revenueByPlan,
                     height: 220,
                     barColor: Colors.teal,
@@ -134,29 +140,49 @@ class MembershipReportView extends ConsumerWidget {
           subtitle: 'Currently active',
         ),
         ReportKpiCard(
-          title: 'Expired / Cancelled',
-          value: report.expiredCancelledMemberships.toString(),
-          icon: Icons.cancel_outlined,
-          color: Colors.red,
-          subtitle: 'In selected period',
+          title: 'New Subscriptions',
+          value: report.newSubscriptions.toString(),
+          icon: Icons.fiber_new_outlined,
+          color: Colors.indigo,
+          subtitle: 'First-time plans',
         ),
         ReportKpiCard(
-          title: 'Membership Revenue',
+          title: 'Renewals',
+          value: report.renewals.toString(),
+          icon: Icons.autorenew,
+          color: Colors.cyan,
+          subtitle: 'Returning members',
+        ),
+        ReportKpiCard(
+          title: 'Expiring Soon',
+          value: report.expiringSoonCount.toString(),
+          icon: Icons.schedule,
+          color: Colors.orange,
+          subtitle: 'Next 7 days',
+        ),
+        ReportKpiCard(
+          title: 'Lapsed',
+          value: report.lapsedCount.toString(),
+          icon: Icons.trending_down,
+          color: Colors.red,
+          subtitle: 'Ended without renewal',
+        ),
+        ReportKpiCard(
+          title: 'Plan Value Sold',
           value: _currencyFormat.format(report.membershipRevenue),
           icon: Icons.attach_money,
           color: Colors.teal,
-          subtitle: 'From plan subscriptions',
+          subtitle: 'Not cash collected',
           featured: true,
         ),
         ReportKpiCard(
-          title: 'Add-on Revenue',
+          title: 'Add-on Value Sold',
           value: _currencyFormat.format(report.addOnRevenue),
           icon: Icons.add_circle_outline,
-          color: Colors.orange,
-          subtitle: 'From add-on purchases',
+          color: Colors.deepOrange,
+          subtitle: 'Not cash collected',
         ),
       ],
     );
   }
-
 }

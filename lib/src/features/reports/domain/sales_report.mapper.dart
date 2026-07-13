@@ -15,8 +15,9 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
   static SalesReportMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = SalesReportMapper._());
-      DailyRevenueMapper.ensureInitialized();
+      PeriodBucketMapper.ensureInitialized();
       ProductSalesSummaryMapper.ensureInitialized();
+      StaffSalesSummaryMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -40,10 +41,10 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
     'averageTransactionValue',
     _$averageTransactionValue,
   );
-  static List<DailyRevenue> _$revenueByDay(SalesReport v) => v.revenueByDay;
-  static const Field<SalesReport, List<DailyRevenue>> _f$revenueByDay = Field(
-    'revenueByDay',
-    _$revenueByDay,
+  static List<PeriodBucket> _$revenueTrend(SalesReport v) => v.revenueTrend;
+  static const Field<SalesReport, List<PeriodBucket>> _f$revenueTrend = Field(
+    'revenueTrend',
+    _$revenueTrend,
   );
   static Map<String, num> _$revenueByPaymentMethod(SalesReport v) =>
       v.revenueByPaymentMethod;
@@ -53,15 +54,41 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       v.topSellingProducts;
   static const Field<SalesReport, List<ProductSalesSummary>>
   _f$topSellingProducts = Field('topSellingProducts', _$topSellingProducts);
+  static Map<String, num> _$revenueByItemType(SalesReport v) =>
+      v.revenueByItemType;
+  static const Field<SalesReport, Map<String, num>> _f$revenueByItemType =
+      Field('revenueByItemType', _$revenueByItemType, opt: true, def: const {});
+  static int _$unpaidSalesCount(SalesReport v) => v.unpaidSalesCount;
+  static const Field<SalesReport, int> _f$unpaidSalesCount = Field(
+    'unpaidSalesCount',
+    _$unpaidSalesCount,
+    opt: true,
+    def: 0,
+  );
+  static num _$unpaidBalance(SalesReport v) => v.unpaidBalance;
+  static const Field<SalesReport, num> _f$unpaidBalance = Field(
+    'unpaidBalance',
+    _$unpaidBalance,
+    opt: true,
+    def: 0,
+  );
+  static List<StaffSalesSummary> _$staffPerformance(SalesReport v) =>
+      v.staffPerformance;
+  static const Field<SalesReport, List<StaffSalesSummary>> _f$staffPerformance =
+      Field('staffPerformance', _$staffPerformance, opt: true, def: const []);
 
   @override
   final MappableFields<SalesReport> fields = const {
     #totalRevenue: _f$totalRevenue,
     #transactionCount: _f$transactionCount,
     #averageTransactionValue: _f$averageTransactionValue,
-    #revenueByDay: _f$revenueByDay,
+    #revenueTrend: _f$revenueTrend,
     #revenueByPaymentMethod: _f$revenueByPaymentMethod,
     #topSellingProducts: _f$topSellingProducts,
+    #revenueByItemType: _f$revenueByItemType,
+    #unpaidSalesCount: _f$unpaidSalesCount,
+    #unpaidBalance: _f$unpaidBalance,
+    #staffPerformance: _f$staffPerformance,
   };
 
   static SalesReport _instantiate(DecodingData data) {
@@ -69,9 +96,13 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       totalRevenue: data.dec(_f$totalRevenue),
       transactionCount: data.dec(_f$transactionCount),
       averageTransactionValue: data.dec(_f$averageTransactionValue),
-      revenueByDay: data.dec(_f$revenueByDay),
+      revenueTrend: data.dec(_f$revenueTrend),
       revenueByPaymentMethod: data.dec(_f$revenueByPaymentMethod),
       topSellingProducts: data.dec(_f$topSellingProducts),
+      revenueByItemType: data.dec(_f$revenueByItemType),
+      unpaidSalesCount: data.dec(_f$unpaidSalesCount),
+      unpaidBalance: data.dec(_f$unpaidBalance),
+      staffPerformance: data.dec(_f$staffPerformance),
     );
   }
 
@@ -137,10 +168,10 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<
     $R,
-    DailyRevenue,
-    DailyRevenueCopyWith<$R, DailyRevenue, DailyRevenue>
+    PeriodBucket,
+    PeriodBucketCopyWith<$R, PeriodBucket, PeriodBucket>
   >
-  get revenueByDay;
+  get revenueTrend;
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
   get revenueByPaymentMethod;
   ListCopyWith<
@@ -149,13 +180,25 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
     ProductSalesSummaryCopyWith<$R, ProductSalesSummary, ProductSalesSummary>
   >
   get topSellingProducts;
+  MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
+  get revenueByItemType;
+  ListCopyWith<
+    $R,
+    StaffSalesSummary,
+    StaffSalesSummaryCopyWith<$R, StaffSalesSummary, StaffSalesSummary>
+  >
+  get staffPerformance;
   $R call({
     num? totalRevenue,
     int? transactionCount,
     num? averageTransactionValue,
-    List<DailyRevenue>? revenueByDay,
+    List<PeriodBucket>? revenueTrend,
     Map<String, num>? revenueByPaymentMethod,
     List<ProductSalesSummary>? topSellingProducts,
+    Map<String, num>? revenueByItemType,
+    int? unpaidSalesCount,
+    num? unpaidBalance,
+    List<StaffSalesSummary>? staffPerformance,
   });
   SalesReportCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -171,13 +214,13 @@ class _SalesReportCopyWithImpl<$R, $Out>
   @override
   ListCopyWith<
     $R,
-    DailyRevenue,
-    DailyRevenueCopyWith<$R, DailyRevenue, DailyRevenue>
+    PeriodBucket,
+    PeriodBucketCopyWith<$R, PeriodBucket, PeriodBucket>
   >
-  get revenueByDay => ListCopyWith(
-    $value.revenueByDay,
+  get revenueTrend => ListCopyWith(
+    $value.revenueTrend,
     (v, t) => v.copyWith.$chain(t),
-    (v) => call(revenueByDay: v),
+    (v) => call(revenueTrend: v),
   );
   @override
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
@@ -198,23 +241,49 @@ class _SalesReportCopyWithImpl<$R, $Out>
     (v) => call(topSellingProducts: v),
   );
   @override
+  MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
+  get revenueByItemType => MapCopyWith(
+    $value.revenueByItemType,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(revenueByItemType: v),
+  );
+  @override
+  ListCopyWith<
+    $R,
+    StaffSalesSummary,
+    StaffSalesSummaryCopyWith<$R, StaffSalesSummary, StaffSalesSummary>
+  >
+  get staffPerformance => ListCopyWith(
+    $value.staffPerformance,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(staffPerformance: v),
+  );
+  @override
   $R call({
     num? totalRevenue,
     int? transactionCount,
     num? averageTransactionValue,
-    List<DailyRevenue>? revenueByDay,
+    List<PeriodBucket>? revenueTrend,
     Map<String, num>? revenueByPaymentMethod,
     List<ProductSalesSummary>? topSellingProducts,
+    Map<String, num>? revenueByItemType,
+    int? unpaidSalesCount,
+    num? unpaidBalance,
+    List<StaffSalesSummary>? staffPerformance,
   }) => $apply(
     FieldCopyWithData({
       if (totalRevenue != null) #totalRevenue: totalRevenue,
       if (transactionCount != null) #transactionCount: transactionCount,
       if (averageTransactionValue != null)
         #averageTransactionValue: averageTransactionValue,
-      if (revenueByDay != null) #revenueByDay: revenueByDay,
+      if (revenueTrend != null) #revenueTrend: revenueTrend,
       if (revenueByPaymentMethod != null)
         #revenueByPaymentMethod: revenueByPaymentMethod,
       if (topSellingProducts != null) #topSellingProducts: topSellingProducts,
+      if (revenueByItemType != null) #revenueByItemType: revenueByItemType,
+      if (unpaidSalesCount != null) #unpaidSalesCount: unpaidSalesCount,
+      if (unpaidBalance != null) #unpaidBalance: unpaidBalance,
+      if (staffPerformance != null) #staffPerformance: staffPerformance,
     }),
   );
   @override
@@ -225,7 +294,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
       #averageTransactionValue,
       or: $value.averageTransactionValue,
     ),
-    revenueByDay: data.get(#revenueByDay, or: $value.revenueByDay),
+    revenueTrend: data.get(#revenueTrend, or: $value.revenueTrend),
     revenueByPaymentMethod: data.get(
       #revenueByPaymentMethod,
       or: $value.revenueByPaymentMethod,
@@ -234,134 +303,19 @@ class _SalesReportCopyWithImpl<$R, $Out>
       #topSellingProducts,
       or: $value.topSellingProducts,
     ),
+    revenueByItemType: data.get(
+      #revenueByItemType,
+      or: $value.revenueByItemType,
+    ),
+    unpaidSalesCount: data.get(#unpaidSalesCount, or: $value.unpaidSalesCount),
+    unpaidBalance: data.get(#unpaidBalance, or: $value.unpaidBalance),
+    staffPerformance: data.get(#staffPerformance, or: $value.staffPerformance),
   );
 
   @override
   SalesReportCopyWith<$R2, SalesReport, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _SalesReportCopyWithImpl<$R2, $Out2>($value, $cast, t);
-}
-
-class DailyRevenueMapper extends ClassMapperBase<DailyRevenue> {
-  DailyRevenueMapper._();
-
-  static DailyRevenueMapper? _instance;
-  static DailyRevenueMapper ensureInitialized() {
-    if (_instance == null) {
-      MapperContainer.globals.use(_instance = DailyRevenueMapper._());
-    }
-    return _instance!;
-  }
-
-  @override
-  final String id = 'DailyRevenue';
-
-  static DateTime _$date(DailyRevenue v) => v.date;
-  static const Field<DailyRevenue, DateTime> _f$date = Field('date', _$date);
-  static num _$amount(DailyRevenue v) => v.amount;
-  static const Field<DailyRevenue, num> _f$amount = Field('amount', _$amount);
-
-  @override
-  final MappableFields<DailyRevenue> fields = const {
-    #date: _f$date,
-    #amount: _f$amount,
-  };
-
-  static DailyRevenue _instantiate(DecodingData data) {
-    return DailyRevenue(date: data.dec(_f$date), amount: data.dec(_f$amount));
-  }
-
-  @override
-  final Function instantiate = _instantiate;
-
-  static DailyRevenue fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<DailyRevenue>(map);
-  }
-
-  static DailyRevenue fromJson(String json) {
-    return ensureInitialized().decodeJson<DailyRevenue>(json);
-  }
-}
-
-mixin DailyRevenueMappable {
-  String toJson() {
-    return DailyRevenueMapper.ensureInitialized().encodeJson<DailyRevenue>(
-      this as DailyRevenue,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return DailyRevenueMapper.ensureInitialized().encodeMap<DailyRevenue>(
-      this as DailyRevenue,
-    );
-  }
-
-  DailyRevenueCopyWith<DailyRevenue, DailyRevenue, DailyRevenue> get copyWith =>
-      _DailyRevenueCopyWithImpl<DailyRevenue, DailyRevenue>(
-        this as DailyRevenue,
-        $identity,
-        $identity,
-      );
-  @override
-  String toString() {
-    return DailyRevenueMapper.ensureInitialized().stringifyValue(
-      this as DailyRevenue,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return DailyRevenueMapper.ensureInitialized().equalsValue(
-      this as DailyRevenue,
-      other,
-    );
-  }
-
-  @override
-  int get hashCode {
-    return DailyRevenueMapper.ensureInitialized().hashValue(
-      this as DailyRevenue,
-    );
-  }
-}
-
-extension DailyRevenueValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, DailyRevenue, $Out> {
-  DailyRevenueCopyWith<$R, DailyRevenue, $Out> get $asDailyRevenue =>
-      $base.as((v, t, t2) => _DailyRevenueCopyWithImpl<$R, $Out>(v, t, t2));
-}
-
-abstract class DailyRevenueCopyWith<$R, $In extends DailyRevenue, $Out>
-    implements ClassCopyWith<$R, $In, $Out> {
-  $R call({DateTime? date, num? amount});
-  DailyRevenueCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
-}
-
-class _DailyRevenueCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, DailyRevenue, $Out>
-    implements DailyRevenueCopyWith<$R, DailyRevenue, $Out> {
-  _DailyRevenueCopyWithImpl(super.value, super.then, super.then2);
-
-  @override
-  late final ClassMapperBase<DailyRevenue> $mapper =
-      DailyRevenueMapper.ensureInitialized();
-  @override
-  $R call({DateTime? date, num? amount}) => $apply(
-    FieldCopyWithData({
-      if (date != null) #date: date,
-      if (amount != null) #amount: amount,
-    }),
-  );
-  @override
-  DailyRevenue $make(CopyWithData data) => DailyRevenue(
-    date: data.get(#date, or: $value.date),
-    amount: data.get(#amount, or: $value.amount),
-  );
-
-  @override
-  DailyRevenueCopyWith<$R2, DailyRevenue, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _DailyRevenueCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
 class ProductSalesSummaryMapper extends ClassMapperBase<ProductSalesSummary> {
@@ -512,5 +466,175 @@ class _ProductSalesSummaryCopyWithImpl<$R, $Out>
   ProductSalesSummaryCopyWith<$R2, ProductSalesSummary, $Out2>
   $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
       _ProductSalesSummaryCopyWithImpl<$R2, $Out2>($value, $cast, t);
+}
+
+class StaffSalesSummaryMapper extends ClassMapperBase<StaffSalesSummary> {
+  StaffSalesSummaryMapper._();
+
+  static StaffSalesSummaryMapper? _instance;
+  static StaffSalesSummaryMapper ensureInitialized() {
+    if (_instance == null) {
+      MapperContainer.globals.use(_instance = StaffSalesSummaryMapper._());
+    }
+    return _instance!;
+  }
+
+  @override
+  final String id = 'StaffSalesSummary';
+
+  static String _$staffId(StaffSalesSummary v) => v.staffId;
+  static const Field<StaffSalesSummary, String> _f$staffId = Field(
+    'staffId',
+    _$staffId,
+  );
+  static String _$staffName(StaffSalesSummary v) => v.staffName;
+  static const Field<StaffSalesSummary, String> _f$staffName = Field(
+    'staffName',
+    _$staffName,
+  );
+  static int _$transactionCount(StaffSalesSummary v) => v.transactionCount;
+  static const Field<StaffSalesSummary, int> _f$transactionCount = Field(
+    'transactionCount',
+    _$transactionCount,
+  );
+  static num _$revenue(StaffSalesSummary v) => v.revenue;
+  static const Field<StaffSalesSummary, num> _f$revenue = Field(
+    'revenue',
+    _$revenue,
+  );
+
+  @override
+  final MappableFields<StaffSalesSummary> fields = const {
+    #staffId: _f$staffId,
+    #staffName: _f$staffName,
+    #transactionCount: _f$transactionCount,
+    #revenue: _f$revenue,
+  };
+
+  static StaffSalesSummary _instantiate(DecodingData data) {
+    return StaffSalesSummary(
+      staffId: data.dec(_f$staffId),
+      staffName: data.dec(_f$staffName),
+      transactionCount: data.dec(_f$transactionCount),
+      revenue: data.dec(_f$revenue),
+    );
+  }
+
+  @override
+  final Function instantiate = _instantiate;
+
+  static StaffSalesSummary fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<StaffSalesSummary>(map);
+  }
+
+  static StaffSalesSummary fromJson(String json) {
+    return ensureInitialized().decodeJson<StaffSalesSummary>(json);
+  }
+}
+
+mixin StaffSalesSummaryMappable {
+  String toJson() {
+    return StaffSalesSummaryMapper.ensureInitialized()
+        .encodeJson<StaffSalesSummary>(this as StaffSalesSummary);
+  }
+
+  Map<String, dynamic> toMap() {
+    return StaffSalesSummaryMapper.ensureInitialized()
+        .encodeMap<StaffSalesSummary>(this as StaffSalesSummary);
+  }
+
+  StaffSalesSummaryCopyWith<
+    StaffSalesSummary,
+    StaffSalesSummary,
+    StaffSalesSummary
+  >
+  get copyWith =>
+      _StaffSalesSummaryCopyWithImpl<StaffSalesSummary, StaffSalesSummary>(
+        this as StaffSalesSummary,
+        $identity,
+        $identity,
+      );
+  @override
+  String toString() {
+    return StaffSalesSummaryMapper.ensureInitialized().stringifyValue(
+      this as StaffSalesSummary,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return StaffSalesSummaryMapper.ensureInitialized().equalsValue(
+      this as StaffSalesSummary,
+      other,
+    );
+  }
+
+  @override
+  int get hashCode {
+    return StaffSalesSummaryMapper.ensureInitialized().hashValue(
+      this as StaffSalesSummary,
+    );
+  }
+}
+
+extension StaffSalesSummaryValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, StaffSalesSummary, $Out> {
+  StaffSalesSummaryCopyWith<$R, StaffSalesSummary, $Out>
+  get $asStaffSalesSummary => $base.as(
+    (v, t, t2) => _StaffSalesSummaryCopyWithImpl<$R, $Out>(v, t, t2),
+  );
+}
+
+abstract class StaffSalesSummaryCopyWith<
+  $R,
+  $In extends StaffSalesSummary,
+  $Out
+>
+    implements ClassCopyWith<$R, $In, $Out> {
+  $R call({
+    String? staffId,
+    String? staffName,
+    int? transactionCount,
+    num? revenue,
+  });
+  StaffSalesSummaryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  );
+}
+
+class _StaffSalesSummaryCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, StaffSalesSummary, $Out>
+    implements StaffSalesSummaryCopyWith<$R, StaffSalesSummary, $Out> {
+  _StaffSalesSummaryCopyWithImpl(super.value, super.then, super.then2);
+
+  @override
+  late final ClassMapperBase<StaffSalesSummary> $mapper =
+      StaffSalesSummaryMapper.ensureInitialized();
+  @override
+  $R call({
+    String? staffId,
+    String? staffName,
+    int? transactionCount,
+    num? revenue,
+  }) => $apply(
+    FieldCopyWithData({
+      if (staffId != null) #staffId: staffId,
+      if (staffName != null) #staffName: staffName,
+      if (transactionCount != null) #transactionCount: transactionCount,
+      if (revenue != null) #revenue: revenue,
+    }),
+  );
+  @override
+  StaffSalesSummary $make(CopyWithData data) => StaffSalesSummary(
+    staffId: data.get(#staffId, or: $value.staffId),
+    staffName: data.get(#staffName, or: $value.staffName),
+    transactionCount: data.get(#transactionCount, or: $value.transactionCount),
+    revenue: data.get(#revenue, or: $value.revenue),
+  );
+
+  @override
+  StaffSalesSummaryCopyWith<$R2, StaffSalesSummary, $Out2> $chain<$R2, $Out2>(
+    Then<$Out2, $R2> t,
+  ) => _StaffSalesSummaryCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 
