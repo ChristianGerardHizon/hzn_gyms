@@ -160,6 +160,7 @@ class _Translations$fields$tl implements Translations$fields$en {
 	@override String get requiredField => 'Kinakailangan';
 	@override String get atLeastOneRequired => 'Kailangan ng kahit isang field';
 	@override String get receiptNumber => 'Numero ng Resibo';
+	@override String get descriptor => 'Paglalarawan';
 	@override String get customerName => 'Pangalan ng Customer';
 	@override String get paymentRef => 'Reference ng Bayad';
 	@override String get notes => 'Mga Tala';
@@ -323,6 +324,7 @@ extension on TranslationsTl {
 			'fields.requiredField' => 'Kinakailangan',
 			'fields.atLeastOneRequired' => 'Kailangan ng kahit isang field',
 			'fields.receiptNumber' => 'Numero ng Resibo',
+			'fields.descriptor' => 'Paglalarawan',
 			'fields.customerName' => 'Pangalan ng Customer',
 			'fields.paymentRef' => 'Reference ng Bayad',
 			'fields.notes' => 'Mga Tala',

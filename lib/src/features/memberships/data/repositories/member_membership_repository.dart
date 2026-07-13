@@ -44,7 +44,13 @@ abstract class MemberMembershipRepository {
   FutureEither<MemberMembership> cancel(String id);
 
   /// Fetches active memberships for a member.
-  FutureEither<List<MemberMembership>> fetchActive(String memberId);
+  ///
+  /// When [validAtBranchId] is set, only memberships whose plan is valid at
+  /// that branch are returned (empty plan `validBranches` = all branches).
+  FutureEither<List<MemberMembership>> fetchActive(
+    String memberId, {
+    String? validAtBranchId,
+  });
 
   /// Invalidates the cache.
   void invalidateCache();
@@ -185,7 +191,10 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
   }
 
   @override
-  FutureEither<List<MemberMembership>> fetchActive(String memberId) async {
+  FutureEither<List<MemberMembership>> fetchActive(
+    String memberId, {
+    String? validAtBranchId,
+  }) async {
     return TaskEither.tryCatch(() async {
       final now = DateTime.now();
       final filter = PBFilter()
@@ -200,7 +209,13 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
         expand: 'member,membership',
       );
 
-      return records.map(_toEntity).toList();
+      var memberships = records.map(_toEntity).toList();
+      if (validAtBranchId != null) {
+        memberships = memberships
+            .where((m) => m.isValidAtBranch(validAtBranchId))
+            .toList();
+      }
+      return memberships;
     }, Failure.handle).run();
   }
 }

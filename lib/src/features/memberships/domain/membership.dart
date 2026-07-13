@@ -14,6 +14,7 @@ class Membership with MembershipMappable {
     required this.durationDays,
     required this.price,
     required this.branchId,
+    this.validBranches = const [],
     this.description,
     this.isActive = true,
     this.isFavorite = false,
@@ -36,8 +37,13 @@ class Membership with MembershipMappable {
   /// Price in PHP.
   final num price;
 
-  /// Branch this plan belongs to.
+  /// Branch this plan belongs to (catalog/home branch).
   final String branchId;
+
+  /// Branches where this plan grants check-in access.
+  ///
+  /// Empty list means valid at **all** branches.
+  final List<String> validBranches;
 
   /// Whether this plan is currently offered.
   final bool isActive;
@@ -50,6 +56,12 @@ class Membership with MembershipMappable {
 
   /// Last update timestamp.
   final DateTime? updated;
+
+  /// Whether this plan grants access at [branchId].
+  ///
+  /// Empty [validBranches] means all branches.
+  bool isValidAtBranch(String branchId) =>
+      validBranches.isEmpty || validBranches.contains(branchId);
 
   /// Display string for duration.
   String get durationDisplay {

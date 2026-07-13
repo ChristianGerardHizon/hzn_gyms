@@ -143,6 +143,16 @@ class SaleListPanel extends HookConsumerWidget {
 
                   final sale = paginatedState.items[index];
                   final isSelected = sale.id == selectedId;
+                  final hasDescriptor =
+                      sale.descriptor != null &&
+                      sale.descriptor!.trim().isNotEmpty;
+                  final subtitle = [
+                    if (hasDescriptor) sale.shortReceiptNumber,
+                    sale.created != null
+                        ? dateFormat.format(sale.created!)
+                        : 'Unknown',
+                    sale.isPaid ? 'Paid' : 'Unpaid',
+                  ].join(' • ');
 
                   return ListTile(
                     leading: CircleAvatar(
@@ -157,15 +167,15 @@ class SaleListPanel extends HookConsumerWidget {
                       ),
                     ),
                     title: Text(
-                      sale.receiptNumber,
+                      sale.listTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
-                    subtitle: Text(
-                      '${sale.created != null ? dateFormat.format(sale.created!) : "Unknown"} • ${sale.isPaid ? 'Paid' : 'Unpaid'}',
-                    ),
+                    subtitle: Text(subtitle),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

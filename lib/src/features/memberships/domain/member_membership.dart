@@ -41,6 +41,7 @@ class MemberMembership with MemberMembershipMappable {
     required this.branchId,
     this.memberName,
     this.membershipName,
+    this.membershipValidBranches = const [],
     this.saleId,
     this.soldBy,
     this.notes,
@@ -75,6 +76,9 @@ class MemberMembership with MemberMembershipMappable {
   /// Membership plan name (for display, from expand).
   final String? membershipName;
 
+  /// Plan `validBranches` from expand. Empty = valid at all branches.
+  final List<String> membershipValidBranches;
+
   /// Linked sale ID (if purchased through POS).
   final String? saleId;
 
@@ -96,6 +100,13 @@ class MemberMembership with MemberMembershipMappable {
     final now = DateTime.now();
     return now.isAfter(startDate) && !isBeforeToday(endDate);
   }
+
+  /// Whether the linked plan grants access at [branchId].
+  ///
+  /// Empty [membershipValidBranches] means all branches.
+  bool isValidAtBranch(String branchId) =>
+      membershipValidBranches.isEmpty ||
+      membershipValidBranches.contains(branchId);
 
   /// Whether this subscription has expired based on date.
   ///

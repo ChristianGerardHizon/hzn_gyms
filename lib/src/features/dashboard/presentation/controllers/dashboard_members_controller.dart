@@ -6,6 +6,7 @@ import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/perf_logger.dart';
+import '../../../memberships/data/repositories/membership_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 
 part 'dashboard_members_controller.g.dart';
@@ -154,9 +155,29 @@ Future<DashboardMembersPage> dashboardMembersPage(
     filter.searchFields(searchQuery, ['name', 'mobileNumber']);
   }
 
-  // Branch filter (member home branch)
+  // When a branch is selected, only members whose (best) membership plan is
+  // valid at that branch (validBranches contains it, or empty = all).
   if (branchId != null) {
-    filter.relation('branch', branchId);
+    final plansResult = await ref
+        .read(membershipRepositoryProvider)
+        .fetchAll(branchId: branchId);
+    final planIds = plansResult.fold(
+      (_) => <String>[],
+      (plans) => plans.map((p) => p.id).toList(),
+    );
+    if (planIds.isEmpty) {
+      perf.finish('no plans valid at branch');
+      return const DashboardMembersPage(
+        items: [],
+        totalItems: 0,
+        page: 1,
+        totalPages: 0,
+      );
+    }
+    final orClause = planIds
+        .map((id) => 'membershipId = "$id"')
+        .join(' || ');
+    filter.raw('($orClause)');
   }
 
   // Status filter (server-side via the view's expirationDate)

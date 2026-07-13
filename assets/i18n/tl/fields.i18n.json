@@ -11,6 +11,7 @@
     "requiredField": "Kinakailangan",
     "atLeastOneRequired": "Kailangan ng kahit isang field",
     "receiptNumber": "Numero ng Resibo",
+    "descriptor": "Paglalarawan",
     "customerName": "Pangalan ng Customer",
     "paymentRef": "Reference ng Bayad",
     "notes": "Mga Tala",

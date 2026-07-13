@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/membership_report.dart';
 import '../../controllers/membership_report_controller.dart';
@@ -60,41 +61,54 @@ class MembershipReportView extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Charts Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Membership Plan Distribution (Pie Chart)
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: PieChartWidget(
-                      title: 'Membership Plan Distribution',
-                      data: report.membershipPlanDistribution,
-                      height: 220,
-                    ),
+          // Charts — stacked on mobile, side-by-side on wider layouts
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < Breakpoints.mobile;
+              final planDistributionChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: PieChartWidget(
+                    title: 'Membership Plan Distribution',
+                    data: report.membershipPlanDistribution,
+                    height: 220,
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // Revenue by Plan (Bar Chart)
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: BarChartWidget(
-                      title: 'Revenue by Membership Plan',
-                      data: report.revenueByPlan,
-                      height: 220,
-                      barColor: Colors.teal,
-                      valueFormatter: (value) =>
-                          _currencyFormat.format(value).replaceAll('.00', ''),
-                    ),
+              );
+              final revenueByPlanChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: BarChartWidget(
+                    title: 'Revenue by Membership Plan',
+                    data: report.revenueByPlan,
+                    height: 220,
+                    barColor: Colors.teal,
+                    valueFormatter: (value) =>
+                        _currencyFormat.format(value).replaceAll('.00', ''),
                   ),
                 ),
-              ),
-            ],
+              );
+
+              if (isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    planDistributionChart,
+                    const SizedBox(height: 16),
+                    revenueByPlanChart,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: planDistributionChart),
+                  const SizedBox(width: 16),
+                  Expanded(child: revenueByPlanChart),
+                ],
+              );
+            },
           ),
         ],
       ),

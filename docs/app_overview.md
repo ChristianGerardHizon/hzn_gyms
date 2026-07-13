@@ -26,11 +26,20 @@ A comprehensive Flutter multi-platform gym management system supporting Android,
 Home screen with gym metrics and quick actions.
 
 - Responsive layout (single column mobile, single-pane tablet)
-- KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members
-- Quick action buttons: Check-In, New Sale, New Member
+- KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
+- Quick action buttons: Check-In, New Sale, Renew, New Member
+- Renew Membership: pick any member, then choose a plan for the current branch; if they still have an active membership, the new period starts the day after it ends
+- Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's full list
+- Members grid: tap a member for a quick-view dialog (details + membership summary, Renew / Purchase, Show full details)
 - Expiring memberships section (memberships expiring within 7 days)
 - Inventory alerts (low stock, expiring products)
 - Pull-to-refresh invalidates all dashboard data
+
+#### Today's Transactions (`/todays-transactions`)
+Full list of sales made today for the current branch (opened from dashboard View All).
+
+- Pull-to-refresh
+- Tap a row to open sale quick view (items, payment status, Record payment when unpaid, Show full details)
 
 #### Check-In (`/check-in`)
 Member check-in system for tracking gym visits.
@@ -75,6 +84,7 @@ Membership plan management for gym subscriptions.
   - Create/edit plans via bottom sheet form
   - **Add-ons per plan** (e.g., Treadmill Access, Coach/Instructor, Locker, Pool Access) — each with its own price, managed from the plan detail page
   - Purchase membership flow from member detail page with optional add-on selection — total cost = base price + selected add-ons
+  - Renew from dashboard Quick Action or member membership detail; if the member still has an active membership at the branch, the new period starts the day after that membership ends
 - **Key Models**: `Membership`, `MembershipAddOn`, `MemberMembership`, `MemberMembershipAddOn`, `MemberMembershipStatus`
 - **Master-Detail Layout**: Tablet shows list + detail side-by-side
 
@@ -103,13 +113,15 @@ Complete POS system for processing product sales.
   - Lot selection with FEFO ordering for lot-tracked products
   - Variable price support for products
   - Multiple payment methods (cash, card, check, etc.)
+  - Checkout creates the sale, then opens Record Payment before showing the receipt
   - Receipt generation and printing
 - **Components**:
   - `ProductGrid` - Product selection (default mode)
   - `GroupedCashierView` - Scrollable grouped sections (grouped mode)
   - `CashierSearchDropdown` - Search overlay for grouped mode
   - `CartView` - Shopping cart
-  - `CheckoutDialog` - Payment processing
+  - `CheckoutDialog` - Order summary, member, notes; then payment step
+  - `RecordPaymentDialog` - Payment collection after checkout
   - `LotSelectionDialog` - FEFO lot selection
   - `ReceiptDialog` - Receipt display/print
 
@@ -268,7 +280,8 @@ Located in `/lib/src/core/`
 - Password Recovery (`/recovery`)
 
 ### Main Navigation
-- **Dashboard**: Home with KPIs, quick actions, expiring memberships, inventory alerts
+- **Dashboard**: Home with KPIs, quick actions, recent transactions, inventory alerts
+- **Today's Transactions**: Full list of sales for today (from dashboard View All)
 - **Check-In**: Member search, check-in with membership validation
 - **Cashier/POS**: Product grid and checkout
 - **Sales List**: Transaction history
@@ -347,6 +360,7 @@ App Root (Shell)
 │
 └── Main Shell (with navigation)
     ├── / (Dashboard)
+    ├── /todays-transactions (Today's Transactions)
     ├── /check-in (Check-In)
     ├── /cashier (POS)
     ├── /sales (Sales History)
@@ -506,6 +520,14 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 13 | Member quick view | Tap a dashboard member card to open a details dialog with membership summary, Renew/Purchase shortcut, and Show full details |
+| Jul 13 | Sale descriptors | Sales store a `descriptor` (item name or `Member · Plan`) shown as the list title with receipt short code underneath on sales history and dashboard |
+| Jul 13 | Sale quick view | Tap a dashboard sale (recent transactions, today's list, sales KPI) to open a details dialog with items, payment status, Record payment when unpaid, and Show full details |
+| Jul 13 | KPI breakdown dialogs | Tap dashboard KPIs to see aggregate chips (paid/unpaid, check-in method, plan counts) plus the underlying item list |
+| Jul 13 | POS payment step | After completing a product sale checkout, opens Record Payment (same as memberships) before the receipt |
+| Jul 13 | Recent transactions | Collapsible dashboard section under Quick Actions previewing today's sales; View All opens `/todays-transactions` for the full day list |
+| Jul 13 | Dashboard renew | Quick Action to pick any member and renew with current-branch plans; new periods stack from the day after an still-active membership ends |
+| Jul 13 | Multi-branch memberships | Plans have `validBranches` (1, many, or all); check-in gated by plan validity at current branch; members list/search are global; dashboard shows members whose membership is valid at the selected branch |
 | Jul 12 | Renew exclude sales | Membership renew dialog can skip creating a sale/receipt (complimentary or admin renewals) |
 | Jul 12 | Outbox nav | Added `/outbox` nav destination to inspect pending offline queue entries with payload details |
 | Jul 12 | Offline outbox | Member create/update (with photo) and membership renew queue to Drift outbox; sync worker drains when online; pending count in app shell |

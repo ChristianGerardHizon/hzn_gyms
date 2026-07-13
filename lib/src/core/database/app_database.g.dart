@@ -2595,6 +2595,19 @@ class $MembershipPlansTable extends MembershipPlans
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _validBranchesJsonMeta = const VerificationMeta(
+    'validBranchesJson',
+  );
+  @override
+  late final GeneratedColumn<String> validBranchesJson =
+      GeneratedColumn<String>(
+        'valid_branches_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -2644,6 +2657,7 @@ class $MembershipPlansTable extends MembershipPlans
     durationDays,
     price,
     branchId,
+    validBranchesJson,
     isActive,
     isFavorite,
     syncedAt,
@@ -2709,6 +2723,15 @@ class $MembershipPlansTable extends MembershipPlans
     } else if (isInserting) {
       context.missing(_branchIdMeta);
     }
+    if (data.containsKey('valid_branches_json')) {
+      context.handle(
+        _validBranchesJsonMeta,
+        validBranchesJson.isAcceptableOrUnknown(
+          data['valid_branches_json']!,
+          _validBranchesJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -2762,6 +2785,10 @@ class $MembershipPlansTable extends MembershipPlans
         DriftSqlType.string,
         data['${effectivePrefix}branch_id'],
       )!,
+      validBranchesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}valid_branches_json'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -2791,6 +2818,9 @@ class MembershipPlanRow extends DataClass
   final int durationDays;
   final double price;
   final String branchId;
+
+  /// JSON-encoded list of branch IDs. Empty list (`[]`) means all branches.
+  final String validBranchesJson;
   final bool isActive;
   final bool isFavorite;
   final DateTime syncedAt;
@@ -2801,6 +2831,7 @@ class MembershipPlanRow extends DataClass
     required this.durationDays,
     required this.price,
     required this.branchId,
+    required this.validBranchesJson,
     required this.isActive,
     required this.isFavorite,
     required this.syncedAt,
@@ -2816,6 +2847,7 @@ class MembershipPlanRow extends DataClass
     map['duration_days'] = Variable<int>(durationDays);
     map['price'] = Variable<double>(price);
     map['branch_id'] = Variable<String>(branchId);
+    map['valid_branches_json'] = Variable<String>(validBranchesJson);
     map['is_active'] = Variable<bool>(isActive);
     map['is_favorite'] = Variable<bool>(isFavorite);
     map['synced_at'] = Variable<DateTime>(syncedAt);
@@ -2832,6 +2864,7 @@ class MembershipPlanRow extends DataClass
       durationDays: Value(durationDays),
       price: Value(price),
       branchId: Value(branchId),
+      validBranchesJson: Value(validBranchesJson),
       isActive: Value(isActive),
       isFavorite: Value(isFavorite),
       syncedAt: Value(syncedAt),
@@ -2850,6 +2883,7 @@ class MembershipPlanRow extends DataClass
       durationDays: serializer.fromJson<int>(json['durationDays']),
       price: serializer.fromJson<double>(json['price']),
       branchId: serializer.fromJson<String>(json['branchId']),
+      validBranchesJson: serializer.fromJson<String>(json['validBranchesJson']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
@@ -2865,6 +2899,7 @@ class MembershipPlanRow extends DataClass
       'durationDays': serializer.toJson<int>(durationDays),
       'price': serializer.toJson<double>(price),
       'branchId': serializer.toJson<String>(branchId),
+      'validBranchesJson': serializer.toJson<String>(validBranchesJson),
       'isActive': serializer.toJson<bool>(isActive),
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
@@ -2878,6 +2913,7 @@ class MembershipPlanRow extends DataClass
     int? durationDays,
     double? price,
     String? branchId,
+    String? validBranchesJson,
     bool? isActive,
     bool? isFavorite,
     DateTime? syncedAt,
@@ -2888,6 +2924,7 @@ class MembershipPlanRow extends DataClass
     durationDays: durationDays ?? this.durationDays,
     price: price ?? this.price,
     branchId: branchId ?? this.branchId,
+    validBranchesJson: validBranchesJson ?? this.validBranchesJson,
     isActive: isActive ?? this.isActive,
     isFavorite: isFavorite ?? this.isFavorite,
     syncedAt: syncedAt ?? this.syncedAt,
@@ -2904,6 +2941,9 @@ class MembershipPlanRow extends DataClass
           : this.durationDays,
       price: data.price.present ? data.price.value : this.price,
       branchId: data.branchId.present ? data.branchId.value : this.branchId,
+      validBranchesJson: data.validBranchesJson.present
+          ? data.validBranchesJson.value
+          : this.validBranchesJson,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       isFavorite: data.isFavorite.present
           ? data.isFavorite.value
@@ -2921,6 +2961,7 @@ class MembershipPlanRow extends DataClass
           ..write('durationDays: $durationDays, ')
           ..write('price: $price, ')
           ..write('branchId: $branchId, ')
+          ..write('validBranchesJson: $validBranchesJson, ')
           ..write('isActive: $isActive, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('syncedAt: $syncedAt')
@@ -2936,6 +2977,7 @@ class MembershipPlanRow extends DataClass
     durationDays,
     price,
     branchId,
+    validBranchesJson,
     isActive,
     isFavorite,
     syncedAt,
@@ -2950,6 +2992,7 @@ class MembershipPlanRow extends DataClass
           other.durationDays == this.durationDays &&
           other.price == this.price &&
           other.branchId == this.branchId &&
+          other.validBranchesJson == this.validBranchesJson &&
           other.isActive == this.isActive &&
           other.isFavorite == this.isFavorite &&
           other.syncedAt == this.syncedAt);
@@ -2962,6 +3005,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
   final Value<int> durationDays;
   final Value<double> price;
   final Value<String> branchId;
+  final Value<String> validBranchesJson;
   final Value<bool> isActive;
   final Value<bool> isFavorite;
   final Value<DateTime> syncedAt;
@@ -2973,6 +3017,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     this.durationDays = const Value.absent(),
     this.price = const Value.absent(),
     this.branchId = const Value.absent(),
+    this.validBranchesJson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.isFavorite = const Value.absent(),
     this.syncedAt = const Value.absent(),
@@ -2985,6 +3030,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     required int durationDays,
     required double price,
     required String branchId,
+    this.validBranchesJson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.isFavorite = const Value.absent(),
     required DateTime syncedAt,
@@ -3002,6 +3048,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Expression<int>? durationDays,
     Expression<double>? price,
     Expression<String>? branchId,
+    Expression<String>? validBranchesJson,
     Expression<bool>? isActive,
     Expression<bool>? isFavorite,
     Expression<DateTime>? syncedAt,
@@ -3014,6 +3061,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       if (durationDays != null) 'duration_days': durationDays,
       if (price != null) 'price': price,
       if (branchId != null) 'branch_id': branchId,
+      if (validBranchesJson != null) 'valid_branches_json': validBranchesJson,
       if (isActive != null) 'is_active': isActive,
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (syncedAt != null) 'synced_at': syncedAt,
@@ -3028,6 +3076,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Value<int>? durationDays,
     Value<double>? price,
     Value<String>? branchId,
+    Value<String>? validBranchesJson,
     Value<bool>? isActive,
     Value<bool>? isFavorite,
     Value<DateTime>? syncedAt,
@@ -3040,6 +3089,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       durationDays: durationDays ?? this.durationDays,
       price: price ?? this.price,
       branchId: branchId ?? this.branchId,
+      validBranchesJson: validBranchesJson ?? this.validBranchesJson,
       isActive: isActive ?? this.isActive,
       isFavorite: isFavorite ?? this.isFavorite,
       syncedAt: syncedAt ?? this.syncedAt,
@@ -3068,6 +3118,9 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     if (branchId.present) {
       map['branch_id'] = Variable<String>(branchId.value);
     }
+    if (validBranchesJson.present) {
+      map['valid_branches_json'] = Variable<String>(validBranchesJson.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -3092,6 +3145,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
           ..write('durationDays: $durationDays, ')
           ..write('price: $price, ')
           ..write('branchId: $branchId, ')
+          ..write('validBranchesJson: $validBranchesJson, ')
           ..write('isActive: $isActive, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('syncedAt: $syncedAt, ')
@@ -4865,6 +4919,7 @@ typedef $$MembershipPlansTableCreateCompanionBuilder =
       required int durationDays,
       required double price,
       required String branchId,
+      Value<String> validBranchesJson,
       Value<bool> isActive,
       Value<bool> isFavorite,
       required DateTime syncedAt,
@@ -4878,6 +4933,7 @@ typedef $$MembershipPlansTableUpdateCompanionBuilder =
       Value<int> durationDays,
       Value<double> price,
       Value<String> branchId,
+      Value<String> validBranchesJson,
       Value<bool> isActive,
       Value<bool> isFavorite,
       Value<DateTime> syncedAt,
@@ -4920,6 +4976,11 @@ class $$MembershipPlansTableFilterComposer
 
   ColumnFilters<String> get branchId => $composableBuilder(
     column: $table.branchId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get validBranchesJson => $composableBuilder(
+    column: $table.validBranchesJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4978,6 +5039,11 @@ class $$MembershipPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get validBranchesJson => $composableBuilder(
+    column: $table.validBranchesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -5024,6 +5090,11 @@ class $$MembershipPlansTableAnnotationComposer
 
   GeneratedColumn<String> get branchId =>
       $composableBuilder(column: $table.branchId, builder: (column) => column);
+
+  GeneratedColumn<String> get validBranchesJson => $composableBuilder(
+    column: $table.validBranchesJson,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -5080,6 +5151,7 @@ class $$MembershipPlansTableTableManager
                 Value<int> durationDays = const Value.absent(),
                 Value<double> price = const Value.absent(),
                 Value<String> branchId = const Value.absent(),
+                Value<String> validBranchesJson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
@@ -5091,6 +5163,7 @@ class $$MembershipPlansTableTableManager
                 durationDays: durationDays,
                 price: price,
                 branchId: branchId,
+                validBranchesJson: validBranchesJson,
                 isActive: isActive,
                 isFavorite: isFavorite,
                 syncedAt: syncedAt,
@@ -5104,6 +5177,7 @@ class $$MembershipPlansTableTableManager
                 required int durationDays,
                 required double price,
                 required String branchId,
+                Value<String> validBranchesJson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
                 required DateTime syncedAt,
@@ -5115,6 +5189,7 @@ class $$MembershipPlansTableTableManager
                 durationDays: durationDays,
                 price: price,
                 branchId: branchId,
+                validBranchesJson: validBranchesJson,
                 isActive: isActive,
                 isFavorite: isFavorite,
                 syncedAt: syncedAt,

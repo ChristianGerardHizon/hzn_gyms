@@ -65,7 +65,7 @@ class SalesRepositoryImpl implements SalesRepository {
 
   /// Columns needed for list / history rows (avoids shipping notes, etc.).
   static const _listFields =
-      'id,receiptNumber,branch,cashier,totalAmount,status,isPaid,member,customerName,created,updated';
+      'id,receiptNumber,branch,cashier,totalAmount,status,isPaid,member,customerName,descriptor,created,updated';
 
   RecordService get _sales => _pb.collection(PocketBaseCollections.sales);
   RecordService get _saleItems =>
@@ -89,6 +89,14 @@ class SalesRepositoryImpl implements SalesRepository {
     return TaskEither.tryCatch(
       () async {
         // 1. Create Sale Record
+        final descriptor = () {
+          final existing = sale.descriptor?.trim();
+          if (existing != null && existing.isNotEmpty) return existing;
+          return Sale.buildDescriptor(
+            items: items,
+            customerName: sale.customerName,
+          );
+        }();
         final saleBody = {
           'receiptNumber': sale.receiptNumber,
           'branch': sale.branchId,
@@ -98,6 +106,7 @@ class SalesRepositoryImpl implements SalesRepository {
           'isPaid': sale.isPaid,
           'member': sale.customerId,
           'customerName': sale.customerName,
+          'descriptor': descriptor,
           'notes': sale.notes,
         };
         final saleRecord = await _sales.create(body: saleBody);

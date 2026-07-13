@@ -46,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,13 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await _migrateToV3(migrator);
+          }
+          if (from < 4) {
+            await _addColumnIfMissing(
+              migrator,
+              table: membershipPlans,
+              column: membershipPlans.validBranchesJson,
+            );
           }
         },
       );

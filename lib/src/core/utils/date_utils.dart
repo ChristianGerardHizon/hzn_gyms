@@ -85,3 +85,26 @@ int calendarDaysUntil(DateTime date) {
 
 /// Whether [date]'s local calendar day is strictly before today.
 bool isBeforeToday(DateTime date) => calendarDaysUntil(date) < 0;
+
+/// Start date for a new membership period, stacking after an active one.
+///
+/// Membership end dates are inclusive. If [latestActiveEndDate] is still
+/// active (not before today), the new period starts the next calendar day.
+/// Otherwise returns [now] (defaults to [DateTime.now]).
+DateTime computeMembershipStartDate({
+  DateTime? latestActiveEndDate,
+  DateTime? now,
+}) {
+  final current = now ?? DateTime.now();
+  if (latestActiveEndDate == null || isBeforeToday(latestActiveEndDate)) {
+    return current;
+  }
+  return toLocalDateOnly(latestActiveEndDate).add(const Duration(days: 1));
+}
+
+/// End date for a membership period of [durationDays] starting at [startDate].
+DateTime computeMembershipEndDate({
+  required DateTime startDate,
+  required int durationDays,
+}) =>
+    startDate.add(Duration(days: durationDays));

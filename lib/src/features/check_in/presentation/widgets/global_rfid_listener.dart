@@ -179,6 +179,14 @@ class _GlobalRfidListenerState extends ConsumerState<GlobalRfidListener> {
             message:
                 '$memberName has no active membership and cannot check in.',
           );
+        case CardCheckInMembershipNotValidAtBranch(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Not Valid at This Branch',
+            message:
+                '$memberName has an active membership, but it is not valid '
+                'at this branch.',
+          );
         case CardCheckInNoBranch():
           await showCheckInErrorDialog(
             context,

@@ -9,6 +9,9 @@ class MembershipPlans extends Table {
   IntColumn get durationDays => integer()();
   RealColumn get price => real()();
   TextColumn get branchId => text()();
+  /// JSON-encoded list of branch IDs. Empty list (`[]`) means all branches.
+  TextColumn get validBranchesJson =>
+      text().withDefault(const Constant('[]'))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   DateTimeColumn get syncedAt => dateTime()();

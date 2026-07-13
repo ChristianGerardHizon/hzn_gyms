@@ -5,6 +5,7 @@ part 'sale_search_controller.g.dart';
 /// Available search fields for sales.
 const saleSearchableFields = [
   'receiptNumber',
+  'descriptor',
   'customerName',
   'paymentRef',
   'notes',

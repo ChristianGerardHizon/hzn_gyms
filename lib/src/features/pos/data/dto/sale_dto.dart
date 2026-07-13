@@ -19,6 +19,7 @@ class SaleDto with SaleDtoMappable {
   final bool isPaid;
   final String? customer;
   final String? customerName;
+  final String? descriptor;
   final String? notes;
   final String? voidedBy;
   final String? created;
@@ -36,6 +37,7 @@ class SaleDto with SaleDtoMappable {
     this.isPaid = false,
     this.customer,
     this.customerName,
+    this.descriptor,
     this.notes,
     this.voidedBy,
     this.created,
@@ -55,6 +57,7 @@ class SaleDto with SaleDtoMappable {
       isPaid: record.getBoolValue('isPaid'),
       customer: record.getStringValue('member'),
       customerName: record.getStringValue('customerName'),
+      descriptor: record.getStringValue('descriptor'),
       notes: record.getStringValue('notes'),
       voidedBy: record.getStringValue('voidedBy'),
       created: record.get<String>('created'),
@@ -73,6 +76,7 @@ class SaleDto with SaleDtoMappable {
       isPaid: isPaid,
       customerId: customer != null && customer!.isNotEmpty ? customer : null,
       customerName: customerName != null && customerName!.isNotEmpty ? customerName : null,
+      descriptor: descriptor != null && descriptor!.isNotEmpty ? descriptor : null,
       notes: notes,
       voidedById: voidedBy != null && voidedBy!.isNotEmpty ? voidedBy : null,
       created: parseToLocal(created),

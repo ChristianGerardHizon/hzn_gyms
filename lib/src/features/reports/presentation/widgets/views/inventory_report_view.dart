@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/inventory_report.dart';
 import '../../controllers/inventory_report_controller.dart';
@@ -37,48 +38,61 @@ class InventoryReportView extends ConsumerWidget {
           _buildKpiSection(context, report),
           const SizedBox(height: 24),
 
-          // Charts Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Stock Status Pie Chart
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: PieChartWidget(
-                      title: 'Stock Status',
-                      data: report.stockStatusBreakdown.map(
-                        (k, v) => MapEntry(k, v),
-                      ),
-                      height: 220,
-                      colors: const [
-                        Color(0xFF4CAF50), // In Stock - Green
-                        Color(0xFFFBC02D), // Low Stock - Yellow
-                        Color(0xFFF44336), // Out of Stock - Red
-                      ],
+          // Charts — stacked on mobile, side-by-side on wider layouts
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < Breakpoints.mobile;
+              final stockStatusChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: PieChartWidget(
+                    title: 'Stock Status',
+                    data: report.stockStatusBreakdown.map(
+                      (k, v) => MapEntry(k, v),
                     ),
+                    height: 220,
+                    colors: const [
+                      Color(0xFF4CAF50), // In Stock - Green
+                      Color(0xFFFBC02D), // Low Stock - Yellow
+                      Color(0xFFF44336), // Out of Stock - Red
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // Products by Category Bar Chart
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: BarChartWidget(
-                      title: 'Products by Category',
-                      data: report.productsByCategory.map(
-                        (k, v) => MapEntry(k, v),
-                      ),
-                      height: 220,
-                      barColor: Colors.deepPurple,
+              );
+              final productsByCategoryChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: BarChartWidget(
+                    title: 'Products by Category',
+                    data: report.productsByCategory.map(
+                      (k, v) => MapEntry(k, v),
                     ),
+                    height: 220,
+                    barColor: Colors.deepPurple,
                   ),
                 ),
-              ),
-            ],
+              );
+
+              if (isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    stockStatusChart,
+                    const SizedBox(height: 16),
+                    productsByCategoryChart,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: stockStatusChart),
+                  const SizedBox(width: 16),
+                  Expanded(child: productsByCategoryChart),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
 

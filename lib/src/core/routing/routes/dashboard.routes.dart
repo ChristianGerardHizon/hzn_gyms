@@ -3,18 +3,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../features/dashboard/presentation/controllers/active_members_count_controller.dart';
-import '../../../features/dashboard/presentation/controllers/dashboard_kpi_provider.dart';
-import '../../../features/dashboard/presentation/controllers/expiring_memberships_controller.dart';
-import '../../../features/dashboard/presentation/controllers/inventory_alerts_controller.dart';
-import '../../../features/dashboard/presentation/controllers/new_members_controller.dart';
-import '../../../features/dashboard/presentation/controllers/dashboard_members_controller.dart';
-import '../../../features/dashboard/presentation/controllers/todays_checkins_controller.dart';
-import '../../../features/dashboard/presentation/controllers/todays_sales_controller.dart';
+import '../../../features/dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../features/dashboard/presentation/widgets/dashboard_members_section.dart';
 import '../../../features/dashboard/presentation/widgets/inventory_alerts_section.dart';
 import '../../../features/dashboard/presentation/widgets/kpi_summary_section.dart';
 import '../../../features/dashboard/presentation/widgets/quick_actions_section.dart';
+import '../../../features/dashboard/presentation/widgets/recent_transactions_section.dart';
 import '../../../features/dashboard/presentation/widgets/tablet_dashboard_layout.dart';
 import '../../../features/dashboard/presentation/widgets/dashboard_footer.dart';
 import '../../../features/settings/presentation/controllers/current_branch_controller.dart';
@@ -50,6 +44,7 @@ class DashboardPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isTablet = Breakpoints.isTabletOrLarger(context);
     final scrollController = useScrollController();
+    final overviewKey = useMemoized(GlobalKey.new);
     final branchAsync = ref.watch(currentBranchControllerProvider);
 
     // Hide stale KPIs / members while switching branch (not on first resolve).
@@ -79,36 +74,41 @@ class DashboardPage extends HookConsumerWidget {
       body: Stack(
         children: [
           RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(inventoryAlertsSummaryProvider);
-              ref.invalidate(todaySalesSummaryProvider);
-              ref.invalidate(todaysCheckInsCountProvider);
-              ref.invalidate(activeMembersCountProvider);
-              ref.invalidate(todaysNewMembersCountProvider);
-              ref.invalidate(expiringMembershipsProvider);
-              ref.invalidate(dashboardMembersPageProvider);
-              ref.invalidate(productsNearExpirationCountProvider);
-              ref.invalidate(productsExpiredCountProvider);
-              ref.invalidate(lowStockProductsCountProvider);
-            },
+            onRefresh: () => refreshDashboard(ref),
             child: CustomScrollView(
               controller: scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                // Header + KPI + Quick Actions
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        _MobileDashboardHeader(),
-                        SizedBox(height: 16),
-                        KpiSummarySection(),
-                        SizedBox(height: 20),
-                        QuickActionsSection(),
-                        SizedBox(height: 24),
-                      ],
+                // Header + KPI + Quick Actions + Recent Transactions
+                // Keyed so scroll-to-top shows after this block scrolls away.
+                SliverToBoxAdapter(
+                  child: NotificationListener<SizeChangedLayoutNotification>(
+                    onNotification: (_) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (scrollController.hasClients) {
+                          scrollController.position.notifyListeners();
+                        }
+                      });
+                      return true;
+                    },
+                    child: SizeChangedLayoutNotifier(
+                      child: Padding(
+                        key: overviewKey,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _MobileDashboardHeader(),
+                            SizedBox(height: 16),
+                            KpiSummarySection(),
+                            SizedBox(height: 20),
+                            QuickActionsSection(),
+                            SizedBox(height: 24),
+                            RecentTransactionsSection(),
+                            SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -135,7 +135,10 @@ class DashboardPage extends HookConsumerWidget {
               ],
             ),
           ),
-          ScrollToTopButton(scrollController: scrollController),
+          ScrollToTopButton(
+            scrollController: scrollController,
+            anchorKey: overviewKey,
+          ),
         ],
       ),
     );
@@ -173,6 +176,12 @@ class _MobileDashboardHeader extends ConsumerWidget {
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Refresh',
+                onPressed: () => refreshDashboard(ref),
               ),
             ],
           ),

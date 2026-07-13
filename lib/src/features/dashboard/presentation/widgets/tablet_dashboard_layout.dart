@@ -4,19 +4,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/scroll_to_top_button.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
-import '../controllers/active_members_count_controller.dart';
-import '../controllers/dashboard_members_controller.dart';
-import '../controllers/expiring_memberships_controller.dart';
-import '../controllers/inventory_alerts_controller.dart';
-import '../controllers/dashboard_kpi_provider.dart';
-import '../controllers/new_members_controller.dart';
-import '../controllers/todays_checkins_controller.dart';
-import '../controllers/todays_sales_controller.dart';
+import '../controllers/dashboard_refresh.dart';
 import 'dashboard_footer.dart';
 import 'dashboard_members_section.dart';
 import 'inventory_alerts_section.dart';
 import 'kpi_summary_section.dart';
 import 'quick_actions_section.dart';
+import 'recent_transactions_section.dart';
 
 /// Single-pane tablet layout for the dashboard.
 ///
@@ -29,6 +23,7 @@ class TabletDashboardLayout extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scrollController = useScrollController();
+    final overviewKey = useMemoized(GlobalKey.new);
     final branchAsync = ref.watch(currentBranchControllerProvider);
 
     // Hide stale KPIs / members while switching branch (not on first resolve).
@@ -55,70 +50,81 @@ class TabletDashboardLayout extends HookConsumerWidget {
     return Stack(
       children: [
         RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(inventoryAlertsSummaryProvider);
-            ref.invalidate(todaySalesSummaryProvider);
-            ref.invalidate(todaysCheckInsCountProvider);
-            ref.invalidate(activeMembersCountProvider);
-            ref.invalidate(todaysNewMembersCountProvider);
-            ref.invalidate(expiringMembershipsProvider);
-            ref.invalidate(dashboardMembersPageProvider);
-            ref.invalidate(productsNearExpirationCountProvider);
-            ref.invalidate(productsExpiredCountProvider);
-            ref.invalidate(lowStockProductsCountProvider);
-          },
+          onRefresh: () => refreshDashboard(ref),
           child: CustomScrollView(
             controller: scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              // Header + KPI + Quick Actions
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              // Header + KPI + Quick Actions + Recent Transactions
+              // Keyed so scroll-to-top shows after this block scrolls away.
+              SliverToBoxAdapter(
+                child: NotificationListener<SizeChangedLayoutNotification>(
+                  onNotification: (_) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (scrollController.hasClients) {
+                        scrollController.position.notifyListeners();
+                      }
+                    });
+                    return true;
+                  },
+                  child: SizeChangedLayoutNotifier(
+                    child: Padding(
+                      key: overviewKey,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.dashboard,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Dashboard Overview',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (branchLabel != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
+                          Row(
                             children: [
                               Icon(
-                                Icons.store,
-                                size: 16,
-                                color: theme.colorScheme.outline,
+                                Icons.dashboard,
+                                color: theme.colorScheme.primary,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
                               Text(
-                                branchLabel,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.outline,
+                                'Dashboard Overview',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.refresh),
+                                tooltip: 'Refresh',
+                                onPressed: () => refreshDashboard(ref),
                               ),
                             ],
                           ),
-                        ),
-                      const SizedBox(height: 24),
-                      const KpiSummarySection(),
-                      const SizedBox(height: 24),
-                      const QuickActionsSection(),
-                      const SizedBox(height: 24),
-                    ],
+                          if (branchLabel != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.store,
+                                    size: 16,
+                                    color: theme.colorScheme.outline,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    branchLabel,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.outline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 24),
+                          const KpiSummarySection(),
+                          const SizedBox(height: 24),
+                          const QuickActionsSection(),
+                          const SizedBox(height: 24),
+                          const RecentTransactionsSection(),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -144,7 +150,10 @@ class TabletDashboardLayout extends HookConsumerWidget {
             ],
           ),
         ),
-        ScrollToTopButton(scrollController: scrollController),
+        ScrollToTopButton(
+          scrollController: scrollController,
+          anchorKey: overviewKey,
+        ),
       ],
     );
   }

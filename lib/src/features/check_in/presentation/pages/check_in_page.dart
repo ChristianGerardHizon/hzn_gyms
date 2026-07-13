@@ -10,6 +10,7 @@ import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
 import '../controllers/check_in_controller.dart';
 import '../widgets/check_in_error_dialog.dart';
@@ -70,9 +71,13 @@ class CheckInPage extends HookConsumerWidget {
       searchResults.value = [];
       inputController.text = member.name;
 
-      // Fetch active membership
+      // Fetch active membership valid at the current branch
+      final branchId = ref.read(effectiveBranchIdForWriteProvider);
       final mmRepo = ref.read(memberMembershipRepositoryProvider);
-      final result = await mmRepo.fetchActive(member.id);
+      final result = await mmRepo.fetchActive(
+        member.id,
+        validAtBranchId: branchId,
+      );
       result.fold((_) => activeMembership.value = null, (memberships) {
         activeMembership.value = memberships.isNotEmpty
             ? memberships.first
@@ -92,13 +97,15 @@ class CheckInPage extends HookConsumerWidget {
       final member = selectedMember.value;
       if (member == null) return;
 
-      // Block check-in if member has no active membership
+      // Block check-in if member has no membership valid at this branch
       if (activeMembership.value == null) {
         if (context.mounted) {
           showErrorSnackBar(
             context,
             message:
-                '${member.name} has no active membership. Only members with an active membership can check in.',
+                '${member.name} has no membership valid at this branch. '
+                'Only members with an active membership for this branch '
+                'can check in.',
           );
         }
         return;
@@ -174,6 +181,17 @@ class CheckInPage extends HookConsumerWidget {
             title: 'No Active Membership',
             message:
                 '$memberName has no active membership and cannot check in.',
+          );
+          inputController.clear();
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInMembershipNotValidAtBranch(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Not Valid at This Branch',
+            message:
+                '$memberName has an active membership, but it is not valid '
+                'at this branch.',
           );
           inputController.clear();
           inputFocusNode.requestFocus();

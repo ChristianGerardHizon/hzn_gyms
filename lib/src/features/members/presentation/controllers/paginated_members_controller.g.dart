@@ -9,12 +9,18 @@ part of 'paginated_members_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Controller for managing paginated members list.
+///
+/// Members are branch-agnostic — lists and search are not filtered by the
+/// current branch switcher.
 
 @ProviderFor(PaginatedMembersController)
 final paginatedMembersControllerProvider =
     PaginatedMembersControllerProvider._();
 
 /// Controller for managing paginated members list.
+///
+/// Members are branch-agnostic — lists and search are not filtered by the
+/// current branch switcher.
 final class PaginatedMembersControllerProvider
     extends
         $AsyncNotifierProvider<
@@ -22,6 +28,9 @@ final class PaginatedMembersControllerProvider
           PaginatedState<Member>
         > {
   /// Controller for managing paginated members list.
+  ///
+  /// Members are branch-agnostic — lists and search are not filtered by the
+  /// current branch switcher.
   PaginatedMembersControllerProvider._()
     : super(
         from: null,
@@ -42,9 +51,12 @@ final class PaginatedMembersControllerProvider
 }
 
 String _$paginatedMembersControllerHash() =>
-    r'3ae7edcb93b9eff9622dd69d005517722ffb9612';
+    r'd7d984918e10a00acccd80a4a85d916b90d7574c';
 
 /// Controller for managing paginated members list.
+///
+/// Members are branch-agnostic — lists and search are not filtered by the
+/// current branch switcher.
 
 abstract class _$PaginatedMembersController
     extends $AsyncNotifier<PaginatedState<Member>> {

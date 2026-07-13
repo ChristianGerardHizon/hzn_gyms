@@ -40,11 +40,9 @@ class MembershipCacheDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<List<MembershipPlanRow>> getPlans({String? branchId}) {
+    // Branch filtering is done in the local data source via validBranches.
     final query = select(membershipPlans)
       ..orderBy([(p) => OrderingTerm.asc(p.name)]);
-    if (branchId != null) {
-      query.where((p) => p.branchId.equals(branchId));
-    }
     return query.get();
   }
 

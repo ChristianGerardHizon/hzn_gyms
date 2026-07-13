@@ -63,6 +63,9 @@ class MembershipPurchaseOrchestrator {
       !_isOnline() && canWriteOffline(_pb, hasAuth: _hasAuth());
 
   /// Queues or returns failure if offline purchase not allowed.
+  ///
+  /// When [latestActiveEndDate] is set and still active, the new period
+  /// stacks from the day after that end date.
   Future<Either<Failure, MembershipPurchaseResult>> purchase({
     required String memberId,
     required String memberName,
@@ -71,6 +74,7 @@ class MembershipPurchaseOrchestrator {
     required String branchId,
     String? soldBy,
     bool excludeFromSales = false,
+    DateTime? latestActiveEndDate,
   }) async {
     if (!shouldQueueOffline) {
       return left(
@@ -86,6 +90,7 @@ class MembershipPurchaseOrchestrator {
       branchId: branchId,
       soldBy: soldBy,
       excludeFromSales: excludeFromSales,
+      latestActiveEndDate: latestActiveEndDate,
     );
   }
 
@@ -97,10 +102,16 @@ class MembershipPurchaseOrchestrator {
     required String branchId,
     String? soldBy,
     bool excludeFromSales = false,
+    DateTime? latestActiveEndDate,
   }) async {
     try {
-      final startDate = DateTime.now();
-      final endDate = startDate.add(Duration(days: plan.durationDays));
+      final startDate = computeMembershipStartDate(
+        latestActiveEndDate: latestActiveEndDate,
+      );
+      final endDate = computeMembershipEndDate(
+        startDate: startDate,
+        durationDays: plan.durationDays,
+      );
       final addOnTotal = addOns.fold<num>(0, (sum, a) => sum + a.price);
       final totalPrice = plan.price + addOnTotal;
 

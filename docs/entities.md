@@ -161,7 +161,7 @@ Gym members.
 | `rfidCardId` | String | No | RFID card ID for check-in |
 | `email` | String | No | Email address |
 | `emergencyContact` | String | No | Emergency contact info |
-| `branch` | String (FK) | No | FK to Branch (home branch) |
+| `branch` | String (FK) | No | Optional home branch (metadata only; members are searchable globally) |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
@@ -188,13 +188,18 @@ Membership plan templates.
 | `description` | String | No | Plan description |
 | `durationDays` | int | Yes | Duration in days (30, 90, 365, etc.) |
 | `price` | num | Yes | Price in PHP |
-| `branch` | String (FK) | No | FK to Branch |
+| `branch` | String (FK) | No | Catalog/home branch FK to Branch |
+| `validBranches` | List\<String\> (FK) | No | Multi-relation to Branch — branches where this plan grants check-in access. Empty = all branches |
 | `isActive` | bool | Yes | Whether plan is currently offered |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
 **Collection:** `memberships`
+
+**Relationships:**
+- `branch` -> Branch (optional catalog/home)
+- `validBranches` -> Branch[] (optional; empty means all branches)
 
 **Referenced by:** MemberMembership, MembershipAddOn
 
@@ -434,6 +439,7 @@ Transaction records.
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
 | `receiptNumber` | String | Yes | Generated receipt number |
+| `descriptor` | String | No | List label: product name(s) or `Member · Plan` |
 | `status` | SaleStatus | Yes | Sale status |
 | `total` | num | Yes | Total amount |
 | `member` | String (FK) | No | FK to Member |

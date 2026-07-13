@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -77,6 +79,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
     final searchController = useTextEditingController();
     final searchQuery = useState('');
     final showInactive = useState(false);
+    final latestActiveEndDate = useState<DateTime?>(null);
 
     useEffect(() {
       void listener() {
@@ -87,9 +90,47 @@ class MembershipPurchaseContent extends HookConsumerWidget {
       return () => searchController.removeListener(listener);
     }, [searchController]);
 
+    // Load latest active membership end date for stacking.
+    useEffect(() {
+      var cancelled = false;
+      Future<void> loadActive() async {
+        final branchId = ref.read(effectiveBranchIdForWriteProvider);
+        final result = await ref
+            .read(memberMembershipRepositoryProvider)
+            .fetchActive(memberId, validAtBranchId: branchId);
+        if (cancelled) return;
+        result.fold(
+          (_) => latestActiveEndDate.value = null,
+          (memberships) {
+            latestActiveEndDate.value =
+                memberships.isNotEmpty ? memberships.first.endDate : null;
+          },
+        );
+      }
+
+      loadActive();
+      return () => cancelled = true;
+    }, [memberId]);
+
     final membershipState = selectedMembership ?? localMembership;
     final addOnsState = selectedAddOns ?? localAddOns;
     final skipPlanSelection = preselectedMembershipId != null;
+
+    final selectedPlan = membershipState.value;
+    final previewStart = selectedPlan == null
+        ? null
+        : computeMembershipStartDate(
+            latestActiveEndDate: latestActiveEndDate.value,
+          );
+    final previewEnd = selectedPlan == null || previewStart == null
+        ? null
+        : computeMembershipEndDate(
+            startDate: previewStart,
+            durationDays: selectedPlan.durationDays,
+          );
+    final isStacking = latestActiveEndDate.value != null &&
+        !isBeforeToday(latestActiveEndDate.value!);
+    final dateFormat = useMemoized(() => DateFormat.yMMMd());
 
     // Pre-select the membership plan when renewing.
     useEffect(() {
@@ -149,6 +190,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
           branchId: branchId,
           soldBy: auth?.user.id,
           excludeFromSales: skipSale,
+          latestActiveEndDate: latestActiveEndDate.value,
         );
 
         isPurchasing.value = false;
@@ -186,8 +228,13 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         return;
       }
 
-      final startDate = DateTime.now();
-      final endDate = startDate.add(Duration(days: plan.durationDays));
+      final startDate = computeMembershipStartDate(
+        latestActiveEndDate: latestActiveEndDate.value,
+      );
+      final endDate = computeMembershipEndDate(
+        startDate: startDate,
+        durationDays: plan.durationDays,
+      );
 
       Sale? createdSale;
 
@@ -544,6 +591,43 @@ class MembershipPurchaseContent extends HookConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (previewStart != null && previewEnd != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isStacking
+                              ? 'Starts after current membership'
+                              : 'Membership period',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${dateFormat.format(previewStart)} → ${dateFormat.format(previewEnd)}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (isStacking && latestActiveEndDate.value != null)
+                          Text(
+                            'Current ends ${dateFormat.format(latestActiveEndDate.value!)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (isRenewal)
                   CheckboxListTile(
                     value: excludeFromSales.value,

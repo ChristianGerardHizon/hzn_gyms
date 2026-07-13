@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/sales_report.dart';
 import '../../controllers/sales_report_controller.dart';
@@ -66,44 +67,57 @@ class SalesReportView extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Charts Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Payment Method Pie Chart
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: PieChartWidget(
-                      title: 'Revenue by Payment Method',
-                      data: report.revenueByPaymentMethod,
-                      height: 200,
-                    ),
+          // Charts — stacked on mobile, side-by-side on wider layouts
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < Breakpoints.mobile;
+              final paymentMethodChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: PieChartWidget(
+                    title: 'Revenue by Payment Method',
+                    data: report.revenueByPaymentMethod,
+                    height: 200,
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // Top Products Bar Chart
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: BarChartWidget(
-                      title: 'Top Products by Revenue',
-                      data: Map.fromEntries(
-                        report.topSellingProducts.take(5).map(
-                              (p) => MapEntry(p.productName, p.revenue),
-                            ),
-                      ),
-                      height: 200,
-                      valueFormatter: (value) =>
-                          _currencyFormat.format(value).replaceAll('.00', ''),
+              );
+              final topProductsChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: BarChartWidget(
+                    title: 'Top Products by Revenue',
+                    data: Map.fromEntries(
+                      report.topSellingProducts.take(5).map(
+                            (p) => MapEntry(p.productName, p.revenue),
+                          ),
                     ),
+                    height: 200,
+                    valueFormatter: (value) =>
+                        _currencyFormat.format(value).replaceAll('.00', ''),
                   ),
                 ),
-              ),
-            ],
+              );
+
+              if (isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    paymentMethodChart,
+                    const SizedBox(height: 16),
+                    topProductsChart,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: paymentMethodChart),
+                  const SizedBox(width: 16),
+                  Expanded(child: topProductsChart),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
 

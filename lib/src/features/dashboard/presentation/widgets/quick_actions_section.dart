@@ -4,6 +4,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/routing/routes/sales.routes.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
+import '../../../members/presentation/widgets/member_picker_dialog.dart';
+import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 
 /// Section displaying quick action buttons on the dashboard.
@@ -61,6 +63,28 @@ class QuickActionsSection extends ConsumerWidget {
                   label: 'New Sale',
                   color: Colors.green,
                   onTap: () => const SalesRoute().go(context),
+                ),
+                const SizedBox(width: 12),
+                _QuickActionButton(
+                  icon: Icons.autorenew,
+                  label: 'Renew',
+                  color: Colors.deepOrange,
+                  onTap: () async {
+                    final member = await showMemberPickerDialog(
+                      context,
+                      title: 'Renew Membership',
+                      subtitle: 'Select a member to renew',
+                    );
+                    if (member == null || !context.mounted) return;
+
+                    await purchaseMembershipAndRecordPayment(
+                      context,
+                      ref,
+                      memberId: member.id,
+                      memberName: member.name,
+                      isRenewal: true,
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(

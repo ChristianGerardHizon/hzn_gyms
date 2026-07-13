@@ -11,6 +11,7 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/empty_state.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_members_controller.dart';
+import 'member_quick_view_dialog.dart';
 
 /// Section displaying members as a virtualized grid of photo cards.
 ///
@@ -54,8 +55,7 @@ class DashboardMembersSection extends HookConsumerWidget {
       return timer.cancel;
     }, [rawSearchInput.value]);
 
-    // Reset pagination when branch, search, or status filter changes so we
-    // never keep showing members from the previous scope.
+    // Reset pagination when branch, search, or status filter changes.
     useEffect(() {
       allMembers.value = [];
       totalItems.value = 0;
@@ -473,7 +473,11 @@ class _DashboardMemberCard extends StatelessWidget {
             : BorderSide.none,
       ),
       child: InkWell(
-        onTap: () => MemberDetailRoute(id: dashboardMember.id).go(context),
+        onTap: () => showMemberQuickViewDialog(
+          context,
+          memberId: dashboardMember.id,
+          dashboardMember: dashboardMember,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
