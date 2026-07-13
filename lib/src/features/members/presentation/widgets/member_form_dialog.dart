@@ -300,13 +300,19 @@ class _MemberCreateWizard extends HookConsumerWidget {
         final plan = selectedMembership.value!;
         final auth = ref.read(currentAuthProvider);
         final startDate = DateTime.now();
-        final endDate = startDate.add(Duration(days: plan.durationDays));
+        final endDate = startDate.add(
+          Duration(
+            days:
+                plan.durationDays +
+                MembershipAddOn.totalBonusDays(selectedAddOns.value),
+          ),
+        );
 
         // 2a. Create a Sale record for this membership purchase
         final saleResult = await createMembershipSale(
           ref: ref,
           memberId: created.id,
-          memberName: created.name,
+          customerName: created.name,
           plan: plan,
           addOns: selectedAddOns.value,
           branchId: branchId,
@@ -928,8 +934,16 @@ class _ReviewStep extends StatelessWidget {
                     ...addOns.map(
                       (addOn) => ListTile(
                         dense: true,
-                        leading: const Icon(Icons.extension, size: 20),
+                        leading: Icon(
+                          addOn.extendsDuration
+                              ? Icons.event_available
+                              : Icons.extension,
+                          size: 20,
+                        ),
                         title: Text(addOn.name),
+                        subtitle: addOn.extendsDuration
+                            ? Text(addOn.durationDisplay)
+                            : null,
                         trailing: Text(addOn.price.toCurrency()),
                       ),
                     ),

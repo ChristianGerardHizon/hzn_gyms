@@ -91,7 +91,36 @@ class MembershipDetailPage extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Plan Details', style: theme.textTheme.titleMedium),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Plan Details',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ),
+                          if (membership.walkInBadgeLabel != null)
+                            Chip(
+                              avatar: Icon(
+                                Icons.directions_walk,
+                                size: 16,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              label: Text(
+                                membership.walkInBadgeLabel!,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                              backgroundColor:
+                                  theme.colorScheme.secondaryContainer,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                            ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       _InfoRow(label: 'Name', value: membership.name),
                       if (membership.description != null &&
@@ -107,6 +136,10 @@ class MembershipDetailPage extends HookConsumerWidget {
                       _InfoRow(
                         label: 'Price',
                         value: membership.price.toCurrency(),
+                      ),
+                      _InfoRow(
+                        label: 'Plan type',
+                        value: membership.planTypeDisplay,
                       ),
                       _InfoRow(
                         label: 'Status',
@@ -297,14 +330,18 @@ class _AddOnTile extends ConsumerWidget {
             ? theme.colorScheme.primaryContainer
             : theme.colorScheme.surfaceContainerHighest,
         child: Icon(
-          Icons.extension,
+          addOn.extendsDuration ? Icons.event_available : Icons.extension,
           color: addOn.isActive
               ? theme.colorScheme.onPrimaryContainer
               : theme.colorScheme.onSurfaceVariant,
         ),
       ),
       title: Text(addOn.name),
-      subtitle: Text(addOn.price.toCurrency()),
+      subtitle: Text(
+        addOn.extendsDuration
+            ? '${addOn.durationDisplay} · ${addOn.price.toCurrency()}'
+            : addOn.price.toCurrency(),
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

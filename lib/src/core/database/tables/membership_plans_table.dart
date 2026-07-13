@@ -14,6 +14,8 @@ class MembershipPlans extends Table {
       text().withDefault(const Constant('[]'))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+  BoolColumn get memberNotRequired =>
+      boolean().withDefault(const Constant(false))();
   DateTimeColumn get syncedAt => dateTime()();
 
   @override

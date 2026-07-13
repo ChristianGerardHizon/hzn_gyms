@@ -16,6 +16,7 @@ class MembershipAddOnDto with MembershipAddOnDtoMappable {
   final String name;
   final String? description;
   final num price;
+  final int durationDays;
   final bool isActive;
   final String? created;
   final String? updated;
@@ -28,6 +29,7 @@ class MembershipAddOnDto with MembershipAddOnDtoMappable {
     required this.name,
     this.description,
     required this.price,
+    this.durationDays = 0,
     this.isActive = true,
     this.created,
     this.updated,
@@ -43,10 +45,23 @@ class MembershipAddOnDto with MembershipAddOnDtoMappable {
       name: record.getStringValue('name'),
       description: record.getStringValue('description'),
       price: record.getDoubleValue('price'),
+      durationDays: _readDurationDays(record),
       isActive: record.getBoolValue('isActive'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
+  }
+
+  static int _readDurationDays(RecordModel record) {
+    try {
+      final value = record.get<dynamic>('durationDays');
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString()) ?? 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
   /// Converts the DTO to a domain MembershipAddOn entity.
@@ -59,6 +74,7 @@ class MembershipAddOnDto with MembershipAddOnDtoMappable {
           ? description
           : null,
       price: price,
+      durationDays: durationDays,
       isActive: isActive,
       created: parseToLocal(created),
       updated: parseToLocal(updated),

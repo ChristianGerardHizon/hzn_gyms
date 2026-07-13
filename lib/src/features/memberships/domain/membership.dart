@@ -18,6 +18,7 @@ class Membership with MembershipMappable {
     this.description,
     this.isActive = true,
     this.isFavorite = false,
+    this.memberNotRequired = false,
     this.created,
     this.updated,
   });
@@ -51,6 +52,10 @@ class Membership with MembershipMappable {
   /// Whether this plan is pinned as a favorite in selection lists.
   final bool isFavorite;
 
+  /// When true, this is a day-pass / walk-in plan sold with a customer name
+  /// only (no linked member or [MemberMembership] record).
+  final bool memberNotRequired;
+
   /// Creation timestamp.
   final DateTime? created;
 
@@ -72,5 +77,26 @@ class Membership with MembershipMappable {
     if (durationDays == 180) return '6 months';
     if (durationDays == 365) return '1 year';
     return '$durationDays days';
+  }
+
+  /// Short badge label for walk-in / day-pass plans; null for standard plans.
+  String? get walkInBadgeLabel => memberNotRequired ? 'Walk-in' : null;
+
+  /// Plan type label for detail views.
+  String get planTypeDisplay => memberNotRequired
+      ? 'Walk-in (membership not required)'
+      : 'Standard (membership required)';
+
+  /// Sort comparator for membership plan lists.
+  ///
+  /// Order: active plans first, then favorites, then name (case-insensitive).
+  static int compareForList(Membership a, Membership b) {
+    if (a.isActive != b.isActive) {
+      return a.isActive ? -1 : 1;
+    }
+    if (a.isFavorite != b.isFavorite) {
+      return a.isFavorite ? -1 : 1;
+    }
+    return a.name.toLowerCase().compareTo(b.name.toLowerCase());
   }
 }

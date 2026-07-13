@@ -25,7 +25,7 @@ part 'membership_purchase_orchestrator.g.dart';
 class MembershipPurchaseResult {
   const MembershipPurchaseResult({
     this.sale,
-    required this.memberMembership,
+    this.memberMembership,
     required this.totalPrice,
     required this.queuedOffline,
     this.excludedFromSales = false,
@@ -33,7 +33,9 @@ class MembershipPurchaseResult {
 
   /// Null when [excludedFromSales] is true (no sale/receipt created).
   final Sale? sale;
-  final MemberMembership memberMembership;
+
+  /// Null for guest / walk-in sales (sale only, no member membership).
+  final MemberMembership? memberMembership;
   final num totalPrice;
   final bool queuedOffline;
   final bool excludedFromSales;
@@ -64,10 +66,14 @@ class MembershipPurchaseOrchestrator {
 
   /// Queues or returns failure if offline purchase not allowed.
   ///
-  /// When [latestActiveEndDate] is set and still active, the new period
-  /// stacks from the day after that end date.
+  /// When [customStartDate] is set, that date is used. Otherwise, when
+  /// [latestActiveEndDate] is set and still active, the new period stacks
+  /// from the day after that end date.
+  ///
+  /// When [guestMode] is true, only the sale (+ items) is queued — no
+  /// [MemberMembership] record.
   Future<Either<Failure, MembershipPurchaseResult>> purchase({
-    required String memberId,
+    String? memberId,
     required String memberName,
     required Membership plan,
     required Set<MembershipAddOn> addOns,
@@ -75,6 +81,8 @@ class MembershipPurchaseOrchestrator {
     String? soldBy,
     bool excludeFromSales = false,
     DateTime? latestActiveEndDate,
+    DateTime? customStartDate,
+    bool guestMode = false,
   }) async {
     if (!shouldQueueOffline) {
       return left(
@@ -82,8 +90,23 @@ class MembershipPurchaseOrchestrator {
       );
     }
 
+    if (guestMode) {
+      return _queueOfflineGuestPurchase(
+        customerName: memberName,
+        plan: plan,
+        addOns: addOns,
+        branchId: branchId,
+        soldBy: soldBy,
+      );
+    }
+
+    final id = memberId?.trim() ?? '';
+    if (id.isEmpty) {
+      return left(const GenericFailure('Member is required'));
+    }
+
     return _queueOfflinePurchase(
-      memberId: memberId,
+      memberId: id,
       memberName: memberName,
       plan: plan,
       addOns: addOns,
@@ -91,7 +114,117 @@ class MembershipPurchaseOrchestrator {
       soldBy: soldBy,
       excludeFromSales: excludeFromSales,
       latestActiveEndDate: latestActiveEndDate,
+      customStartDate: customStartDate,
     );
+  }
+
+  Future<Either<Failure, MembershipPurchaseResult>> _queueOfflineGuestPurchase({
+    required String customerName,
+    required Membership plan,
+    required Set<MembershipAddOn> addOns,
+    required String branchId,
+    String? soldBy,
+  }) async {
+    try {
+      final addOnTotal = addOns.fold<num>(0, (sum, a) => sum + a.price);
+      final totalPrice = plan.price + addOnTotal;
+      final name = customerName.trim();
+      if (name.isEmpty) {
+        return left(const GenericFailure('Customer name is required'));
+      }
+
+      late Sale syntheticSale;
+
+      await _db.transaction(() async {
+        final saleId = generateClientId();
+        final receiptNumber = generateReceiptNumber();
+        final saleItems = <SaleItem>[
+          SaleItem(
+            id: '',
+            saleId: saleId,
+            productId: '',
+            productName: plan.name,
+            quantity: 1,
+            unitPrice: plan.price,
+            subtotal: plan.price,
+            itemType: 'walkIn',
+          ),
+          ...addOns.map(
+            (addOn) => SaleItem(
+              id: '',
+              saleId: saleId,
+              productId: '',
+              productName: addOn.name,
+              quantity: 1,
+              unitPrice: addOn.price,
+              subtotal: addOn.price,
+              itemType: 'walkIn',
+            ),
+          ),
+        ];
+        final descriptor = Sale.buildDescriptor(
+          items: saleItems,
+          customerName: name,
+          isWalkIn: true,
+        );
+
+        final saleOutboxId = await _outbox.enqueueCreate(
+          entityType: OutboxEntityType.sale,
+          clientRecordId: saleId,
+          payload: {
+            'receiptNumber': receiptNumber,
+            'branch': branchId,
+            'cashier': soldBy,
+            'totalAmount': totalPrice,
+            'status': 'awaitingPayment',
+            'isPaid': false,
+            'customerName': name,
+            'descriptor': descriptor,
+          },
+        );
+
+        for (final item in saleItems) {
+          final itemId = generateClientId();
+          await _outbox.enqueueCreate(
+            entityType: OutboxEntityType.saleItem,
+            clientRecordId: itemId,
+            dependsOnId: saleOutboxId,
+            payload: {
+              'sale': saleId,
+              if (item.productId.isNotEmpty) 'product': item.productId,
+              'productName': item.productName,
+              'quantity': item.quantity,
+              'unitPrice': item.unitPrice,
+              'subtotal': item.subtotal,
+              if (item.itemType != null && item.itemType!.isNotEmpty)
+                'itemType': item.itemType,
+            },
+          );
+        }
+
+        syntheticSale = Sale(
+          id: saleId,
+          receiptNumber: receiptNumber,
+          branchId: branchId,
+          cashierId: soldBy ?? '',
+          totalAmount: totalPrice,
+          status: 'awaitingPayment',
+          isPaid: false,
+          customerName: name,
+          descriptor: descriptor,
+        );
+      });
+
+      return right(
+        MembershipPurchaseResult(
+          sale: syntheticSale,
+          totalPrice: totalPrice,
+          queuedOffline: true,
+        ),
+      );
+    } catch (e, st) {
+      return left(Failure.handle(e, st));
+    }
   }
 
   Future<Either<Failure, MembershipPurchaseResult>> _queueOfflinePurchase({
@@ -103,14 +236,18 @@ class MembershipPurchaseOrchestrator {
     String? soldBy,
     bool excludeFromSales = false,
     DateTime? latestActiveEndDate,
+    DateTime? customStartDate,
   }) async {
     try {
-      final startDate = computeMembershipStartDate(
-        latestActiveEndDate: latestActiveEndDate,
-      );
+      final startDate = customStartDate != null
+          ? toLocalDateOnly(customStartDate)
+          : computeMembershipStartDate(
+              latestActiveEndDate: latestActiveEndDate,
+            );
       final endDate = computeMembershipEndDate(
         startDate: startDate,
-        durationDays: plan.durationDays,
+        durationDays:
+            plan.durationDays + MembershipAddOn.totalBonusDays(addOns),
       );
       final addOnTotal = addOns.fold<num>(0, (sum, a) => sum + a.price);
       final totalPrice = plan.price + addOnTotal;
@@ -130,22 +267,6 @@ class MembershipPurchaseOrchestrator {
         if (!excludeFromSales) {
           saleId = generateClientId();
           final receiptNumber = generateReceiptNumber();
-
-          saleOutboxId = await _outbox.enqueueCreate(
-            entityType: OutboxEntityType.sale,
-            clientRecordId: saleId,
-            dependsOnId: memberCreateOutboxId,
-            payload: {
-              'receiptNumber': receiptNumber,
-              'branch': branchId,
-              'cashier': soldBy,
-              'totalAmount': totalPrice,
-              'status': 'awaitingPayment',
-              'isPaid': false,
-              'member': memberId,
-              'customerName': memberName,
-            },
-          );
 
           final saleItems = <SaleItem>[
             SaleItem(
@@ -171,6 +292,28 @@ class MembershipPurchaseOrchestrator {
               ),
             ),
           ];
+          final descriptor = Sale.buildDescriptor(
+            items: saleItems,
+            customerName: memberName,
+            isWalkIn: false,
+          );
+
+          saleOutboxId = await _outbox.enqueueCreate(
+            entityType: OutboxEntityType.sale,
+            clientRecordId: saleId,
+            dependsOnId: memberCreateOutboxId,
+            payload: {
+              'receiptNumber': receiptNumber,
+              'branch': branchId,
+              'cashier': soldBy,
+              'totalAmount': totalPrice,
+              'status': 'awaitingPayment',
+              'isPaid': false,
+              'member': memberId,
+              'customerName': memberName,
+              'descriptor': descriptor,
+            },
+          );
 
           for (final item in saleItems) {
             final itemId = generateClientId();
@@ -180,7 +323,7 @@ class MembershipPurchaseOrchestrator {
               dependsOnId: saleOutboxId,
               payload: {
                 'sale': saleId,
-                'product': item.productId,
+                if (item.productId.isNotEmpty) 'product': item.productId,
                 'productName': item.productName,
                 'quantity': item.quantity,
                 'unitPrice': item.unitPrice,
@@ -201,6 +344,7 @@ class MembershipPurchaseOrchestrator {
             isPaid: false,
             customerId: memberId,
             customerName: memberName,
+            descriptor: descriptor,
           );
         }
 
@@ -267,7 +411,7 @@ class MembershipPurchaseOrchestrator {
       return right(
         MembershipPurchaseResult(
           sale: syntheticSale,
-          memberMembership: syntheticMembership!,
+          memberMembership: syntheticMembership,
           totalPrice: totalPrice,
           queuedOffline: true,
           excludedFromSales: excludeFromSales,

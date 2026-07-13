@@ -50,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,6 +79,20 @@ class AppDatabase extends _$AppDatabase {
             if (!await _tableExists(migrator, appPreferences.actualTableName)) {
               await migrator.createTable(appPreferences);
             }
+          }
+          if (from < 6) {
+            await _addColumnIfMissing(
+              migrator,
+              table: membershipPlans,
+              column: membershipPlans.memberNotRequired,
+            );
+          }
+          if (from < 7) {
+            await _addColumnIfMissing(
+              migrator,
+              table: membershipAddOnsCache,
+              column: membershipAddOnsCache.durationDays,
+            );
           }
         },
       );

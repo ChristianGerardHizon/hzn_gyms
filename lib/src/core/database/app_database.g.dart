@@ -2638,6 +2638,21 @@ class $MembershipPlansTable extends MembershipPlans
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _memberNotRequiredMeta = const VerificationMeta(
+    'memberNotRequired',
+  );
+  @override
+  late final GeneratedColumn<bool> memberNotRequired = GeneratedColumn<bool>(
+    'member_not_required',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("member_not_required" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _syncedAtMeta = const VerificationMeta(
     'syncedAt',
   );
@@ -2660,6 +2675,7 @@ class $MembershipPlansTable extends MembershipPlans
     validBranchesJson,
     isActive,
     isFavorite,
+    memberNotRequired,
     syncedAt,
   ];
   @override
@@ -2744,6 +2760,15 @@ class $MembershipPlansTable extends MembershipPlans
         isFavorite.isAcceptableOrUnknown(data['is_favorite']!, _isFavoriteMeta),
       );
     }
+    if (data.containsKey('member_not_required')) {
+      context.handle(
+        _memberNotRequiredMeta,
+        memberNotRequired.isAcceptableOrUnknown(
+          data['member_not_required']!,
+          _memberNotRequiredMeta,
+        ),
+      );
+    }
     if (data.containsKey('synced_at')) {
       context.handle(
         _syncedAtMeta,
@@ -2797,6 +2822,10 @@ class $MembershipPlansTable extends MembershipPlans
         DriftSqlType.bool,
         data['${effectivePrefix}is_favorite'],
       )!,
+      memberNotRequired: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}member_not_required'],
+      )!,
       syncedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}synced_at'],
@@ -2823,6 +2852,7 @@ class MembershipPlanRow extends DataClass
   final String validBranchesJson;
   final bool isActive;
   final bool isFavorite;
+  final bool memberNotRequired;
   final DateTime syncedAt;
   const MembershipPlanRow({
     required this.id,
@@ -2834,6 +2864,7 @@ class MembershipPlanRow extends DataClass
     required this.validBranchesJson,
     required this.isActive,
     required this.isFavorite,
+    required this.memberNotRequired,
     required this.syncedAt,
   });
   @override
@@ -2850,6 +2881,7 @@ class MembershipPlanRow extends DataClass
     map['valid_branches_json'] = Variable<String>(validBranchesJson);
     map['is_active'] = Variable<bool>(isActive);
     map['is_favorite'] = Variable<bool>(isFavorite);
+    map['member_not_required'] = Variable<bool>(memberNotRequired);
     map['synced_at'] = Variable<DateTime>(syncedAt);
     return map;
   }
@@ -2867,6 +2899,7 @@ class MembershipPlanRow extends DataClass
       validBranchesJson: Value(validBranchesJson),
       isActive: Value(isActive),
       isFavorite: Value(isFavorite),
+      memberNotRequired: Value(memberNotRequired),
       syncedAt: Value(syncedAt),
     );
   }
@@ -2886,6 +2919,7 @@ class MembershipPlanRow extends DataClass
       validBranchesJson: serializer.fromJson<String>(json['validBranchesJson']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
+      memberNotRequired: serializer.fromJson<bool>(json['memberNotRequired']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
     );
   }
@@ -2902,6 +2936,7 @@ class MembershipPlanRow extends DataClass
       'validBranchesJson': serializer.toJson<String>(validBranchesJson),
       'isActive': serializer.toJson<bool>(isActive),
       'isFavorite': serializer.toJson<bool>(isFavorite),
+      'memberNotRequired': serializer.toJson<bool>(memberNotRequired),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
     };
   }
@@ -2916,6 +2951,7 @@ class MembershipPlanRow extends DataClass
     String? validBranchesJson,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     DateTime? syncedAt,
   }) => MembershipPlanRow(
     id: id ?? this.id,
@@ -2927,6 +2963,7 @@ class MembershipPlanRow extends DataClass
     validBranchesJson: validBranchesJson ?? this.validBranchesJson,
     isActive: isActive ?? this.isActive,
     isFavorite: isFavorite ?? this.isFavorite,
+    memberNotRequired: memberNotRequired ?? this.memberNotRequired,
     syncedAt: syncedAt ?? this.syncedAt,
   );
   MembershipPlanRow copyWithCompanion(MembershipPlansCompanion data) {
@@ -2948,6 +2985,9 @@ class MembershipPlanRow extends DataClass
       isFavorite: data.isFavorite.present
           ? data.isFavorite.value
           : this.isFavorite,
+      memberNotRequired: data.memberNotRequired.present
+          ? data.memberNotRequired.value
+          : this.memberNotRequired,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
   }
@@ -2964,6 +3004,7 @@ class MembershipPlanRow extends DataClass
           ..write('validBranchesJson: $validBranchesJson, ')
           ..write('isActive: $isActive, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('memberNotRequired: $memberNotRequired, ')
           ..write('syncedAt: $syncedAt')
           ..write(')'))
         .toString();
@@ -2980,6 +3021,7 @@ class MembershipPlanRow extends DataClass
     validBranchesJson,
     isActive,
     isFavorite,
+    memberNotRequired,
     syncedAt,
   );
   @override
@@ -2995,6 +3037,7 @@ class MembershipPlanRow extends DataClass
           other.validBranchesJson == this.validBranchesJson &&
           other.isActive == this.isActive &&
           other.isFavorite == this.isFavorite &&
+          other.memberNotRequired == this.memberNotRequired &&
           other.syncedAt == this.syncedAt);
 }
 
@@ -3008,6 +3051,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
   final Value<String> validBranchesJson;
   final Value<bool> isActive;
   final Value<bool> isFavorite;
+  final Value<bool> memberNotRequired;
   final Value<DateTime> syncedAt;
   final Value<int> rowid;
   const MembershipPlansCompanion({
@@ -3020,6 +3064,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     this.validBranchesJson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.memberNotRequired = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3033,6 +3078,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     this.validBranchesJson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.memberNotRequired = const Value.absent(),
     required DateTime syncedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3051,6 +3097,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Expression<String>? validBranchesJson,
     Expression<bool>? isActive,
     Expression<bool>? isFavorite,
+    Expression<bool>? memberNotRequired,
     Expression<DateTime>? syncedAt,
     Expression<int>? rowid,
   }) {
@@ -3064,6 +3111,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       if (validBranchesJson != null) 'valid_branches_json': validBranchesJson,
       if (isActive != null) 'is_active': isActive,
       if (isFavorite != null) 'is_favorite': isFavorite,
+      if (memberNotRequired != null) 'member_not_required': memberNotRequired,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3079,6 +3127,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Value<String>? validBranchesJson,
     Value<bool>? isActive,
     Value<bool>? isFavorite,
+    Value<bool>? memberNotRequired,
     Value<DateTime>? syncedAt,
     Value<int>? rowid,
   }) {
@@ -3092,6 +3141,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       validBranchesJson: validBranchesJson ?? this.validBranchesJson,
       isActive: isActive ?? this.isActive,
       isFavorite: isFavorite ?? this.isFavorite,
+      memberNotRequired: memberNotRequired ?? this.memberNotRequired,
       syncedAt: syncedAt ?? this.syncedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3127,6 +3177,9 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     if (isFavorite.present) {
       map['is_favorite'] = Variable<bool>(isFavorite.value);
     }
+    if (memberNotRequired.present) {
+      map['member_not_required'] = Variable<bool>(memberNotRequired.value);
+    }
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
@@ -3148,6 +3201,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
           ..write('validBranchesJson: $validBranchesJson, ')
           ..write('isActive: $isActive, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('memberNotRequired: $memberNotRequired, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3210,6 +3264,18 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _durationDaysMeta = const VerificationMeta(
+    'durationDays',
+  );
+  @override
+  late final GeneratedColumn<int> durationDays = GeneratedColumn<int>(
+    'duration_days',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -3243,6 +3309,7 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
     name,
     description,
     price,
+    durationDays,
     isActive,
     syncedAt,
   ];
@@ -3299,6 +3366,15 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
     } else if (isInserting) {
       context.missing(_priceMeta);
     }
+    if (data.containsKey('duration_days')) {
+      context.handle(
+        _durationDaysMeta,
+        durationDays.isAcceptableOrUnknown(
+          data['duration_days']!,
+          _durationDaysMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -3342,6 +3418,10 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
         DriftSqlType.double,
         data['${effectivePrefix}price'],
       )!,
+      durationDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_days'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -3366,6 +3446,7 @@ class MembershipAddOnRow extends DataClass
   final String name;
   final String? description;
   final double price;
+  final int durationDays;
   final bool isActive;
   final DateTime syncedAt;
   const MembershipAddOnRow({
@@ -3374,6 +3455,7 @@ class MembershipAddOnRow extends DataClass
     required this.name,
     this.description,
     required this.price,
+    required this.durationDays,
     required this.isActive,
     required this.syncedAt,
   });
@@ -3387,6 +3469,7 @@ class MembershipAddOnRow extends DataClass
       map['description'] = Variable<String>(description);
     }
     map['price'] = Variable<double>(price);
+    map['duration_days'] = Variable<int>(durationDays);
     map['is_active'] = Variable<bool>(isActive);
     map['synced_at'] = Variable<DateTime>(syncedAt);
     return map;
@@ -3401,6 +3484,7 @@ class MembershipAddOnRow extends DataClass
           ? const Value.absent()
           : Value(description),
       price: Value(price),
+      durationDays: Value(durationDays),
       isActive: Value(isActive),
       syncedAt: Value(syncedAt),
     );
@@ -3417,6 +3501,7 @@ class MembershipAddOnRow extends DataClass
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
       price: serializer.fromJson<double>(json['price']),
+      durationDays: serializer.fromJson<int>(json['durationDays']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
     );
@@ -3430,6 +3515,7 @@ class MembershipAddOnRow extends DataClass
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
       'price': serializer.toJson<double>(price),
+      'durationDays': serializer.toJson<int>(durationDays),
       'isActive': serializer.toJson<bool>(isActive),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
     };
@@ -3441,6 +3527,7 @@ class MembershipAddOnRow extends DataClass
     String? name,
     Value<String?> description = const Value.absent(),
     double? price,
+    int? durationDays,
     bool? isActive,
     DateTime? syncedAt,
   }) => MembershipAddOnRow(
@@ -3449,6 +3536,7 @@ class MembershipAddOnRow extends DataClass
     name: name ?? this.name,
     description: description.present ? description.value : this.description,
     price: price ?? this.price,
+    durationDays: durationDays ?? this.durationDays,
     isActive: isActive ?? this.isActive,
     syncedAt: syncedAt ?? this.syncedAt,
   );
@@ -3463,6 +3551,9 @@ class MembershipAddOnRow extends DataClass
           ? data.description.value
           : this.description,
       price: data.price.present ? data.price.value : this.price,
+      durationDays: data.durationDays.present
+          ? data.durationDays.value
+          : this.durationDays,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
@@ -3476,6 +3567,7 @@ class MembershipAddOnRow extends DataClass
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('price: $price, ')
+          ..write('durationDays: $durationDays, ')
           ..write('isActive: $isActive, ')
           ..write('syncedAt: $syncedAt')
           ..write(')'))
@@ -3489,6 +3581,7 @@ class MembershipAddOnRow extends DataClass
     name,
     description,
     price,
+    durationDays,
     isActive,
     syncedAt,
   );
@@ -3501,6 +3594,7 @@ class MembershipAddOnRow extends DataClass
           other.name == this.name &&
           other.description == this.description &&
           other.price == this.price &&
+          other.durationDays == this.durationDays &&
           other.isActive == this.isActive &&
           other.syncedAt == this.syncedAt);
 }
@@ -3512,6 +3606,7 @@ class MembershipAddOnsCacheCompanion
   final Value<String> name;
   final Value<String?> description;
   final Value<double> price;
+  final Value<int> durationDays;
   final Value<bool> isActive;
   final Value<DateTime> syncedAt;
   final Value<int> rowid;
@@ -3521,6 +3616,7 @@ class MembershipAddOnsCacheCompanion
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.price = const Value.absent(),
+    this.durationDays = const Value.absent(),
     this.isActive = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3531,6 +3627,7 @@ class MembershipAddOnsCacheCompanion
     required String name,
     this.description = const Value.absent(),
     required double price,
+    this.durationDays = const Value.absent(),
     this.isActive = const Value.absent(),
     required DateTime syncedAt,
     this.rowid = const Value.absent(),
@@ -3545,6 +3642,7 @@ class MembershipAddOnsCacheCompanion
     Expression<String>? name,
     Expression<String>? description,
     Expression<double>? price,
+    Expression<int>? durationDays,
     Expression<bool>? isActive,
     Expression<DateTime>? syncedAt,
     Expression<int>? rowid,
@@ -3555,6 +3653,7 @@ class MembershipAddOnsCacheCompanion
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (price != null) 'price': price,
+      if (durationDays != null) 'duration_days': durationDays,
       if (isActive != null) 'is_active': isActive,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3567,6 +3666,7 @@ class MembershipAddOnsCacheCompanion
     Value<String>? name,
     Value<String?>? description,
     Value<double>? price,
+    Value<int>? durationDays,
     Value<bool>? isActive,
     Value<DateTime>? syncedAt,
     Value<int>? rowid,
@@ -3577,6 +3677,7 @@ class MembershipAddOnsCacheCompanion
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      durationDays: durationDays ?? this.durationDays,
       isActive: isActive ?? this.isActive,
       syncedAt: syncedAt ?? this.syncedAt,
       rowid: rowid ?? this.rowid,
@@ -3601,6 +3702,9 @@ class MembershipAddOnsCacheCompanion
     if (price.present) {
       map['price'] = Variable<double>(price.value);
     }
+    if (durationDays.present) {
+      map['duration_days'] = Variable<int>(durationDays.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -3621,6 +3725,7 @@ class MembershipAddOnsCacheCompanion
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('price: $price, ')
+          ..write('durationDays: $durationDays, ')
           ..write('isActive: $isActive, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('rowid: $rowid')
@@ -5136,6 +5241,7 @@ typedef $$MembershipPlansTableCreateCompanionBuilder =
       Value<String> validBranchesJson,
       Value<bool> isActive,
       Value<bool> isFavorite,
+      Value<bool> memberNotRequired,
       required DateTime syncedAt,
       Value<int> rowid,
     });
@@ -5150,6 +5256,7 @@ typedef $$MembershipPlansTableUpdateCompanionBuilder =
       Value<String> validBranchesJson,
       Value<bool> isActive,
       Value<bool> isFavorite,
+      Value<bool> memberNotRequired,
       Value<DateTime> syncedAt,
       Value<int> rowid,
     });
@@ -5205,6 +5312,11 @@ class $$MembershipPlansTableFilterComposer
 
   ColumnFilters<bool> get isFavorite => $composableBuilder(
     column: $table.isFavorite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get memberNotRequired => $composableBuilder(
+    column: $table.memberNotRequired,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5268,6 +5380,11 @@ class $$MembershipPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get memberNotRequired => $composableBuilder(
+    column: $table.memberNotRequired,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
     column: $table.syncedAt,
     builder: (column) => ColumnOrderings(column),
@@ -5315,6 +5432,11 @@ class $$MembershipPlansTableAnnotationComposer
 
   GeneratedColumn<bool> get isFavorite => $composableBuilder(
     column: $table.isFavorite,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get memberNotRequired => $composableBuilder(
+    column: $table.memberNotRequired,
     builder: (column) => column,
   );
 
@@ -5368,6 +5490,7 @@ class $$MembershipPlansTableTableManager
                 Value<String> validBranchesJson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
+                Value<bool> memberNotRequired = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembershipPlansCompanion(
@@ -5380,6 +5503,7 @@ class $$MembershipPlansTableTableManager
                 validBranchesJson: validBranchesJson,
                 isActive: isActive,
                 isFavorite: isFavorite,
+                memberNotRequired: memberNotRequired,
                 syncedAt: syncedAt,
                 rowid: rowid,
               ),
@@ -5394,6 +5518,7 @@ class $$MembershipPlansTableTableManager
                 Value<String> validBranchesJson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
+                Value<bool> memberNotRequired = const Value.absent(),
                 required DateTime syncedAt,
                 Value<int> rowid = const Value.absent(),
               }) => MembershipPlansCompanion.insert(
@@ -5406,6 +5531,7 @@ class $$MembershipPlansTableTableManager
                 validBranchesJson: validBranchesJson,
                 isActive: isActive,
                 isFavorite: isFavorite,
+                memberNotRequired: memberNotRequired,
                 syncedAt: syncedAt,
                 rowid: rowid,
               ),
@@ -5441,6 +5567,7 @@ typedef $$MembershipAddOnsCacheTableCreateCompanionBuilder =
       required String name,
       Value<String?> description,
       required double price,
+      Value<int> durationDays,
       Value<bool> isActive,
       required DateTime syncedAt,
       Value<int> rowid,
@@ -5452,6 +5579,7 @@ typedef $$MembershipAddOnsCacheTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String?> description,
       Value<double> price,
+      Value<int> durationDays,
       Value<bool> isActive,
       Value<DateTime> syncedAt,
       Value<int> rowid,
@@ -5488,6 +5616,11 @@ class $$MembershipAddOnsCacheTableFilterComposer
 
   ColumnFilters<double> get price => $composableBuilder(
     column: $table.price,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationDays => $composableBuilder(
+    column: $table.durationDays,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5536,6 +5669,11 @@ class $$MembershipAddOnsCacheTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get durationDays => $composableBuilder(
+    column: $table.durationDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -5574,6 +5712,11 @@ class $$MembershipAddOnsCacheTableAnnotationComposer
 
   GeneratedColumn<double> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
+
+  GeneratedColumn<int> get durationDays => $composableBuilder(
+    column: $table.durationDays,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -5633,6 +5776,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<double> price = const Value.absent(),
+                Value<int> durationDays = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -5642,6 +5786,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 name: name,
                 description: description,
                 price: price,
+                durationDays: durationDays,
                 isActive: isActive,
                 syncedAt: syncedAt,
                 rowid: rowid,
@@ -5653,6 +5798,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 required String name,
                 Value<String?> description = const Value.absent(),
                 required double price,
+                Value<int> durationDays = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required DateTime syncedAt,
                 Value<int> rowid = const Value.absent(),
@@ -5662,6 +5808,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 name: name,
                 description: description,
                 price: price,
+                durationDays: durationDays,
                 isActive: isActive,
                 syncedAt: syncedAt,
                 rowid: rowid,

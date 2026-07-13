@@ -30,6 +30,7 @@ class MembershipCacheLocalDataSource {
             validBranchesJson: Value(jsonEncode(p.validBranches)),
             isActive: Value(p.isActive),
             isFavorite: Value(p.isFavorite),
+            memberNotRequired: Value(p.memberNotRequired),
             syncedAt: now,
           ),
         )
@@ -47,6 +48,7 @@ class MembershipCacheLocalDataSource {
             name: a.name,
             description: Value(a.description),
             price: a.price.toDouble(),
+            durationDays: Value(a.durationDays),
             isActive: Value(a.isActive),
             syncedAt: now,
           ),
@@ -76,6 +78,7 @@ class MembershipCacheLocalDataSource {
             name: a.name,
             description: Value(a.description),
             price: a.price.toDouble(),
+            durationDays: Value(a.durationDays),
             isActive: Value(a.isActive),
             syncedAt: now,
           ),
@@ -102,6 +105,7 @@ class MembershipCacheLocalDataSource {
       validBranches: _decodeValidBranches(row.validBranchesJson),
       isActive: row.isActive,
       isFavorite: row.isFavorite,
+      memberNotRequired: row.memberNotRequired,
     );
   }
 
@@ -122,6 +126,7 @@ class MembershipCacheLocalDataSource {
       name: row.name,
       description: row.description,
       price: row.price,
+      durationDays: row.durationDays,
       isActive: row.isActive,
     );
   }

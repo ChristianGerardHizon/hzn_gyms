@@ -20,6 +20,7 @@ class MembershipDto with MembershipDtoMappable {
   final List<String> validBranches;
   final bool isActive;
   final bool isFavorite;
+  final bool memberNotRequired;
   final String? created;
   final String? updated;
 
@@ -35,6 +36,7 @@ class MembershipDto with MembershipDtoMappable {
     this.validBranches = const [],
     this.isActive = true,
     this.isFavorite = false,
+    this.memberNotRequired = false,
     this.created,
     this.updated,
   });
@@ -54,6 +56,7 @@ class MembershipDto with MembershipDtoMappable {
       validBranches: _parseIdList(json['validBranches']),
       isActive: record.getBoolValue('isActive'),
       isFavorite: record.getBoolValue('isFavorite'),
+      memberNotRequired: record.getBoolValue('memberNotRequired'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
@@ -78,6 +81,7 @@ class MembershipDto with MembershipDtoMappable {
       validBranches: validBranches,
       isActive: isActive,
       isFavorite: isFavorite,
+      memberNotRequired: memberNotRequired,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

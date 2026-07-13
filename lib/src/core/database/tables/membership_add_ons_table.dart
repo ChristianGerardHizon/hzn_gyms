@@ -8,6 +8,7 @@ class MembershipAddOnsCache extends Table {
   TextColumn get name => text()();
   TextColumn get description => text().nullable()();
   RealColumn get price => real()();
+  IntColumn get durationDays => integer().withDefault(const Constant(0))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get syncedAt => dateTime()();
 

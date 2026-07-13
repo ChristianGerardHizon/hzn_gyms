@@ -75,6 +75,13 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     opt: true,
     def: false,
   );
+  static bool _$memberNotRequired(MembershipDto v) => v.memberNotRequired;
+  static const Field<MembershipDto, bool> _f$memberNotRequired = Field(
+    'memberNotRequired',
+    _$memberNotRequired,
+    opt: true,
+    def: false,
+  );
   static String? _$created(MembershipDto v) => v.created;
   static const Field<MembershipDto, String> _f$created = Field(
     'created',
@@ -101,6 +108,7 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     #validBranches: _f$validBranches,
     #isActive: _f$isActive,
     #isFavorite: _f$isFavorite,
+    #memberNotRequired: _f$memberNotRequired,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -118,6 +126,7 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
       validBranches: data.dec(_f$validBranches),
       isActive: data.dec(_f$isActive),
       isFavorite: data.dec(_f$isFavorite),
+      memberNotRequired: data.dec(_f$memberNotRequired),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -199,6 +208,7 @@ abstract class MembershipDtoCopyWith<$R, $In extends MembershipDto, $Out>
     List<String>? validBranches,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     String? created,
     String? updated,
   });
@@ -233,6 +243,7 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     List<String>? validBranches,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -248,6 +259,7 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
       if (validBranches != null) #validBranches: validBranches,
       if (isActive != null) #isActive: isActive,
       if (isFavorite != null) #isFavorite: isFavorite,
+      if (memberNotRequired != null) #memberNotRequired: memberNotRequired,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -265,6 +277,10 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     validBranches: data.get(#validBranches, or: $value.validBranches),
     isActive: data.get(#isActive, or: $value.isActive),
     isFavorite: data.get(#isFavorite, or: $value.isFavorite),
+    memberNotRequired: data.get(
+      #memberNotRequired,
+      or: $value.memberNotRequired,
+    ),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

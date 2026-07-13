@@ -13,6 +13,19 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../domain/membership.dart';
 import '../controllers/memberships_controller.dart';
 
+/// Whether [selectedBranchIds] covers every id in [allBranchIds].
+///
+/// Used to auto-enable "Valid at all branches" when every branch is checked.
+bool selectsAllBranches(
+  Iterable<String> selectedBranchIds,
+  Iterable<String> allBranchIds,
+) {
+  final all = allBranchIds.toList();
+  if (all.isEmpty) return false;
+  final selected = selectedBranchIds.toSet();
+  return all.every(selected.contains);
+}
+
 /// Shows a dialog form for creating or editing a membership plan.
 ///
 /// Returns `true` if the membership was saved successfully.
@@ -59,6 +72,7 @@ class MembershipFormDialog extends HookConsumerWidget {
             'price': membership!.price.toString(),
             'isActive': membership!.isActive,
             'isFavorite': membership!.isFavorite,
+            'memberNotRequired': membership!.memberNotRequired,
             'allBranches': isAllBranches,
             'validBranches': initialValidBranches,
           }
@@ -100,6 +114,7 @@ class MembershipFormDialog extends HookConsumerWidget {
         validBranches: all ? const [] : selected,
         isActive: values['isActive'] as bool? ?? true,
         isFavorite: values['isFavorite'] as bool? ?? false,
+        memberNotRequired: values['memberNotRequired'] as bool? ?? false,
       );
 
       final controller = ref.read(membershipsControllerProvider.notifier);
@@ -223,6 +238,17 @@ class MembershipFormDialog extends HookConsumerWidget {
                       ),
                     )
                     .toList(),
+                onChanged: (value) {
+                  final selected = value ?? const <String>[];
+                  final allIds = branches.map((b) => b.id);
+                  if (!selectsAllBranches(selected, allIds)) return;
+
+                  allBranches.value = true;
+                  formKey.currentState?.fields['allBranches']?.didChange(true);
+                  formKey.currentState?.fields['validBranches']?.didChange(
+                    const <String>[],
+                  );
+                },
                 validator: (value) {
                   if (allBranches.value) return null;
                   if (value == null || value.isEmpty) {
@@ -257,6 +283,16 @@ class MembershipFormDialog extends HookConsumerWidget {
             title: const Text('Favorite'),
             subtitle: const Text(
               'Show at the top when selecting a plan for new members',
+            ),
+            decoration: const InputDecoration(border: InputBorder.none),
+          ),
+          FormBuilderSwitch(
+            name: 'memberNotRequired',
+            initialValue: membership?.memberNotRequired ?? false,
+            title: const Text('Membership not required'),
+            subtitle: const Text(
+              'Tick this for day pass or walk-in plans. '
+              'Sold with a customer name only — no linked member membership.',
             ),
             decoration: const InputDecoration(border: InputBorder.none),
           ),

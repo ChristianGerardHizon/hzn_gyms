@@ -70,6 +70,7 @@ void main() {
       );
       expect(open.isValidAtBranch('x'), isTrue);
       expect(open.durationDisplay, '1 month');
+      expect(open.memberNotRequired, isFalse);
 
       const limited = Membership(
         id: '2',
@@ -82,6 +83,16 @@ void main() {
       expect(limited.isValidAtBranch('a'), isTrue);
       expect(limited.isValidAtBranch('b'), isFalse);
       expect(limited.durationDisplay, '1 week');
+    });
+
+    test('memberNotRequired marks day-pass plans', () {
+      final walkIn = buildMembership(
+        name: 'Day Pass',
+        durationDays: 1,
+        memberNotRequired: true,
+      );
+      expect(walkIn.memberNotRequired, isTrue);
+      expect(buildMembership().memberNotRequired, isFalse);
     });
   });
 }

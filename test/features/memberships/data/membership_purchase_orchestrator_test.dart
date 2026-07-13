@@ -93,7 +93,7 @@ void main() {
     expect(purchase.totalPrice, 1150);
     expect(purchase.sale, isNotNull);
     expect(purchase.sale!.totalAmount, 1150);
-    expect(purchase.memberMembership.membershipName, 'Monthly');
+    expect(purchase.memberMembership!.membershipName, 'Monthly');
     expect(await outbox.countPending(), greaterThan(0));
   });
 
@@ -111,7 +111,7 @@ void main() {
     final purchase = result.getOrElse((_) => throw StateError('left'));
     expect(purchase.excludedFromSales, isTrue);
     expect(purchase.sale, isNull);
-    expect(purchase.memberMembership.saleId, isNull);
+    expect(purchase.memberMembership!.saleId, isNull);
     expect(purchase.totalPrice, 500);
   });
 
@@ -136,11 +136,136 @@ void main() {
     ).add(const Duration(days: 1));
     expect(
       DateTime(
-        purchase.memberMembership.startDate.year,
-        purchase.memberMembership.startDate.month,
-        purchase.memberMembership.startDate.day,
+        purchase.memberMembership!.startDate.year,
+        purchase.memberMembership!.startDate.month,
+        purchase.memberMembership!.startDate.day,
       ),
       expectedStart,
     );
+  });
+
+  test('customStartDate overrides stacking default', () async {
+    final orchestrator = buildOrchestrator(isOnline: false, hasAuth: true);
+    final activeEnd = DateTime.now().add(const Duration(days: 10));
+    final customStart = DateTime(2026, 8, 1);
+
+    final result = await orchestrator.purchase(
+      memberId: 'member-1',
+      memberName: 'Jane',
+      plan: buildMembership(durationDays: 30),
+      addOns: {},
+      branchId: 'branch-1',
+      latestActiveEndDate: activeEnd,
+      customStartDate: customStart,
+    );
+
+    final purchase = result.getOrElse((_) => throw StateError('left'));
+    expect(
+      DateTime(
+        purchase.memberMembership!.startDate.year,
+        purchase.memberMembership!.startDate.month,
+        purchase.memberMembership!.startDate.day,
+      ),
+      DateTime(2026, 8, 1),
+    );
+    expect(
+      DateTime(
+        purchase.memberMembership!.endDate.year,
+        purchase.memberMembership!.endDate.month,
+        purchase.memberMembership!.endDate.day,
+      ),
+      DateTime(2026, 8, 31),
+    );
+  });
+
+  test('add-on durationDays extends membership end date', () async {
+    final orchestrator = buildOrchestrator(isOnline: false, hasAuth: true);
+    final promo = buildAddOn(
+      id: 'promo-3mo',
+      name: 'Promo 3 months',
+      price: 0,
+      durationDays: 90,
+    );
+    final locker = buildAddOn(id: 'locker', name: 'Locker', price: 100);
+
+    final result = await orchestrator.purchase(
+      memberId: 'member-1',
+      memberName: 'Jane',
+      plan: buildMembership(durationDays: 30),
+      addOns: {promo, locker},
+      branchId: 'branch-1',
+      customStartDate: DateTime(2026, 1, 1),
+    );
+
+    final purchase = result.getOrElse((_) => throw StateError('left'));
+    expect(purchase.totalPrice, 1100);
+    expect(
+      DateTime(
+        purchase.memberMembership!.endDate.year,
+        purchase.memberMembership!.endDate.month,
+        purchase.memberMembership!.endDate.day,
+      ),
+      // 30 plan days + 90 promo days from Jan 1 → May 1
+      DateTime(2026, 5, 1),
+    );
+  });
+
+  test('guestMode queues sale + items only without membership', () async {
+    final orchestrator = buildOrchestrator(isOnline: false, hasAuth: true);
+    final addOn = buildAddOn(price: 50);
+
+    final result = await orchestrator.purchase(
+      memberName: 'Walk In Guest',
+      plan: buildMembership(
+        name: 'Day Pass',
+        price: 100,
+        memberNotRequired: true,
+      ),
+      addOns: {addOn},
+      branchId: 'branch-1',
+      soldBy: 'user-1',
+      guestMode: true,
+    );
+
+    expect(result.isRight(), isTrue);
+    final purchase = result.getOrElse((_) => throw StateError('left'));
+    expect(purchase.queuedOffline, isTrue);
+    expect(purchase.memberMembership, isNull);
+    expect(purchase.sale, isNotNull);
+    expect(purchase.sale!.customerName, 'Walk In Guest');
+    expect(purchase.sale!.customerId, isNull);
+    expect(purchase.sale!.descriptor, 'Walk-in · Walk In Guest · Day Pass +1 add-on');
+    expect(purchase.totalPrice, 150);
+
+    final entries = await db.select(db.outboxEntries).get();
+    final entityTypes = entries.map((e) => e.entityType).toSet();
+    expect(entityTypes.contains('sale'), isTrue);
+    expect(entityTypes.contains('saleItem'), isTrue);
+    expect(entityTypes.contains('memberMembership'), isFalse);
+    final saleEntry = entries.firstWhere((e) => e.entityType == 'sale');
+    expect(saleEntry.payload.contains('Walk-in'), isTrue);
+    expect(saleEntry.payload.contains('descriptor'), isTrue);
+    final itemPayloads = entries
+        .where((e) => e.entityType == 'saleItem')
+        .map((e) => e.payload)
+        .toList();
+    expect(itemPayloads, isNotEmpty);
+    for (final payload in itemPayloads) {
+      expect(payload.contains('"itemType":"walkIn"'), isTrue);
+      expect(payload.contains('"itemType":"membership"'), isFalse);
+      expect(payload.contains('"itemType":"product"'), isFalse);
+    }
+  });
+
+  test('guestMode requires customer name', () async {
+    final orchestrator = buildOrchestrator(isOnline: false, hasAuth: true);
+    final result = await orchestrator.purchase(
+      memberName: '   ',
+      plan: buildMembership(memberNotRequired: true),
+      addOns: {},
+      branchId: 'branch-1',
+      guestMode: true,
+    );
+    expect(result.isLeft(), isTrue);
   });
 }

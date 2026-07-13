@@ -65,6 +65,13 @@ class MembershipMapper extends ClassMapperBase<Membership> {
     opt: true,
     def: false,
   );
+  static bool _$memberNotRequired(Membership v) => v.memberNotRequired;
+  static const Field<Membership, bool> _f$memberNotRequired = Field(
+    'memberNotRequired',
+    _$memberNotRequired,
+    opt: true,
+    def: false,
+  );
   static DateTime? _$created(Membership v) => v.created;
   static const Field<Membership, DateTime> _f$created = Field(
     'created',
@@ -89,6 +96,7 @@ class MembershipMapper extends ClassMapperBase<Membership> {
     #description: _f$description,
     #isActive: _f$isActive,
     #isFavorite: _f$isFavorite,
+    #memberNotRequired: _f$memberNotRequired,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -104,6 +112,7 @@ class MembershipMapper extends ClassMapperBase<Membership> {
       description: data.dec(_f$description),
       isActive: data.dec(_f$isActive),
       isFavorite: data.dec(_f$isFavorite),
+      memberNotRequired: data.dec(_f$memberNotRequired),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -181,6 +190,7 @@ abstract class MembershipCopyWith<$R, $In extends Membership, $Out>
     String? description,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     DateTime? created,
     DateTime? updated,
   });
@@ -213,6 +223,7 @@ class _MembershipCopyWithImpl<$R, $Out>
     Object? description = $none,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -226,6 +237,7 @@ class _MembershipCopyWithImpl<$R, $Out>
       if (description != $none) #description: description,
       if (isActive != null) #isActive: isActive,
       if (isFavorite != null) #isFavorite: isFavorite,
+      if (memberNotRequired != null) #memberNotRequired: memberNotRequired,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -241,6 +253,10 @@ class _MembershipCopyWithImpl<$R, $Out>
     description: data.get(#description, or: $value.description),
     isActive: data.get(#isActive, or: $value.isActive),
     isFavorite: data.get(#isFavorite, or: $value.isFavorite),
+    memberNotRequired: data.get(
+      #memberNotRequired,
+      or: $value.memberNotRequired,
+    ),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

@@ -15,10 +15,13 @@ import '../domain/membership_add_on.dart';
 /// Builds a Sale with line items for the membership plan and each selected
 /// add-on, then persists it via [SalesRepository]. The returned [Sale] can
 /// be linked to the [MemberMembership] record via its `saleId` field.
+///
+/// When [memberId] is null/empty (walk-in / day pass), the sale stores only
+/// [customerName] with no linked member.
 Future<Either<Failure, Sale>> createMembershipSale({
   required WidgetRef ref,
-  required String memberId,
-  required String memberName,
+  String? memberId,
+  required String customerName,
   required Membership plan,
   required Set<MembershipAddOn> addOns,
   required String branchId,
@@ -35,6 +38,13 @@ Future<Either<Failure, Sale>> createMembershipSale({
   final addOnTotal = addOns.fold<num>(0, (sum, a) => sum + a.price);
   final totalAmount = plan.price + addOnTotal;
 
+  final linkedMemberId = memberId?.trim();
+  final hasMember = linkedMemberId != null && linkedMemberId.isNotEmpty;
+  final resolvedCustomerName = Sale.resolveCustomerName(
+    customerId: linkedMemberId,
+    customerName: customerName,
+  )!;
+
   // Build sale
   final sale = Sale(
     id: '',
@@ -44,11 +54,15 @@ Future<Either<Failure, Sale>> createMembershipSale({
     totalAmount: totalAmount,
     status: 'awaitingPayment',
     isPaid: false,
-    customerId: memberId,
-    customerName: memberName,
+    customerId: hasMember ? linkedMemberId : null,
+    customerName: resolvedCustomerName,
   );
 
   // Build sale items
+  // Guest / walk-in day-pass lines use itemType `walkIn` so Sales reports them
+  // separately from standard memberships (and Memberships report ignores them).
+  final planItemType = hasMember ? 'membership' : 'walkIn';
+  final addOnItemType = hasMember ? 'addon' : 'walkIn';
   final saleItems = <SaleItem>[
     // Membership plan line item
     SaleItem(
@@ -59,7 +73,7 @@ Future<Either<Failure, Sale>> createMembershipSale({
       quantity: 1,
       unitPrice: plan.price,
       subtotal: plan.price,
-      itemType: 'membership',
+      itemType: planItemType,
     ),
     // Add-on line items
     ...addOns.map(
@@ -71,7 +85,7 @@ Future<Either<Failure, Sale>> createMembershipSale({
         quantity: 1,
         unitPrice: addOn.price,
         subtotal: addOn.price,
-        itemType: 'addon',
+        itemType: addOnItemType,
       ),
     ),
   ];

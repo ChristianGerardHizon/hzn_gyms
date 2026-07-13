@@ -48,6 +48,7 @@ class MembershipAddOnFormDialog extends HookConsumerWidget {
             'name': addOn!.name,
             'description': addOn!.description,
             'price': addOn!.price.toString(),
+            'durationDays': addOn!.durationDays.toString(),
             'isActive': addOn!.isActive,
           }
         : null;
@@ -69,6 +70,8 @@ class MembershipAddOnFormDialog extends HookConsumerWidget {
         name: values['name'] as String,
         description: values['description'] as String?,
         price: num.tryParse(values['price']?.toString() ?? '') ?? 0,
+        durationDays:
+            int.tryParse(values['durationDays']?.toString() ?? '') ?? 0,
         isActive: values['isActive'] as bool? ?? true,
       );
 
@@ -141,6 +144,26 @@ class MembershipAddOnFormDialog extends HookConsumerWidget {
             validator: FormBuilderValidators.compose([
               FormBuilderValidators.required(),
               FormBuilderValidators.numeric(),
+            ]),
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+          FormBuilderTextField(
+            name: 'durationDays',
+            initialValue: addOn?.durationDays.toString() ?? '0',
+            decoration: const InputDecoration(
+              labelText: 'Extra days',
+              hintText: '0 = no change to end date',
+              helperText:
+                  'Adds days to the membership end date when selected '
+                  '(e.g. 90 for a 3-month promo).',
+              suffixText: 'days',
+            ),
+            keyboardType: TextInputType.number,
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(),
+              FormBuilderValidators.integer(),
+              FormBuilderValidators.min(0),
             ]),
             textInputAction: TextInputAction.done,
           ),

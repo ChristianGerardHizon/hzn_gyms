@@ -92,6 +92,9 @@ Membership buildMembership({
   num price = 1000,
   String branchId = 'branch-1',
   List<String> validBranches = const [],
+  bool isActive = true,
+  bool isFavorite = false,
+  bool memberNotRequired = false,
 }) {
   return Membership(
     id: id,
@@ -100,6 +103,9 @@ Membership buildMembership({
     price: price,
     branchId: branchId,
     validBranches: validBranches,
+    isActive: isActive,
+    isFavorite: isFavorite,
+    memberNotRequired: memberNotRequired,
   );
 }
 
@@ -108,12 +114,14 @@ MembershipAddOn buildAddOn({
   String membershipId = 'plan-1',
   String name = 'Locker',
   num price = 100,
+  int durationDays = 0,
 }) {
   return MembershipAddOn(
     id: id,
     membershipId: membershipId,
     name: name,
     price: price,
+    durationDays: durationDays,
   );
 }
 
@@ -195,6 +203,9 @@ Sale buildSale({
   num totalAmount = 100,
   String status = 'pending',
   bool isPaid = false,
+  String? customerId,
+  String? customerName,
+  String? descriptor,
 }) {
   return Sale(
     id: id,
@@ -204,6 +215,9 @@ Sale buildSale({
     totalAmount: totalAmount,
     status: status,
     isPaid: isPaid,
+    customerId: customerId,
+    customerName: customerName,
+    descriptor: descriptor,
   );
 }
 

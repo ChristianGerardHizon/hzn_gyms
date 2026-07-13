@@ -177,6 +177,7 @@ class MembershipRepositoryImpl implements MembershipRepository {
         'validBranches': membership.validBranches,
         'isActive': membership.isActive,
         'isFavorite': membership.isFavorite,
+        'memberNotRequired': membership.memberNotRequired,
       };
 
       final record = await _collection.create(body: body);
@@ -197,6 +198,7 @@ class MembershipRepositoryImpl implements MembershipRepository {
         'validBranches': membership.validBranches,
         'isActive': membership.isActive,
         'isFavorite': membership.isFavorite,
+        'memberNotRequired': membership.memberNotRequired,
       };
 
       final record = await _collection.update(membership.id, body: body);
