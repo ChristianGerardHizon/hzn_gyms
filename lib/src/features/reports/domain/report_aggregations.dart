@@ -5,7 +5,11 @@ import 'report_period.dart';
 
 /// Pure aggregation helpers for report calculations (unit-testable).
 
-/// Formats a date as `yyyy-MM-dd` for PocketBase view date filters.
+/// Formats a local calendar date as `yyyy-MM-dd` for PocketBase view filters.
+///
+/// Report views must bucket with SQLite `localtime` (e.g.
+/// `DATE(s.created, 'localtime')`) so these local dates align with Manila
+/// business days — UTC `DATE(s.created)` shifts overnight sales to yesterday.
 String formatViewDate(DateTime date) {
   final y = date.year.toString().padLeft(4, '0');
   final m = date.month.toString().padLeft(2, '0');
@@ -218,9 +222,104 @@ String itemTypeLabel(String type) {
       return 'Add-on';
     case 'product':
       return 'Product';
+    case 'walkIn':
+      return 'Walk-in';
     default:
       return type;
   }
+}
+
+/// Normalizes empty/null sale line types to `product`.
+String normalizeSalesItemType(String? itemType) {
+  if (itemType == null || itemType.isEmpty) return 'product';
+  return itemType;
+}
+
+/// Aggregates view rows into ranked top-selling items (all sale line types).
+///
+/// Rows are keyed by name + item type so a product and membership with the
+/// same name stay separate. Every non-empty named line is included.
+List<({String name, String itemType, num quantity, num revenue})>
+    aggregateTopSellingItems(
+  Iterable<({String name, String? itemType, num quantity, num revenue})> rows,
+) {
+  final map = <String, ({String name, String itemType, num quantity, num revenue})>{};
+  for (final row in rows) {
+    if (row.name.isEmpty) continue;
+    final type = normalizeSalesItemType(row.itemType);
+    final key = '${row.name}\u0000$type';
+    final existing = map[key];
+    if (existing != null) {
+      map[key] = (
+        name: existing.name,
+        itemType: existing.itemType,
+        quantity: existing.quantity + row.quantity,
+        revenue: existing.revenue + row.revenue,
+      );
+    } else {
+      map[key] = (
+        name: row.name,
+        itemType: type,
+        quantity: row.quantity,
+        revenue: row.revenue,
+      );
+    }
+  }
+  return map.values.toList()
+    ..sort((a, b) => b.revenue.compareTo(a.revenue));
+}
+
+/// Normalizes a sale line into the Sales revenue-by-type bucket.
+///
+/// Walk-in / guest day-pass lines ([hasLinkedMember] false with membership or
+/// addon type) are reported as `walkIn` so they stay visible in Sales while
+/// remaining excluded from the Memberships report.
+String salesItemTypeBucket({
+  required String? itemType,
+  required bool hasLinkedMember,
+}) {
+  final type = normalizeSalesItemType(itemType);
+  if (!hasLinkedMember && (type == 'membership' || type == 'addon')) {
+    return 'walkIn';
+  }
+  return type;
+}
+
+/// Whether a sale line should count toward the Memberships report.
+///
+/// Walk-in / guest day-pass sales ([saleHasLinkedMember] false) and plans with
+/// [planMemberNotRequired] belong in the Sales report only — they create no
+/// member subscription lifecycle.
+bool includeInMembershipReport({
+  required bool saleHasLinkedMember,
+  bool planMemberNotRequired = false,
+}) {
+  if (!saleHasLinkedMember) return false;
+  if (planMemberNotRequired) return false;
+  return true;
+}
+
+/// Sums membership vs add-on plan value for the Memberships report.
+///
+/// Skips walk-in / guest lines ([hasLinkedMember] false).
+({num membershipRevenue, num addOnRevenue}) sumMembershipReportSaleRevenue(
+  Iterable<({String? itemType, num subtotal, bool hasLinkedMember})> items,
+) {
+  num membershipRevenue = 0;
+  num addOnRevenue = 0;
+  for (final item in items) {
+    if (!includeInMembershipReport(saleHasLinkedMember: item.hasLinkedMember)) {
+      continue;
+    }
+    final type = item.itemType;
+    if (type == 'walkIn') continue;
+    if (type == 'addon') {
+      addOnRevenue += item.subtotal;
+    } else if (type == 'membership') {
+      membershipRevenue += item.subtotal;
+    }
+  }
+  return (membershipRevenue: membershipRevenue, addOnRevenue: addOnRevenue);
 }
 
 /// Classifies period memberships as new subscriptions vs renewals.

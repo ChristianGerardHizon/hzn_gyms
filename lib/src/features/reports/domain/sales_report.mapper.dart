@@ -18,6 +18,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       PeriodBucketMapper.ensureInitialized();
       ProductSalesSummaryMapper.ensureInitialized();
       StaffSalesSummaryMapper.ensureInitialized();
+      SaleMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -76,6 +77,13 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       v.staffPerformance;
   static const Field<SalesReport, List<StaffSalesSummary>> _f$staffPerformance =
       Field('staffPerformance', _$staffPerformance, opt: true, def: const []);
+  static List<Sale> _$sales(SalesReport v) => v.sales;
+  static const Field<SalesReport, List<Sale>> _f$sales = Field(
+    'sales',
+    _$sales,
+    opt: true,
+    def: const [],
+  );
 
   @override
   final MappableFields<SalesReport> fields = const {
@@ -89,6 +97,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
     #unpaidSalesCount: _f$unpaidSalesCount,
     #unpaidBalance: _f$unpaidBalance,
     #staffPerformance: _f$staffPerformance,
+    #sales: _f$sales,
   };
 
   static SalesReport _instantiate(DecodingData data) {
@@ -103,6 +112,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       unpaidSalesCount: data.dec(_f$unpaidSalesCount),
       unpaidBalance: data.dec(_f$unpaidBalance),
       staffPerformance: data.dec(_f$staffPerformance),
+      sales: data.dec(_f$sales),
     );
   }
 
@@ -188,6 +198,7 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
     StaffSalesSummaryCopyWith<$R, StaffSalesSummary, StaffSalesSummary>
   >
   get staffPerformance;
+  ListCopyWith<$R, Sale, SaleCopyWith<$R, Sale, Sale>> get sales;
   $R call({
     num? totalRevenue,
     int? transactionCount,
@@ -199,6 +210,7 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
+    List<Sale>? sales,
   });
   SalesReportCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -259,6 +271,13 @@ class _SalesReportCopyWithImpl<$R, $Out>
     (v) => call(staffPerformance: v),
   );
   @override
+  ListCopyWith<$R, Sale, SaleCopyWith<$R, Sale, Sale>> get sales =>
+      ListCopyWith(
+        $value.sales,
+        (v, t) => v.copyWith.$chain(t),
+        (v) => call(sales: v),
+      );
+  @override
   $R call({
     num? totalRevenue,
     int? transactionCount,
@@ -270,6 +289,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
+    List<Sale>? sales,
   }) => $apply(
     FieldCopyWithData({
       if (totalRevenue != null) #totalRevenue: totalRevenue,
@@ -284,6 +304,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
       if (unpaidSalesCount != null) #unpaidSalesCount: unpaidSalesCount,
       if (unpaidBalance != null) #unpaidBalance: unpaidBalance,
       if (staffPerformance != null) #staffPerformance: staffPerformance,
+      if (sales != null) #sales: sales,
     }),
   );
   @override
@@ -310,6 +331,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
     unpaidSalesCount: data.get(#unpaidSalesCount, or: $value.unpaidSalesCount),
     unpaidBalance: data.get(#unpaidBalance, or: $value.unpaidBalance),
     staffPerformance: data.get(#staffPerformance, or: $value.staffPerformance),
+    sales: data.get(#sales, or: $value.sales),
   );
 
   @override
@@ -347,12 +369,20 @@ class ProductSalesSummaryMapper extends ClassMapperBase<ProductSalesSummary> {
     'revenue',
     _$revenue,
   );
+  static String _$itemType(ProductSalesSummary v) => v.itemType;
+  static const Field<ProductSalesSummary, String> _f$itemType = Field(
+    'itemType',
+    _$itemType,
+    opt: true,
+    def: 'product',
+  );
 
   @override
   final MappableFields<ProductSalesSummary> fields = const {
     #productName: _f$productName,
     #quantity: _f$quantity,
     #revenue: _f$revenue,
+    #itemType: _f$itemType,
   };
 
   static ProductSalesSummary _instantiate(DecodingData data) {
@@ -360,6 +390,7 @@ class ProductSalesSummaryMapper extends ClassMapperBase<ProductSalesSummary> {
       productName: data.dec(_f$productName),
       quantity: data.dec(_f$quantity),
       revenue: data.dec(_f$revenue),
+      itemType: data.dec(_f$itemType),
     );
   }
 
@@ -433,7 +464,7 @@ abstract class ProductSalesSummaryCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? productName, num? quantity, num? revenue});
+  $R call({String? productName, num? quantity, num? revenue, String? itemType});
   ProductSalesSummaryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -448,11 +479,17 @@ class _ProductSalesSummaryCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ProductSalesSummary> $mapper =
       ProductSalesSummaryMapper.ensureInitialized();
   @override
-  $R call({String? productName, num? quantity, num? revenue}) => $apply(
+  $R call({
+    String? productName,
+    num? quantity,
+    num? revenue,
+    String? itemType,
+  }) => $apply(
     FieldCopyWithData({
       if (productName != null) #productName: productName,
       if (quantity != null) #quantity: quantity,
       if (revenue != null) #revenue: revenue,
+      if (itemType != null) #itemType: itemType,
     }),
   );
   @override
@@ -460,6 +497,7 @@ class _ProductSalesSummaryCopyWithImpl<$R, $Out>
     productName: data.get(#productName, or: $value.productName),
     quantity: data.get(#quantity, or: $value.quantity),
     revenue: data.get(#revenue, or: $value.revenue),
+    itemType: data.get(#itemType, or: $value.itemType),
   );
 
   @override

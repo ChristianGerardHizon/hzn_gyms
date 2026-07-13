@@ -7,6 +7,7 @@ import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../pos/data/dto/sale_dto.dart';
 import '../../domain/attendance_report.dart';
 import '../../domain/inventory_report.dart';
 import '../../domain/membership_report.dart';
@@ -129,6 +130,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
           _sales.getFullList(
             filter: salePeriodFilter.build(),
             expand: 'cashier',
+            sort: '-created',
           ),
         ]);
 
@@ -136,6 +138,10 @@ class ReportsRepositoryImpl implements ReportsRepository {
         final topProductsRecords = results[1];
         final itemTypeRecords = results[2];
         final saleRecords = results[3];
+
+        final periodSales = saleRecords
+            .map((record) => SaleDto.fromRecord(record).toEntity())
+            .toList();
 
         if (summaryRecords.isEmpty &&
             itemTypeRecords.isEmpty &&
@@ -171,40 +177,34 @@ class ReportsRepositoryImpl implements ReportsRepository {
         final avgValue =
             transactionCount > 0 ? totalRevenue / transactionCount : 0;
 
-        final productSales = <String, ({num quantity, num revenue})>{};
-        for (final record in topProductsRecords) {
-          final name = record.getStringValue('productName');
-          if (name.isEmpty) continue;
-          final itemType = record.getStringValue('itemType');
-          if (itemType.isNotEmpty && itemType != 'product') continue;
-          final qty = record.getDoubleValue('total_quantity_sold');
-          final revenue = record.getDoubleValue('total_revenue');
-          final existing = productSales[name];
-          if (existing != null) {
-            productSales[name] = (
-              quantity: existing.quantity + qty,
-              revenue: existing.revenue + revenue,
-            );
-          } else {
-            productSales[name] = (quantity: qty, revenue: revenue);
-          }
-        }
-
-        final topProducts = productSales.entries
+        // Include every sale line type (product, membership, walk-in, add-on, …).
+        final topProducts = aggregateTopSellingItems(
+          topProductsRecords.map(
+            (record) => (
+              name: record.getStringValue('productName'),
+              itemType: record.getStringValue('itemType'),
+              quantity: record.getDoubleValue('total_quantity_sold'),
+              revenue: record.getDoubleValue('total_revenue'),
+            ),
+          ),
+        )
             .map(
               (e) => ProductSalesSummary(
-                productName: e.key,
-                quantity: e.value.quantity,
-                revenue: e.value.revenue,
+                productName: e.name,
+                quantity: e.quantity,
+                revenue: e.revenue,
+                itemType: e.itemType,
               ),
             )
-            .toList()
-          ..sort((a, b) => b.revenue.compareTo(a.revenue));
+            .toList();
 
         final revenueByItemType = <String, num>{};
         for (final record in itemTypeRecords) {
           final type = record.getStringValue('itemType');
-          final key = type.isEmpty ? 'product' : type;
+          // Historical walk-in rows may still be typed as membership/addon with
+          // no linked member; views only expose itemType, so keep raw keys and
+          // map empty → product. New guest sales use itemType `walkIn`.
+          final key = normalizeSalesItemType(type);
           revenueByItemType[key] =
               (revenueByItemType[key] ?? 0) +
               record.getDoubleValue('total_revenue');
@@ -275,6 +275,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
           unpaidSalesCount: unpaidCount,
           unpaidBalance: unpaidBalance,
           staffPerformance: staffPerformance,
+          sales: periodSales,
         );
       },
       Failure.handle,
@@ -495,6 +496,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
               }
               return f.build();
             }(),
+            expand: 'sale',
           ),
         ]);
 
@@ -603,6 +605,16 @@ class ReportsRepositoryImpl implements ReportsRepository {
     for (final record in periodMemberMemberships) {
       final status = record.getStringValue('status');
       final membershipExpand = record.get<RecordModel?>('expand.membership');
+      final planMemberNotRequired =
+          membershipExpand?.getBoolValue('memberNotRequired') ?? false;
+      // Walk-in / guest plans belong in Sales, not membership lifecycle.
+      if (!includeInMembershipReport(
+        saleHasLinkedMember: true,
+        planMemberNotRequired: planMemberNotRequired,
+      )) {
+        continue;
+      }
+
       final planName = membershipExpand?.getStringValue('name') ?? 'Unknown';
       final planPrice = membershipExpand?.getDoubleValue('price') ?? 0;
 
@@ -623,21 +635,26 @@ class ReportsRepositoryImpl implements ReportsRepository {
       }
     }
 
-    num membershipRevenue = 0;
-    num addOnRevenue = 0;
-    for (final item in membershipSaleItems) {
-      final type = item.getStringValue('itemType');
-      final subtotal = item.getDoubleValue('subtotal');
-      if (type == 'addon') {
-        addOnRevenue += subtotal;
-      } else {
-        membershipRevenue += subtotal;
-      }
-    }
+    final saleRevenue = sumMembershipReportSaleRevenue(
+      membershipSaleItems.map((item) {
+        final saleExpand = item.get<RecordModel?>('expand.sale');
+        final memberId = saleExpand?.getStringValue('member') ?? '';
+        return (
+          itemType: item.getStringValue('itemType'),
+          subtotal: item.getDoubleValue('subtotal'),
+          hasLinkedMember: memberId.isNotEmpty,
+        );
+      }),
+    );
+    var membershipRevenue = saleRevenue.membershipRevenue;
+    var addOnRevenue = saleRevenue.addOnRevenue;
 
     if (membershipRevenue == 0 && addOnRevenue == 0) {
       for (final record in periodMemberMemberships) {
         final membershipExpand = record.get<RecordModel?>('expand.membership');
+        final planMemberNotRequired =
+            membershipExpand?.getBoolValue('memberNotRequired') ?? false;
+        if (planMemberNotRequired) continue;
         membershipRevenue += membershipExpand?.getDoubleValue('price') ?? 0;
       }
       for (final addOn in addOns) {

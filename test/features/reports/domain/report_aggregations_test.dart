@@ -115,6 +115,15 @@ void main() {
       expect(selection.rangeEnd.hour, 23);
       expect(selection.displayRangeLabel, contains('Jul 4'));
     });
+
+    test('day period supports from/to range', () {
+      final selection = ReportPeriodSelection.current(ReportPeriod.day)
+          .withDay(DateTime(2026, 7, 1))
+          .withRangeEnd(DateTime(2026, 7, 3));
+      expect(startOfDay(selection.rangeStart), DateTime(2026, 7, 1));
+      expect(selection.rangeEnd.day, 3);
+      expect(selection.displayRangeLabel.contains('–'), isTrue);
+    });
   });
 
   group('buildSaleDateViewFilter', () {
@@ -244,6 +253,126 @@ void main() {
       expect(itemTypeLabel('product'), 'Product');
       expect(itemTypeLabel('membership'), 'Membership');
       expect(itemTypeLabel('addon'), 'Add-on');
+      expect(itemTypeLabel('walkIn'), 'Walk-in');
+    });
+  });
+
+  group('aggregateTopSellingItems', () {
+    test('includes every item type ranked by revenue', () {
+      final result = aggregateTopSellingItems([
+        (
+          name: 'Protein Shake',
+          itemType: 'product',
+          quantity: 3,
+          revenue: 300,
+        ),
+        (
+          name: 'Monthly Plan',
+          itemType: 'membership',
+          quantity: 2,
+          revenue: 2000,
+        ),
+        (
+          name: 'Day Pass',
+          itemType: 'walkIn',
+          quantity: 5,
+          revenue: 500,
+        ),
+        (
+          name: 'Locker',
+          itemType: 'addon',
+          quantity: 1,
+          revenue: 50,
+        ),
+        (
+          name: 'Custom Line',
+          itemType: 'other',
+          quantity: 10,
+          revenue: 900,
+        ),
+      ]);
+
+      expect(result.map((e) => e.name).toList(), [
+        'Monthly Plan',
+        'Custom Line',
+        'Day Pass',
+        'Protein Shake',
+        'Locker',
+      ]);
+      expect(result.first.itemType, 'membership');
+    });
+
+    test('keeps same name product and membership separate', () {
+      final result = aggregateTopSellingItems([
+        (name: 'Day Pass', itemType: 'product', quantity: 1, revenue: 100),
+        (name: 'Day Pass', itemType: 'membership', quantity: 2, revenue: 200),
+        (name: 'Day Pass', itemType: 'product', quantity: 1, revenue: 50),
+      ]);
+
+      expect(result.length, 2);
+      expect(
+        result.firstWhere((e) => e.itemType == 'membership').revenue,
+        200,
+      );
+      expect(
+        result.firstWhere((e) => e.itemType == 'product').revenue,
+        150,
+      );
+    });
+  });
+
+  group('salesItemTypeBucket', () {
+    test('maps guest membership lines to walkIn', () {
+      expect(
+        salesItemTypeBucket(itemType: 'membership', hasLinkedMember: false),
+        'walkIn',
+      );
+      expect(
+        salesItemTypeBucket(itemType: 'addon', hasLinkedMember: false),
+        'walkIn',
+      );
+      expect(
+        salesItemTypeBucket(itemType: 'membership', hasLinkedMember: true),
+        'membership',
+      );
+      expect(
+        salesItemTypeBucket(itemType: 'product', hasLinkedMember: false),
+        'product',
+      );
+    });
+  });
+
+  group('includeInMembershipReport', () {
+    test('excludes walk-in sales and memberNotRequired plans', () {
+      expect(
+        includeInMembershipReport(saleHasLinkedMember: false),
+        isFalse,
+      );
+      expect(
+        includeInMembershipReport(
+          saleHasLinkedMember: true,
+          planMemberNotRequired: true,
+        ),
+        isFalse,
+      );
+      expect(
+        includeInMembershipReport(saleHasLinkedMember: true),
+        isTrue,
+      );
+    });
+  });
+
+  group('sumMembershipReportSaleRevenue', () {
+    test('skips walk-in lines and sums membership vs addon', () {
+      final result = sumMembershipReportSaleRevenue([
+        (itemType: 'membership', subtotal: 500, hasLinkedMember: true),
+        (itemType: 'addon', subtotal: 50, hasLinkedMember: true),
+        (itemType: 'membership', subtotal: 100, hasLinkedMember: false),
+        (itemType: 'addon', subtotal: 25, hasLinkedMember: false),
+        (itemType: 'product', subtotal: 80, hasLinkedMember: true),
+      ]);
+      expect(result.membershipRevenue, 500);
+      expect(result.addOnRevenue, 50);
     });
   });
 

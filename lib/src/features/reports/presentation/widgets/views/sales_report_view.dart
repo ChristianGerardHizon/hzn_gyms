@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
+import '../../../../dashboard/presentation/widgets/today_sale_list_tile.dart';
+import '../../../../pos/domain/sale.dart';
 import '../../../domain/report_aggregations.dart';
+import '../../../domain/report_period.dart';
 import '../../../domain/sales_report.dart';
+import '../../controllers/report_period_controller.dart';
 import '../../controllers/sales_report_controller.dart';
 import '../charts/bar_chart_widget.dart';
 import '../charts/line_chart_widget.dart';
@@ -23,9 +28,10 @@ class SalesReportView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(salesReportProvider);
+    final period = ref.watch(reportPeriodControllerProvider);
 
     return reportAsync.when(
-      data: (report) => _buildContent(context, report),
+      data: (report) => _buildContent(context, report, period),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => ErrorState.fromError(
         error,
@@ -35,12 +41,19 @@ class SalesReportView extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, SalesReport report) {
+  Widget _buildContent(
+    BuildContext context,
+    SalesReport report,
+    ReportPeriodSelection period,
+  ) {
     final itemTypeData = Map.fromEntries(
       report.revenueByItemType.entries.map(
         (e) => MapEntry(itemTypeLabel(e.key), e.value),
       ),
     );
+    final multiDay = startOfDay(period.rangeStart) != startOfDay(period.rangeEnd);
+    final showTrend = period.period != ReportPeriod.day || multiDay;
+    final showSalesList = period.period == ReportPeriod.day;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -48,25 +61,27 @@ class SalesReportView extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildKpiSection(context, report),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LineChartWidget(
-                title: 'Revenue Trend',
-                spots: report.revenueTrend.asMap().entries.map((entry) {
-                  return FlSpot(
-                    entry.key.toDouble(),
-                    entry.value.value.toDouble(),
-                  );
-                }).toList(),
-                xLabels: report.revenueTrend.map((r) => r.label).toList(),
-                yAxisFormatter: (value) =>
-                    _currencyFormat.format(value).replaceAll('.00', ''),
-                height: 250,
+          if (showTrend) ...[
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: LineChartWidget(
+                  title: 'Revenue Trend',
+                  spots: report.revenueTrend.asMap().entries.map((entry) {
+                    return FlSpot(
+                      entry.key.toDouble(),
+                      entry.value.value.toDouble(),
+                    );
+                  }).toList(),
+                  xLabels: report.revenueTrend.map((r) => r.label).toList(),
+                  yAxisFormatter: (value) =>
+                      _currencyFormat.format(value).replaceAll('.00', ''),
+                  height: 250,
+                ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -97,7 +112,7 @@ class SalesReportView extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: BarChartWidget(
-                    title: 'Top Products by Revenue',
+                    title: 'Top Selling by Revenue',
                     data: Map.fromEntries(
                       report.topSellingProducts.take(5).map(
                             (p) => MapEntry(p.productName, p.revenue),
@@ -139,6 +154,10 @@ class SalesReportView extends ConsumerWidget {
               );
             },
           ),
+          if (showSalesList) ...[
+            const SizedBox(height: 24),
+            _buildSalesList(context, report.sales, period),
+          ],
           const SizedBox(height: 24),
           _buildTopProductsTable(context, report),
           if (report.staffPerformance.isNotEmpty) ...[
@@ -194,6 +213,70 @@ class SalesReportView extends ConsumerWidget {
     );
   }
 
+  Widget _buildSalesList(
+    BuildContext context,
+    List<Sale> sales,
+    ReportPeriodSelection period,
+  ) {
+    final theme = Theme.of(context);
+    final title = startOfDay(period.rangeStart) == startOfDay(period.rangeEnd)
+        ? 'Sales'
+        : 'Sales in Range';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(title, style: theme.textTheme.titleSmall),
+                ),
+                Text(
+                  '${sales.length}',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (sales.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'No sales in this date range',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: sales.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final sale = sales[index];
+                  return TodaySaleListTile(
+                    sale: sale,
+                    showDate: startOfDay(period.rangeStart) !=
+                        startOfDay(period.rangeEnd),
+                    onTap: () => SaleDetailRoute(id: sale.id).push(context),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTopProductsTable(BuildContext context, SalesReport report) {
     final theme = Theme.of(context);
 
@@ -208,7 +291,7 @@ class SalesReportView extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Top Selling Products',
+              'Top Selling Items',
               style: theme.textTheme.titleSmall,
             ),
             const SizedBox(height: 16),
@@ -216,13 +299,15 @@ class SalesReportView extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 columns: const [
-                  DataColumn(label: Text('Product')),
+                  DataColumn(label: Text('Item')),
+                  DataColumn(label: Text('Type')),
                   DataColumn(label: Text('Quantity'), numeric: true),
                   DataColumn(label: Text('Revenue'), numeric: true),
                 ],
                 rows: report.topSellingProducts.map((product) {
                   return DataRow(cells: [
                     DataCell(Text(product.productName)),
+                    DataCell(Text(itemTypeLabel(product.itemType))),
                     DataCell(Text(product.quantity.toString())),
                     DataCell(Text(_currencyFormat.format(product.revenue))),
                   ]);

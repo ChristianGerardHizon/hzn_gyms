@@ -51,11 +51,12 @@ class ReportCsvExporter {
       buffer.writeln('${itemTypeLabel(e.key)},${_currency.format(e.value)}');
     }
     buffer.writeln();
-    buffer.writeln('Top Products');
-    buffer.writeln('Product,Quantity,Revenue');
+    buffer.writeln('Top Selling Items');
+    buffer.writeln('Item,Type,Quantity,Revenue');
     for (final p in report.topSellingProducts) {
       buffer.writeln(
-        '${_csv(p.productName)},${p.quantity},${_currency.format(p.revenue)}',
+        '${_csv(p.productName)},${itemTypeLabel(p.itemType)},'
+        '${p.quantity},${_currency.format(p.revenue)}',
       );
     }
     buffer.writeln();
@@ -146,12 +147,14 @@ class ReportCsvExporter {
       'Without Membership Link,${report.withoutActiveMembershipCount}',
     );
     buffer.writeln();
-    buffer.writeln('Check-ins Trend');
-    buffer.writeln('Bucket,Count');
-    for (final d in report.checkInsTrend) {
-      buffer.writeln('${_csv(d.label)},${d.value}');
+    if (period.period != ReportPeriod.day) {
+      buffer.writeln('Check-ins Trend');
+      buffer.writeln('Bucket,Count');
+      for (final d in report.checkInsTrend) {
+        buffer.writeln('${_csv(d.label)},${d.value}');
+      }
+      buffer.writeln();
     }
-    buffer.writeln();
     buffer.writeln('By Method');
     buffer.writeln('Method,Count');
     for (final e in report.checkInsByMethod.entries) {

@@ -264,20 +264,22 @@ class _ExportButtons extends HookConsumerWidget {
       },
       tableHeaders: itemTypeRows.isNotEmpty
           ? ['Item Type', 'Revenue']
-          : ['Product', 'Quantity', 'Revenue'],
+          : ['Item', 'Type', 'Quantity', 'Revenue'],
       tableRows: itemTypeRows.isNotEmpty
           ? itemTypeRows
           : report.topSellingProducts
               .map(
                 (p) => [
                   p.productName,
+                  itemTypeLabel(p.itemType),
                   p.quantity.toString(),
                   currencyFormat.format(p.revenue),
                 ],
               )
               .toList(),
       additionalNotes:
-          'Revenue by item type is sale line subtotals. Total Revenue is cash collected from payments. Do not sum with Membership plan value.',
+          'Revenue by item type is sale line subtotals (products and memberships). '
+          'Total Revenue is cash collected from payments. Do not sum with Membership plan value.',
     );
   }
 
@@ -355,15 +357,19 @@ class _ExportButtons extends HookConsumerWidget {
         'No Membership Link':
             report.withoutActiveMembershipCount.toString(),
       },
-      tableHeaders: ['Bucket', 'Check-ins'],
-      tableRows: report.checkInsTrend
-          .map(
-            (d) => [
-              d.label,
-              d.value.toString(),
-            ],
-          )
-          .toList(),
+      tableHeaders: period.period == ReportPeriod.day
+          ? null
+          : ['Bucket', 'Check-ins'],
+      tableRows: period.period == ReportPeriod.day
+          ? null
+          : report.checkInsTrend
+              .map(
+                (d) => [
+                  d.label,
+                  d.value.toString(),
+                ],
+              )
+              .toList(),
     );
   }
 }

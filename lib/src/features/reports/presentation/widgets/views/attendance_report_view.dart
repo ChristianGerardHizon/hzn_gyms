@@ -41,6 +41,7 @@ class AttendanceReportView extends ConsumerWidget {
   ) {
     final showPeakHours =
         period.period == ReportPeriod.day && report.checkInsByHour.isNotEmpty;
+    final showTrend = period.period != ReportPeriod.day;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -75,23 +76,25 @@ class AttendanceReportView extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LineChartWidget(
-                title: 'Check-ins Trend',
-                spots: report.checkInsTrend.asMap().entries.map((entry) {
-                  return FlSpot(
-                    entry.key.toDouble(),
-                    entry.value.value.toDouble(),
-                  );
-                }).toList(),
-                xLabels: report.checkInsTrend.map((r) => r.label).toList(),
-                height: 250,
+          if (showTrend) ...[
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: LineChartWidget(
+                  title: 'Check-ins Trend',
+                  spots: report.checkInsTrend.asMap().entries.map((entry) {
+                    return FlSpot(
+                      entry.key.toDouble(),
+                      entry.value.value.toDouble(),
+                    );
+                  }).toList(),
+                  xLabels: report.checkInsTrend.map((r) => r.label).toList(),
+                  height: 250,
+                ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {

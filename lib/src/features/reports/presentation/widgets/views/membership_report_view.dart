@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/membership_report.dart';
+import '../../../domain/report_period.dart';
 import '../../controllers/membership_report_controller.dart';
+import '../../controllers/report_period_controller.dart';
 import '../charts/bar_chart_widget.dart';
 import '../charts/line_chart_widget.dart';
 import '../charts/pie_chart_widget.dart';
@@ -22,9 +24,10 @@ class MembershipReportView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(membershipReportProvider);
+    final period = ref.watch(reportPeriodControllerProvider);
 
     return reportAsync.when(
-      data: (report) => _buildContent(context, report),
+      data: (report) => _buildContent(context, report, period),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => ErrorState.fromError(
         error,
@@ -34,7 +37,13 @@ class MembershipReportView extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, MembershipReport report) {
+  Widget _buildContent(
+    BuildContext context,
+    MembershipReport report,
+    ReportPeriodSelection period,
+  ) {
+    final showTrend = period.period != ReportPeriod.day;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -44,29 +53,32 @@ class MembershipReportView extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Plan value is sold amount from sale lines (or catalog fallback). '
-            'Cash collected lives on the Sales tab — do not sum both.',
+            'Cash collected lives on the Sales tab — do not sum both. '
+            'Walk-in / guest day-pass plans are counted in Sales only.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LineChartWidget(
-                title: 'New Member Registrations',
-                spots: report.registrationsTrend.asMap().entries.map((entry) {
-                  return FlSpot(
-                    entry.key.toDouble(),
-                    entry.value.value.toDouble(),
-                  );
-                }).toList(),
-                xLabels:
-                    report.registrationsTrend.map((r) => r.label).toList(),
-                height: 250,
+          if (showTrend) ...[
+            const SizedBox(height: 24),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: LineChartWidget(
+                  title: 'New Member Registrations',
+                  spots: report.registrationsTrend.asMap().entries.map((entry) {
+                    return FlSpot(
+                      entry.key.toDouble(),
+                      entry.value.value.toDouble(),
+                    );
+                  }).toList(),
+                  xLabels:
+                      report.registrationsTrend.map((r) => r.label).toList(),
+                  height: 250,
+                ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {

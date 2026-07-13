@@ -108,37 +108,6 @@ class _RangePickerRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(reportPeriodControllerProvider.notifier);
 
-    if (selection.period == ReportPeriod.day) {
-      final label = DateFormat('EEE, MMM d, y').format(selection.rangeStart);
-
-      Future<void> pickDay() async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: startOfDay(selection.rangeStart),
-          firstDate: DateTime(2019),
-          lastDate: DateTime.now().add(const Duration(days: 365)),
-          helpText: 'Select date',
-        );
-        if (picked != null) notifier.setDay(picked);
-      }
-
-      if (isMobile) {
-        return _RangeField(
-          caption: 'Date',
-          label: label,
-          onPressed: pickDay,
-        );
-      }
-
-      return Row(
-        children: [
-          Text('Date', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(width: 8),
-          _RangeButton(label: label, onPressed: pickDay),
-        ],
-      );
-    }
-
     final startLabel = _formatStart(selection);
     final endLabel = _formatEnd(selection);
 
@@ -301,13 +270,12 @@ Future<DateTime?> _pickForGrain(
 }) {
   switch (selection.period) {
     case ReportPeriod.day:
-      // Day uses a dedicated single-date picker in _RangePickerRow.
       return showDatePicker(
         context: context,
         initialDate: startOfDay(initial),
         firstDate: DateTime(2019),
         lastDate: DateTime.now().add(const Duration(days: 365)),
-        helpText: 'Select date',
+        helpText: '$title date',
       );
     case ReportPeriod.weekly:
       return showDatePicker(

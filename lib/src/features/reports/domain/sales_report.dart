@@ -1,5 +1,6 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
+import '../../pos/domain/sale.dart';
 import 'period_bucket.dart';
 
 part 'sales_report.mapper.dart';
@@ -18,6 +19,7 @@ class SalesReport with SalesReportMappable {
     this.unpaidSalesCount = 0,
     this.unpaidBalance = 0,
     this.staffPerformance = const [],
+    this.sales = const [],
   });
 
   /// Total revenue in the period (cash collected from payments).
@@ -35,10 +37,10 @@ class SalesReport with SalesReportMappable {
   /// Revenue grouped by payment method (for pie chart).
   final Map<String, num> revenueByPaymentMethod;
 
-  /// Top selling products with quantities (for bar chart).
+  /// Top selling items (products, memberships, walk-ins) with quantities.
   final List<ProductSalesSummary> topSellingProducts;
 
-  /// Revenue split by sale item type: product / membership / addon.
+  /// Revenue split by sale item type: product / membership / walkIn / addon.
   final Map<String, num> revenueByItemType;
 
   /// Number of unpaid or partially paid sales (accounts receivable).
@@ -49,6 +51,9 @@ class SalesReport with SalesReportMappable {
 
   /// Staff / cashier sales performance for the period.
   final List<StaffSalesSummary> staffPerformance;
+
+  /// Individual sales in the selected range (newest first).
+  final List<Sale> sales;
 
   /// Empty report for initial/error states.
   static const empty = SalesReport(
@@ -61,18 +66,22 @@ class SalesReport with SalesReportMappable {
   );
 }
 
-/// Summary of product sales.
+/// Summary of a top-selling sale line (product, membership, walk-in, add-on).
 @MappableClass()
 class ProductSalesSummary with ProductSalesSummaryMappable {
   const ProductSalesSummary({
     required this.productName,
     required this.quantity,
     required this.revenue,
+    this.itemType = 'product',
   });
 
   final String productName;
   final num quantity;
   final num revenue;
+
+  /// Sale line type: product / membership / walkIn / addon.
+  final String itemType;
 }
 
 /// Staff sales performance summary.
