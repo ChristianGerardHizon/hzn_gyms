@@ -36,6 +36,7 @@ void main() {
 
     test('customerDisplay falls back to Walk-in when unlinked', () {
       expect(buildSale().customerDisplay, 'Walk-in');
+      expect(buildSale().isWalkIn, isTrue);
       expect(buildSale().hasCustomer, isFalse);
       expect(
         buildSale().copyWith(customerName: '  Jane Doe  ').customerDisplay,
@@ -46,8 +47,39 @@ void main() {
         isTrue,
       );
       expect(
+        buildSale().copyWith(customerName: Sale.walkInLabel).hasCustomer,
+        isFalse,
+      );
+      expect(
         buildSale().copyWith(customerId: 'm1').hasCustomer,
         isTrue,
+      );
+      expect(
+        buildSale().copyWith(customerId: 'm1').isWalkIn,
+        isFalse,
+      );
+    });
+
+    test('resolveCustomerName stores Walk-in for unlinked sales', () {
+      expect(
+        Sale.resolveCustomerName(customerId: null, customerName: null),
+        Sale.walkInLabel,
+      );
+      expect(
+        Sale.resolveCustomerName(customerId: '', customerName: '  '),
+        Sale.walkInLabel,
+      );
+      expect(
+        Sale.resolveCustomerName(customerId: null, customerName: 'Jane'),
+        'Jane',
+      );
+      expect(
+        Sale.resolveCustomerName(customerId: 'm1', customerName: 'Jane'),
+        'Jane',
+      );
+      expect(
+        Sale.resolveCustomerName(customerId: 'm1', customerName: null),
+        isNull,
       );
     });
 
@@ -75,6 +107,10 @@ void main() {
       expect(
         Sale.buildDescriptor(items: const [], customerName: 'Jane'),
         'Jane',
+      );
+      expect(
+        Sale.buildDescriptor(items: const [], isWalkIn: true),
+        'Walk-in',
       );
     });
 
@@ -105,6 +141,79 @@ void main() {
           ],
         ),
         'Monthly +1 add-on',
+      );
+    });
+
+    test('walk-in membership descriptors are prefixed', () {
+      expect(
+        Sale.buildDescriptor(
+          items: [_item(name: 'Day Pass', itemType: 'membership')],
+          customerName: 'Jane',
+          isWalkIn: true,
+        ),
+        'Walk-in · Jane · Day Pass',
+      );
+      expect(
+        Sale.buildDescriptor(
+          items: [_item(name: 'Day Pass', itemType: 'membership')],
+          isWalkIn: true,
+        ),
+        'Walk-in · Day Pass',
+      );
+      expect(
+        Sale.buildDescriptor(
+          items: [
+            _item(name: 'Day Pass', itemType: 'membership'),
+            _item(name: 'Locker', itemType: 'addon'),
+          ],
+          customerName: 'Jane',
+          isWalkIn: true,
+        ),
+        'Walk-in · Jane · Day Pass +1 add-on',
+      );
+    });
+
+    test('walk-in product-typed guest day-pass descriptors are prefixed', () {
+      expect(
+        Sale.buildDescriptor(
+          items: [_item(name: 'Day Pass', itemType: 'product')],
+          customerName: 'Jane',
+          isWalkIn: true,
+        ),
+        'Walk-in · Jane · Day Pass',
+      );
+      expect(
+        Sale.buildDescriptor(
+          items: [
+            _item(name: 'Day Pass', itemType: 'product'),
+            _item(name: 'Locker', itemType: 'product'),
+          ],
+          customerName: 'Jane',
+          isWalkIn: true,
+        ),
+        'Walk-in · Jane · Day Pass +1 add-on',
+      );
+    });
+
+    test('walk-in itemType guest day-pass descriptors are prefixed', () {
+      expect(
+        Sale.buildDescriptor(
+          items: [_item(name: 'Day Pass', itemType: 'walkIn')],
+          customerName: 'Jane',
+          isWalkIn: true,
+        ),
+        'Walk-in · Jane · Day Pass',
+      );
+      expect(
+        Sale.buildDescriptor(
+          items: [
+            _item(name: 'Day Pass', itemType: 'walkIn'),
+            _item(name: 'Locker', itemType: 'walkIn'),
+          ],
+          customerName: 'Jane',
+          isWalkIn: true,
+        ),
+        'Walk-in · Jane · Day Pass +1 add-on',
       );
     });
 

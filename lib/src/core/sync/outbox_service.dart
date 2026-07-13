@@ -239,6 +239,10 @@ class OutboxDispatcher {
   ) async {
     final body = Map<String, dynamic>.from(payload)
       ..['id'] = entry.clientRecordId;
+    final product = body['product'];
+    if (product is! String || product.trim().isEmpty) {
+      body.remove('product');
+    }
     await _pb.collection('saleItems').create(body: body);
   }
 

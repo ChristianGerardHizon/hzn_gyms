@@ -71,18 +71,28 @@ class Sale with SaleMappable {
   /// Last update timestamp.
   final DateTime? updated;
 
+  /// Stored / display label for sales with no linked member.
+  static const walkInLabel = 'Walk-in';
+
+  /// Whether this sale has no linked member (day pass / product walk-in).
+  bool get isWalkIn {
+    final id = customerId?.trim();
+    return id == null || id.isEmpty;
+  }
+
   /// Whether this sale is linked to a named customer / member.
   bool get hasCustomer {
     final name = customerName?.trim();
-    return (customerId != null && customerId!.isNotEmpty) ||
-        (name != null && name.isNotEmpty);
+    final hasRealName =
+        name != null && name.isNotEmpty && name != walkInLabel;
+    return !isWalkIn || hasRealName;
   }
 
-  /// Display label for customer; `"Walk-in"` when none is linked.
+  /// Display label for customer; [walkInLabel] when none is linked.
   String get customerDisplay {
     final name = customerName?.trim();
     if (name != null && name.isNotEmpty) return name;
-    return 'Walk-in';
+    return walkInLabel;
   }
 
   /// Last 4 characters of the receipt number for compact list display.
@@ -112,14 +122,33 @@ class Sale with SaleMappable {
   }
 
   /// Builds a list descriptor from sale line items.
+  ///
+  /// When [isWalkIn] is true (no linked member), descriptors are prefixed with
+  /// [walkInLabel] so day-pass / guest sales are searchable/identifiable.
   static String buildDescriptor({
     required List<SaleItem> items,
     String? customerName,
+    bool isWalkIn = false,
   }) {
     if (items.isEmpty) {
       final name = customerName?.trim();
       if (name != null && name.isNotEmpty) return name;
-      return 'Sale';
+      return isWalkIn ? walkInLabel : 'Sale';
+    }
+
+    if (isWalkIn) {
+      final primary = items.first;
+      final planName = primary.productName.trim();
+      final name = customerName?.trim();
+      final parts = <String>[walkInLabel];
+      if (name != null && name.isNotEmpty && name != walkInLabel) {
+        parts.add(name);
+      }
+      if (planName.isNotEmpty) parts.add(planName);
+      final base = parts.join(' · ');
+      final extras = items.length - 1;
+      if (extras <= 0) return base;
+      return '$base +$extras add-on${extras == 1 ? '' : 's'}';
     }
 
     final membershipItems =
@@ -130,11 +159,14 @@ class Sale with SaleMappable {
       final name = customerName?.trim();
       final addOnCount =
           items.where((item) => item.itemType == 'addon').length;
-      final base = (name != null && name.isNotEmpty && planName.isNotEmpty)
-          ? '$name · $planName'
-          : (planName.isNotEmpty
-              ? planName
-              : (name ?? 'Membership'));
+      final String base;
+      if (name != null && name.isNotEmpty && planName.isNotEmpty) {
+        base = '$name · $planName';
+      } else if (planName.isNotEmpty) {
+        base = planName;
+      } else {
+        base = name ?? 'Membership';
+      }
       if (addOnCount <= 0) return base;
       return '$base +$addOnCount add-on${addOnCount == 1 ? '' : 's'}';
     }
@@ -155,5 +187,24 @@ class Sale with SaleMappable {
     }
     final label = firstName.isNotEmpty ? firstName : 'Item';
     return '$label +${namedItems.length - 1} more';
+  }
+
+  /// Resolves the customer name to persist for a sale.
+  ///
+  /// Walk-in / day-pass sales (no linked member) always store a non-empty
+  /// [customerName] so they remain searchable — either the provided name or
+  /// [walkInLabel].
+  static String? resolveCustomerName({
+    String? customerId,
+    String? customerName,
+  }) {
+    final linkedId = customerId?.trim();
+    final hasMember = linkedId != null && linkedId.isNotEmpty;
+    final name = customerName?.trim();
+    if (hasMember) {
+      return (name != null && name.isNotEmpty) ? name : null;
+    }
+    if (name != null && name.isNotEmpty) return name;
+    return walkInLabel;
   }
 }

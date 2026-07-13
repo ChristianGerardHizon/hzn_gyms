@@ -31,12 +31,16 @@ void main() {
     ).thenAnswer((invocation) async {
       final body = invocation.namedArguments[#body] as Map<String, dynamic>;
       expect(body['descriptor'], 'WATER');
+      expect(body['customerName'], Sale.walkInLabel);
+      expect(body.containsKey('member'), isFalse);
       return buildSaleRecord(id: 'sale-1', descriptor: body['descriptor'] as String);
     });
     when(
       () => saleItems.create(body: any(named: 'body')),
-    ).thenAnswer(
-      (_) async => buildRecord(
+    ).thenAnswer((invocation) async {
+      final body = invocation.namedArguments[#body] as Map<String, dynamic>;
+      expect(body['product'], 'prod-1');
+      return buildRecord(
         id: 'si-1',
         collectionName: 'saleItems',
         data: {
@@ -48,8 +52,8 @@ void main() {
           'subtotal': 50,
           'itemType': 'product',
         },
-      ),
-    );
+      );
+    });
 
     final result = await repo.createSale(
       buildSale(id: ''),
@@ -68,6 +72,81 @@ void main() {
     );
     expect(result.isRight(), isTrue);
     verify(() => saleItems.create(body: any(named: 'body'))).called(1);
+  });
+
+  test('createSale omits empty product for membership walk-in items', () async {
+    when(
+      () => sales.create(body: any(named: 'body')),
+    ).thenAnswer((invocation) async {
+      final body = invocation.namedArguments[#body] as Map<String, dynamic>;
+      expect(body['descriptor'], 'Walk-in · Jane · Day Pass');
+      expect(body['customerName'], 'Jane');
+      expect(body.containsKey('member'), isFalse);
+      return buildSaleRecord(
+        id: 'sale-2',
+        descriptor: body['descriptor'] as String,
+        customerName: 'Jane',
+      );
+    });
+    when(
+      () => saleItems.create(body: any(named: 'body')),
+    ).thenAnswer((invocation) async {
+      final body = invocation.namedArguments[#body] as Map<String, dynamic>;
+      expect(body.containsKey('product'), isFalse);
+      expect(body['itemType'], 'membership');
+      return buildRecord(
+        id: 'si-2',
+        collectionName: 'saleItems',
+        data: body,
+      );
+    });
+
+    final result = await repo.createSale(
+      buildSale(id: '', customerName: 'Jane'),
+      [
+        const SaleItem(
+          id: '',
+          saleId: '',
+          productId: '',
+          productName: 'Day Pass',
+          quantity: 1,
+          unitPrice: 100,
+          subtotal: 100,
+          itemType: 'membership',
+        ),
+      ],
+    );
+    expect(result.isRight(), isTrue);
+  });
+
+  test('searchPaginated treats walk-in queries as no-member sales', () async {
+    when(
+      () => sales.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        fields: any(named: 'fields'),
+      ),
+    ).thenAnswer((invocation) async {
+      final filter = invocation.namedArguments[#filter] as String;
+      expect(filter.contains('Walk-in'), isTrue);
+      expect(filter.contains('member = null'), isTrue);
+      return ResultList<RecordModel>(
+        page: 1,
+        perPage: 20,
+        totalItems: 1,
+        totalPages: 1,
+        items: [buildSaleRecord(customerName: 'Walk-in')],
+      );
+    });
+
+    final result = await repo.searchPaginated('walk-in');
+    expect(result.isRight(), isTrue);
+    expect(
+      result.getOrElse((_) => throw StateError('l')).items.single.customerDisplay,
+      'Walk-in',
+    );
   });
 
   test('getSale and updateSaleStatus', () async {

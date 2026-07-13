@@ -63,16 +63,30 @@ def request_json(
         raise RuntimeError(f"{method} {url} -> {exc.code}: {detail}") from exc
 
 
-def build_descriptor(items: list[dict], customer_name: str | None) -> str:
+def build_descriptor(
+    items: list[dict],
+    customer_name: str | None,
+    *,
+    is_walk_in: bool = False,
+) -> str:
     name = (customer_name or "").strip()
     if not items:
-        return name or "Sale"
+        if name:
+            return name
+        return "Walk-in" if is_walk_in else "Sale"
 
     membership = next((i for i in items if i.get("itemType") == "membership"), None)
     if membership is not None:
         plan_name = (membership.get("productName") or "").strip()
         add_on_count = sum(1 for i in items if i.get("itemType") == "addon")
-        if name and plan_name:
+        if is_walk_in:
+            parts = ["Walk-in"]
+            if name and name != "Walk-in":
+                parts.append(name)
+            if plan_name:
+                parts.append(plan_name)
+            base = " · ".join(parts)
+        elif name and plan_name:
             base = f"{name} · {plan_name}"
         elif plan_name:
             base = plan_name
@@ -155,7 +169,7 @@ def main() -> int:
         list_url = (
             f"{base}api/collections/sales/records"
             f"?page={page}&perPage={PAGE_SIZE}&sort=-created"
-            f"&fields=id,customerName,descriptor"
+            f"&fields=id,customerName,descriptor,member"
             f"&skipTotal=1"
         )
         log(f"Fetching sales page {page} ...")
@@ -181,9 +195,11 @@ def main() -> int:
             items_by_sale = fetch_items_for_sales(base, token, sale_ids)
 
             def patch_one(sale: dict) -> str:
+                member = (sale.get("member") or "").strip()
                 descriptor = build_descriptor(
                     items_by_sale.get(sale["id"], []),
                     sale.get("customerName"),
+                    is_walk_in=not bool(member),
                 )
                 request_json(
                     "PATCH",

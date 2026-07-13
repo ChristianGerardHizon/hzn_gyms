@@ -52,9 +52,10 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Walk-in Sale'), findsOneWidget);
+      expect(find.text('Cashier'), findsOneWidget);
       expect(find.text('Member optional at checkout'), findsOneWidget);
-      expect(find.text('Close'), findsOneWidget);
+      expect(find.byTooltip('Close'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Close'), findsNothing);
     });
   });
 }
