@@ -11,7 +11,8 @@ import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 /// Section displaying quick action buttons on the dashboard.
 ///
 /// Provides fast access to common tasks:
-/// - Walk-in sale (cashier dialog, stays on dashboard)
+/// - Cashier (product POS dialog)
+/// - Walk-in (day pass / name-only sale for plans with membership not required)
 /// - Show dashboard overview (tablet only)
 class QuickActionsSection extends ConsumerWidget {
   const QuickActionsSection({
@@ -60,9 +61,16 @@ class QuickActionsSection extends ConsumerWidget {
                 const SizedBox(width: 12),
                 _QuickActionButton(
                   icon: Icons.storefront,
-                  label: 'Walk-in Sale',
+                  label: 'Cashier',
                   color: Colors.green,
                   onTap: () => showCashierDialog(context, ref),
+                ),
+                const SizedBox(width: 12),
+                _QuickActionButton(
+                  icon: Icons.directions_walk,
+                  label: 'Walk-in',
+                  color: Colors.indigo,
+                  onTap: () => sellWalkInAndRecordPayment(context, ref),
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(

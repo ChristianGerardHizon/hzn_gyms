@@ -10,7 +10,9 @@ part of 'dashboard_members_layout_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Controller for dashboard members grid layout preferences.
 ///
-/// Persists column count (2–5) and photo vs name-only display.
+/// Persists column count (1–5) and photo vs name-only display in Drift so the
+/// choice survives app restarts. Effective columns are capped by screen width
+/// at display time.
 
 @ProviderFor(DashboardMembersLayoutController)
 final dashboardMembersLayoutControllerProvider =
@@ -18,7 +20,9 @@ final dashboardMembersLayoutControllerProvider =
 
 /// Controller for dashboard members grid layout preferences.
 ///
-/// Persists column count (2–5) and photo vs name-only display.
+/// Persists column count (1–5) and photo vs name-only display in Drift so the
+/// choice survives app restarts. Effective columns are capped by screen width
+/// at display time.
 final class DashboardMembersLayoutControllerProvider
     extends
         $AsyncNotifierProvider<
@@ -27,7 +31,9 @@ final class DashboardMembersLayoutControllerProvider
         > {
   /// Controller for dashboard members grid layout preferences.
   ///
-  /// Persists column count (2–5) and photo vs name-only display.
+  /// Persists column count (1–5) and photo vs name-only display in Drift so the
+  /// choice survives app restarts. Effective columns are capped by screen width
+  /// at display time.
   DashboardMembersLayoutControllerProvider._()
     : super(
         from: null,
@@ -49,11 +55,13 @@ final class DashboardMembersLayoutControllerProvider
 }
 
 String _$dashboardMembersLayoutControllerHash() =>
-    r'dff2c96894e070fcbecb7a3985afa1f8b96b4e2c';
+    r'53cf09357c97d7279aaffa6744cf556d2f62e944';
 
 /// Controller for dashboard members grid layout preferences.
 ///
-/// Persists column count (2–5) and photo vs name-only display.
+/// Persists column count (1–5) and photo vs name-only display in Drift so the
+/// choice survives app restarts. Effective columns are capped by screen width
+/// at display time.
 
 abstract class _$DashboardMembersLayoutController
     extends $AsyncNotifier<DashboardMembersLayout> {

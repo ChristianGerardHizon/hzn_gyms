@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('QuickActionsSection', () {
-    testWidgets('shows Walk-in Sale quick action for POS without member', (
+    testWidgets('shows Cashier and Walk-in quick actions', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -18,9 +18,11 @@ void main() {
         ),
       );
 
-      expect(find.text('Walk-in Sale'), findsOneWidget);
-      expect(find.text('New Sale'), findsNothing);
+      expect(find.text('Cashier'), findsOneWidget);
+      expect(find.text('Walk-in'), findsOneWidget);
       expect(find.text('Check-In'), findsOneWidget);
+      expect(find.text('Renew'), findsOneWidget);
+      expect(find.text('New Member'), findsOneWidget);
     });
   });
 }

@@ -10,16 +10,22 @@ class TodaySaleListTile extends StatelessWidget {
     super.key,
     required this.sale,
     required this.onTap,
+    this.showDate = false,
   });
 
   final Sale sale;
   final VoidCallback onTap;
 
+  /// When true, shows calendar date with time (for multi-day ranges).
+  final bool showDate;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '₱');
-    final timeFormat = DateFormat('hh:mm a');
+    final timeFormat = showDate
+        ? DateFormat('MMM d · hh:mm a')
+        : DateFormat('hh:mm a');
 
     final timeLabel =
         sale.created != null ? timeFormat.format(sale.created!) : null;
@@ -28,7 +34,7 @@ class TodaySaleListTile extends StatelessWidget {
     final subtitleParts = <String>[
       if (hasDescriptor) sale.shortReceiptNumber,
       if (timeLabel != null) timeLabel,
-      if (!hasDescriptor) sale.customerDisplay,
+      sale.customerDisplay,
       sale.isPaid ? 'Paid' : 'Unpaid',
     ];
 
