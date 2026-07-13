@@ -1,10 +1,12 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'daos/app_preferences_dao.dart';
 import 'daos/members_dao.dart';
 import 'daos/membership_cache_dao.dart';
 import 'daos/outbox_dao.dart';
 import 'daos/pending_member_memberships_dao.dart';
+import 'tables/app_preferences_table.dart';
 import 'tables/members_table.dart';
 import 'tables/membership_add_ons_table.dart';
 import 'tables/membership_plans_table.dart';
@@ -23,12 +25,14 @@ part 'app_database.g.dart';
     PendingMemberMemberships,
     MembershipPlans,
     MembershipAddOnsCache,
+    AppPreferences,
   ],
   daos: [
     MembersDao,
     OutboxDao,
     PendingMemberMembershipsDao,
     MembershipCacheDao,
+    AppPreferencesDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -46,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +67,32 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await _migrateToV3(migrator);
+          }
+          if (from < 4) {
+            await _addColumnIfMissing(
+              migrator,
+              table: membershipPlans,
+              column: membershipPlans.validBranchesJson,
+            );
+          }
+          if (from < 5) {
+            if (!await _tableExists(migrator, appPreferences.actualTableName)) {
+              await migrator.createTable(appPreferences);
+            }
+          }
+          if (from < 6) {
+            await _addColumnIfMissing(
+              migrator,
+              table: membershipPlans,
+              column: membershipPlans.memberNotRequired,
+            );
+          }
+          if (from < 7) {
+            await _addColumnIfMissing(
+              migrator,
+              table: membershipAddOnsCache,
+              column: membershipAddOnsCache.durationDays,
+            );
           }
         },
       );

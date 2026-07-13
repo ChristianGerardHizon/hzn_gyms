@@ -65,7 +65,7 @@ class SalesRepositoryImpl implements SalesRepository {
 
   /// Columns needed for list / history rows (avoids shipping notes, etc.).
   static const _listFields =
-      'id,receiptNumber,branch,cashier,totalAmount,status,isPaid,member,customerName,created,updated';
+      'id,receiptNumber,branch,cashier,totalAmount,status,isPaid,member,customerName,descriptor,created,updated';
 
   RecordService get _sales => _pb.collection(PocketBaseCollections.sales);
   RecordService get _saleItems =>
@@ -88,16 +88,30 @@ class SalesRepositoryImpl implements SalesRepository {
   ) async {
     return TaskEither.tryCatch(
       () async {
-        // 1. Create Sale Record
-        final saleBody = {
+        final memberId = sale.customerId?.trim();
+        final customerName = Sale.resolveCustomerName(
+          customerId: sale.customerId,
+          customerName: sale.customerName,
+        );
+        final descriptor = () {
+          final existing = sale.descriptor?.trim();
+          if (existing != null && existing.isNotEmpty) return existing;
+          return Sale.buildDescriptor(
+            items: items,
+            customerName: customerName,
+            isWalkIn: sale.isWalkIn,
+          );
+        }();
+        final saleBody = <String, dynamic>{
           'receiptNumber': sale.receiptNumber,
           'branch': sale.branchId,
           'cashier': sale.cashierId,
           'totalAmount': sale.totalAmount,
           'status': sale.status,
           'isPaid': sale.isPaid,
-          'member': sale.customerId,
-          'customerName': sale.customerName,
+          if (memberId != null && memberId.isNotEmpty) 'member': memberId,
+          if (customerName != null) 'customerName': customerName,
+          'descriptor': descriptor,
           'notes': sale.notes,
         };
         final saleRecord = await _sales.create(body: saleBody);
@@ -106,12 +120,14 @@ class SalesRepositoryImpl implements SalesRepository {
         for (final item in items) {
           final itemBody = <String, dynamic>{
             'sale': saleRecord.id,
-            'product': item.productId,
             'productName': item.productName,
             'quantity': item.quantity,
             'unitPrice': item.unitPrice,
             'subtotal': item.subtotal,
           };
+          if (item.productId.isNotEmpty) {
+            itemBody['product'] = item.productId;
+          }
           if (item.productLotId != null && item.productLotId!.isNotEmpty) {
             itemBody['productLot'] = item.productLotId;
             itemBody['lotNumber'] = item.lotNumber;
@@ -252,8 +268,7 @@ class SalesRepositoryImpl implements SalesRepository {
       () async {
         // Use PBFilter for multi-field OR search
         final searchFields = fields ?? ['receiptNumber'];
-        final searchFilter =
-            PBFilter().searchFields(query, searchFields).build();
+        final searchFilter = _buildSaleSearchFilter(query, searchFields);
 
         // Combine search filter with optional branch filter
         final combinedFilter =
@@ -276,6 +291,25 @@ class SalesRepositoryImpl implements SalesRepository {
       },
       Failure.handle,
     ).run();
+  }
+
+  /// Builds a PocketBase filter for sales search.
+  ///
+  /// Queries that match "walk-in" / "walkin" also include sales with no
+  /// linked member, since older walk-in rows may not store the label.
+  static String _buildSaleSearchFilter(String query, List<String> fields) {
+    final normalized =
+        query.trim().toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
+    if (normalized == 'walkin') {
+      final label = Sale.walkInLabel;
+      return '('
+          'customerName ~ "$label" || '
+          'descriptor ~ "$label" || '
+          'member = "" || '
+          'member = null'
+          ')';
+    }
+    return PBFilter().searchFields(query, fields).buildOrEmpty();
   }
 
   @override

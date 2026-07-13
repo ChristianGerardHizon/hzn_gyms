@@ -13,6 +13,7 @@ import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../pos/domain/payment_method.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
@@ -131,8 +132,9 @@ class RecordPaymentDialog extends HookConsumerWidget {
       if (!dialogContext.mounted) return;
 
       if (payment != null) {
-        // Refresh the sale to get updated isPaid status
+        // Refresh the sale and dashboard Recent Transactions / sales KPI
         ref.invalidate(saleProvider(sale.id));
+        refreshTodaysSales(ref);
         Navigator.of(dialogContext).pop(true);
         showSuccessSnackBar(dialogContext,
             message: 'Payment recorded successfully',
@@ -216,7 +218,7 @@ class RecordPaymentDialog extends HookConsumerWidget {
                   border: InputBorder.none,
                 ),
                 spacing: 8,
-                options: PaymentType.values
+                options: PaymentType.forRecording
                     .map((type) => FormBuilderChipOption(
                           value: type,
                           child: Text(type.displayName),

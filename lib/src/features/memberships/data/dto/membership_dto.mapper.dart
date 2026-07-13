@@ -54,6 +54,13 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     'branch',
     _$branch,
   );
+  static List<String> _$validBranches(MembershipDto v) => v.validBranches;
+  static const Field<MembershipDto, List<String>> _f$validBranches = Field(
+    'validBranches',
+    _$validBranches,
+    opt: true,
+    def: const [],
+  );
   static bool _$isActive(MembershipDto v) => v.isActive;
   static const Field<MembershipDto, bool> _f$isActive = Field(
     'isActive',
@@ -65,6 +72,13 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
   static const Field<MembershipDto, bool> _f$isFavorite = Field(
     'isFavorite',
     _$isFavorite,
+    opt: true,
+    def: false,
+  );
+  static bool _$memberNotRequired(MembershipDto v) => v.memberNotRequired;
+  static const Field<MembershipDto, bool> _f$memberNotRequired = Field(
+    'memberNotRequired',
+    _$memberNotRequired,
     opt: true,
     def: false,
   );
@@ -91,8 +105,10 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     #durationDays: _f$durationDays,
     #price: _f$price,
     #branch: _f$branch,
+    #validBranches: _f$validBranches,
     #isActive: _f$isActive,
     #isFavorite: _f$isFavorite,
+    #memberNotRequired: _f$memberNotRequired,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -107,8 +123,10 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
       durationDays: data.dec(_f$durationDays),
       price: data.dec(_f$price),
       branch: data.dec(_f$branch),
+      validBranches: data.dec(_f$validBranches),
       isActive: data.dec(_f$isActive),
       isFavorite: data.dec(_f$isFavorite),
+      memberNotRequired: data.dec(_f$memberNotRequired),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -176,6 +194,8 @@ extension MembershipDtoValueCopy<$R, $Out>
 
 abstract class MembershipDtoCopyWith<$R, $In extends MembershipDto, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get validBranches;
   $R call({
     String? id,
     String? collectionId,
@@ -185,8 +205,10 @@ abstract class MembershipDtoCopyWith<$R, $In extends MembershipDto, $Out>
     int? durationDays,
     num? price,
     String? branch,
+    List<String>? validBranches,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     String? created,
     String? updated,
   });
@@ -202,6 +224,13 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MembershipDto> $mapper =
       MembershipDtoMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get validBranches => ListCopyWith(
+    $value.validBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(validBranches: v),
+  );
+  @override
   $R call({
     String? id,
     String? collectionId,
@@ -211,8 +240,10 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     int? durationDays,
     num? price,
     String? branch,
+    List<String>? validBranches,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -225,8 +256,10 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
       if (durationDays != null) #durationDays: durationDays,
       if (price != null) #price: price,
       if (branch != null) #branch: branch,
+      if (validBranches != null) #validBranches: validBranches,
       if (isActive != null) #isActive: isActive,
       if (isFavorite != null) #isFavorite: isFavorite,
+      if (memberNotRequired != null) #memberNotRequired: memberNotRequired,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -241,8 +274,13 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     durationDays: data.get(#durationDays, or: $value.durationDays),
     price: data.get(#price, or: $value.price),
     branch: data.get(#branch, or: $value.branch),
+    validBranches: data.get(#validBranches, or: $value.validBranches),
     isActive: data.get(#isActive, or: $value.isActive),
     isFavorite: data.get(#isFavorite, or: $value.isFavorite),
+    memberNotRequired: data.get(
+      #memberNotRequired,
+      or: $value.memberNotRequired,
+    ),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

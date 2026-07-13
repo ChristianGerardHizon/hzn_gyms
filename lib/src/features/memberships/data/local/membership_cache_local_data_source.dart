@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -25,8 +27,10 @@ class MembershipCacheLocalDataSource {
             durationDays: p.durationDays,
             price: p.price.toDouble(),
             branchId: p.branchId,
+            validBranchesJson: Value(jsonEncode(p.validBranches)),
             isActive: Value(p.isActive),
             isFavorite: Value(p.isFavorite),
+            memberNotRequired: Value(p.memberNotRequired),
             syncedAt: now,
           ),
         )
@@ -44,6 +48,7 @@ class MembershipCacheLocalDataSource {
             name: a.name,
             description: Value(a.description),
             price: a.price.toDouble(),
+            durationDays: Value(a.durationDays),
             isActive: Value(a.isActive),
             syncedAt: now,
           ),
@@ -52,9 +57,15 @@ class MembershipCacheLocalDataSource {
     await _db.membershipCacheDao.replaceAddOns(companions);
   }
 
+  /// Returns cached plans. When [branchId] is set, only plans valid at that
+  /// branch (or all-branch plans with empty validBranches) are returned.
   Future<List<Membership>> getPlans({String? branchId}) async {
-    final rows = await _db.membershipCacheDao.getPlans(branchId: branchId);
-    return rows.map(_planRowToEntity).toList();
+    final rows = await _db.membershipCacheDao.getPlans();
+    var plans = rows.map(_planRowToEntity).toList();
+    if (branchId != null) {
+      plans = plans.where((p) => p.isValidAtBranch(branchId)).toList();
+    }
+    return plans;
   }
 
   Future<void> upsertAddOns(List<MembershipAddOn> addOns) async {
@@ -67,6 +78,7 @@ class MembershipCacheLocalDataSource {
             name: a.name,
             description: Value(a.description),
             price: a.price.toDouble(),
+            durationDays: Value(a.durationDays),
             isActive: Value(a.isActive),
             syncedAt: now,
           ),
@@ -90,9 +102,21 @@ class MembershipCacheLocalDataSource {
       durationDays: row.durationDays,
       price: row.price,
       branchId: row.branchId,
+      validBranches: _decodeValidBranches(row.validBranchesJson),
       isActive: row.isActive,
       isFavorite: row.isFavorite,
+      memberNotRequired: row.memberNotRequired,
     );
+  }
+
+  List<String> _decodeValidBranches(String json) {
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is! List) return const [];
+      return decoded.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+    } catch (_) {
+      return const [];
+    }
   }
 
   MembershipAddOn _addOnRowToEntity(MembershipAddOnRow row) {
@@ -102,6 +126,7 @@ class MembershipCacheLocalDataSource {
       name: row.name,
       description: row.description,
       price: row.price,
+      durationDays: row.durationDays,
       isActive: row.isActive,
     );
   }

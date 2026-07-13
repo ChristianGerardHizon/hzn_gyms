@@ -39,6 +39,13 @@ class MembershipAddOnMapper extends ClassMapperBase<MembershipAddOn> {
     _$description,
     opt: true,
   );
+  static int _$durationDays(MembershipAddOn v) => v.durationDays;
+  static const Field<MembershipAddOn, int> _f$durationDays = Field(
+    'durationDays',
+    _$durationDays,
+    opt: true,
+    def: 0,
+  );
   static bool _$isActive(MembershipAddOn v) => v.isActive;
   static const Field<MembershipAddOn, bool> _f$isActive = Field(
     'isActive',
@@ -66,6 +73,7 @@ class MembershipAddOnMapper extends ClassMapperBase<MembershipAddOn> {
     #name: _f$name,
     #price: _f$price,
     #description: _f$description,
+    #durationDays: _f$durationDays,
     #isActive: _f$isActive,
     #created: _f$created,
     #updated: _f$updated,
@@ -78,6 +86,7 @@ class MembershipAddOnMapper extends ClassMapperBase<MembershipAddOn> {
       name: data.dec(_f$name),
       price: data.dec(_f$price),
       description: data.dec(_f$description),
+      durationDays: data.dec(_f$durationDays),
       isActive: data.dec(_f$isActive),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -152,6 +161,7 @@ abstract class MembershipAddOnCopyWith<$R, $In extends MembershipAddOn, $Out>
     String? name,
     num? price,
     String? description,
+    int? durationDays,
     bool? isActive,
     DateTime? created,
     DateTime? updated,
@@ -176,6 +186,7 @@ class _MembershipAddOnCopyWithImpl<$R, $Out>
     String? name,
     num? price,
     Object? description = $none,
+    int? durationDays,
     bool? isActive,
     Object? created = $none,
     Object? updated = $none,
@@ -186,6 +197,7 @@ class _MembershipAddOnCopyWithImpl<$R, $Out>
       if (name != null) #name: name,
       if (price != null) #price: price,
       if (description != $none) #description: description,
+      if (durationDays != null) #durationDays: durationDays,
       if (isActive != null) #isActive: isActive,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -198,6 +210,7 @@ class _MembershipAddOnCopyWithImpl<$R, $Out>
     name: data.get(#name, or: $value.name),
     price: data.get(#price, or: $value.price),
     description: data.get(#description, or: $value.description),
+    durationDays: data.get(#durationDays, or: $value.durationDays),
     isActive: data.get(#isActive, or: $value.isActive),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

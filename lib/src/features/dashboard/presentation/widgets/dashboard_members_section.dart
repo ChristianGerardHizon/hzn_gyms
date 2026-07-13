@@ -10,7 +10,10 @@ import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/empty_state.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../domain/dashboard_members_layout.dart';
 import '../controllers/dashboard_members_controller.dart';
+import '../controllers/dashboard_members_layout_controller.dart';
+import 'member_quick_view_dialog.dart';
 
 /// Section displaying members as a virtualized grid of photo cards.
 ///
@@ -35,6 +38,7 @@ class DashboardMembersSection extends HookConsumerWidget {
     final loadPerf = useRef<PerfTimer?>(null);
     final prefetchInFlight = useRef(<int>{});
     final prefetchGeneration = useRef(0);
+    final layout = ref.watch(currentDashboardMembersLayoutProvider);
 
     // Branch scope — local list state must reset when this changes, otherwise
     // page-1 updates are ignored once [loadedUpToPage] > 0.
@@ -54,8 +58,7 @@ class DashboardMembersSection extends HookConsumerWidget {
       return timer.cancel;
     }, [rawSearchInput.value]);
 
-    // Reset pagination when branch, search, or status filter changes so we
-    // never keep showing members from the previous scope.
+    // Reset pagination when branch, search, or status filter changes.
     useEffect(() {
       allMembers.value = [];
       totalItems.value = 0;
@@ -251,6 +254,74 @@ class DashboardMembersSection extends HookConsumerWidget {
                       ),
                     ),
                     const Spacer(),
+                    Builder(
+                      builder: (context) {
+                        final screenWidth = MediaQuery.sizeOf(context).width;
+                        final columnOptions =
+                            DashboardMembersLayout.allowedColumnsForWidth(
+                          screenWidth,
+                        );
+                        final effectiveColumns =
+                            layout.effectiveColumnsForWidth(screenWidth);
+
+                        return PopupMenuButton<_LayoutMenuAction>(
+                          tooltip: 'Layout options',
+                          icon:
+                              const Icon(Icons.view_quilt_outlined, size: 20),
+                          onSelected: (action) {
+                            final controller = ref.read(
+                              dashboardMembersLayoutControllerProvider
+                                  .notifier,
+                            );
+                            switch (action) {
+                              case _LayoutMenuAction.columns1:
+                                unawaited(controller.setColumns(1));
+                              case _LayoutMenuAction.columns2:
+                                unawaited(controller.setColumns(2));
+                              case _LayoutMenuAction.columns3:
+                                unawaited(controller.setColumns(3));
+                              case _LayoutMenuAction.columns4:
+                                unawaited(controller.setColumns(4));
+                              case _LayoutMenuAction.columns5:
+                                unawaited(controller.setColumns(5));
+                              case _LayoutMenuAction.photo:
+                                unawaited(controller.setShowPhoto(true));
+                              case _LayoutMenuAction.nameOnly:
+                                unawaited(controller.setShowPhoto(false));
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              enabled: false,
+                              child: Text('Columns'),
+                            ),
+                            ...columnOptions.map(
+                              (count) =>
+                                  CheckedPopupMenuItem<_LayoutMenuAction>(
+                                value: _layoutMenuActionForColumns(count),
+                                checked: effectiveColumns == count,
+                                child: Text('$count'),
+                              ),
+                            ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              enabled: false,
+                              child: Text('Display'),
+                            ),
+                            CheckedPopupMenuItem<_LayoutMenuAction>(
+                              value: _LayoutMenuAction.photo,
+                              checked: layout.showPhoto,
+                              child: const Text('Photo'),
+                            ),
+                            CheckedPopupMenuItem<_LayoutMenuAction>(
+                              value: _LayoutMenuAction.nameOnly,
+                              checked: !layout.showPhoto,
+                              child: const Text('Name only'),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                     TextButton(
                       onPressed: () => const MembersRoute().go(context),
                       child: const Text('View All'),
@@ -335,14 +406,15 @@ class DashboardMembersSection extends HookConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) {
+                final screenWidth = MediaQuery.sizeOf(context).width;
                 final crossAxisCount =
-                    constraints.crossAxisExtent > 600 ? 4 : 2;
+                    layout.effectiveColumnsForWidth(screenWidth);
                 return SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: layout.childAspectRatio,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -352,8 +424,8 @@ class DashboardMembersSection extends HookConsumerWidget {
                           hasMore.value) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (!hasMore.value) return;
-                          // Show a spinner if the user has caught up to in-flight
-                          // background fetches.
+                          // Show a spinner if the user has caught up to
+                          // in-flight background fetches.
                           if (prefetchInFlight.value.isNotEmpty) {
                             isLoadingMore.value = true;
                             return;
@@ -364,6 +436,7 @@ class DashboardMembersSection extends HookConsumerWidget {
                       }
                       return _DashboardMemberCard(
                         dashboardMember: allMembers.value[index],
+                        showPhoto: layout.showPhoto,
                       );
                     },
                     childCount: allMembers.value.length,
@@ -444,12 +517,34 @@ class _DashboardMembersEmptyState extends StatelessWidget {
   }
 }
 
-/// A card showing a member's photo with an expiration badge overlay
-/// and their name below.
+/// Actions for the members layout popup menu.
+enum _LayoutMenuAction {
+  columns1,
+  columns2,
+  columns3,
+  columns4,
+  columns5,
+  photo,
+  nameOnly,
+}
+
+_LayoutMenuAction _layoutMenuActionForColumns(int count) => switch (count) {
+      1 => _LayoutMenuAction.columns1,
+      2 => _LayoutMenuAction.columns2,
+      3 => _LayoutMenuAction.columns3,
+      4 => _LayoutMenuAction.columns4,
+      _ => _LayoutMenuAction.columns5,
+    };
+
+/// A card showing a member's photo (optional) with expiration info and name.
 class _DashboardMemberCard extends StatelessWidget {
-  const _DashboardMemberCard({required this.dashboardMember});
+  const _DashboardMemberCard({
+    required this.dashboardMember,
+    required this.showPhoto,
+  });
 
   final DashboardMember dashboardMember;
+  final bool showPhoto;
 
   String? _thumbnailUrl(String? photoUrl) {
     if (photoUrl == null || photoUrl.isEmpty) return null;
@@ -462,6 +557,7 @@ class _DashboardMemberCard extends StatelessWidget {
     final theme = Theme.of(context);
     final days = dashboardMember.daysUntilExpiry;
     final isExpired = dashboardMember.isExpired;
+    final showBadge = days != null && (isExpired || days <= 7);
 
     return Card(
       clipBehavior: Clip.hardEdge,
@@ -473,60 +569,107 @@ class _DashboardMemberCard extends StatelessWidget {
             : BorderSide.none,
       ),
       child: InkWell(
-        onTap: () => MemberDetailRoute(id: dashboardMember.id).go(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CachedImage(
-                      imageUrl: _thumbnailUrl(dashboardMember.photo)),
-                  if (days != null && (isExpired || days <= 7))
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: _DaysLeftBadge(days: days),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Column(
-                children: [
-                  Text(
-                    dashboardMember.name,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    dashboardMember.expirationDate != null
-                        ? DateFormat('MMM d, y')
-                            .format(dashboardMember.expirationDate!)
-                        : 'No membership',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: isExpired
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontSize: 10,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
+        onTap: () => showMemberQuickViewDialog(
+          context,
+          memberId: dashboardMember.id,
+          dashboardMember: dashboardMember,
         ),
+        child: showPhoto
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedImage(
+                          imageUrl: _thumbnailUrl(dashboardMember.photo),
+                        ),
+                        if (showBadge)
+                          Positioned(
+                            top: 6,
+                            left: 6,
+                            child: _DaysLeftBadge(days: days),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: _MemberCardLabels(
+                      name: dashboardMember.name,
+                      expirationDate: dashboardMember.expirationDate,
+                      isExpired: isExpired,
+                    ),
+                  ),
+                ],
+              )
+            : Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (showBadge) ...[
+                      _DaysLeftBadge(days: days),
+                      const SizedBox(height: 4),
+                    ],
+                    _MemberCardLabels(
+                      name: dashboardMember.name,
+                      expirationDate: dashboardMember.expirationDate,
+                      isExpired: isExpired,
+                    ),
+                  ],
+                ),
+              ),
       ),
+    );
+  }
+}
+
+/// Name + expiration labels shared by photo and name-only cards.
+class _MemberCardLabels extends StatelessWidget {
+  const _MemberCardLabels({
+    required this.name,
+    required this.expirationDate,
+    required this.isExpired,
+  });
+
+  final String name;
+  final DateTime? expirationDate;
+  final bool isExpired;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Text(
+          name,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          expirationDate != null
+              ? DateFormat('MMM d, y').format(expirationDate!)
+              : 'No membership',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: isExpired
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurfaceVariant,
+            fontSize: 10,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

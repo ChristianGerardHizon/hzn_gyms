@@ -36,12 +36,7 @@ class MembershipListPanel extends HookConsumerWidget {
             return m.name.toLowerCase().contains(query) ||
                 (m.description?.toLowerCase().contains(query) ?? false);
           }).toList();
-    filteredMemberships.sort((a, b) {
-      if (a.isFavorite != b.isFavorite) {
-        return a.isFavorite ? -1 : 1;
-      }
-      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    });
+    filteredMemberships.sort(Membership.compareForList);
 
     return Scaffold(
       appBar: AppBar(
@@ -167,38 +162,27 @@ class _MembershipListTile extends ConsumerWidget {
       ),
       title: Text(membership.name),
       subtitle: Text(
-        '${membership.durationDisplay} - ${membership.price.toCurrency()}',
+        [
+          membership.durationDisplay,
+          membership.price.toCurrency(),
+          if (membership.walkInBadgeLabel != null) membership.walkInBadgeLabel!,
+          if (!membership.isActive) 'Inactive',
+        ].join(' · '),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (!membership.isActive)
-            Chip(
-              label: Text(
-                'Inactive',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
-          IconButton(
-            icon: Icon(
-              membership.isFavorite ? Icons.star : Icons.star_border,
-              color: membership.isFavorite
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-            tooltip: membership.isFavorite
-                ? 'Remove from favorites'
-                : 'Add to favorites',
-            onPressed: toggleFavorite,
-          ),
-        ],
+      trailing: IconButton(
+        icon: Icon(
+          membership.isFavorite ? Icons.star : Icons.star_border,
+          color: membership.isFavorite
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant,
+        ),
+        tooltip: membership.isFavorite
+            ? 'Remove from favorites'
+            : 'Add to favorites',
+        onPressed: toggleFavorite,
       ),
       onTap: () => MembershipDetailRoute(id: membership.id).go(context),
     );

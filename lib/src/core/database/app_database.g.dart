@@ -2595,6 +2595,19 @@ class $MembershipPlansTable extends MembershipPlans
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _validBranchesJsonMeta = const VerificationMeta(
+    'validBranchesJson',
+  );
+  @override
+  late final GeneratedColumn<String> validBranchesJson =
+      GeneratedColumn<String>(
+        'valid_branches_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('[]'),
+      );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -2625,6 +2638,21 @@ class $MembershipPlansTable extends MembershipPlans
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _memberNotRequiredMeta = const VerificationMeta(
+    'memberNotRequired',
+  );
+  @override
+  late final GeneratedColumn<bool> memberNotRequired = GeneratedColumn<bool>(
+    'member_not_required',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("member_not_required" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _syncedAtMeta = const VerificationMeta(
     'syncedAt',
   );
@@ -2644,8 +2672,10 @@ class $MembershipPlansTable extends MembershipPlans
     durationDays,
     price,
     branchId,
+    validBranchesJson,
     isActive,
     isFavorite,
+    memberNotRequired,
     syncedAt,
   ];
   @override
@@ -2709,6 +2739,15 @@ class $MembershipPlansTable extends MembershipPlans
     } else if (isInserting) {
       context.missing(_branchIdMeta);
     }
+    if (data.containsKey('valid_branches_json')) {
+      context.handle(
+        _validBranchesJsonMeta,
+        validBranchesJson.isAcceptableOrUnknown(
+          data['valid_branches_json']!,
+          _validBranchesJsonMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -2719,6 +2758,15 @@ class $MembershipPlansTable extends MembershipPlans
       context.handle(
         _isFavoriteMeta,
         isFavorite.isAcceptableOrUnknown(data['is_favorite']!, _isFavoriteMeta),
+      );
+    }
+    if (data.containsKey('member_not_required')) {
+      context.handle(
+        _memberNotRequiredMeta,
+        memberNotRequired.isAcceptableOrUnknown(
+          data['member_not_required']!,
+          _memberNotRequiredMeta,
+        ),
       );
     }
     if (data.containsKey('synced_at')) {
@@ -2762,6 +2810,10 @@ class $MembershipPlansTable extends MembershipPlans
         DriftSqlType.string,
         data['${effectivePrefix}branch_id'],
       )!,
+      validBranchesJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}valid_branches_json'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -2769,6 +2821,10 @@ class $MembershipPlansTable extends MembershipPlans
       isFavorite: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_favorite'],
+      )!,
+      memberNotRequired: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}member_not_required'],
       )!,
       syncedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -2791,8 +2847,12 @@ class MembershipPlanRow extends DataClass
   final int durationDays;
   final double price;
   final String branchId;
+
+  /// JSON-encoded list of branch IDs. Empty list (`[]`) means all branches.
+  final String validBranchesJson;
   final bool isActive;
   final bool isFavorite;
+  final bool memberNotRequired;
   final DateTime syncedAt;
   const MembershipPlanRow({
     required this.id,
@@ -2801,8 +2861,10 @@ class MembershipPlanRow extends DataClass
     required this.durationDays,
     required this.price,
     required this.branchId,
+    required this.validBranchesJson,
     required this.isActive,
     required this.isFavorite,
+    required this.memberNotRequired,
     required this.syncedAt,
   });
   @override
@@ -2816,8 +2878,10 @@ class MembershipPlanRow extends DataClass
     map['duration_days'] = Variable<int>(durationDays);
     map['price'] = Variable<double>(price);
     map['branch_id'] = Variable<String>(branchId);
+    map['valid_branches_json'] = Variable<String>(validBranchesJson);
     map['is_active'] = Variable<bool>(isActive);
     map['is_favorite'] = Variable<bool>(isFavorite);
+    map['member_not_required'] = Variable<bool>(memberNotRequired);
     map['synced_at'] = Variable<DateTime>(syncedAt);
     return map;
   }
@@ -2832,8 +2896,10 @@ class MembershipPlanRow extends DataClass
       durationDays: Value(durationDays),
       price: Value(price),
       branchId: Value(branchId),
+      validBranchesJson: Value(validBranchesJson),
       isActive: Value(isActive),
       isFavorite: Value(isFavorite),
+      memberNotRequired: Value(memberNotRequired),
       syncedAt: Value(syncedAt),
     );
   }
@@ -2850,8 +2916,10 @@ class MembershipPlanRow extends DataClass
       durationDays: serializer.fromJson<int>(json['durationDays']),
       price: serializer.fromJson<double>(json['price']),
       branchId: serializer.fromJson<String>(json['branchId']),
+      validBranchesJson: serializer.fromJson<String>(json['validBranchesJson']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
+      memberNotRequired: serializer.fromJson<bool>(json['memberNotRequired']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
     );
   }
@@ -2865,8 +2933,10 @@ class MembershipPlanRow extends DataClass
       'durationDays': serializer.toJson<int>(durationDays),
       'price': serializer.toJson<double>(price),
       'branchId': serializer.toJson<String>(branchId),
+      'validBranchesJson': serializer.toJson<String>(validBranchesJson),
       'isActive': serializer.toJson<bool>(isActive),
       'isFavorite': serializer.toJson<bool>(isFavorite),
+      'memberNotRequired': serializer.toJson<bool>(memberNotRequired),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
     };
   }
@@ -2878,8 +2948,10 @@ class MembershipPlanRow extends DataClass
     int? durationDays,
     double? price,
     String? branchId,
+    String? validBranchesJson,
     bool? isActive,
     bool? isFavorite,
+    bool? memberNotRequired,
     DateTime? syncedAt,
   }) => MembershipPlanRow(
     id: id ?? this.id,
@@ -2888,8 +2960,10 @@ class MembershipPlanRow extends DataClass
     durationDays: durationDays ?? this.durationDays,
     price: price ?? this.price,
     branchId: branchId ?? this.branchId,
+    validBranchesJson: validBranchesJson ?? this.validBranchesJson,
     isActive: isActive ?? this.isActive,
     isFavorite: isFavorite ?? this.isFavorite,
+    memberNotRequired: memberNotRequired ?? this.memberNotRequired,
     syncedAt: syncedAt ?? this.syncedAt,
   );
   MembershipPlanRow copyWithCompanion(MembershipPlansCompanion data) {
@@ -2904,10 +2978,16 @@ class MembershipPlanRow extends DataClass
           : this.durationDays,
       price: data.price.present ? data.price.value : this.price,
       branchId: data.branchId.present ? data.branchId.value : this.branchId,
+      validBranchesJson: data.validBranchesJson.present
+          ? data.validBranchesJson.value
+          : this.validBranchesJson,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       isFavorite: data.isFavorite.present
           ? data.isFavorite.value
           : this.isFavorite,
+      memberNotRequired: data.memberNotRequired.present
+          ? data.memberNotRequired.value
+          : this.memberNotRequired,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
   }
@@ -2921,8 +3001,10 @@ class MembershipPlanRow extends DataClass
           ..write('durationDays: $durationDays, ')
           ..write('price: $price, ')
           ..write('branchId: $branchId, ')
+          ..write('validBranchesJson: $validBranchesJson, ')
           ..write('isActive: $isActive, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('memberNotRequired: $memberNotRequired, ')
           ..write('syncedAt: $syncedAt')
           ..write(')'))
         .toString();
@@ -2936,8 +3018,10 @@ class MembershipPlanRow extends DataClass
     durationDays,
     price,
     branchId,
+    validBranchesJson,
     isActive,
     isFavorite,
+    memberNotRequired,
     syncedAt,
   );
   @override
@@ -2950,8 +3034,10 @@ class MembershipPlanRow extends DataClass
           other.durationDays == this.durationDays &&
           other.price == this.price &&
           other.branchId == this.branchId &&
+          other.validBranchesJson == this.validBranchesJson &&
           other.isActive == this.isActive &&
           other.isFavorite == this.isFavorite &&
+          other.memberNotRequired == this.memberNotRequired &&
           other.syncedAt == this.syncedAt);
 }
 
@@ -2962,8 +3048,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
   final Value<int> durationDays;
   final Value<double> price;
   final Value<String> branchId;
+  final Value<String> validBranchesJson;
   final Value<bool> isActive;
   final Value<bool> isFavorite;
+  final Value<bool> memberNotRequired;
   final Value<DateTime> syncedAt;
   final Value<int> rowid;
   const MembershipPlansCompanion({
@@ -2973,8 +3061,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     this.durationDays = const Value.absent(),
     this.price = const Value.absent(),
     this.branchId = const Value.absent(),
+    this.validBranchesJson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.memberNotRequired = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2985,8 +3075,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     required int durationDays,
     required double price,
     required String branchId,
+    this.validBranchesJson = const Value.absent(),
     this.isActive = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.memberNotRequired = const Value.absent(),
     required DateTime syncedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3002,8 +3094,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Expression<int>? durationDays,
     Expression<double>? price,
     Expression<String>? branchId,
+    Expression<String>? validBranchesJson,
     Expression<bool>? isActive,
     Expression<bool>? isFavorite,
+    Expression<bool>? memberNotRequired,
     Expression<DateTime>? syncedAt,
     Expression<int>? rowid,
   }) {
@@ -3014,8 +3108,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       if (durationDays != null) 'duration_days': durationDays,
       if (price != null) 'price': price,
       if (branchId != null) 'branch_id': branchId,
+      if (validBranchesJson != null) 'valid_branches_json': validBranchesJson,
       if (isActive != null) 'is_active': isActive,
       if (isFavorite != null) 'is_favorite': isFavorite,
+      if (memberNotRequired != null) 'member_not_required': memberNotRequired,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3028,8 +3124,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Value<int>? durationDays,
     Value<double>? price,
     Value<String>? branchId,
+    Value<String>? validBranchesJson,
     Value<bool>? isActive,
     Value<bool>? isFavorite,
+    Value<bool>? memberNotRequired,
     Value<DateTime>? syncedAt,
     Value<int>? rowid,
   }) {
@@ -3040,8 +3138,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       durationDays: durationDays ?? this.durationDays,
       price: price ?? this.price,
       branchId: branchId ?? this.branchId,
+      validBranchesJson: validBranchesJson ?? this.validBranchesJson,
       isActive: isActive ?? this.isActive,
       isFavorite: isFavorite ?? this.isFavorite,
+      memberNotRequired: memberNotRequired ?? this.memberNotRequired,
       syncedAt: syncedAt ?? this.syncedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3068,11 +3168,17 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     if (branchId.present) {
       map['branch_id'] = Variable<String>(branchId.value);
     }
+    if (validBranchesJson.present) {
+      map['valid_branches_json'] = Variable<String>(validBranchesJson.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
     if (isFavorite.present) {
       map['is_favorite'] = Variable<bool>(isFavorite.value);
+    }
+    if (memberNotRequired.present) {
+      map['member_not_required'] = Variable<bool>(memberNotRequired.value);
     }
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
@@ -3092,8 +3198,10 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
           ..write('durationDays: $durationDays, ')
           ..write('price: $price, ')
           ..write('branchId: $branchId, ')
+          ..write('validBranchesJson: $validBranchesJson, ')
           ..write('isActive: $isActive, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('memberNotRequired: $memberNotRequired, ')
           ..write('syncedAt: $syncedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3156,6 +3264,18 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _durationDaysMeta = const VerificationMeta(
+    'durationDays',
+  );
+  @override
+  late final GeneratedColumn<int> durationDays = GeneratedColumn<int>(
+    'duration_days',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -3189,6 +3309,7 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
     name,
     description,
     price,
+    durationDays,
     isActive,
     syncedAt,
   ];
@@ -3245,6 +3366,15 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
     } else if (isInserting) {
       context.missing(_priceMeta);
     }
+    if (data.containsKey('duration_days')) {
+      context.handle(
+        _durationDaysMeta,
+        durationDays.isAcceptableOrUnknown(
+          data['duration_days']!,
+          _durationDaysMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -3288,6 +3418,10 @@ class $MembershipAddOnsCacheTable extends MembershipAddOnsCache
         DriftSqlType.double,
         data['${effectivePrefix}price'],
       )!,
+      durationDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}duration_days'],
+      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -3312,6 +3446,7 @@ class MembershipAddOnRow extends DataClass
   final String name;
   final String? description;
   final double price;
+  final int durationDays;
   final bool isActive;
   final DateTime syncedAt;
   const MembershipAddOnRow({
@@ -3320,6 +3455,7 @@ class MembershipAddOnRow extends DataClass
     required this.name,
     this.description,
     required this.price,
+    required this.durationDays,
     required this.isActive,
     required this.syncedAt,
   });
@@ -3333,6 +3469,7 @@ class MembershipAddOnRow extends DataClass
       map['description'] = Variable<String>(description);
     }
     map['price'] = Variable<double>(price);
+    map['duration_days'] = Variable<int>(durationDays);
     map['is_active'] = Variable<bool>(isActive);
     map['synced_at'] = Variable<DateTime>(syncedAt);
     return map;
@@ -3347,6 +3484,7 @@ class MembershipAddOnRow extends DataClass
           ? const Value.absent()
           : Value(description),
       price: Value(price),
+      durationDays: Value(durationDays),
       isActive: Value(isActive),
       syncedAt: Value(syncedAt),
     );
@@ -3363,6 +3501,7 @@ class MembershipAddOnRow extends DataClass
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
       price: serializer.fromJson<double>(json['price']),
+      durationDays: serializer.fromJson<int>(json['durationDays']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
     );
@@ -3376,6 +3515,7 @@ class MembershipAddOnRow extends DataClass
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
       'price': serializer.toJson<double>(price),
+      'durationDays': serializer.toJson<int>(durationDays),
       'isActive': serializer.toJson<bool>(isActive),
       'syncedAt': serializer.toJson<DateTime>(syncedAt),
     };
@@ -3387,6 +3527,7 @@ class MembershipAddOnRow extends DataClass
     String? name,
     Value<String?> description = const Value.absent(),
     double? price,
+    int? durationDays,
     bool? isActive,
     DateTime? syncedAt,
   }) => MembershipAddOnRow(
@@ -3395,6 +3536,7 @@ class MembershipAddOnRow extends DataClass
     name: name ?? this.name,
     description: description.present ? description.value : this.description,
     price: price ?? this.price,
+    durationDays: durationDays ?? this.durationDays,
     isActive: isActive ?? this.isActive,
     syncedAt: syncedAt ?? this.syncedAt,
   );
@@ -3409,6 +3551,9 @@ class MembershipAddOnRow extends DataClass
           ? data.description.value
           : this.description,
       price: data.price.present ? data.price.value : this.price,
+      durationDays: data.durationDays.present
+          ? data.durationDays.value
+          : this.durationDays,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
     );
@@ -3422,6 +3567,7 @@ class MembershipAddOnRow extends DataClass
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('price: $price, ')
+          ..write('durationDays: $durationDays, ')
           ..write('isActive: $isActive, ')
           ..write('syncedAt: $syncedAt')
           ..write(')'))
@@ -3435,6 +3581,7 @@ class MembershipAddOnRow extends DataClass
     name,
     description,
     price,
+    durationDays,
     isActive,
     syncedAt,
   );
@@ -3447,6 +3594,7 @@ class MembershipAddOnRow extends DataClass
           other.name == this.name &&
           other.description == this.description &&
           other.price == this.price &&
+          other.durationDays == this.durationDays &&
           other.isActive == this.isActive &&
           other.syncedAt == this.syncedAt);
 }
@@ -3458,6 +3606,7 @@ class MembershipAddOnsCacheCompanion
   final Value<String> name;
   final Value<String?> description;
   final Value<double> price;
+  final Value<int> durationDays;
   final Value<bool> isActive;
   final Value<DateTime> syncedAt;
   final Value<int> rowid;
@@ -3467,6 +3616,7 @@ class MembershipAddOnsCacheCompanion
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.price = const Value.absent(),
+    this.durationDays = const Value.absent(),
     this.isActive = const Value.absent(),
     this.syncedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3477,6 +3627,7 @@ class MembershipAddOnsCacheCompanion
     required String name,
     this.description = const Value.absent(),
     required double price,
+    this.durationDays = const Value.absent(),
     this.isActive = const Value.absent(),
     required DateTime syncedAt,
     this.rowid = const Value.absent(),
@@ -3491,6 +3642,7 @@ class MembershipAddOnsCacheCompanion
     Expression<String>? name,
     Expression<String>? description,
     Expression<double>? price,
+    Expression<int>? durationDays,
     Expression<bool>? isActive,
     Expression<DateTime>? syncedAt,
     Expression<int>? rowid,
@@ -3501,6 +3653,7 @@ class MembershipAddOnsCacheCompanion
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (price != null) 'price': price,
+      if (durationDays != null) 'duration_days': durationDays,
       if (isActive != null) 'is_active': isActive,
       if (syncedAt != null) 'synced_at': syncedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3513,6 +3666,7 @@ class MembershipAddOnsCacheCompanion
     Value<String>? name,
     Value<String?>? description,
     Value<double>? price,
+    Value<int>? durationDays,
     Value<bool>? isActive,
     Value<DateTime>? syncedAt,
     Value<int>? rowid,
@@ -3523,6 +3677,7 @@ class MembershipAddOnsCacheCompanion
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
+      durationDays: durationDays ?? this.durationDays,
       isActive: isActive ?? this.isActive,
       syncedAt: syncedAt ?? this.syncedAt,
       rowid: rowid ?? this.rowid,
@@ -3547,6 +3702,9 @@ class MembershipAddOnsCacheCompanion
     if (price.present) {
       map['price'] = Variable<double>(price.value);
     }
+    if (durationDays.present) {
+      map['duration_days'] = Variable<int>(durationDays.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -3567,8 +3725,218 @@ class MembershipAddOnsCacheCompanion
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('price: $price, ')
+          ..write('durationDays: $durationDays, ')
           ..write('isActive: $isActive, ')
           ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AppPreferencesTable extends AppPreferences
+    with TableInfo<$AppPreferencesTable, AppPreferenceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppPreferencesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_preferences';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppPreferenceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  AppPreferenceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppPreferenceRow(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+    );
+  }
+
+  @override
+  $AppPreferencesTable createAlias(String alias) {
+    return $AppPreferencesTable(attachedDatabase, alias);
+  }
+}
+
+class AppPreferenceRow extends DataClass
+    implements Insertable<AppPreferenceRow> {
+  final String key;
+  final String value;
+  const AppPreferenceRow({required this.key, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  AppPreferencesCompanion toCompanion(bool nullToAbsent) {
+    return AppPreferencesCompanion(key: Value(key), value: Value(value));
+  }
+
+  factory AppPreferenceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppPreferenceRow(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  AppPreferenceRow copyWith({String? key, String? value}) =>
+      AppPreferenceRow(key: key ?? this.key, value: value ?? this.value);
+  AppPreferenceRow copyWithCompanion(AppPreferencesCompanion data) {
+    return AppPreferenceRow(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppPreferenceRow(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppPreferenceRow &&
+          other.key == this.key &&
+          other.value == this.value);
+}
+
+class AppPreferencesCompanion extends UpdateCompanion<AppPreferenceRow> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> rowid;
+  const AppPreferencesCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AppPreferencesCompanion.insert({
+    required String key,
+    required String value,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       value = Value(value);
+  static Insertable<AppPreferenceRow> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AppPreferencesCompanion copyWith({
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? rowid,
+  }) {
+    return AppPreferencesCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppPreferencesCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3589,11 +3957,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $MembershipAddOnsCacheTable membershipAddOnsCache =
       $MembershipAddOnsCacheTable(this);
+  late final $AppPreferencesTable appPreferences = $AppPreferencesTable(this);
   late final MembersDao membersDao = MembersDao(this as AppDatabase);
   late final OutboxDao outboxDao = OutboxDao(this as AppDatabase);
   late final PendingMemberMembershipsDao pendingMemberMembershipsDao =
       PendingMemberMembershipsDao(this as AppDatabase);
   late final MembershipCacheDao membershipCacheDao = MembershipCacheDao(
+    this as AppDatabase,
+  );
+  late final AppPreferencesDao appPreferencesDao = AppPreferencesDao(
     this as AppDatabase,
   );
   @override
@@ -3607,6 +3979,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     pendingMemberMemberships,
     membershipPlans,
     membershipAddOnsCache,
+    appPreferences,
   ];
 }
 
@@ -4865,8 +5238,10 @@ typedef $$MembershipPlansTableCreateCompanionBuilder =
       required int durationDays,
       required double price,
       required String branchId,
+      Value<String> validBranchesJson,
       Value<bool> isActive,
       Value<bool> isFavorite,
+      Value<bool> memberNotRequired,
       required DateTime syncedAt,
       Value<int> rowid,
     });
@@ -4878,8 +5253,10 @@ typedef $$MembershipPlansTableUpdateCompanionBuilder =
       Value<int> durationDays,
       Value<double> price,
       Value<String> branchId,
+      Value<String> validBranchesJson,
       Value<bool> isActive,
       Value<bool> isFavorite,
+      Value<bool> memberNotRequired,
       Value<DateTime> syncedAt,
       Value<int> rowid,
     });
@@ -4923,6 +5300,11 @@ class $$MembershipPlansTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get validBranchesJson => $composableBuilder(
+    column: $table.validBranchesJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnFilters(column),
@@ -4930,6 +5312,11 @@ class $$MembershipPlansTableFilterComposer
 
   ColumnFilters<bool> get isFavorite => $composableBuilder(
     column: $table.isFavorite,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get memberNotRequired => $composableBuilder(
+    column: $table.memberNotRequired,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4978,6 +5365,11 @@ class $$MembershipPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get validBranchesJson => $composableBuilder(
+    column: $table.validBranchesJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -4985,6 +5377,11 @@ class $$MembershipPlansTableOrderingComposer
 
   ColumnOrderings<bool> get isFavorite => $composableBuilder(
     column: $table.isFavorite,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get memberNotRequired => $composableBuilder(
+    column: $table.memberNotRequired,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5025,11 +5422,21 @@ class $$MembershipPlansTableAnnotationComposer
   GeneratedColumn<String> get branchId =>
       $composableBuilder(column: $table.branchId, builder: (column) => column);
 
+  GeneratedColumn<String> get validBranchesJson => $composableBuilder(
+    column: $table.validBranchesJson,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
   GeneratedColumn<bool> get isFavorite => $composableBuilder(
     column: $table.isFavorite,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get memberNotRequired => $composableBuilder(
+    column: $table.memberNotRequired,
     builder: (column) => column,
   );
 
@@ -5080,8 +5487,10 @@ class $$MembershipPlansTableTableManager
                 Value<int> durationDays = const Value.absent(),
                 Value<double> price = const Value.absent(),
                 Value<String> branchId = const Value.absent(),
+                Value<String> validBranchesJson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
+                Value<bool> memberNotRequired = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MembershipPlansCompanion(
@@ -5091,8 +5500,10 @@ class $$MembershipPlansTableTableManager
                 durationDays: durationDays,
                 price: price,
                 branchId: branchId,
+                validBranchesJson: validBranchesJson,
                 isActive: isActive,
                 isFavorite: isFavorite,
+                memberNotRequired: memberNotRequired,
                 syncedAt: syncedAt,
                 rowid: rowid,
               ),
@@ -5104,8 +5515,10 @@ class $$MembershipPlansTableTableManager
                 required int durationDays,
                 required double price,
                 required String branchId,
+                Value<String> validBranchesJson = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
+                Value<bool> memberNotRequired = const Value.absent(),
                 required DateTime syncedAt,
                 Value<int> rowid = const Value.absent(),
               }) => MembershipPlansCompanion.insert(
@@ -5115,8 +5528,10 @@ class $$MembershipPlansTableTableManager
                 durationDays: durationDays,
                 price: price,
                 branchId: branchId,
+                validBranchesJson: validBranchesJson,
                 isActive: isActive,
                 isFavorite: isFavorite,
+                memberNotRequired: memberNotRequired,
                 syncedAt: syncedAt,
                 rowid: rowid,
               ),
@@ -5152,6 +5567,7 @@ typedef $$MembershipAddOnsCacheTableCreateCompanionBuilder =
       required String name,
       Value<String?> description,
       required double price,
+      Value<int> durationDays,
       Value<bool> isActive,
       required DateTime syncedAt,
       Value<int> rowid,
@@ -5163,6 +5579,7 @@ typedef $$MembershipAddOnsCacheTableUpdateCompanionBuilder =
       Value<String> name,
       Value<String?> description,
       Value<double> price,
+      Value<int> durationDays,
       Value<bool> isActive,
       Value<DateTime> syncedAt,
       Value<int> rowid,
@@ -5199,6 +5616,11 @@ class $$MembershipAddOnsCacheTableFilterComposer
 
   ColumnFilters<double> get price => $composableBuilder(
     column: $table.price,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get durationDays => $composableBuilder(
+    column: $table.durationDays,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5247,6 +5669,11 @@ class $$MembershipAddOnsCacheTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get durationDays => $composableBuilder(
+    column: $table.durationDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -5285,6 +5712,11 @@ class $$MembershipAddOnsCacheTableAnnotationComposer
 
   GeneratedColumn<double> get price =>
       $composableBuilder(column: $table.price, builder: (column) => column);
+
+  GeneratedColumn<int> get durationDays => $composableBuilder(
+    column: $table.durationDays,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -5344,6 +5776,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<double> price = const Value.absent(),
+                Value<int> durationDays = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> syncedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -5353,6 +5786,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 name: name,
                 description: description,
                 price: price,
+                durationDays: durationDays,
                 isActive: isActive,
                 syncedAt: syncedAt,
                 rowid: rowid,
@@ -5364,6 +5798,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 required String name,
                 Value<String?> description = const Value.absent(),
                 required double price,
+                Value<int> durationDays = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 required DateTime syncedAt,
                 Value<int> rowid = const Value.absent(),
@@ -5373,6 +5808,7 @@ class $$MembershipAddOnsCacheTableTableManager
                 name: name,
                 description: description,
                 price: price,
+                durationDays: durationDays,
                 isActive: isActive,
                 syncedAt: syncedAt,
                 rowid: rowid,
@@ -5406,6 +5842,152 @@ typedef $$MembershipAddOnsCacheTableProcessedTableManager =
       MembershipAddOnRow,
       PrefetchHooks Function()
     >;
+typedef $$AppPreferencesTableCreateCompanionBuilder =
+    AppPreferencesCompanion Function({
+      required String key,
+      required String value,
+      Value<int> rowid,
+    });
+typedef $$AppPreferencesTableUpdateCompanionBuilder =
+    AppPreferencesCompanion Function({
+      Value<String> key,
+      Value<String> value,
+      Value<int> rowid,
+    });
+
+class $$AppPreferencesTableFilterComposer
+    extends Composer<_$AppDatabase, $AppPreferencesTable> {
+  $$AppPreferencesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppPreferencesTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppPreferencesTable> {
+  $$AppPreferencesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppPreferencesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppPreferencesTable> {
+  $$AppPreferencesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$AppPreferencesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppPreferencesTable,
+          AppPreferenceRow,
+          $$AppPreferencesTableFilterComposer,
+          $$AppPreferencesTableOrderingComposer,
+          $$AppPreferencesTableAnnotationComposer,
+          $$AppPreferencesTableCreateCompanionBuilder,
+          $$AppPreferencesTableUpdateCompanionBuilder,
+          (
+            AppPreferenceRow,
+            BaseReferences<
+              _$AppDatabase,
+              $AppPreferencesTable,
+              AppPreferenceRow
+            >,
+          ),
+          AppPreferenceRow,
+          PrefetchHooks Function()
+        > {
+  $$AppPreferencesTableTableManager(
+    _$AppDatabase db,
+    $AppPreferencesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppPreferencesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppPreferencesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppPreferencesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) =>
+                  AppPreferencesCompanion(key: key, value: value, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String value,
+                Value<int> rowid = const Value.absent(),
+              }) => AppPreferencesCompanion.insert(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppPreferencesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppPreferencesTable,
+      AppPreferenceRow,
+      $$AppPreferencesTableFilterComposer,
+      $$AppPreferencesTableOrderingComposer,
+      $$AppPreferencesTableAnnotationComposer,
+      $$AppPreferencesTableCreateCompanionBuilder,
+      $$AppPreferencesTableUpdateCompanionBuilder,
+      (
+        AppPreferenceRow,
+        BaseReferences<_$AppDatabase, $AppPreferencesTable, AppPreferenceRow>,
+      ),
+      AppPreferenceRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5425,4 +6007,6 @@ class $AppDatabaseManager {
       $$MembershipPlansTableTableManager(_db, _db.membershipPlans);
   $$MembershipAddOnsCacheTableTableManager get membershipAddOnsCache =>
       $$MembershipAddOnsCacheTableTableManager(_db, _db.membershipAddOnsCache);
+  $$AppPreferencesTableTableManager get appPreferences =>
+      $$AppPreferencesTableTableManager(_db, _db.appPreferences);
 }

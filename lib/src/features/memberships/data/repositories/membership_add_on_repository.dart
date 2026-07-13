@@ -151,6 +151,7 @@ class MembershipAddOnRepositoryImpl implements MembershipAddOnRepository {
         'name': addOn.name,
         'description': addOn.description,
         'price': addOn.price,
+        'durationDays': addOn.durationDays,
         'isActive': addOn.isActive,
       };
 
@@ -167,6 +168,7 @@ class MembershipAddOnRepositoryImpl implements MembershipAddOnRepository {
         'name': addOn.name,
         'description': addOn.description,
         'price': addOn.price,
+        'durationDays': addOn.durationDays,
         'isActive': addOn.isActive,
       };
 

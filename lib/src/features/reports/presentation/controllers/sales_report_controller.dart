@@ -7,16 +7,15 @@ import 'report_period_controller.dart';
 
 part 'sales_report_controller.g.dart';
 
-/// Fetches and provides sales report data.
-@riverpod
+/// Fetches and caches sales report data.
+@Riverpod(keepAlive: true)
 Future<SalesReport> salesReport(Ref ref) async {
   final period = ref.watch(reportPeriodControllerProvider);
   final branchId = ref.watch(currentBranchIdProvider);
   final repository = ref.read(reportsRepositoryProvider);
 
   final result = await repository.getSalesReport(
-    startDate: period.startDate,
-    endDate: period.endDate,
+    period: period,
     branchId: branchId,
   );
 

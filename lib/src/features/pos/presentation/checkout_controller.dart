@@ -110,7 +110,10 @@ class CheckoutController extends _$CheckoutController {
       status: initialStatus,
       isPaid: initialStatus == 'paid',
       customerId: customerId,
-      customerName: customerName,
+      customerName: Sale.resolveCustomerName(
+        customerId: customerId,
+        customerName: customerName,
+      ),
       notes: notes,
     );
 

@@ -29,7 +29,7 @@ class ReportPdfData {
   final String reportTitle;
 
   /// The time period of the report.
-  final ReportPeriod period;
+  final ReportPeriodSelection period;
 
   /// When the report was generated.
   final DateTime generatedAt;
@@ -148,6 +148,11 @@ pw.Widget _buildReportInfo(ReportPdfData data) {
           children: [
             pw.Text(
               'Period: ${data.period.displayName}',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Range: ${data.period.displayRangeLabel}',
               style: const pw.TextStyle(fontSize: 10),
             ),
             pw.SizedBox(height: 4),

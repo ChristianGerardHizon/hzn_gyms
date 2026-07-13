@@ -55,7 +55,7 @@ class SaleItem with SaleItemMappable {
   /// Lot number snapshot at time of sale.
   final String? lotNumber;
 
-  /// Item type: 'product', 'membership', or 'addon'.
+  /// Item type: 'product', 'membership', 'addon', or 'walkIn' (guest day-pass).
   final String? itemType;
 
   /// Creation timestamp.

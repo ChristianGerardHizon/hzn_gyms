@@ -62,6 +62,12 @@ class SaleMapper extends ClassMapperBase<Sale> {
     _$customerName,
     opt: true,
   );
+  static String? _$descriptor(Sale v) => v.descriptor;
+  static const Field<Sale, String> _f$descriptor = Field(
+    'descriptor',
+    _$descriptor,
+    opt: true,
+  );
   static String? _$notes(Sale v) => v.notes;
   static const Field<Sale, String> _f$notes = Field(
     'notes',
@@ -98,6 +104,7 @@ class SaleMapper extends ClassMapperBase<Sale> {
     #isPaid: _f$isPaid,
     #customerId: _f$customerId,
     #customerName: _f$customerName,
+    #descriptor: _f$descriptor,
     #notes: _f$notes,
     #voidedById: _f$voidedById,
     #created: _f$created,
@@ -115,6 +122,7 @@ class SaleMapper extends ClassMapperBase<Sale> {
       isPaid: data.dec(_f$isPaid),
       customerId: data.dec(_f$customerId),
       customerName: data.dec(_f$customerName),
+      descriptor: data.dec(_f$descriptor),
       notes: data.dec(_f$notes),
       voidedById: data.dec(_f$voidedById),
       created: data.dec(_f$created),
@@ -178,6 +186,7 @@ abstract class SaleCopyWith<$R, $In extends Sale, $Out>
     bool? isPaid,
     String? customerId,
     String? customerName,
+    String? descriptor,
     String? notes,
     String? voidedById,
     DateTime? created,
@@ -203,6 +212,7 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
     bool? isPaid,
     Object? customerId = $none,
     Object? customerName = $none,
+    Object? descriptor = $none,
     Object? notes = $none,
     Object? voidedById = $none,
     Object? created = $none,
@@ -218,6 +228,7 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
       if (isPaid != null) #isPaid: isPaid,
       if (customerId != $none) #customerId: customerId,
       if (customerName != $none) #customerName: customerName,
+      if (descriptor != $none) #descriptor: descriptor,
       if (notes != $none) #notes: notes,
       if (voidedById != $none) #voidedById: voidedById,
       if (created != $none) #created: created,
@@ -235,6 +246,7 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
     isPaid: data.get(#isPaid, or: $value.isPaid),
     customerId: data.get(#customerId, or: $value.customerId),
     customerName: data.get(#customerName, or: $value.customerName),
+    descriptor: data.get(#descriptor, or: $value.descriptor),
     notes: data.get(#notes, or: $value.notes),
     voidedById: data.get(#voidedById, or: $value.voidedById),
     created: data.get(#created, or: $value.created),

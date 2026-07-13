@@ -169,6 +169,14 @@ class PBFilter {
     return this;
   }
 
+  /// Adds a raw filter expression (already parenthesized if needed).
+  PBFilter raw(String expression) {
+    if (expression.isNotEmpty) {
+      _conditions.add(expression);
+    }
+    return this;
+  }
+
   // --- Common Presets ---
 
   /// Adds: isDeleted = false

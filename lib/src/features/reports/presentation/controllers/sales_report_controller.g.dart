@@ -8,12 +8,12 @@ part of 'sales_report_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Fetches and provides sales report data.
+/// Fetches and caches sales report data.
 
 @ProviderFor(salesReport)
 final salesReportProvider = SalesReportProvider._();
 
-/// Fetches and provides sales report data.
+/// Fetches and caches sales report data.
 
 final class SalesReportProvider
     extends
@@ -23,14 +23,14 @@ final class SalesReportProvider
           FutureOr<SalesReport>
         >
     with $FutureModifier<SalesReport>, $FutureProvider<SalesReport> {
-  /// Fetches and provides sales report data.
+  /// Fetches and caches sales report data.
   SalesReportProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'salesReportProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -50,4 +50,4 @@ final class SalesReportProvider
   }
 }
 
-String _$salesReportHash() => r'a7a3da9f8f7b6081da9730afdc955cd5b4379448';
+String _$salesReportHash() => r'6f60843ad016bf0586d02b840eae1df248db9836';

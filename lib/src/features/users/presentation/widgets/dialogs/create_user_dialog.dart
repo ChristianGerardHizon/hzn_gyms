@@ -92,20 +92,21 @@ class CreateUserDialog extends HookConsumerWidget {
 
       if (context.mounted) {
         isSaving.value = false;
-        context.pop();
 
-        showSuccessSnackBar(context, message: 'User created successfully');
+        // Root-navigator dialogs sit outside RouteBase.builder, so
+        // GoRouterState.of(context) throws. Read path from GoRouter instead
+        // and navigate via the router after the dialog is closed.
+        final router = GoRouter.of(context);
+        final detailLocation = userDetailLocationForCurrentPath(
+          router.state.uri.path,
+          createdUser.id,
+        );
 
         // Pre-cache the user before navigation to avoid race condition
         ref.read(userEntityCacheProvider.notifier).cacheUser(createdUser);
-
-        // Navigate to user detail based on current route context
-        final currentPath = GoRouterState.of(context).uri.path;
-        if (currentPath.startsWith('/organization')) {
-          OrganizationUserDetailRoute(id: createdUser.id).go(context);
-        } else {
-          UserDetailRoute(id: createdUser.id).go(context);
-        }
+        showSuccessSnackBar(context, message: 'User created successfully');
+        context.pop();
+        router.go(detailLocation);
       }
     }
 
@@ -400,6 +401,17 @@ class _SectionHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Resolves the user detail location for the shell that opened create-user.
+///
+/// Organization users live under `/organization/users/:id`; otherwise
+/// `/users/:id`.
+String userDetailLocationForCurrentPath(String currentPath, String userId) {
+  if (currentPath.startsWith('/organization')) {
+    return OrganizationUserDetailRoute(id: userId).location;
+  }
+  return UserDetailRoute(id: userId).location;
 }
 
 /// Shows the create user dialog.

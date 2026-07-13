@@ -8,9 +8,23 @@ import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/membership.dart';
 import '../controllers/memberships_controller.dart';
+
+/// Whether [selectedBranchIds] covers every id in [allBranchIds].
+///
+/// Used to auto-enable "Valid at all branches" when every branch is checked.
+bool selectsAllBranches(
+  Iterable<String> selectedBranchIds,
+  Iterable<String> allBranchIds,
+) {
+  final all = allBranchIds.toList();
+  if (all.isEmpty) return false;
+  final selected = selectedBranchIds.toSet();
+  return all.every(selected.contains);
+}
 
 /// Shows a dialog form for creating or editing a membership plan.
 ///
@@ -36,6 +50,19 @@ class MembershipFormDialog extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final isSaving = useState(false);
+    final branchesAsync = ref.watch(branchesControllerProvider);
+    final currentBranchId = ref.watch(effectiveBranchIdForWriteProvider);
+
+    final isAllBranches = membership != null
+        ? membership!.validBranches.isEmpty
+        : false;
+    final allBranches = useState(isAllBranches);
+
+    final initialValidBranches = membership != null
+        ? (membership!.validBranches.isEmpty
+              ? <String>[]
+              : List<String>.from(membership!.validBranches))
+        : (currentBranchId != null ? [currentBranchId] : <String>[]);
 
     final initialValues = isEditing
         ? <String, dynamic>{
@@ -45,8 +72,14 @@ class MembershipFormDialog extends HookConsumerWidget {
             'price': membership!.price.toString(),
             'isActive': membership!.isActive,
             'isFavorite': membership!.isFavorite,
+            'memberNotRequired': membership!.memberNotRequired,
+            'allBranches': isAllBranches,
+            'validBranches': initialValidBranches,
           }
-        : null;
+        : <String, dynamic>{
+            'allBranches': false,
+            'validBranches': initialValidBranches,
+          };
 
     final dirtyGuard = useFormDirtyGuard(
       formKey: formKey,
@@ -64,6 +97,12 @@ class MembershipFormDialog extends HookConsumerWidget {
           ref.read(effectiveBranchIdForWriteProvider) ??
           '';
 
+      final all = values['allBranches'] as bool? ?? false;
+      final selectedRaw = values['validBranches'];
+      final selected = selectedRaw is List
+          ? selectedRaw.map((e) => e.toString()).toList()
+          : <String>[];
+
       final membershipData = Membership(
         id: membership?.id ?? '',
         name: values['name'] as String,
@@ -72,8 +111,10 @@ class MembershipFormDialog extends HookConsumerWidget {
             int.tryParse(values['durationDays']?.toString() ?? '') ?? 0,
         price: num.tryParse(values['price']?.toString() ?? '') ?? 0,
         branchId: branchId,
+        validBranches: all ? const [] : selected,
         isActive: values['isActive'] as bool? ?? true,
         isFavorite: values['isFavorite'] as bool? ?? false,
+        memberNotRequired: values['memberNotRequired'] as bool? ?? false,
       );
 
       final controller = ref.read(membershipsControllerProvider.notifier);
@@ -164,6 +205,72 @@ class MembershipFormDialog extends HookConsumerWidget {
             textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 16),
+          FormBuilderCheckbox(
+            name: 'allBranches',
+            initialValue: allBranches.value,
+            title: const Text('Valid at all branches'),
+            subtitle: const Text(
+              'Members with this plan can check in at every branch',
+            ),
+            decoration: const InputDecoration(border: InputBorder.none),
+            onChanged: (value) {
+              allBranches.value = value ?? false;
+            },
+          ),
+          if (!allBranches.value) ...[
+            const SizedBox(height: 8),
+            branchesAsync.when(
+              data: (branches) => FormBuilderCheckboxGroup<String>(
+                name: 'validBranches',
+                initialValue: initialValidBranches,
+                decoration: const InputDecoration(
+                  labelText: 'Valid Branches *',
+                  border: OutlineInputBorder(),
+                  helperText: 'Select at least one branch',
+                ),
+                enabled: !isSaving.value,
+                orientation: OptionsOrientation.vertical,
+                options: branches
+                    .map(
+                      (branch) => FormBuilderFieldOption(
+                        value: branch.id,
+                        child: Text(branch.name),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  final selected = value ?? const <String>[];
+                  final allIds = branches.map((b) => b.id);
+                  if (!selectsAllBranches(selected, allIds)) return;
+
+                  allBranches.value = true;
+                  formKey.currentState?.fields['allBranches']?.didChange(true);
+                  formKey.currentState?.fields['validBranches']?.didChange(
+                    const <String>[],
+                  );
+                },
+                validator: (value) {
+                  if (allBranches.value) return null;
+                  if (value == null || value.isEmpty) {
+                    return 'Select at least one branch, or enable all branches';
+                  }
+                  return null;
+                },
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const Text(
+                'Failed to load branches',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ] else
+            // Keep the field registered when hidden so save still works
+            FormBuilderField<List<String>>(
+              name: 'validBranches',
+              initialValue: const [],
+              builder: (field) => const SizedBox.shrink(),
+            ),
+          const SizedBox(height: 16),
           FormBuilderSwitch(
             name: 'isActive',
             initialValue: membership?.isActive ?? true,
@@ -176,6 +283,16 @@ class MembershipFormDialog extends HookConsumerWidget {
             title: const Text('Favorite'),
             subtitle: const Text(
               'Show at the top when selecting a plan for new members',
+            ),
+            decoration: const InputDecoration(border: InputBorder.none),
+          ),
+          FormBuilderSwitch(
+            name: 'memberNotRequired',
+            initialValue: membership?.memberNotRequired ?? false,
+            title: const Text('Membership not required'),
+            subtitle: const Text(
+              'Tick this for day pass or walk-in plans. '
+              'Sold with a customer name only — no linked member membership.',
             ),
             decoration: const InputDecoration(border: InputBorder.none),
           ),

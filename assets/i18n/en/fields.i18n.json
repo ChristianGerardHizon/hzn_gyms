@@ -11,6 +11,7 @@
     "requiredField": "Required",
     "atLeastOneRequired": "At least one field required",
     "receiptNumber": "Receipt Number",
+    "descriptor": "Description",
     "customerName": "Customer Name",
     "paymentRef": "Payment Reference",
     "notes": "Notes",

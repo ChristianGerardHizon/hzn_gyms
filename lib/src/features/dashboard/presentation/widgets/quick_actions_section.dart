@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/check_in.routes.dart';
-import '../../../../core/routing/routes/sales.routes.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
+import '../../../members/presentation/widgets/member_picker_dialog.dart';
+import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
+import '../../../pos/presentation/components/cashier_dialog.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 
 /// Section displaying quick action buttons on the dashboard.
 ///
 /// Provides fast access to common tasks:
-/// - Open POS/Cashier
+/// - Cashier (product POS dialog)
+/// - Walk-in (day pass / name-only sale for plans with membership not required)
 /// - Show dashboard overview (tablet only)
 class QuickActionsSection extends ConsumerWidget {
   const QuickActionsSection({
@@ -57,10 +60,39 @@ class QuickActionsSection extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(
-                  icon: Icons.point_of_sale,
-                  label: 'New Sale',
+                  icon: Icons.storefront,
+                  label: 'Cashier',
                   color: Colors.green,
-                  onTap: () => const SalesRoute().go(context),
+                  onTap: () => showCashierDialog(context, ref),
+                ),
+                const SizedBox(width: 12),
+                _QuickActionButton(
+                  icon: Icons.directions_walk,
+                  label: 'Walk-in',
+                  color: Colors.indigo,
+                  onTap: () => sellWalkInAndRecordPayment(context, ref),
+                ),
+                const SizedBox(width: 12),
+                _QuickActionButton(
+                  icon: Icons.autorenew,
+                  label: 'Renew',
+                  color: Colors.deepOrange,
+                  onTap: () async {
+                    final member = await showMemberPickerDialog(
+                      context,
+                      title: 'Renew Membership',
+                      subtitle: 'Select a member to renew',
+                    );
+                    if (member == null || !context.mounted) return;
+
+                    await purchaseMembershipAndRecordPayment(
+                      context,
+                      ref,
+                      memberId: member.id,
+                      memberName: member.name,
+                      isRenewal: true,
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(

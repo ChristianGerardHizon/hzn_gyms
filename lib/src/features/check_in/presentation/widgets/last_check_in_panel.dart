@@ -6,6 +6,7 @@ import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/check_in.dart';
 import '../controllers/member_check_ins_controller.dart';
 
@@ -280,14 +281,19 @@ class _CheckInHistoryTile extends StatelessWidget {
   }
 }
 
-/// Provider that fetches the first active membership for a member.
+/// Provider that fetches the first active membership for a member
+/// that is valid at the current branch.
 /// Used by the sidebar to display membership info without a full controller.
 final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
   ref,
   String memberId,
 ) async {
+  final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
-  final result = await repo.fetchActive(memberId);
+  final result = await repo.fetchActive(
+    memberId,
+    validAtBranchId: branchId,
+  );
   return result.fold(
     (_) => null,
     (memberships) => memberships.isNotEmpty ? memberships.first : null,

@@ -161,7 +161,7 @@ Gym members.
 | `rfidCardId` | String | No | RFID card ID for check-in |
 | `email` | String | No | Email address |
 | `emergencyContact` | String | No | Emergency contact info |
-| `branch` | String (FK) | No | FK to Branch (home branch) |
+| `branch` | String (FK) | No | Optional home branch (metadata only; members are searchable globally) |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
@@ -188,13 +188,20 @@ Membership plan templates.
 | `description` | String | No | Plan description |
 | `durationDays` | int | Yes | Duration in days (30, 90, 365, etc.) |
 | `price` | num | Yes | Price in PHP |
-| `branch` | String (FK) | No | FK to Branch |
+| `branch` | String (FK) | No | Catalog/home branch FK to Branch |
+| `validBranches` | List\<String\> (FK) | No | Multi-relation to Branch — branches where this plan grants check-in access. Empty = all branches |
 | `isActive` | bool | Yes | Whether plan is currently offered |
+| `isFavorite` | bool | No | Pinned to top of plan selection lists |
+| `memberNotRequired` | bool | No | Day pass / walk-in plan — sold with customer name only (no linked member membership). Default `false` |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
 **Collection:** `memberships`
+
+**Relationships:**
+- `branch` -> Branch (optional catalog/home)
+- `validBranches` -> Branch[] (optional; empty means all branches)
 
 **Referenced by:** MemberMembership, MembershipAddOn
 
@@ -211,6 +218,7 @@ Add-on options for membership plans (e.g., "Treadmill Access", "Coach/Instructor
 | `name` | String | Yes | Add-on name |
 | `description` | String | No | Add-on description |
 | `price` | num | Yes | Price in PHP |
+| `durationDays` | int | No | Extra days added to the membership end date when selected (e.g. `90` for a 3-month promo). Default `0` (no date change) |
 | `isActive` | bool | No | Whether currently offered |
 | `isDeleted` | bool | No | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
@@ -434,6 +442,7 @@ Transaction records.
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
 | `receiptNumber` | String | Yes | Generated receipt number |
+| `descriptor` | String | No | List label: product name(s) or `Member · Plan` |
 | `status` | SaleStatus | Yes | Sale status |
 | `total` | num | Yes | Total amount |
 | `member` | String (FK) | No | FK to Member |
@@ -466,6 +475,19 @@ Cashier layout groups per branch.
 | `vw_inventory_status` | Aggregated inventory status |
 | `vw_sales_daily_summary` | Daily sales totals |
 | `vw_top_selling_products` | Top selling products |
+| `vw_revenue_by_item_type` | Daily revenue by item type (product / membership / addon) |
+| `vw_revenue_by_item_type_weekly` | Weekly revenue by item type |
+| `vw_revenue_by_item_type_monthly` | Monthly revenue by item type |
+| `vw_revenue_by_item_type_yearly` | Yearly revenue by item type |
+| `vw_checkins_daily_summary` | Daily check-in counts by branch and method |
+| `vw_checkins_weekly_summary` | Weekly check-in counts |
+| `vw_checkins_monthly_summary` | Monthly check-in counts |
+| `vw_checkins_yearly_summary` | Yearly check-in counts |
+| `vw_sales_weekly_summary` | Weekly sales totals by payment method |
+| `vw_sales_monthly_summary` | Monthly sales totals by payment method |
+| `vw_sales_yearly_summary` | Yearly sales totals by payment method |
+| `vw_top_selling_products_monthly` | Monthly top selling products |
+| `vw_top_selling_products_yearly` | Yearly top selling products |
 | `vw_todays_sales` | Today's sales list |
 | `vw_lot_quantity_totals` | Lot quantity aggregates |
 | `vw_low_stock_products` | Low stock alerts |
@@ -478,7 +500,7 @@ Cashier layout groups per branch.
 
 ## Summary
 
-**Total Collections:** 20 (+ 9 view collections)
+**Total Collections:** 20 (+ 22 view collections)
 
 **Enums:**
 

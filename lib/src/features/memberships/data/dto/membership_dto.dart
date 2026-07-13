@@ -17,8 +17,10 @@ class MembershipDto with MembershipDtoMappable {
   final int durationDays;
   final num price;
   final String branch;
+  final List<String> validBranches;
   final bool isActive;
   final bool isFavorite;
+  final bool memberNotRequired;
   final String? created;
   final String? updated;
 
@@ -31,14 +33,17 @@ class MembershipDto with MembershipDtoMappable {
     required this.durationDays,
     required this.price,
     required this.branch,
+    this.validBranches = const [],
     this.isActive = true,
     this.isFavorite = false,
+    this.memberNotRequired = false,
     this.created,
     this.updated,
   });
 
   /// Creates a DTO from a PocketBase RecordModel.
   factory MembershipDto.fromRecord(RecordModel record) {
+    final json = record.toJson();
     return MembershipDto(
       id: record.id,
       collectionId: record.collectionId,
@@ -48,11 +53,18 @@ class MembershipDto with MembershipDtoMappable {
       durationDays: record.get<int>('durationDays'),
       price: record.getDoubleValue('price'),
       branch: record.getStringValue('branch'),
+      validBranches: _parseIdList(json['validBranches']),
       isActive: record.getBoolValue('isActive'),
       isFavorite: record.getBoolValue('isFavorite'),
+      memberNotRequired: record.getBoolValue('memberNotRequired'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
+  }
+
+  static List<String> _parseIdList(dynamic value) {
+    if (value is! List) return const [];
+    return value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
   }
 
   /// Converts the DTO to a domain Membership entity.
@@ -66,8 +78,10 @@ class MembershipDto with MembershipDtoMappable {
       durationDays: durationDays,
       price: price,
       branchId: branch,
+      validBranches: validBranches,
       isActive: isActive,
       isFavorite: isFavorite,
+      memberNotRequired: memberNotRequired,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

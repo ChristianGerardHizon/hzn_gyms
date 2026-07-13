@@ -116,7 +116,7 @@ class CheckInController extends _$CheckInController {
 
     final resolvedName = memberName ?? 'Member';
 
-    // 3. Check for active membership
+    // 3. Check for active membership valid at this branch
     final mmRepo = ref.read(memberMembershipRepositoryProvider);
     final mmResult = await mmRepo.fetchActive(memberId);
     final activeMemberships = mmResult.fold(
@@ -128,7 +128,14 @@ class CheckInController extends _$CheckInController {
       return CardCheckInNoActiveMembership(memberName: resolvedName);
     }
 
-    final activeMembership = activeMemberships.first;
+    final validHere = activeMemberships
+        .where((m) => m.isValidAtBranch(branchId))
+        .toList();
+    if (validHere.isEmpty) {
+      return CardCheckInMembershipNotValidAtBranch(memberName: resolvedName);
+    }
+
+    final activeMembership = validHere.first;
 
     // 4. Create check-in
     final result = await _repository.checkIn(

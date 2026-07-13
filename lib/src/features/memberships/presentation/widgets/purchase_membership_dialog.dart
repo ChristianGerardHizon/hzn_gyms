@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../controllers/member_memberships_controller.dart';
@@ -47,6 +48,14 @@ Future<MembershipPurchaseResult?> showPurchaseMembershipDialog(
   );
 }
 
+/// Shows a walk-in / day-pass sale dialog (customer name + plan, no member).
+Future<MembershipPurchaseResult?> showWalkInSaleDialog(BuildContext context) {
+  return showConstrainedDialog<MembershipPurchaseResult>(
+    context: context,
+    builder: (context) => const PurchaseMembershipDialog(guestMode: true),
+  );
+}
+
 /// Opens the purchase (or renew) flow and records payment when complete.
 Future<void> purchaseMembershipAndRecordPayment(
   BuildContext context,
@@ -82,28 +91,62 @@ Future<void> purchaseMembershipAndRecordPayment(
     return;
   }
 
+  refreshTodaysSales(ref);
+
   if (context.mounted) {
     await showRecordPaymentDialog(
       context,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
+    if (context.mounted) refreshTodaysSales(ref);
+  }
+}
+
+/// Opens walk-in sale flow and records payment when complete.
+Future<void> sellWalkInAndRecordPayment(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final result = await showWalkInSaleDialog(context);
+  if (result == null || !context.mounted) return;
+
+  if (result.queuedOffline) {
+    showInfoSnackBar(
+      context,
+      message: 'Sale queued — record payment once synced and online.',
+    );
+    return;
+  }
+
+  if (result.sale != null) {
+    // Show the new walk-in on Recent Transactions before payment.
+    refreshTodaysSales(ref);
+    await showRecordPaymentDialog(
+      context,
+      sale: result.sale!,
+      balanceDue: result.totalPrice,
+    );
+    // Refresh again so paid status / KPI totals match the payment.
+    if (context.mounted) refreshTodaysSales(ref);
   }
 }
 
 class PurchaseMembershipDialog extends StatelessWidget {
   const PurchaseMembershipDialog({
     super.key,
-    required this.memberId,
-    required this.memberName,
+    this.memberId = '',
+    this.memberName = '',
     this.preselectedMembershipId,
     this.isRenewal = false,
+    this.guestMode = false,
   });
 
   final String memberId;
   final String memberName;
   final String? preselectedMembershipId;
   final bool isRenewal;
+  final bool guestMode;
 
   @override
   Widget build(BuildContext context) {
@@ -131,14 +174,18 @@ class PurchaseMembershipDialog extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isRenewal
+                                guestMode
+                                    ? 'Walk-in'
+                                    : isRenewal
                                     ? 'Renew Membership'
                                     : 'Purchase Membership',
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'For $memberName',
+                                guestMode
+                                    ? 'Day pass — name and plan only'
+                                    : 'For $memberName',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -160,6 +207,7 @@ class PurchaseMembershipDialog extends StatelessWidget {
                     child: MembershipPurchaseContent(
                       memberId: memberId,
                       memberName: memberName,
+                      guestMode: guestMode,
                       preselectedMembershipId: preselectedMembershipId,
                       isRenewal: isRenewal,
                       onPurchased:

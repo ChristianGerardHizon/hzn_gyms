@@ -532,6 +532,149 @@ view vw_top_selling_products {
 }
 
 
+view vw_revenue_by_item_type {
+  # Daily revenue split by sale item type (product / membership / addon)
+  id                    text
+  sale_date             json
+  itemType              text
+  branch                relation    -> branches
+  total_revenue         json
+  total_quantity        json
+  transaction_count     number
+}
+
+
+view vw_checkins_daily_summary {
+  # Daily check-in counts by branch and method
+  id                    text
+  checkin_date          json
+  branch                relation    -> branches
+  method                text
+  checkin_count         number
+  unique_members        number
+}
+
+
+view vw_sales_weekly_summary {
+  id                    text
+  week_start            json
+  paymentMethod         select
+  branch                relation    -> branches
+  transaction_count     number
+  total_revenue         json
+  avg_transaction_value json
+}
+
+
+view vw_sales_monthly_summary {
+  id                    text
+  sale_month            text
+  paymentMethod         select
+  branch                relation    -> branches
+  transaction_count     number
+  total_revenue         json
+  avg_transaction_value json
+}
+
+
+view vw_sales_yearly_summary {
+  id                    text
+  sale_year             text
+  paymentMethod         select
+  branch                relation    -> branches
+  transaction_count     number
+  total_revenue         json
+  avg_transaction_value json
+}
+
+
+view vw_revenue_by_item_type_weekly {
+  id                    text
+  week_start            json
+  itemType              text
+  branch                relation    -> branches
+  total_revenue         json
+  total_quantity        json
+  transaction_count     number
+}
+
+
+view vw_revenue_by_item_type_monthly {
+  id                    text
+  sale_month            text
+  itemType              text
+  branch                relation    -> branches
+  total_revenue         json
+  total_quantity        json
+  transaction_count     number
+}
+
+
+view vw_revenue_by_item_type_yearly {
+  id                    text
+  sale_year             text
+  itemType              text
+  branch                relation    -> branches
+  total_revenue         json
+  total_quantity        json
+  transaction_count     number
+}
+
+
+view vw_top_selling_products_monthly {
+  id                    text
+  productName           text
+  product_id            relation    -> products
+  branch                relation    -> branches
+  sale_month            text
+  total_quantity_sold   json
+  total_revenue         json
+  transaction_count     number
+}
+
+
+view vw_top_selling_products_yearly {
+  id                    text
+  productName           text
+  product_id            relation    -> products
+  branch                relation    -> branches
+  sale_year             text
+  total_quantity_sold   json
+  total_revenue         json
+  transaction_count     number
+}
+
+
+view vw_checkins_weekly_summary {
+  id                    text
+  week_start            json
+  branch                relation    -> branches
+  method                text
+  checkin_count         number
+  unique_members        number
+}
+
+
+view vw_checkins_monthly_summary {
+  id                    text
+  checkin_month         text
+  branch                relation    -> branches
+  method                text
+  checkin_count         number
+  unique_members        number
+}
+
+
+view vw_checkins_yearly_summary {
+  id                    text
+  checkin_year          text
+  branch                relation    -> branches
+  method                text
+  checkin_count         number
+  unique_members        number
+}
+
+
 view vw_lot_quantity_totals {
   # Total quantities per product from all active lots
   id                    text        # product id

@@ -15,7 +15,7 @@ class MembershipReportMapper extends ClassMapperBase<MembershipReport> {
   static MembershipReportMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MembershipReportMapper._());
-      DailyRegistrationMapper.ensureInitialized();
+      PeriodBucketMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -47,10 +47,10 @@ class MembershipReportMapper extends ClassMapperBase<MembershipReport> {
     'addOnRevenue',
     _$addOnRevenue,
   );
-  static List<DailyRegistration> _$registrationsByDay(MembershipReport v) =>
-      v.registrationsByDay;
-  static const Field<MembershipReport, List<DailyRegistration>>
-  _f$registrationsByDay = Field('registrationsByDay', _$registrationsByDay);
+  static List<PeriodBucket> _$registrationsTrend(MembershipReport v) =>
+      v.registrationsTrend;
+  static const Field<MembershipReport, List<PeriodBucket>>
+  _f$registrationsTrend = Field('registrationsTrend', _$registrationsTrend);
   static Map<String, num> _$membershipPlanDistribution(MembershipReport v) =>
       v.membershipPlanDistribution;
   static const Field<MembershipReport, Map<String, num>>
@@ -62,6 +62,34 @@ class MembershipReportMapper extends ClassMapperBase<MembershipReport> {
       v.revenueByPlan;
   static const Field<MembershipReport, Map<String, num>> _f$revenueByPlan =
       Field('revenueByPlan', _$revenueByPlan);
+  static int _$newSubscriptions(MembershipReport v) => v.newSubscriptions;
+  static const Field<MembershipReport, int> _f$newSubscriptions = Field(
+    'newSubscriptions',
+    _$newSubscriptions,
+    opt: true,
+    def: 0,
+  );
+  static int _$renewals(MembershipReport v) => v.renewals;
+  static const Field<MembershipReport, int> _f$renewals = Field(
+    'renewals',
+    _$renewals,
+    opt: true,
+    def: 0,
+  );
+  static int _$expiringSoonCount(MembershipReport v) => v.expiringSoonCount;
+  static const Field<MembershipReport, int> _f$expiringSoonCount = Field(
+    'expiringSoonCount',
+    _$expiringSoonCount,
+    opt: true,
+    def: 0,
+  );
+  static int _$lapsedCount(MembershipReport v) => v.lapsedCount;
+  static const Field<MembershipReport, int> _f$lapsedCount = Field(
+    'lapsedCount',
+    _$lapsedCount,
+    opt: true,
+    def: 0,
+  );
 
   @override
   final MappableFields<MembershipReport> fields = const {
@@ -70,9 +98,13 @@ class MembershipReportMapper extends ClassMapperBase<MembershipReport> {
     #expiredCancelledMemberships: _f$expiredCancelledMemberships,
     #membershipRevenue: _f$membershipRevenue,
     #addOnRevenue: _f$addOnRevenue,
-    #registrationsByDay: _f$registrationsByDay,
+    #registrationsTrend: _f$registrationsTrend,
     #membershipPlanDistribution: _f$membershipPlanDistribution,
     #revenueByPlan: _f$revenueByPlan,
+    #newSubscriptions: _f$newSubscriptions,
+    #renewals: _f$renewals,
+    #expiringSoonCount: _f$expiringSoonCount,
+    #lapsedCount: _f$lapsedCount,
   };
 
   static MembershipReport _instantiate(DecodingData data) {
@@ -82,9 +114,13 @@ class MembershipReportMapper extends ClassMapperBase<MembershipReport> {
       expiredCancelledMemberships: data.dec(_f$expiredCancelledMemberships),
       membershipRevenue: data.dec(_f$membershipRevenue),
       addOnRevenue: data.dec(_f$addOnRevenue),
-      registrationsByDay: data.dec(_f$registrationsByDay),
+      registrationsTrend: data.dec(_f$registrationsTrend),
       membershipPlanDistribution: data.dec(_f$membershipPlanDistribution),
       revenueByPlan: data.dec(_f$revenueByPlan),
+      newSubscriptions: data.dec(_f$newSubscriptions),
+      renewals: data.dec(_f$renewals),
+      expiringSoonCount: data.dec(_f$expiringSoonCount),
+      lapsedCount: data.dec(_f$lapsedCount),
     );
   }
 
@@ -152,10 +188,10 @@ abstract class MembershipReportCopyWith<$R, $In extends MembershipReport, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<
     $R,
-    DailyRegistration,
-    DailyRegistrationCopyWith<$R, DailyRegistration, DailyRegistration>
+    PeriodBucket,
+    PeriodBucketCopyWith<$R, PeriodBucket, PeriodBucket>
   >
-  get registrationsByDay;
+  get registrationsTrend;
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
   get membershipPlanDistribution;
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>> get revenueByPlan;
@@ -165,9 +201,13 @@ abstract class MembershipReportCopyWith<$R, $In extends MembershipReport, $Out>
     int? expiredCancelledMemberships,
     num? membershipRevenue,
     num? addOnRevenue,
-    List<DailyRegistration>? registrationsByDay,
+    List<PeriodBucket>? registrationsTrend,
     Map<String, num>? membershipPlanDistribution,
     Map<String, num>? revenueByPlan,
+    int? newSubscriptions,
+    int? renewals,
+    int? expiringSoonCount,
+    int? lapsedCount,
   });
   MembershipReportCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -185,13 +225,13 @@ class _MembershipReportCopyWithImpl<$R, $Out>
   @override
   ListCopyWith<
     $R,
-    DailyRegistration,
-    DailyRegistrationCopyWith<$R, DailyRegistration, DailyRegistration>
+    PeriodBucket,
+    PeriodBucketCopyWith<$R, PeriodBucket, PeriodBucket>
   >
-  get registrationsByDay => ListCopyWith(
-    $value.registrationsByDay,
+  get registrationsTrend => ListCopyWith(
+    $value.registrationsTrend,
     (v, t) => v.copyWith.$chain(t),
-    (v) => call(registrationsByDay: v),
+    (v) => call(registrationsTrend: v),
   );
   @override
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
@@ -214,9 +254,13 @@ class _MembershipReportCopyWithImpl<$R, $Out>
     int? expiredCancelledMemberships,
     num? membershipRevenue,
     num? addOnRevenue,
-    List<DailyRegistration>? registrationsByDay,
+    List<PeriodBucket>? registrationsTrend,
     Map<String, num>? membershipPlanDistribution,
     Map<String, num>? revenueByPlan,
+    int? newSubscriptions,
+    int? renewals,
+    int? expiringSoonCount,
+    int? lapsedCount,
   }) => $apply(
     FieldCopyWithData({
       if (totalNewMembers != null) #totalNewMembers: totalNewMembers,
@@ -225,10 +269,14 @@ class _MembershipReportCopyWithImpl<$R, $Out>
         #expiredCancelledMemberships: expiredCancelledMemberships,
       if (membershipRevenue != null) #membershipRevenue: membershipRevenue,
       if (addOnRevenue != null) #addOnRevenue: addOnRevenue,
-      if (registrationsByDay != null) #registrationsByDay: registrationsByDay,
+      if (registrationsTrend != null) #registrationsTrend: registrationsTrend,
       if (membershipPlanDistribution != null)
         #membershipPlanDistribution: membershipPlanDistribution,
       if (revenueByPlan != null) #revenueByPlan: revenueByPlan,
+      if (newSubscriptions != null) #newSubscriptions: newSubscriptions,
+      if (renewals != null) #renewals: renewals,
+      if (expiringSoonCount != null) #expiringSoonCount: expiringSoonCount,
+      if (lapsedCount != null) #lapsedCount: lapsedCount,
     }),
   );
   @override
@@ -247,159 +295,27 @@ class _MembershipReportCopyWithImpl<$R, $Out>
       or: $value.membershipRevenue,
     ),
     addOnRevenue: data.get(#addOnRevenue, or: $value.addOnRevenue),
-    registrationsByDay: data.get(
-      #registrationsByDay,
-      or: $value.registrationsByDay,
+    registrationsTrend: data.get(
+      #registrationsTrend,
+      or: $value.registrationsTrend,
     ),
     membershipPlanDistribution: data.get(
       #membershipPlanDistribution,
       or: $value.membershipPlanDistribution,
     ),
     revenueByPlan: data.get(#revenueByPlan, or: $value.revenueByPlan),
+    newSubscriptions: data.get(#newSubscriptions, or: $value.newSubscriptions),
+    renewals: data.get(#renewals, or: $value.renewals),
+    expiringSoonCount: data.get(
+      #expiringSoonCount,
+      or: $value.expiringSoonCount,
+    ),
+    lapsedCount: data.get(#lapsedCount, or: $value.lapsedCount),
   );
 
   @override
   MembershipReportCopyWith<$R2, MembershipReport, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) => _MembershipReportCopyWithImpl<$R2, $Out2>($value, $cast, t);
-}
-
-class DailyRegistrationMapper extends ClassMapperBase<DailyRegistration> {
-  DailyRegistrationMapper._();
-
-  static DailyRegistrationMapper? _instance;
-  static DailyRegistrationMapper ensureInitialized() {
-    if (_instance == null) {
-      MapperContainer.globals.use(_instance = DailyRegistrationMapper._());
-    }
-    return _instance!;
-  }
-
-  @override
-  final String id = 'DailyRegistration';
-
-  static DateTime _$date(DailyRegistration v) => v.date;
-  static const Field<DailyRegistration, DateTime> _f$date = Field(
-    'date',
-    _$date,
-  );
-  static int _$count(DailyRegistration v) => v.count;
-  static const Field<DailyRegistration, int> _f$count = Field('count', _$count);
-
-  @override
-  final MappableFields<DailyRegistration> fields = const {
-    #date: _f$date,
-    #count: _f$count,
-  };
-
-  static DailyRegistration _instantiate(DecodingData data) {
-    return DailyRegistration(
-      date: data.dec(_f$date),
-      count: data.dec(_f$count),
-    );
-  }
-
-  @override
-  final Function instantiate = _instantiate;
-
-  static DailyRegistration fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<DailyRegistration>(map);
-  }
-
-  static DailyRegistration fromJson(String json) {
-    return ensureInitialized().decodeJson<DailyRegistration>(json);
-  }
-}
-
-mixin DailyRegistrationMappable {
-  String toJson() {
-    return DailyRegistrationMapper.ensureInitialized()
-        .encodeJson<DailyRegistration>(this as DailyRegistration);
-  }
-
-  Map<String, dynamic> toMap() {
-    return DailyRegistrationMapper.ensureInitialized()
-        .encodeMap<DailyRegistration>(this as DailyRegistration);
-  }
-
-  DailyRegistrationCopyWith<
-    DailyRegistration,
-    DailyRegistration,
-    DailyRegistration
-  >
-  get copyWith =>
-      _DailyRegistrationCopyWithImpl<DailyRegistration, DailyRegistration>(
-        this as DailyRegistration,
-        $identity,
-        $identity,
-      );
-  @override
-  String toString() {
-    return DailyRegistrationMapper.ensureInitialized().stringifyValue(
-      this as DailyRegistration,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return DailyRegistrationMapper.ensureInitialized().equalsValue(
-      this as DailyRegistration,
-      other,
-    );
-  }
-
-  @override
-  int get hashCode {
-    return DailyRegistrationMapper.ensureInitialized().hashValue(
-      this as DailyRegistration,
-    );
-  }
-}
-
-extension DailyRegistrationValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, DailyRegistration, $Out> {
-  DailyRegistrationCopyWith<$R, DailyRegistration, $Out>
-  get $asDailyRegistration => $base.as(
-    (v, t, t2) => _DailyRegistrationCopyWithImpl<$R, $Out>(v, t, t2),
-  );
-}
-
-abstract class DailyRegistrationCopyWith<
-  $R,
-  $In extends DailyRegistration,
-  $Out
->
-    implements ClassCopyWith<$R, $In, $Out> {
-  $R call({DateTime? date, int? count});
-  DailyRegistrationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
-}
-
-class _DailyRegistrationCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, DailyRegistration, $Out>
-    implements DailyRegistrationCopyWith<$R, DailyRegistration, $Out> {
-  _DailyRegistrationCopyWithImpl(super.value, super.then, super.then2);
-
-  @override
-  late final ClassMapperBase<DailyRegistration> $mapper =
-      DailyRegistrationMapper.ensureInitialized();
-  @override
-  $R call({DateTime? date, int? count}) => $apply(
-    FieldCopyWithData({
-      if (date != null) #date: date,
-      if (count != null) #count: count,
-    }),
-  );
-  @override
-  DailyRegistration $make(CopyWithData data) => DailyRegistration(
-    date: data.get(#date, or: $value.date),
-    count: data.get(#count, or: $value.count),
-  );
-
-  @override
-  DailyRegistrationCopyWith<$R2, DailyRegistration, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  ) => _DailyRegistrationCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
 

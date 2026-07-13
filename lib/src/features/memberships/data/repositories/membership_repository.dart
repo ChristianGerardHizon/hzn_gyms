@@ -16,7 +16,10 @@ part 'membership_repository.g.dart';
 
 /// Repository interface for membership plan operations.
 abstract class MembershipRepository {
-  /// Fetches all membership plans for a branch.
+  /// Fetches membership plans.
+  ///
+  /// When [branchId] is set, returns plans valid at that branch
+  /// (`validBranches` contains it, or empty = all branches).
   FutureEither<List<Membership>> fetchAll({String? branchId, bool? activeOnly});
 
   /// Fetches a single membership plan by ID.
@@ -97,7 +100,10 @@ class MembershipRepositoryImpl implements MembershipRepository {
     final result = await TaskEither.tryCatch(() async {
       final filter = PBFilter();
       if (branchId != null) {
-        filter.relation('branch', branchId);
+        // validBranches contains branch OR empty (all branches)
+        filter.raw(
+          '(validBranches.id ?= "$branchId" || validBranches.id = "")',
+        );
       }
       if (activeOnly == true) {
         filter.isTrue('isActive');
@@ -108,7 +114,14 @@ class MembershipRepositoryImpl implements MembershipRepository {
         sort: 'name',
       );
 
-      final memberships = records.map(_toEntity).toList();
+      var memberships = records.map(_toEntity).toList();
+
+      // Client-side fallback if PB empty multi-relation filter is unreliable
+      if (branchId != null) {
+        memberships = memberships
+            .where((m) => m.isValidAtBranch(branchId))
+            .toList();
+      }
 
       await _localCache.replacePlans(memberships);
 
@@ -161,8 +174,10 @@ class MembershipRepositoryImpl implements MembershipRepository {
         'durationDays': membership.durationDays,
         'price': membership.price,
         'branch': membership.branchId,
+        'validBranches': membership.validBranches,
         'isActive': membership.isActive,
         'isFavorite': membership.isFavorite,
+        'memberNotRequired': membership.memberNotRequired,
       };
 
       final record = await _collection.create(body: body);
@@ -180,8 +195,10 @@ class MembershipRepositoryImpl implements MembershipRepository {
         'durationDays': membership.durationDays,
         'price': membership.price,
         'branch': membership.branchId,
+        'validBranches': membership.validBranches,
         'isActive': membership.isActive,
         'isFavorite': membership.isFavorite,
+        'memberNotRequired': membership.memberNotRequired,
       };
 
       final record = await _collection.update(membership.id, body: body);

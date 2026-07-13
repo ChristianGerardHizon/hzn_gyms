@@ -6,9 +6,8 @@ import '../../domain/inventory_report.dart';
 
 part 'inventory_report_controller.g.dart';
 
-/// Fetches and provides inventory report data.
-/// Note: Inventory report doesn't use date filtering - it shows current state.
-@riverpod
+/// Fetches and caches inventory report data (current stock snapshot).
+@Riverpod(keepAlive: true)
 Future<InventoryReport> inventoryReport(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
   final repository = ref.read(reportsRepositoryProvider);

@@ -18,6 +18,8 @@ Future<void> showMemberMembershipDetailDialog(
 }) {
   return showConstrainedDialog<void>(
     context: context,
+    maxWidth: DialogConstraints.compactMaxWidth,
+    barrierDismissible: true,
     builder: (context) => MemberMembershipDetailDialog(
       memberMembership: memberMembership,
       memberId: memberId,
@@ -65,142 +67,146 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
       orElse: () => false,
     );
 
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Membership Details',
-                      style: theme.textTheme.titleLarge,
-                    ),
+    // Do not wrap in Dialog — showConstrainedDialog already provides one.
+    // A nested Dialog expands to max height and vertically centers content.
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: DialogConstraints.compactMaxWidth,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Membership Details',
+                    style: theme.textTheme.titleLarge,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                memberName,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
-              const SizedBox(height: 20),
-              _InfoRow(
-                label: 'Plan',
-                value: memberMembership.membershipName ?? 'Membership',
-              ),
-              _InfoRow(
-                label: 'Start Date',
-                value: dateFormat.format(memberMembership.startDate),
-              ),
-              _InfoRow(
-                label: 'End Date',
-                value: dateFormat.format(memberMembership.endDate),
-              ),
-              _InfoRow(
-                label: 'Status',
-                value: effectiveExpired
-                    ? 'Expired'
-                    : memberMembership.status.displayName,
-                valueColor: statusColor,
-              ),
-              if (memberMembership.isCurrentlyActive)
-                _InfoRow(
-                  label: 'Days Remaining',
-                  value: '${memberMembership.daysRemaining}',
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-              planAsync.when(
-                data: (plan) {
-                  if (plan == null) return const SizedBox.shrink();
-                  return _InfoRow(
-                    label: 'Plan Price',
-                    value: plan.price.toCurrency(),
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              memberName,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              addOnsAsync.when(
-                data: (addOns) {
-                  if (addOns.isEmpty) return const SizedBox.shrink();
-
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Add-Ons',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...addOns.map(
-                          (addOn) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              children: [
-                                Expanded(child: Text(addOn.addOnName)),
-                                Text(addOn.price.toCurrency()),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 20),
+            _InfoRow(
+              label: 'Plan',
+              value: memberMembership.membershipName ?? 'Membership',
+            ),
+            _InfoRow(
+              label: 'Start Date',
+              value: dateFormat.format(memberMembership.startDate),
+            ),
+            _InfoRow(
+              label: 'End Date',
+              value: dateFormat.format(memberMembership.endDate),
+            ),
+            _InfoRow(
+              label: 'Status',
+              value: effectiveExpired
+                  ? 'Expired'
+                  : memberMembership.status.displayName,
+              valueColor: statusColor,
+            ),
+            if (memberMembership.isCurrentlyActive)
+              _InfoRow(
+                label: 'Days Remaining',
+                value: '${memberMembership.daysRemaining}',
               ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Close'),
-                    ),
-                  ),
-                  if (canRenew) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          if (!context.mounted) return;
+            planAsync.when(
+              data: (plan) {
+                if (plan == null) return const SizedBox.shrink();
+                return _InfoRow(
+                  label: 'Plan Price',
+                  value: plan.price.toCurrency(),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            addOnsAsync.when(
+              data: (addOns) {
+                if (addOns.isEmpty) return const SizedBox.shrink();
 
-                          await purchaseMembershipAndRecordPayment(
-                            context,
-                            ref,
-                            memberId: memberId,
-                            memberName: memberName,
-                            preselectedMembershipId:
-                                memberMembership.membershipId,
-                            isRenewal: true,
-                          );
-                        },
-                        icon: const Icon(Icons.autorenew),
-                        label: const Text('Renew'),
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Add-Ons',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
+                      const SizedBox(height: 8),
+                      ...addOns.map(
+                        (addOn) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(addOn.addOnName)),
+                              Text(addOn.price.toCurrency()),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+                if (canRenew) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        if (!context.mounted) return;
+
+                        await purchaseMembershipAndRecordPayment(
+                          context,
+                          ref,
+                          memberId: memberId,
+                          memberName: memberName,
+                          preselectedMembershipId:
+                              memberMembership.membershipId,
+                          isRenewal: true,
+                        );
+                      },
+                      icon: const Icon(Icons.autorenew),
+                      label: const Text('Renew'),
                     ),
-                  ],
+                  ),
                 ],
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );

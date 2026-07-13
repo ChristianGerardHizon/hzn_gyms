@@ -88,12 +88,12 @@ class ProductGrid extends ConsumerWidget {
                 final childAspectRatio = crossAxisCount <= 3 ? 0.9 : 1.3;
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     childAspectRatio: childAspectRatio,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
                   ),
                   itemCount: products.length,
                   itemBuilder: (context, index) {
@@ -185,23 +185,21 @@ class _ProductCard extends ConsumerWidget {
             Opacity(
               opacity: isDisabled ? 0.5 : 1.0,
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Product name - expanded to fill available space
                     Expanded(
                       child: Text(
                         product.name,
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Price - compact display at bottom
+                    const SizedBox(height: 6),
                     Text(
                       product.isVariablePrice
                           ? 'Variable'

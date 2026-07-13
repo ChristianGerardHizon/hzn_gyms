@@ -309,6 +309,9 @@ class Translations$fields$en {
 	/// en: 'Receipt Number'
 	String get receiptNumber => 'Receipt Number';
 
+	/// en: 'Description'
+	String get descriptor => 'Description';
+
 	/// en: 'Customer Name'
 	String get customerName => 'Customer Name';
 
@@ -571,6 +574,7 @@ extension on Translations {
 			'fields.requiredField' => 'Required',
 			'fields.atLeastOneRequired' => 'At least one field required',
 			'fields.receiptNumber' => 'Receipt Number',
+			'fields.descriptor' => 'Description',
 			'fields.customerName' => 'Customer Name',
 			'fields.paymentRef' => 'Payment Reference',
 			'fields.notes' => 'Notes',
