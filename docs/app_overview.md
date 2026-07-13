@@ -285,7 +285,7 @@ Located in `/lib/src/core/`
 - **Check-In**: Member search, check-in with membership validation
 - **Cashier/POS**: Product grid and checkout
 - **Sales List**: Transaction history
-- **Sale Detail**: Receipt view with refund/void actions
+- **Sale Detail**: Receipt view with refund/void sale actions and void individual payment from payment history
 - **Products List**: Browse products with categories
 - **Product Detail**: Stock and adjustments
 - **Members List**: Browse all members
@@ -520,6 +520,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Jul 13 | Void payment | Sale detail payment history can void an individual payment/refund; sale paid status recalculates |
 | Jul 13 | Member quick view | Tap a dashboard member card to open a details dialog with membership summary, Renew/Purchase shortcut, and Show full details |
 | Jul 13 | Sale descriptors | Sales store a `descriptor` (item name or `Member · Plan`) shown as the list title with receipt short code underneath on sales history and dashboard |
 | Jul 13 | Sale quick view | Tap a dashboard sale (recent transactions, today's list, sales KPI) to open a details dialog with items, payment status, Record payment when unpaid, and Show full details |

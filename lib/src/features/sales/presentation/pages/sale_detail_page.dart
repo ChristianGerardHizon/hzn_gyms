@@ -10,6 +10,7 @@ import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
+import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/presentation/payments_controller.dart';
@@ -495,7 +496,7 @@ class _SaleDetailContent extends HookConsumerWidget {
   Widget _buildPaymentCard(
     BuildContext context,
     WidgetRef ref,
-    AsyncValue<List<dynamic>> paymentsAsync,
+    AsyncValue<List<Payment>> paymentsAsync,
     NumberFormat currencyFormat,
   ) {
     final theme = Theme.of(context);
@@ -578,6 +579,10 @@ class _SaleDetailContent extends HookConsumerWidget {
                   }
                 }
                 final balanceDue = sale.totalAmount - totalPaid;
+                final statusLower = sale.status.toLowerCase();
+                final canVoidPayment =
+                    statusLower != 'voided' && statusLower != 'refunded';
+                final canRecordPayment = canVoidPayment && balanceDue > 0;
 
                 return Column(
                   children: [
@@ -710,12 +715,50 @@ class _SaleDetailContent extends HookConsumerWidget {
                                       ),
                                   ],
                                 ),
-                                trailing: Text(
-                                  '${isRefund ? '-' : '+'}${currencyFormat.format(payment.amount)}',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: isRefund ? Colors.red : Colors.green,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${isRefund ? '-' : '+'}${currencyFormat.format(payment.amount)}',
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
+                                        color: isRefund
+                                            ? Colors.red
+                                            : Colors.green,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (canVoidPayment)
+                                      PopupMenuButton<String>(
+                                        icon: const Icon(Icons.more_vert),
+                                        tooltip: 'Payment actions',
+                                        onSelected: (value) {
+                                          if (value == 'void') {
+                                            _voidPayment(
+                                              context,
+                                              ref,
+                                              payment,
+                                              currencyFormat,
+                                            );
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem<String>(
+                                            value: 'void',
+                                            child: ListTile(
+                                              leading: Icon(
+                                                Icons.cancel,
+                                                color: theme.colorScheme.error,
+                                              ),
+                                              title: const Text('Void Payment'),
+                                              contentPadding: EdgeInsets.zero,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  ],
                                 ),
                               ),
                               // Show proof of payment button if available
@@ -754,7 +797,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                     ],
 
                     // Record payment button
-                    if (balanceDue > 0) ...[
+                    if (canRecordPayment) ...[
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -783,6 +826,65 @@ class _SaleDetailContent extends HookConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _voidPayment(
+    BuildContext context,
+    WidgetRef ref,
+    Payment payment,
+    NumberFormat currencyFormat,
+  ) async {
+    final isRefund = payment.type == PaymentType.refund;
+    final amountLabel = currencyFormat.format(payment.amount);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isRefund ? 'Void Refund?' : 'Void Payment?'),
+        content: Text(
+          isRefund
+              ? 'Remove this $amountLabel refund? The sale balance will be recalculated.'
+              : 'Remove this $amountLabel payment? The sale balance will be recalculated.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Void'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(paymentsControllerProvider.notifier)
+        .deletePayment(payment.id, sale.id);
+
+    if (!context.mounted) return;
+
+    if (success) {
+      ref.invalidate(saleProvider(sale.id));
+      ref.invalidate(salePaymentsProvider(sale.id));
+      showSuccessSnackBar(
+        context,
+        message: isRefund ? 'Refund voided' : 'Payment voided',
+      );
+    } else {
+      showErrorSnackBar(
+        context,
+        message: isRefund
+            ? 'Failed to void refund'
+            : 'Failed to void payment',
+      );
+    }
   }
 
   void _showPaymentProofDialog(BuildContext context, String imageUrl) {

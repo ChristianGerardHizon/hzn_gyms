@@ -491,7 +491,7 @@ class _PaymentSummary extends StatelessWidget {
   }
 }
 
-class _ActionButtons extends ConsumerWidget {
+class _ActionButtons extends StatelessWidget {
   const _ActionButtons({
     required this.saleId,
     required this.sale,
@@ -503,7 +503,7 @@ class _ActionButtons extends ConsumerWidget {
   final AsyncValue<List<Payment>> paymentsAsync;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final canRecordPayment = paymentsAsync.maybeWhen(
       data: (payments) {
         if (sale == null) return false;
@@ -548,16 +548,18 @@ class _ActionButtons extends ConsumerWidget {
                 ? null
                 : () async {
                     final currentSale = sale!;
+                    // Capture before await — recording payment invalidates
+                    // saleProvider and can unmount this widget mid-callback.
+                    final container = ProviderScope.containerOf(context);
                     final result = await showRecordPaymentDialog(
                       context,
                       sale: currentSale,
                       balanceDue: balanceDue,
                     );
-                    if (!context.mounted) return;
                     if (result == true) {
-                      ref.invalidate(saleProvider(saleId));
-                      ref.invalidate(salePaymentsProvider(saleId));
-                      ref.invalidate(todaySalesProvider);
+                      container.invalidate(saleProvider(saleId));
+                      container.invalidate(salePaymentsProvider(saleId));
+                      container.invalidate(todaySalesProvider);
                     }
                   },
             icon: const Icon(Icons.payment),
