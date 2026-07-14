@@ -30,6 +30,9 @@ class User with UserMappable {
   /// Branch IDs the user may switch to.
   final List<String> allowedBranches;
 
+  /// FK to UserRole (PocketBase `role` relation id).
+  final String? roleId;
+
   const User({
     required this.id,
     required this.name,
@@ -38,5 +41,6 @@ class User with UserMappable {
     this.verified = false,
     this.branch,
     this.allowedBranches = const [],
+    this.roleId,
   });
 }

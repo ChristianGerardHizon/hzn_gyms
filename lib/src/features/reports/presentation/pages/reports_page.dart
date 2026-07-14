@@ -11,8 +11,8 @@ import '../controllers/inventory_report_controller.dart';
 import '../controllers/membership_report_controller.dart';
 import '../controllers/report_period_controller.dart';
 import '../controllers/sales_report_controller.dart';
-import '../export/report_csv_exporter.dart';
 import '../pdf/report_pdf_generator.dart';
+import '../pdf/sales_report_pdf_builder.dart';
 import '../widgets/report_period_selector.dart';
 import '../widgets/views/attendance_report_view.dart';
 import '../widgets/views/inventory_report_view.dart';
@@ -27,8 +27,11 @@ import '../widgets/views/sales_report_view.dart';
 class ReportsPage extends HookConsumerWidget {
   const ReportsPage({super.key});
 
-  static final _currencyFormat =
-      NumberFormat.currency(symbol: '₱', decimalDigits: 2);
+  /// PDF uses Helvetica, which does not include ₱ — use ASCII 'P'.
+  static final _pdfCurrencyFormat = NumberFormat.currency(
+    symbol: 'P',
+    decimalDigits: 2,
+  );
 
   static const _tabCount = 4;
 
@@ -69,15 +72,16 @@ class ReportsPage extends HookConsumerWidget {
                 Expanded(
                   child: Text(
                     'Reports',
-                    style: (isMobile
-                            ? Theme.of(context).textTheme.titleLarge
-                            : Theme.of(context).textTheme.headlineMedium)
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style:
+                        (isMobile
+                                ? Theme.of(context).textTheme.titleLarge
+                                : Theme.of(context).textTheme.headlineMedium)
+                            ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
-                _ExportButtons(
+                _ReportExportButton(
                   tabIndex: activeTabIndex.value,
-                  currencyFormat: _currencyFormat,
+                  currencyFormat: _pdfCurrencyFormat,
                   compact: isMobile,
                 ),
               ],
@@ -137,8 +141,10 @@ class ReportsPage extends HookConsumerWidget {
   }
 }
 
-class _ExportButtons extends HookConsumerWidget {
-  const _ExportButtons({
+enum _ReportExportAction { print, savePdf }
+
+class _ReportExportButton extends HookConsumerWidget {
+  const _ReportExportButton({
     required this.tabIndex,
     required this.currencyFormat,
     this.compact = false,
@@ -150,83 +156,62 @@ class _ExportButtons extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (compact) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton.outlined(
-            onPressed: () => _handleCsvExport(context, ref),
-            icon: const Icon(Icons.table_view, size: 20),
-            tooltip: 'Export CSV',
-            visualDensity: VisualDensity.compact,
+    Future<void> openMenu() async {
+      final box = context.findRenderObject() as RenderBox?;
+      if (box == null) return;
+
+      final action = await showMenu<_ReportExportAction>(
+        context: context,
+        position: RelativeRect.fromRect(
+          box.localToGlobal(Offset.zero) & box.size,
+          Offset.zero & MediaQuery.sizeOf(context),
+        ),
+        items: const [
+          PopupMenuItem(
+            value: _ReportExportAction.print,
+            child: ListTile(
+              leading: Icon(Icons.print_outlined),
+              title: Text('Print'),
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
-          const SizedBox(width: 4),
-          IconButton.filled(
-            onPressed: () => _handlePdfExport(context, ref),
-            icon: const Icon(Icons.download, size: 20),
-            tooltip: 'Export PDF',
-            visualDensity: VisualDensity.compact,
+          PopupMenuItem(
+            value: _ReportExportAction.savePdf,
+            child: ListTile(
+              leading: Icon(Icons.picture_as_pdf_outlined),
+              title: Text('Save as PDF'),
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
         ],
       );
+      if (action == null || !context.mounted) return;
+      await _handleExport(context, ref, action);
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        OutlinedButton.icon(
-          onPressed: () => _handleCsvExport(context, ref),
-          icon: const Icon(Icons.table_view, size: 18),
-          label: const Text('CSV'),
-        ),
-        const SizedBox(width: 8),
-        FilledButton.icon(
-          onPressed: () => _handlePdfExport(context, ref),
-          icon: const Icon(Icons.download, size: 18),
-          label: const Text('PDF'),
-        ),
-      ],
+    if (compact) {
+      return IconButton.filled(
+        onPressed: openMenu,
+        icon: const Icon(Icons.print, size: 20),
+        tooltip: 'Print or save report',
+        visualDensity: VisualDensity.compact,
+      );
+    }
+
+    return FilledButton.icon(
+      onPressed: openMenu,
+      icon: const Icon(Icons.print, size: 18),
+      label: const Text('Print Report'),
     );
   }
 
-  Future<void> _handleCsvExport(BuildContext context, WidgetRef ref) async {
-    final period = ref.read(reportPeriodControllerProvider);
-    switch (tabIndex) {
-      case 0:
-        final report = ref.read(salesReportProvider).value;
-        if (report == null) return;
-        await ReportCsvExporter.exportSales(
-          context: context,
-          report: report,
-          period: period,
-        );
-      case 1:
-        final report = ref.read(inventoryReportProvider).value;
-        if (report == null) return;
-        await ReportCsvExporter.exportInventory(
-          context: context,
-          report: report,
-        );
-      case 2:
-        final report = ref.read(membershipReportProvider).value;
-        if (report == null) return;
-        await ReportCsvExporter.exportMembership(
-          context: context,
-          report: report,
-          period: period,
-        );
-      case 3:
-        final report = ref.read(attendanceReportProvider).value;
-        if (report == null) return;
-        await ReportCsvExporter.exportAttendance(
-          context: context,
-          report: report,
-          period: period,
-        );
-    }
-  }
-
-  Future<void> _handlePdfExport(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleExport(
+    BuildContext context,
+    WidgetRef ref,
+    _ReportExportAction action,
+  ) async {
     final period = ref.read(reportPeriodControllerProvider);
     final pdfData = switch (tabIndex) {
       0 => _buildSalesPdfData(ref, period),
@@ -236,50 +221,26 @@ class _ExportButtons extends HookConsumerWidget {
       _ => null,
     };
     if (pdfData == null || !context.mounted) return;
-    await ReportPdfGenerator(pdfData).saveReport(context);
+
+    final generator = ReportPdfGenerator(pdfData);
+    switch (action) {
+      case _ReportExportAction.print:
+        await generator.printReport(context);
+      case _ReportExportAction.savePdf:
+        await generator.saveReport(context);
+    }
   }
 
-  ReportPdfData? _buildSalesPdfData(WidgetRef ref, ReportPeriodSelection period) {
+  ReportPdfData? _buildSalesPdfData(
+    WidgetRef ref,
+    ReportPeriodSelection period,
+  ) {
     final report = ref.read(salesReportProvider).value;
     if (report == null) return null;
-    final itemTypeRows = report.revenueByItemType.entries
-        .map(
-          (e) => [
-            itemTypeLabel(e.key),
-            currencyFormat.format(e.value),
-          ],
-        )
-        .toList();
-    return ReportPdfData(
-      reportTitle: 'Sales Report',
+    return buildSalesReportPdfData(
+      report: report,
       period: period,
-      generatedAt: DateTime.now(),
-      kpiData: {
-        'Total Revenue': currencyFormat.format(report.totalRevenue),
-        'Transactions': report.transactionCount.toString(),
-        'Avg Transaction':
-            currencyFormat.format(report.averageTransactionValue),
-        'Unpaid Sales': report.unpaidSalesCount.toString(),
-        'Unpaid Balance': currencyFormat.format(report.unpaidBalance),
-      },
-      tableHeaders: itemTypeRows.isNotEmpty
-          ? ['Item Type', 'Revenue']
-          : ['Item', 'Type', 'Quantity', 'Revenue'],
-      tableRows: itemTypeRows.isNotEmpty
-          ? itemTypeRows
-          : report.topSellingProducts
-              .map(
-                (p) => [
-                  p.productName,
-                  itemTypeLabel(p.itemType),
-                  p.quantity.toString(),
-                  currencyFormat.format(p.revenue),
-                ],
-              )
-              .toList(),
-      additionalNotes:
-          'Revenue by item type is sale line subtotals (products and memberships). '
-          'Total Revenue is cash collected from payments. Do not sum with Membership plan value.',
+      currencyFormat: currencyFormat,
     );
   }
 
@@ -354,8 +315,7 @@ class _ExportButtons extends HookConsumerWidget {
       kpiData: {
         'Total Check-ins': report.totalCheckIns.toString(),
         'Unique Members': report.uniqueMembers.toString(),
-        'No Membership Link':
-            report.withoutActiveMembershipCount.toString(),
+        'No Membership Link': report.withoutActiveMembershipCount.toString(),
       },
       tableHeaders: period.period == ReportPeriod.day
           ? null
@@ -363,13 +323,8 @@ class _ExportButtons extends HookConsumerWidget {
       tableRows: period.period == ReportPeriod.day
           ? null
           : report.checkInsTrend
-              .map(
-                (d) => [
-                  d.label,
-                  d.value.toString(),
-                ],
-              )
-              .toList(),
+                .map((d) => [d.label, d.value.toString()])
+                .toList(),
     );
   }
 }

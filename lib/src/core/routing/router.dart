@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../pages/app_root.dart';
+import '../permissions/current_user_permissions.dart';
 import 'router_utils.dart';
 import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
@@ -13,6 +14,7 @@ import 'routes/outbox.routes.dart';
 import 'routes/products.routes.dart';
 import 'routes/members.routes.dart';
 import 'routes/memberships.routes.dart';
+import 'routes/profile.routes.dart';
 import 'routes/sales.routes.dart';
 import 'routes/sales_history.routes.dart';
 import 'routes/reports.routes.dart';
@@ -57,6 +59,7 @@ GoRouter router(Ref ref) {
           $salesShellRoute,
           $reportsRoute,
           $organizationShellRoute,
+          $profileRoute,
           $outboxRoute,
           $systemShellRoute,
         ],
@@ -68,6 +71,10 @@ GoRouter router(Ref ref) {
   ref.listen(authControllerProvider, (previous, next) {
     // Refresh router when auth state changes (loading -> data/error)
     // This triggers redirect logic to navigate after login success/failure
+    router.refresh();
+  });
+
+  ref.listen(currentUserPermissionsProvider, (previous, next) {
     router.refresh();
   });
 

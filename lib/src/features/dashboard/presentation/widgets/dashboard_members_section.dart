@@ -13,6 +13,7 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../domain/dashboard_members_layout.dart';
 import '../controllers/dashboard_members_controller.dart';
 import '../controllers/dashboard_members_layout_controller.dart';
+import '../controllers/dashboard_members_page_errors.dart';
 import 'member_quick_view_dialog.dart';
 
 /// Section displaying members as a virtualized grid of photo cards.
@@ -38,6 +39,7 @@ class DashboardMembersSection extends HookConsumerWidget {
     final loadPerf = useRef<PerfTimer?>(null);
     final prefetchInFlight = useRef(<int>{});
     final prefetchGeneration = useRef(0);
+    final sectionMounted = useRef(true);
     final layout = ref.watch(currentDashboardMembersLayoutProvider);
 
     // Branch scope — local list state must reset when this changes, otherwise
@@ -45,6 +47,14 @@ class DashboardMembersSection extends HookConsumerWidget {
     final branchId = ref.watch(currentBranchIdProvider);
     final viewingAll = ref.watch(viewingAllBranchesProvider);
     final branchScopeKey = viewingAll ? 'all' : (branchId ?? 'none');
+
+    useEffect(() {
+      sectionMounted.value = true;
+      return () {
+        sectionMounted.value = false;
+        prefetchGeneration.value++;
+      };
+    }, const []);
 
     // Debounce search input by 400ms
     useEffect(() {
@@ -95,6 +105,14 @@ class DashboardMembersSection extends HookConsumerWidget {
       ];
       if (pagesToFetch.isEmpty) return;
 
+      bool canCommit() => canCommitDashboardMembersPrefetch(
+            requestGeneration: generation,
+            currentGeneration: prefetchGeneration.value,
+            isMounted: sectionMounted.value && context.mounted,
+          );
+
+      if (!canCommit()) return;
+
       prefetchInFlight.value = {
         ...prefetchInFlight.value,
         ...pagesToFetch,
@@ -102,18 +120,28 @@ class DashboardMembersSection extends HookConsumerWidget {
 
       try {
         final results = await Future.wait(
-          pagesToFetch.map(
-            (pageNum) => ref.read(
-              dashboardMembersPageProvider(
-                page: pageNum,
-                searchQuery: query,
-                statusFilter: statusFilter.value,
-              ).future,
-            ),
-          ),
+          pagesToFetch.map((pageNum) async {
+            final provider = dashboardMembersPageProvider(
+              page: pageNum,
+              searchQuery: query,
+              statusFilter: statusFilter.value,
+            );
+            // Keep a listener while awaiting so autoDispose cannot tear down
+            // the provider mid-load (prefetch only uses `.future`).
+            final sub = ref.listenManual(
+              provider,
+              (_, __) {},
+              fireImmediately: true,
+            );
+            try {
+              return await ref.read(provider.future);
+            } finally {
+              sub.close();
+            }
+          }),
         );
 
-        if (generation != prefetchGeneration.value) return;
+        if (!canCommit()) return;
 
         results.sort((a, b) => a.page.compareTo(b.page));
 
@@ -136,12 +164,24 @@ class DashboardMembersSection extends HookConsumerWidget {
           loadedUpToPage.value = highestFetched;
         }
         hasMore.value = loadedUpToPage.value < totalPages.value;
+      } on Object catch (error) {
+        if (isProviderDisposedDuringLoading(error) ||
+            isUsedAfterDisposeError(error) ||
+            !canCommit()) {
+          return;
+        }
+        rethrow;
       } finally {
-        final next = {...prefetchInFlight.value}
-          ..removeAll(pagesToFetch);
-        prefetchInFlight.value = next;
-        if (prefetchInFlight.value.isEmpty) {
-          isLoadingMore.value = false;
+        // Always clear in-flight pages so a superseded/cancelled prefetch
+        // does not leave the load-more spinner stuck or skip later pages.
+        try {
+          final next = {...prefetchInFlight.value}..removeAll(pagesToFetch);
+          prefetchInFlight.value = next;
+          if (prefetchInFlight.value.isEmpty) {
+            isLoadingMore.value = false;
+          }
+        } on Object catch (error) {
+          if (!isUsedAfterDisposeError(error)) rethrow;
         }
       }
     }
@@ -174,6 +214,7 @@ class DashboardMembersSection extends HookConsumerWidget {
         // Ignore re-emissions once this query has been initialized; otherwise
         // page-1 data would wipe already-prefetched pages from the list.
         if (loadedUpToPage.value > 0) return;
+        if (!sectionMounted.value || !context.mounted) return;
 
         loadPerf.value?.checkpoint(
           'provider data received (${page.items.length} items)',
@@ -423,6 +464,9 @@ class DashboardMembersSection extends HookConsumerWidget {
                       if (index >= allMembers.value.length - 4 &&
                           hasMore.value) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!sectionMounted.value || !context.mounted) {
+                            return;
+                          }
                           if (!hasMore.value) return;
                           // Show a spinner if the user has caught up to
                           // in-flight background fetches.

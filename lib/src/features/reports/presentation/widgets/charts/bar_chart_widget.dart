@@ -52,16 +52,15 @@ class BarChartWidget extends StatelessWidget {
     }
 
     final entries = data.entries.toList();
-    final maxValue = entries.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final maxValue = entries
+        .map((e) => e.value)
+        .reduce((a, b) => a > b ? a : b);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (title != null) ...[
-          Text(
-            title!,
-            style: theme.textTheme.titleSmall,
-          ),
+          Text(title!, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
         ],
         SizedBox(
@@ -90,8 +89,8 @@ class BarChartWidget extends StatelessWidget {
           touchTooltipData: BarTouchTooltipData(
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final label = entries[group.x.toInt()].key;
-              final value = valueFormatter?.call(rod.toY) ??
-                  _formatNumber(rod.toY);
+              final value =
+                  valueFormatter?.call(rod.toY) ?? _formatNumber(rod.toY);
               return BarTooltipItem(
                 '$label\n$value',
                 TextStyle(

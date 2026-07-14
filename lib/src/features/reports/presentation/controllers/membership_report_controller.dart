@@ -19,8 +19,5 @@ Future<MembershipReport> membershipReport(Ref ref) async {
     branchId: branchId,
   );
 
-  return result.fold(
-    (failure) => throw failure,
-    (report) => report,
-  );
+  return result.fold((failure) => throw failure, (report) => report);
 }

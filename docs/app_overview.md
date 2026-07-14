@@ -132,7 +132,7 @@ View and manage completed transactions.
 - Refund/unrefund functionality with confirmation dialogs
 
 #### Reports (`/reports`)
-Tabbed analytics hub with period selector (Week / Month / Year / All Time), PDF and CSV export.
+Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time) and PDF export.
 
 **Mental model — Sales vs Memberships (not duplicate features):**
 - **Sales** = money ledger (receipts & payments). Product POS and membership purchases both create `Sale` records.
@@ -140,13 +140,13 @@ Tabbed analytics hub with period selector (Week / Month / Year / All Time), PDF 
 - Do **not** sum Sales revenue with Membership “plan value” — membership purchases already appear in Sales.
 
 **Tabs:**
-- Period selector: **Day** (From/To calendar dates; lists each sale and opens sale detail on tap), **Week** (Mon–Sun), **Month** (calendar month), **Year** (Jan–Dec), **All Time** (per year)
+- Period selector: **Day** (single calendar date; lists each sale and opens sale detail on tap), **Week** (Mon–Sun From/To), **Month** (calendar months), **Year** (calendar years), **All Time** (years from 2019)
 - Trend charts for Week / Month / Year / All Time (hidden on Day — use peak hours for attendance instead)
 - **Sales** — cash collected, revenue by item type (product / membership / walk-in / add-on), payment methods, top selling items (products + memberships + guest day-pass), unpaid (AR), staff performance
 - **Inventory** — stock status, low stock, expiration alerts, inventory value (via SQL views)
 - **Members & Memberships** — new members, active base, renewals vs new, expiring soon, churn/lapse, plan mix; plan value sold (labeled separately from cash collected); excludes walk-in / guest (`memberNotRequired` / `walkIn`) plans
 - **Attendance** — check-ins trend (non-Day), unique members, method mix; peak hours on Day only
-
+- Export: **Generate PDF** only (no CSV)
 ---
 
 ### Organization/Admin Features
@@ -164,12 +164,16 @@ Tabbed analytics hub with period selector (Week / Month / Year / All Time), PDF 
 - **Roles** (`/organization/roles`) - Role and permission management (Admin, Staff, Cashier)
 - **Branches** (`/organization/branches`) - Multi-location support with address and contact info
 
+#### Profile (`/profile`)
+Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment).
+
 #### System Settings (`/system`)
 3-panel tablet layout for system configuration.
 
 **Modes:**
 - **Product Categories** (`/system/product-categories`) - Hierarchical product categories
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
+- **Appearance** (`/system/appearance`) - Theme settings (available to Staff via `settings.view`)
 
 ---
 
@@ -417,9 +421,11 @@ App Root (Shell)
 | 5 | `/members` | Members | `people` |
 | 6 | `/memberships` | Memberships | `card_membership` |
 | 7 | `/reports` | Reports | `analytics` |
-| 8 | `/organization` | Organization | `business` |
+| 8 | `/organization` or `/profile` | Organization (admin) / Profile (staff) | `business` / `person` |
 | 9 | `/outbox` | Outbox | `cloud_sync` |
 | 10 | `/system` | System | `settings` |
+
+Destinations are filtered by role permissions. Staff typically see Dashboard through Memberships, Profile, and System (Appearance only).
 
 ---
 
@@ -526,7 +532,8 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
-| Jul 14 | Sales Day list + range | Day period has From/To dates; Sales tab lists each sale in range and opens sale detail on tap |
+| Jul 14 | Reports PDF-only + Day date | Generate PDF only (CSV removed); Day period uses a single date picker and lists that day's sales |
+| Jul 14 | Sales Day list + range | Day period lists each sale and opens sale detail on tap |
 | Jul 14 | Report view local dates | Sales/attendance SQL views bucket `created`/`checkInTime` with SQLite `localtime` so Day reports match Manila calendar (UTC midnight no longer hides overnight sales) |
 | Jul 14 | Reports walk-in split | Membership report excludes walk-in / guest plans; Sales includes product + membership + walk-in (`itemType: walkIn`); Day period hides trend charts |
 | Jul 14 | Add-on extra days | Membership add-ons can set `durationDays` (e.g. promo +3 months); purchase/renew end date includes plan days + selected add-on days |
@@ -534,7 +541,7 @@ lib/src/
 | Jul 14 | Walk-in day pass | Plan flag `memberNotRequired`; dashboard **Walk-in** sells name + plan + add-ons as a sale only (no member membership); dashboard **Cashier** opens product POS dialog; plan list/detail show Walk-in badge; sales store/search Walk-in descriptors and customer labels |
 | Jul 14 | Dashboard members layout | Members grid header menu: columns scale by screen (mobile 1–2, tablet 2–4, desktop 2–5) plus photo vs name-only; preference stored in Drift |
 | Jul 14 | Report period bucketing | Day/Week/Month/Year/All Time use calendar ranges; charts bucket daily/weekly/monthly/yearly via PB views |
-| Jul 14 | Reports overhaul | Sales vs memberships framing; revenue-by-item-type; attendance tab; AR/renewals/staff; lazy tabs; PB date filters; CSV export |
+| Jul 14 | Reports overhaul | Sales vs memberships framing; revenue-by-item-type; attendance tab; AR/renewals/staff; lazy tabs; PB date filters; PDF export |
 | Jul 13 | Void payment | Sale detail payment history can void an individual payment/refund; sale paid status recalculates |
 | Jul 13 | Member quick view | Tap a dashboard member card to open a details dialog with membership summary, Renew/Purchase shortcut, and Show full details |
 | Jul 13 | Sale descriptors | Sales store a `descriptor` (item name or `Member · Plan`) shown as the list title with receipt short code underneath on sales history and dashboard |

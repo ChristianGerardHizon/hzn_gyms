@@ -175,10 +175,7 @@ class InventoryReportView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Low Stock Items',
-                style: theme.textTheme.titleSmall,
-              ),
+              Text('Low Stock Items', style: theme.textTheme.titleSmall),
               const SizedBox(height: 16),
               Center(
                 child: Padding(
@@ -203,10 +200,7 @@ class InventoryReportView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Low Stock Items',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Low Stock Items', style: theme.textTheme.titleSmall),
             const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -219,17 +213,21 @@ class InventoryReportView extends ConsumerWidget {
                   DataColumn(label: Text('Expiration')),
                 ],
                 rows: report.lowStockItems.map((item) {
-                  return DataRow(cells: [
-                    DataCell(Text(item.productName)),
-                    DataCell(Text(item.categoryName)),
-                    DataCell(Text(item.currentStock.toString())),
-                    DataCell(Text(item.threshold.toString())),
-                    DataCell(Text(
-                      item.expirationDate != null
-                          ? dateFormat.format(item.expirationDate!)
-                          : '-',
-                    )),
-                  ]);
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(item.productName)),
+                      DataCell(Text(item.categoryName)),
+                      DataCell(Text(item.currentStock.toString())),
+                      DataCell(Text(item.threshold.toString())),
+                      DataCell(
+                        Text(
+                          item.expirationDate != null
+                              ? dateFormat.format(item.expirationDate!)
+                              : '-',
+                        ),
+                      ),
+                    ],
+                  );
                 }).toList(),
               ),
             ),

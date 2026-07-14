@@ -14,8 +14,5 @@ Future<InventoryReport> inventoryReport(Ref ref) async {
 
   final result = await repository.getInventoryReport(branchId: branchId);
 
-  return result.fold(
-    (failure) => throw failure,
-    (report) => report,
-  );
+  return result.fold((failure) => throw failure, (report) => report);
 }

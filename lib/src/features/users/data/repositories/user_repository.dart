@@ -36,6 +36,13 @@ abstract class UserRepository {
   /// Updates an existing user.
   FutureEither<User> update(User user);
 
+  /// Updates only name/username for the signed-in user's profile.
+  FutureEither<User> updateProfile({
+    required String id,
+    required String name,
+    required String username,
+  });
+
   /// Soft deletes a user (sets isDeleted = true).
   FutureEither<void> delete(String id);
 
@@ -216,6 +223,26 @@ class UserRepositoryImpl implements UserRepository {
       final record = await _collection.update(
         user.id,
         body: body,
+        expand: _expand,
+      );
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<User> updateProfile({
+    required String id,
+    required String name,
+    required String username,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final record = await _collection.update(
+        id,
+        body: {
+          'name': name,
+          'username': username,
+        },
         expand: _expand,
       );
       invalidateCache();

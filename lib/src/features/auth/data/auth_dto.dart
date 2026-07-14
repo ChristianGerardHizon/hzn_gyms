@@ -81,6 +81,7 @@ class AuthDto with AuthDtoMappable {
       verified: verified,
       branch: branch,
       allowedBranches: allowedBranches,
+      roleId: role != null && role!.isNotEmpty ? role : null,
     );
   }
 

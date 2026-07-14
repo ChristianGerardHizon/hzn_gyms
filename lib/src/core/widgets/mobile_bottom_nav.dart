@@ -1,75 +1,76 @@
 import 'package:flutter/material.dart';
 
 import '../i18n/strings.g.dart';
+import '../navigation/app_nav_destination.dart';
 
 /// Bottom navigation bar for mobile layout.
 ///
-/// Displays 4 primary navigation destinations:
-/// - Dashboard (Home)
-/// - Check-In
-/// - Cashier
-/// - More (opens drawer for additional options)
+/// Primary destinations when available: Dashboard, Check-In, Cashier + More.
 class MobileBottomNav extends StatelessWidget {
   const MobileBottomNav({
     super.key,
+    required this.destinations,
     required this.selectedIndex,
     required this.onDestinationSelected,
     this.onMoreTap,
   });
 
-  /// Currently selected navigation index (from app_root).
+  final List<AppNavDestination> destinations;
+
+  /// Currently selected navigation index into [destinations].
   final int selectedIndex;
 
-  /// Callback when a destination is selected (passes app_root index).
+  /// Callback when a destination is selected (passes destinations index).
   final ValueChanged<int> onDestinationSelected;
 
   /// Callback when "More" is tapped to open the drawer.
   final VoidCallback? onMoreTap;
 
-  /// Maps bottom nav local indices to app_root indices.
-  static const _bottomNavToAppIndex = [0, 1, 2];
+  static const _primaryIds = [
+    AppNavId.dashboard,
+    AppNavId.checkIn,
+    AppNavId.cashier,
+  ];
 
-  /// Gets the bottom nav index from the app_root selected index.
+  List<int> get _primaryIndices {
+    final indices = <int>[];
+    for (final id in _primaryIds) {
+      final index = destinations.indexWhere((d) => d.id == id);
+      if (index >= 0) indices.add(index);
+    }
+    return indices;
+  }
+
   int _getBottomNavIndex() {
-    final localIndex = _bottomNavToAppIndex.indexOf(selectedIndex);
-    // If current route is one of the bottom nav items, highlight it
+    final primary = _primaryIndices;
+    final localIndex = primary.indexOf(selectedIndex);
     if (localIndex >= 0) return localIndex;
-    // Otherwise, highlight "More"
-    return 3;
+    return primary.length; // "More"
   }
 
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
+    final primary = _primaryIndices;
+
     return NavigationBar(
       selectedIndex: _getBottomNavIndex(),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       height: 60,
       onDestinationSelected: (index) {
-        if (index == 3) {
-          // "More" tapped - open drawer
+        if (index >= primary.length) {
           onMoreTap?.call();
-        } else {
-          // Map bottom nav index to app_root index
-          onDestinationSelected(_bottomNavToAppIndex[index]);
+          return;
         }
+        onDestinationSelected(primary[index]);
       },
       destinations: [
-        NavigationDestination(
-          icon: const Icon(Icons.dashboard_outlined),
-          selectedIcon: const Icon(Icons.dashboard),
-          label: t.navigation.dashboard,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.how_to_reg_outlined),
-          selectedIcon: const Icon(Icons.how_to_reg),
-          label: t.navigation.checkIn,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.point_of_sale_outlined),
-          selectedIcon: const Icon(Icons.point_of_sale),
-          label: t.navigation.sales,
-        ),
+        for (final destIndex in primary)
+          NavigationDestination(
+            icon: Icon(_outlinedIcon(destinations[destIndex].id)),
+            selectedIcon: Icon(_filledIcon(destinations[destIndex].id)),
+            label: _label(destinations[destIndex].id, t),
+          ),
         NavigationDestination(
           icon: const Icon(Icons.more_horiz),
           selectedIcon: const Icon(Icons.more_horiz),
@@ -77,5 +78,44 @@ class MobileBottomNav extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  IconData _outlinedIcon(AppNavId id) {
+    switch (id) {
+      case AppNavId.dashboard:
+        return Icons.dashboard_outlined;
+      case AppNavId.checkIn:
+        return Icons.how_to_reg_outlined;
+      case AppNavId.cashier:
+        return Icons.point_of_sale_outlined;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
+
+  IconData _filledIcon(AppNavId id) {
+    switch (id) {
+      case AppNavId.dashboard:
+        return Icons.dashboard;
+      case AppNavId.checkIn:
+        return Icons.how_to_reg;
+      case AppNavId.cashier:
+        return Icons.point_of_sale;
+      default:
+        return Icons.circle;
+    }
+  }
+
+  String _label(AppNavId id, Translations t) {
+    switch (id) {
+      case AppNavId.dashboard:
+        return t.navigation.dashboard;
+      case AppNavId.checkIn:
+        return t.navigation.checkIn;
+      case AppNavId.cashier:
+        return t.navigation.sales;
+      default:
+        return '';
+    }
   }
 }

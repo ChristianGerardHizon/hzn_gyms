@@ -56,8 +56,8 @@ class MembershipReportView extends ConsumerWidget {
             'Cash collected lives on the Sales tab — do not sum both. '
             'Walk-in / guest day-pass plans are counted in Sales only.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           if (showTrend) ...[
             const SizedBox(height: 24),
@@ -72,8 +72,9 @@ class MembershipReportView extends ConsumerWidget {
                       entry.value.value.toDouble(),
                     );
                   }).toList(),
-                  xLabels:
-                      report.registrationsTrend.map((r) => r.label).toList(),
+                  xLabels: report.registrationsTrend
+                      .map((r) => r.label)
+                      .toList(),
                   height: 250,
                 ),
               ),

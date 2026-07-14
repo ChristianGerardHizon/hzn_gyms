@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -292,6 +293,8 @@ class _SaleDetailContent extends HookConsumerWidget {
     final isVoided = statusLower == 'voided';
     final isPending = statusLower == 'pending';
     final isAwaitingPayment = statusLower == 'awaitingpayment';
+    final canVoidSale =
+        ref.watch(currentUserPermissionsProvider).value?.canVoidSales ?? false;
 
     // Show voided info card instead of actions
     if (isVoided) {
@@ -447,15 +450,16 @@ class _SaleDetailContent extends HookConsumerWidget {
                       ),
                     ),
                   if (isPending || isAwaitingPayment)
-                    const PopupMenuItem<String>(
-                      value: 'voided',
-                      child: ListTile(
-                        leading: Icon(Icons.cancel, color: Colors.red),
-                        title: Text('Void Sale'),
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
+                    if (canVoidSale)
+                      const PopupMenuItem<String>(
+                        value: 'voided',
+                        child: ListTile(
+                          leading: Icon(Icons.cancel, color: Colors.red),
+                          title: Text('Void Sale'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
-                    ),
                 ],
               ],
             ),
@@ -598,9 +602,17 @@ class _SaleDetailContent extends HookConsumerWidget {
                 }
                 final balanceDue = sale.totalAmount - totalPaid;
                 final statusLower = sale.status.toLowerCase();
-                final canVoidPayment =
-                    statusLower != 'voided' && statusLower != 'refunded';
-                final canRecordPayment = canVoidPayment && balanceDue > 0;
+                final canVoidPayment = (ref
+                            .watch(currentUserPermissionsProvider)
+                            .value
+                            ?.canVoidSales ??
+                        false) &&
+                    statusLower != 'voided' &&
+                    statusLower != 'refunded';
+                final canRecordPayment =
+                    statusLower != 'voided' &&
+                    statusLower != 'refunded' &&
+                    balanceDue > 0;
 
                 return Column(
                   children: [
