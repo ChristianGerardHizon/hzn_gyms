@@ -11,6 +11,7 @@ enum SystemMode {
   cashierGroups,
   appearance,
   import,
+  debug,
 }
 
 /// Vertical navigation panel for selecting system mode.
@@ -71,13 +72,20 @@ class SystemNavPanel extends ConsumerWidget {
           Icons.palette,
           'Appearance',
         ),
-      if (isAdmin)
+      if (isAdmin) ...[
         (
           SystemMode.import,
           Icons.file_upload_outlined,
           Icons.file_upload,
           'Import',
         ),
+        (
+          SystemMode.debug,
+          Icons.bug_report_outlined,
+          Icons.bug_report,
+          'Debug',
+        ),
+      ],
     ];
 
     return SizedBox(

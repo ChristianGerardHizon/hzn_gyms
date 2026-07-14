@@ -60,6 +60,10 @@ RouteBase get $systemShellRoute => ShellRouteData.$route(
           factory: $AppearanceRoute._fromState,
         ),
         GoRouteData.$route(path: 'import', factory: $ImportRoute._fromState),
+        GoRouteData.$route(
+          path: 'debug',
+          factory: $SystemDebugRoute._fromState,
+        ),
       ],
     ),
   ],
@@ -300,6 +304,27 @@ mixin $ImportRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/system/import');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $SystemDebugRoute on GoRouteData {
+  static SystemDebugRoute _fromState(GoRouterState state) =>
+      const SystemDebugRoute();
+
+  @override
+  String get location => GoRouteData.$location('/system/debug');
 
   @override
   void go(BuildContext context) => context.go(location);

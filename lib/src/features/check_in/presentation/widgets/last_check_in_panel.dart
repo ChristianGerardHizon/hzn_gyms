@@ -290,10 +290,7 @@ final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
 ) async {
   final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
-  final result = await repo.fetchActive(
-    memberId,
-    validAtBranchId: branchId,
-  );
+  final result = await repo.fetchActive(memberId, validAtBranchId: branchId);
   return result.fold(
     (_) => null,
     (memberships) => memberships.isNotEmpty ? memberships.first : null,

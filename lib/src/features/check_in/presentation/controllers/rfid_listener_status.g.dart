@@ -8,17 +8,17 @@ part of 'rfid_listener_status.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Exposes RFID listener availability for the nav status icon.
+/// Exposes RFID listener on/off state for the Check-In app bar toggle.
 
 @ProviderFor(RfidListenerStatusController)
 final rfidListenerStatusControllerProvider =
     RfidListenerStatusControllerProvider._();
 
-/// Exposes RFID listener availability for the nav status icon.
+/// Exposes RFID listener on/off state for the Check-In app bar toggle.
 final class RfidListenerStatusControllerProvider
     extends
         $NotifierProvider<RfidListenerStatusController, RfidListenerStatus> {
-  /// Exposes RFID listener availability for the nav status icon.
+  /// Exposes RFID listener on/off state for the Check-In app bar toggle.
   RfidListenerStatusControllerProvider._()
     : super(
         from: null,
@@ -47,9 +47,9 @@ final class RfidListenerStatusControllerProvider
 }
 
 String _$rfidListenerStatusControllerHash() =>
-    r'b522a90a75e604f19f538f274b3691158ffc7a3f';
+    r'f17638a6e8ff5cb67480b7a9813f1799e36d7266';
 
-/// Exposes RFID listener availability for the nav status icon.
+/// Exposes RFID listener on/off state for the Check-In app bar toggle.
 
 abstract class _$RfidListenerStatusController
     extends $Notifier<RfidListenerStatus> {

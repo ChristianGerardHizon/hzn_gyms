@@ -4,8 +4,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/breakpoints.dart';
-import '../../domain/report_aggregations.dart';
 import '../../domain/report_period.dart';
+import '../../domain/sales_report.dart';
 import '../controllers/attendance_report_controller.dart';
 import '../controllers/inventory_report_controller.dart';
 import '../controllers/membership_report_controller.dart';
@@ -158,13 +158,21 @@ class _ReportExportButton extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Future<void> openMenu() async {
       final box = context.findRenderObject() as RenderBox?;
-      if (box == null) return;
+      final overlay =
+          Overlay.of(context).context.findRenderObject() as RenderBox?;
+      if (box == null || overlay == null) return;
+
+      final topLeft = box.localToGlobal(Offset.zero, ancestor: overlay);
+      final bottomRight = box.localToGlobal(
+        box.size.bottomRight(Offset.zero),
+        ancestor: overlay,
+      );
 
       final action = await showMenu<_ReportExportAction>(
         context: context,
         position: RelativeRect.fromRect(
-          box.localToGlobal(Offset.zero) & box.size,
-          Offset.zero & MediaQuery.sizeOf(context),
+          Rect.fromPoints(topLeft, bottomRight),
+          Offset.zero & overlay.size,
         ),
         items: const [
           PopupMenuItem(
@@ -235,10 +243,12 @@ class _ReportExportButton extends HookConsumerWidget {
     WidgetRef ref,
     ReportPeriodSelection period,
   ) {
-    final report = ref.read(salesReportProvider).value;
-    if (report == null) return null;
+    final core = ref.read(salesReportProvider).value;
+    if (core == null) return null;
+    final extras =
+        ref.read(salesReportExtrasProvider).value ?? SalesReportExtras.empty;
     return buildSalesReportPdfData(
-      report: report,
+      report: core.mergeExtras(extras),
       period: period,
       currencyFormat: currencyFormat,
     );

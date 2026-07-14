@@ -365,8 +365,8 @@ Member (master)
 
 | File | Purpose |
 |------|---------|
-| `lib/src/core/pages/app_root.dart` | Main shell widget with 10-route navigation |
+| `lib/src/core/pages/app_root.dart` | Main shell widget with navigation |
 | `lib/src/core/widgets/mobile_bottom_nav.dart` | Bottom navigation (3 items + More) |
-| `lib/src/core/widgets/mobile_drawer.dart` | Mobile drawer (10 navigation items) |
-| `lib/src/core/widgets/tablet_nav_rail.dart` | Tablet navigation rail (10 destinations) |
+| `lib/src/core/widgets/mobile_drawer.dart` | Mobile drawer (permission-filtered destinations) |
+| `lib/src/core/widgets/tablet_nav_rail.dart` | Tablet navigation rail |
 | `lib/src/core/utils/breakpoints.dart` | Centralized breakpoint definitions |

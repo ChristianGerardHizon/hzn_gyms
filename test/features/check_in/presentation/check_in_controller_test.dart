@@ -151,6 +151,9 @@ void main() {
     final success = result as CardCheckInSuccess;
     expect(success.memberName, 'Jane Doe');
     expect(success.checkIn.id, checkIn.id);
+    expect(success.membershipName, 'Monthly Plan');
+    expect(success.membershipEndDate, isNotNull);
+    expect(success.membershipDaysRemaining, isNotNull);
   });
 
   test('returns failed when check-in repository errors', () async {

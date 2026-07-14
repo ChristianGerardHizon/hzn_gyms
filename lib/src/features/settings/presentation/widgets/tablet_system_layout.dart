@@ -17,6 +17,7 @@ import 'dialogs/quantity_unit_form_dialog.dart';
 import 'dialogs/printer_config_form_dialog.dart';
 import 'dialogs/product_category_form_dialog.dart';
 import 'import_landing_panel.dart';
+import 'system_debug_panel.dart';
 import 'system_nav_panel.dart';
 import 'theme_settings_panel.dart';
 
@@ -52,6 +53,8 @@ class TabletSystemLayout extends ConsumerWidget {
       currentMode = SystemMode.appearance;
     } else if (path.contains('/import')) {
       currentMode = SystemMode.import;
+    } else if (path.contains('/debug')) {
+      currentMode = SystemMode.debug;
     } else {
       currentMode = SystemMode.productCategories;
     }
@@ -75,18 +78,22 @@ class TabletSystemLayout extends ConsumerWidget {
                 const AppearanceRoute().go(context);
               case SystemMode.import:
                 const ImportRoute().go(context);
+              case SystemMode.debug:
+                const SystemDebugRoute().go(context);
             }
           },
         ),
         const VerticalDivider(width: 1),
 
-        // Panel 2: List (or full panel for appearance/import)
+        // Panel 2: List (or full panel for appearance/import/debug)
         if (currentMode == SystemMode.appearance) ...[
           // Appearance mode: Show settings panel directly (no list/detail split)
           const Expanded(child: ThemeSettingsPanel()),
         ] else if (currentMode == SystemMode.import) ...[
           // Import mode: Show landing panel directly (no list/detail split)
           const Expanded(child: ImportLandingPanel()),
+        ] else if (currentMode == SystemMode.debug) ...[
+          const Expanded(child: SystemDebugPanel()),
         ] else if (currentMode == SystemMode.cashierGroups) ...[
           // Cashier groups mode: List + detail split
           SizedBox(
@@ -112,6 +119,8 @@ class TabletSystemLayout extends ConsumerWidget {
               SystemMode.appearance =>
                 const SizedBox.shrink(), // Handled above
               SystemMode.import =>
+                const SizedBox.shrink(), // Handled above
+              SystemMode.debug =>
                 const SizedBox.shrink(), // Handled above
               SystemMode.cashierGroups =>
                 const SizedBox.shrink(), // Handled above

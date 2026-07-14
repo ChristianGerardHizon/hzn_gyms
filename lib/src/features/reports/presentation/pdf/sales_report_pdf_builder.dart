@@ -15,7 +15,11 @@ ReportPdfData buildSalesReportPdfData({
   DateTime? generatedAt,
 }) {
   final generated = generatedAt ?? DateTime.now();
-  final salesRows = _salesTransactionRows(report.sales, currencyFormat);
+  // Transaction rows only for Day — longer periods use summary tables so PDF
+  // generation does not embed every sale in the range.
+  final salesRows = period.period == ReportPeriod.day
+      ? _salesTransactionRows(report.sales, currencyFormat)
+      : <List<String>>[];
   final itemTypeRows = report.revenueByItemType.entries
       .map((e) => [itemTypeLabel(e.key), currencyFormat.format(e.value)])
       .toList();
@@ -23,7 +27,14 @@ ReportPdfData buildSalesReportPdfData({
   final ({List<String> headers, List<List<String>> rows}) table;
   if (salesRows.isNotEmpty) {
     table = (
-      headers: ['Receipt', 'Date', 'Description', 'Customer', 'Amount', 'Status'],
+      headers: [
+        'Receipt',
+        'Date',
+        'Description',
+        'Customer',
+        'Amount',
+        'Status',
+      ],
       rows: salesRows,
     );
   } else if (itemTypeRows.isNotEmpty) {
@@ -57,7 +68,7 @@ ReportPdfData buildSalesReportPdfData({
     },
     tableHeaders: table.headers,
     tableRows: table.rows,
-    tableTitle: salesRows.isNotEmpty ? 'SALES TRANSACTIONS' : 'DETAILED DATA',
+    tableTitle: salesRows.isNotEmpty ? 'SALES TRANSACTIONS' : null,
     additionalNotes:
         'Revenue by item type is sale line subtotals (products and memberships). '
         'Total Revenue is cash collected from payments. Do not sum with Membership plan value.',
@@ -74,8 +85,7 @@ List<List<String>> _salesTransactionRows(
   final dateFormat = DateFormat('MMM d, y hh:mm a');
   return sales.map<List<String>>((sale) {
     final created = sale.created;
-    final dateLabel =
-        created != null ? dateFormat.format(created) : '-';
+    final dateLabel = created != null ? dateFormat.format(created) : '-';
     return [
       sale.receiptNumber,
       dateLabel,

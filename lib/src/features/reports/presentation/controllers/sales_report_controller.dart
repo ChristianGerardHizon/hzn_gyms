@@ -7,7 +7,7 @@ import 'report_period_controller.dart';
 
 part 'sales_report_controller.g.dart';
 
-/// Fetches and caches sales report data.
+/// View-based sales KPIs and charts (fast path).
 @Riverpod(keepAlive: true)
 Future<SalesReport> salesReport(Ref ref) async {
   final period = ref.watch(reportPeriodControllerProvider);
@@ -20,4 +20,19 @@ Future<SalesReport> salesReport(Ref ref) async {
   );
 
   return result.fold((failure) => throw failure, (report) => report);
+}
+
+/// Lean unpaid / staff / Day list — loads after [salesReportProvider].
+@Riverpod(keepAlive: true)
+Future<SalesReportExtras> salesReportExtras(Ref ref) async {
+  final period = ref.watch(reportPeriodControllerProvider);
+  final branchId = ref.watch(currentBranchIdProvider);
+  final repository = ref.read(reportsRepositoryProvider);
+
+  final result = await repository.getSalesReportExtras(
+    period: period,
+    branchId: branchId,
+  );
+
+  return result.fold((failure) => throw failure, (extras) => extras);
 }

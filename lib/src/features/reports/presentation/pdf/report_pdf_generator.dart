@@ -83,7 +83,23 @@ Future<Uint8List> _buildReportPdfBytes(_ReportPdfPayload payload) async {
         _buildKpiSection(data),
         if (data.tableHeaders != null && data.tableRows != null) ...[
           pw.SizedBox(height: 20),
-          _buildDataTable(data),
+          pw.Text(
+            data.tableTitle ?? 'DETAILED DATA',
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 8),
+          pw.TableHelper.fromTextArray(
+            headers: data.tableHeaders!,
+            data: data.tableRows!,
+            border: pw.TableBorder.all(color: PdfColors.grey400),
+            headerStyle: pw.TextStyle(
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 9),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+            cellPadding: const pw.EdgeInsets.all(6),
+          ),
         ],
         if (data.additionalNotes != null) ...[
           pw.SizedBox(height: 20),
@@ -226,51 +242,6 @@ pw.Widget _buildKpiSection(ReportPdfData data) {
         }).toList(),
       ),
     ],
-  );
-}
-
-pw.Widget _buildDataTable(ReportPdfData data) {
-  final headers = data.tableHeaders!;
-  final rows = data.tableRows!;
-
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      pw.Text(
-        data.tableTitle ?? 'DETAILED DATA',
-        style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-      ),
-      pw.SizedBox(height: 8),
-      pw.Table(
-        border: pw.TableBorder.all(color: PdfColors.grey400),
-        children: [
-          pw.TableRow(
-            decoration: const pw.BoxDecoration(color: PdfColors.grey200),
-            children: headers
-                .map((h) => _tableCell(h, isHeader: true))
-                .toList(),
-          ),
-          ...rows.map((row) {
-            return pw.TableRow(
-              children: row.map((cell) => _tableCell(cell)).toList(),
-            );
-          }),
-        ],
-      ),
-    ],
-  );
-}
-
-pw.Widget _tableCell(String text, {bool isHeader = false}) {
-  return pw.Padding(
-    padding: const pw.EdgeInsets.all(6),
-    child: pw.Text(
-      text,
-      style: pw.TextStyle(
-        fontSize: 9,
-        fontWeight: isHeader ? pw.FontWeight.bold : null,
-      ),
-    ),
   );
 }
 

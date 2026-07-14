@@ -9,6 +9,9 @@ void main() {
       CardCheckInSuccess(
         checkIn: buildCheckIn(),
         memberName: 'Jane',
+        membershipName: 'Monthly Plan',
+        membershipEndDate: DateTime(2026, 8, 1),
+        membershipDaysRemaining: 17,
       ),
       const CardCheckInCardNotFound(),
       const CardCheckInNoActiveMembership(memberName: 'Jane'),

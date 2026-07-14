@@ -135,6 +135,7 @@ MemberMembership buildMemberMembership({
   String branchId = 'branch-1',
   List<String> membershipValidBranches = const [],
   String? memberName = 'Jane Doe',
+  String? membershipName = 'Monthly Plan',
 }) {
   final start = startDate ?? DateTime.now().subtract(const Duration(days: 1));
   final end = endDate ?? DateTime.now().add(const Duration(days: 29));
@@ -148,6 +149,7 @@ MemberMembership buildMemberMembership({
     branchId: branchId,
     membershipValidBranches: membershipValidBranches,
     memberName: memberName,
+    membershipName: membershipName,
   );
 }
 
@@ -184,14 +186,18 @@ CheckIn buildCheckIn({
   String memberId = 'member-1',
   String branchId = 'branch-1',
   String? memberMembershipId,
+  String? memberName,
+  DateTime? checkInTime,
+  CheckInMethod method = CheckInMethod.rfid,
 }) {
   return CheckIn(
     id: id,
     memberId: memberId,
     branchId: branchId,
-    checkInTime: DateTime.now(),
-    method: CheckInMethod.rfid,
+    checkInTime: checkInTime ?? DateTime.now(),
+    method: method,
     memberMembershipId: memberMembershipId,
+    memberName: memberName,
   );
 }
 

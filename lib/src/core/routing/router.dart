@@ -52,6 +52,7 @@ GoRouter router(Ref ref) {
         routes: [
           $dashboardRoute,
           $checkInRoute,
+          $checkInRecordsRoute,
           $productsShellRoute,
           $membersShellRoute,
           $membershipsShellRoute,

@@ -17,6 +17,7 @@ import '../../../features/settings/presentation/widgets/import_landing_panel.dar
 import '../../../features/settings/presentation/widgets/quantity_unit_detail_panel.dart';
 import '../../../features/settings/presentation/controllers/quantity_units_controller.dart';
 import '../../../features/settings/presentation/widgets/dialogs/quantity_unit_form_dialog.dart';
+import '../../../features/settings/presentation/widgets/system_debug_panel.dart';
 import '../../../features/quantity_units/domain/quantity_unit.dart';
 import '../../permissions/current_user_permissions.dart';
 import '../../utils/breakpoints.dart';
@@ -65,6 +66,8 @@ part 'system.routes.g.dart';
         TypedGoRoute<AppearanceRoute>(path: 'appearance'),
         // Import products from CSV
         TypedGoRoute<ImportRoute>(path: 'import'),
+        // Debug tools (RFID simulation, etc.)
+        TypedGoRoute<SystemDebugRoute>(path: 'debug'),
       ],
     ),
   ],
@@ -228,6 +231,19 @@ class ImportRoute extends GoRouteData with $ImportRoute {
   }
 }
 
+/// System debug tools route (RFID simulation, etc.).
+class SystemDebugRoute extends GoRouteData with $SystemDebugRoute {
+  const SystemDebugRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    if (Breakpoints.isTabletOrLarger(context)) {
+      return const SizedBox.shrink();
+    }
+    return const _MobileSystemDebugPage();
+  }
+}
+
 /// Cashier groups management route.
 class CashierGroupsRoute extends GoRouteData with $CashierGroupsRoute {
   const CashierGroupsRoute();
@@ -323,7 +339,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
           ],
-          if (isAdmin)
+          if (isAdmin) ...[
             _SystemOptionCard(
               icon: Icons.file_upload,
               title: 'Import',
@@ -331,6 +347,15 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               color: Colors.indigo,
               onTap: () => const ImportRoute().go(context),
             ),
+            const SizedBox(height: 16),
+            _SystemOptionCard(
+              icon: Icons.bug_report,
+              title: 'Debug',
+              description: 'Simulate RFID scans and other test tools',
+              color: Colors.brown,
+              onTap: () => const SystemDebugRoute().go(context),
+            ),
+          ],
         ],
       ),
     );
@@ -669,6 +694,16 @@ class _MobileImportPage extends StatelessWidget {
       ),
       body: const ImportLandingPanel(),
     );
+  }
+}
+
+/// Mobile system debug page.
+class _MobileSystemDebugPage extends StatelessWidget {
+  const _MobileSystemDebugPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SystemDebugPanel();
   }
 }
 

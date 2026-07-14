@@ -14,6 +14,10 @@ part of 'dashboard_members_controller.dart';
 /// Uses server-side pagination and filtering. A single API call
 /// replaces the previous 3-call approach (members + active memberships
 /// + all memberships).
+///
+/// Keeps itself alive briefly so silent prefetch via `.future` cannot dispose
+/// the provider while the network request is still in flight (Riverpod would
+/// otherwise throw "disposed during loading state").
 
 @ProviderFor(dashboardMembersPage)
 final dashboardMembersPageProvider = DashboardMembersPageFamily._();
@@ -24,6 +28,10 @@ final dashboardMembersPageProvider = DashboardMembersPageFamily._();
 /// Uses server-side pagination and filtering. A single API call
 /// replaces the previous 3-call approach (members + active memberships
 /// + all memberships).
+///
+/// Keeps itself alive briefly so silent prefetch via `.future` cannot dispose
+/// the provider while the network request is still in flight (Riverpod would
+/// otherwise throw "disposed during loading state").
 
 final class DashboardMembersPageProvider
     extends
@@ -41,6 +49,10 @@ final class DashboardMembersPageProvider
   /// Uses server-side pagination and filtering. A single API call
   /// replaces the previous 3-call approach (members + active memberships
   /// + all memberships).
+  ///
+  /// Keeps itself alive briefly so silent prefetch via `.future` cannot dispose
+  /// the provider while the network request is still in flight (Riverpod would
+  /// otherwise throw "disposed during loading state").
   DashboardMembersPageProvider._({
     required DashboardMembersPageFamily super.from,
     required ({int page, String? searchQuery, MemberStatusFilter statusFilter})
@@ -98,7 +110,7 @@ final class DashboardMembersPageProvider
 }
 
 String _$dashboardMembersPageHash() =>
-    r'28d42805fe31dc448dff7a6ba26109086eabca48';
+    r'e845fc4f4facc7ff5d801b800f963b2e0ca2b97d';
 
 /// Fetches a single page of members with their membership status
 /// from the [membersWithMembershipStatus] view collection.
@@ -106,6 +118,10 @@ String _$dashboardMembersPageHash() =>
 /// Uses server-side pagination and filtering. A single API call
 /// replaces the previous 3-call approach (members + active memberships
 /// + all memberships).
+///
+/// Keeps itself alive briefly so silent prefetch via `.future` cannot dispose
+/// the provider while the network request is still in flight (Riverpod would
+/// otherwise throw "disposed during loading state").
 
 final class DashboardMembersPageFamily extends $Family
     with
@@ -128,6 +144,10 @@ final class DashboardMembersPageFamily extends $Family
   /// Uses server-side pagination and filtering. A single API call
   /// replaces the previous 3-call approach (members + active memberships
   /// + all memberships).
+  ///
+  /// Keeps itself alive briefly so silent prefetch via `.future` cannot dispose
+  /// the provider while the network request is still in flight (Riverpod would
+  /// otherwise throw "disposed during loading state").
 
   DashboardMembersPageProvider call({
     int page = 1,

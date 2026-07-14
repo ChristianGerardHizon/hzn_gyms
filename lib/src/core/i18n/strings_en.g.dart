@@ -378,6 +378,9 @@ class Translations$navigation$en {
 	/// en: 'Check-In'
 	String get checkIn => 'Check-In';
 
+	/// en: 'Check-In Records'
+	String get checkInRecords => 'Check-In Records';
+
 	/// en: 'Members'
 	String get members => 'Members';
 
@@ -594,6 +597,7 @@ extension on Translations {
 			'navigation.salesHistory' => 'Sales',
 			'navigation.organization' => 'Organization',
 			'navigation.checkIn' => 'Check-In',
+			'navigation.checkInRecords' => 'Check-In Records',
 			'navigation.members' => 'Members',
 			'navigation.memberships' => 'Memberships',
 			'navigation.outbox' => 'Outbox',
