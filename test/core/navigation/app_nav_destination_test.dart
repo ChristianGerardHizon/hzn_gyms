@@ -61,6 +61,16 @@ void main() {
     });
   });
 
+  group('matchesRoutePath', () {
+    test('does not treat /memberships as under /members', () {
+      expect(matchesRoutePath('/members', '/members'), isTrue);
+      expect(matchesRoutePath('/members/abc', '/members'), isTrue);
+      expect(matchesRoutePath('/memberships', '/members'), isFalse);
+      expect(matchesRoutePath('/memberships/abc', '/members'), isFalse);
+      expect(matchesRoutePath('/memberships', '/memberships'), isTrue);
+    });
+  });
+
   group('canAccessPath', () {
     final staff = CurrentUserPermissions(
       permissions: {
@@ -92,6 +102,33 @@ void main() {
       expect(canAccessPath('/cashier', staff), isTrue);
       expect(canAccessPath('/sales', staff), isTrue);
       expect(canAccessPath('/members', staff), isTrue);
+    });
+
+    test('requires memberships.view for /memberships (not members.view)', () {
+      expect(canAccessPath('/memberships', staff), isFalse);
+      expect(canAccessPath('/memberships/abc', staff), isFalse);
+
+      final withMemberships = CurrentUserPermissions(
+        permissions: {
+          ...staff.permissions,
+          Permissions.membershipsView,
+        },
+      );
+      expect(canAccessPath('/memberships', withMemberships), isTrue);
+      expect(canAccessPath('/memberships/abc', withMemberships), isTrue);
+    });
+  });
+
+  group('isPermissionSensitivePath', () {
+    test('flags admin destinations that must wait for role load', () {
+      expect(isPermissionSensitivePath('/organization'), isTrue);
+      expect(isPermissionSensitivePath('/reports'), isTrue);
+      expect(isPermissionSensitivePath('/outbox'), isTrue);
+      expect(isPermissionSensitivePath('/system/product-categories'), isTrue);
+      expect(isPermissionSensitivePath('/system'), isFalse);
+      expect(isPermissionSensitivePath('/system/appearance'), isFalse);
+      expect(isPermissionSensitivePath('/members'), isFalse);
+      expect(isPermissionSensitivePath('/'), isFalse);
     });
   });
 

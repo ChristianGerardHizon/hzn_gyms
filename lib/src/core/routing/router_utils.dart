@@ -99,7 +99,15 @@ abstract class RouterUtils {
     if (isAuthenticated && !isIgnored) {
       final permsAsync = ref.read(currentUserPermissionsProvider);
       final perms = permsAsync.value;
-      if (perms != null && !canAccessPath(currentPath, perms)) {
+      if (perms == null) {
+        // While the role is loading, block admin-only destinations so a deep
+        // link cannot flash Organization / Reports / Outbox / System tabs.
+        if (isPermissionSensitivePath(currentPath)) {
+          return DashboardRoute.path;
+        }
+        return null;
+      }
+      if (!canAccessPath(currentPath, perms)) {
         return fallbackPathFor(perms);
       }
     }

@@ -111,40 +111,48 @@ int selectedNavIndexForPath(
   return 0;
 }
 
+/// True when [location] is [path] or a nested path under it (`/path/...`).
+///
+/// Unlike [String.startsWith], this does not treat `/memberships` as under
+/// `/members`.
+bool matchesRoutePath(String location, String path) {
+  return location == path || location.startsWith('$path/');
+}
+
 /// Whether [location] is allowed for [permissions].
 bool canAccessPath(String location, CurrentUserPermissions permissions) {
   if (location == DashboardRoute.path || location == ProfileRoute.path) {
     return true;
   }
 
-  if (location.startsWith(CheckInRoute.path)) {
+  if (matchesRoutePath(location, CheckInRoute.path)) {
     return permissions.has(Permissions.checkInsView);
   }
-  if (location.startsWith(SalesRoute.path)) {
+  if (matchesRoutePath(location, SalesRoute.path)) {
     return permissions.has(Permissions.salesCreate);
   }
-  if (location.startsWith(SalesHistoryRoute.path)) {
+  if (matchesRoutePath(location, SalesHistoryRoute.path)) {
     return permissions.has(Permissions.salesView);
   }
-  if (location.startsWith(ProductsRoute.path)) {
+  if (matchesRoutePath(location, ProductsRoute.path)) {
     return permissions.has(Permissions.productsView);
   }
-  if (location.startsWith(MembersRoute.path)) {
+  if (matchesRoutePath(location, MembersRoute.path)) {
     return permissions.has(Permissions.membersView);
   }
-  if (location.startsWith(MembershipsRoute.path)) {
+  if (matchesRoutePath(location, MembershipsRoute.path)) {
     return permissions.has(Permissions.membershipsView);
   }
-  if (location.startsWith(ReportsRoute.path)) {
+  if (matchesRoutePath(location, ReportsRoute.path)) {
     return permissions.has(Permissions.reportsView);
   }
-  if (location.startsWith(OrganizationRoute.path)) {
+  if (matchesRoutePath(location, OrganizationRoute.path)) {
     return permissions.canManageUsers;
   }
-  if (location.startsWith(OutboxRoute.path)) {
+  if (matchesRoutePath(location, OutboxRoute.path)) {
     return permissions.canManageSystem;
   }
-  if (location.startsWith(SystemRoute.path)) {
+  if (matchesRoutePath(location, SystemRoute.path)) {
     if (!permissions.canViewSettings) return false;
     // Appearance is allowed with settings.view; other system tabs need admin.
     if (location == SystemRoute.path ||
@@ -154,6 +162,16 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
     return permissions.canManageSystem;
   }
   return true;
+}
+
+/// Paths that must not be reached before role permissions resolve.
+bool isPermissionSensitivePath(String location) {
+  return matchesRoutePath(location, OrganizationRoute.path) ||
+      matchesRoutePath(location, ReportsRoute.path) ||
+      matchesRoutePath(location, OutboxRoute.path) ||
+      (matchesRoutePath(location, SystemRoute.path) &&
+          location != SystemRoute.path &&
+          !location.startsWith('${SystemRoute.path}/appearance'));
 }
 
 /// First fallback path when access is denied.

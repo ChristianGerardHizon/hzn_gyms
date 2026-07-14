@@ -172,10 +172,10 @@ class DashboardMembersSection extends HookConsumerWidget {
         }
         rethrow;
       } finally {
-        if (!canCommit()) return;
+        // Always clear in-flight pages so a superseded/cancelled prefetch
+        // does not leave the load-more spinner stuck or skip later pages.
         try {
-          final next = {...prefetchInFlight.value}
-            ..removeAll(pagesToFetch);
+          final next = {...prefetchInFlight.value}..removeAll(pagesToFetch);
           prefetchInFlight.value = next;
           if (prefetchInFlight.value.isEmpty) {
             isLoadingMore.value = false;

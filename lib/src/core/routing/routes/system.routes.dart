@@ -90,9 +90,11 @@ class SystemRoute extends GoRouteData with $SystemRoute {
   @override
   String? redirect(BuildContext context, GoRouterState state) {
     final perms = ProviderScope.containerOf(context)
-            .read(currentUserPermissionsProvider)
-            .value ??
-        CurrentUserPermissions.empty;
+        .read(currentUserPermissionsProvider)
+        .value;
+    // Wait until the role loads — defaulting to empty would send staff to the
+    // tablet admin tab (product-categories) before settings.view is known.
+    if (perms == null) return null;
 
     // Non-admin with settings access lands on Appearance only.
     if (!perms.canManageSystem && perms.canViewSettings) {
