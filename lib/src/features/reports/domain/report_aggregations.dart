@@ -26,8 +26,7 @@ String formatViewMonth(DateTime date) {
 
 String formatViewYear(DateTime date) => date.year.toString();
 
-DateTime startOfDay(DateTime date) =>
-    DateTime(date.year, date.month, date.day);
+DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 
 /// Monday 00:00 of the week containing [date] (ISO-style Mon–Sun).
 DateTime startOfWeekMonday(DateTime date) {
@@ -73,10 +72,7 @@ String? buildViewDateRangeFilter({
     start = formatViewDate(startDate);
     end = formatViewDate(endDate);
   }
-  final parts = <String>[
-    "$field >= '$start'",
-    "$field <= '$end'",
-  ];
+  final parts = <String>["$field >= '$start'", "$field <= '$end'"];
   if (branchId != null && branchId.isNotEmpty) {
     parts.add('branch = "$branchId"');
   }
@@ -235,15 +231,34 @@ String normalizeSalesItemType(String? itemType) {
   return itemType;
 }
 
+/// Derives Day-period revenue KPIs from raw sales when the summary view is empty.
+///
+/// Counts `completed`/`paid` sales; revenue sums only paid sales so unpaid AR
+/// does not inflate “cash collected.”
+({num totalRevenue, int transactionCount}) daySalesKpisFromSales(
+  Iterable<({String status, bool isPaid, num totalAmount})> sales,
+) {
+  var totalRevenue = 0.0;
+  var transactionCount = 0;
+  for (final sale in sales) {
+    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    if (sale.status != 'completed' && sale.status != 'paid') continue;
+    transactionCount++;
+    if (sale.isPaid) totalRevenue += sale.totalAmount.toDouble();
+  }
+  return (totalRevenue: totalRevenue, transactionCount: transactionCount);
+}
+
 /// Aggregates view rows into ranked top-selling items (all sale line types).
 ///
 /// Rows are keyed by name + item type so a product and membership with the
 /// same name stay separate. Every non-empty named line is included.
 List<({String name, String itemType, num quantity, num revenue})>
-    aggregateTopSellingItems(
+aggregateTopSellingItems(
   Iterable<({String name, String? itemType, num quantity, num revenue})> rows,
 ) {
-  final map = <String, ({String name, String itemType, num quantity, num revenue})>{};
+  final map =
+      <String, ({String name, String itemType, num quantity, num revenue})>{};
   for (final row in rows) {
     if (row.name.isEmpty) continue;
     final type = normalizeSalesItemType(row.itemType);
@@ -265,8 +280,7 @@ List<({String name, String itemType, num quantity, num revenue})>
       );
     }
   }
-  return map.values.toList()
-    ..sort((a, b) => b.revenue.compareTo(a.revenue));
+  return map.values.toList()..sort((a, b) => b.revenue.compareTo(a.revenue));
 }
 
 /// Normalizes a sale line into the Sales revenue-by-type bucket.
@@ -420,10 +434,7 @@ num effectiveStockQuantity({
 }
 
 /// Stock status bucket for inventory reporting.
-String stockStatusLabel({
-  required num qty,
-  required num threshold,
-}) {
+String stockStatusLabel({required num qty, required num threshold}) {
   if (qty <= 0) return 'Out of Stock';
   if (threshold > 0 && qty <= threshold) return 'Low Stock';
   return 'In Stock';
@@ -431,7 +442,7 @@ String stockStatusLabel({
 
 /// Which sales summary view + date field to use for [period].
 ({String collection, String dateField, bool asMonth, bool asYear})
-    salesSummaryViewFor(ReportPeriod period) {
+salesSummaryViewFor(ReportPeriod period) {
   switch (period) {
     case ReportPeriod.day:
     case ReportPeriod.weekly:
@@ -466,7 +477,7 @@ String stockStatusLabel({
 }
 
 ({String collection, String dateField, bool asMonth, bool asYear})
-    revenueByItemTypeViewFor(ReportPeriod period) {
+revenueByItemTypeViewFor(ReportPeriod period) {
   switch (period) {
     case ReportPeriod.day:
     case ReportPeriod.weekly:
@@ -501,7 +512,7 @@ String stockStatusLabel({
 }
 
 ({String collection, String dateField, bool asMonth, bool asYear})
-    topSellingViewFor(ReportPeriod period) {
+topSellingViewFor(ReportPeriod period) {
   switch (period) {
     case ReportPeriod.day:
     case ReportPeriod.weekly:
@@ -530,7 +541,7 @@ String stockStatusLabel({
 }
 
 ({String collection, String dateField, bool asMonth, bool asYear})
-    checkinsViewFor(ReportPeriod period) {
+checkinsViewFor(ReportPeriod period) {
   switch (period) {
     case ReportPeriod.day:
     case ReportPeriod.weekly:

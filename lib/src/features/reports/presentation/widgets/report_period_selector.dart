@@ -96,10 +96,7 @@ class _PeriodChipBar extends StatelessWidget {
 }
 
 class _RangePickerRow extends ConsumerWidget {
-  const _RangePickerRow({
-    required this.selection,
-    required this.isMobile,
-  });
+  const _RangePickerRow({required this.selection, required this.isMobile});
 
   final ReportPeriodSelection selection;
   final bool isMobile;
@@ -107,6 +104,38 @@ class _RangePickerRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(reportPeriodControllerProvider.notifier);
+
+    // Day uses a single date control — not From/To.
+    if (selection.period == ReportPeriod.day) {
+      final dayLabel = DateFormat('EEE, MMM d, y').format(selection.rangeStart);
+
+      Future<void> pickDay() async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: startOfDay(selection.rangeStart),
+          firstDate: DateTime(2019),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+          helpText: 'Report date',
+        );
+        if (picked != null) notifier.setDay(picked);
+      }
+
+      if (isMobile) {
+        return _RangeField(
+          caption: 'Date',
+          label: dayLabel,
+          onPressed: pickDay,
+        );
+      }
+
+      return Row(
+        children: [
+          Text('Date', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(width: 8),
+          _RangeButton(label: dayLabel, onPressed: pickDay),
+        ],
+      );
+    }
 
     final startLabel = _formatStart(selection);
     final endLabel = _formatEnd(selection);
@@ -171,9 +200,9 @@ class _RangePickerRow extends ConsumerWidget {
       case ReportPeriod.day:
         return DateFormat('MMM d, y').format(selection.rangeStart);
       case ReportPeriod.weekly:
-        return DateFormat('MMM d, y').format(
-          startOfWeekMonday(selection.rangeStart),
-        );
+        return DateFormat(
+          'MMM d, y',
+        ).format(startOfWeekMonday(selection.rangeStart));
       case ReportPeriod.monthly:
         return DateFormat('MMM y').format(selection.rangeStart);
       case ReportPeriod.yearly:
@@ -187,9 +216,9 @@ class _RangePickerRow extends ConsumerWidget {
       case ReportPeriod.day:
         return DateFormat('MMM d, y').format(selection.rangeEnd);
       case ReportPeriod.weekly:
-        return DateFormat('MMM d, y').format(
-          endOfWeekSunday(selection.rangeEnd),
-        );
+        return DateFormat(
+          'MMM d, y',
+        ).format(endOfWeekSunday(selection.rangeEnd));
       case ReportPeriod.monthly:
         return DateFormat('MMM y').format(selection.rangeEnd);
       case ReportPeriod.yearly:
@@ -227,11 +256,7 @@ class _RangeField extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onPressed,
           icon: const Icon(Icons.calendar_month, size: 16),
-          label: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           style: OutlinedButton.styleFrom(
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -244,10 +269,7 @@ class _RangeField extends StatelessWidget {
 }
 
 class _RangeButton extends StatelessWidget {
-  const _RangeButton({
-    required this.label,
-    required this.onPressed,
-  });
+  const _RangeButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
@@ -270,12 +292,13 @@ Future<DateTime?> _pickForGrain(
 }) {
   switch (selection.period) {
     case ReportPeriod.day:
+      // Day uses the dedicated single-date picker in [_RangePickerRow].
       return showDatePicker(
         context: context,
         initialDate: startOfDay(initial),
         firstDate: DateTime(2019),
         lastDate: DateTime.now().add(const Duration(days: 365)),
-        helpText: '$title date',
+        helpText: 'Report date',
       );
     case ReportPeriod.weekly:
       return showDatePicker(
@@ -293,11 +316,7 @@ Future<DateTime?> _pickForGrain(
       );
     case ReportPeriod.yearly:
     case ReportPeriod.allTime:
-      return _showYearPicker(
-        context,
-        initial: initial,
-        title: '$title year',
-      );
+      return _showYearPicker(context, initial: initial, title: '$title year');
   }
 }
 
@@ -331,7 +350,9 @@ Future<DateTime?> _showMonthYearPicker(
                       final m = i + 1;
                       return DropdownMenuItem(
                         value: m,
-                        child: Text(DateFormat('MMMM').format(DateTime(2000, m))),
+                        child: Text(
+                          DateFormat('MMMM').format(DateTime(2000, m)),
+                        ),
                       );
                     }),
                     onChanged: (v) {
@@ -347,10 +368,7 @@ Future<DateTime?> _showMonthYearPicker(
                     decoration: const InputDecoration(labelText: 'Year'),
                     items: years
                         .map(
-                          (y) => DropdownMenuItem(
-                            value: y,
-                            child: Text('$y'),
-                          ),
+                          (y) => DropdownMenuItem(value: y, child: Text('$y')),
                         )
                         .toList(),
                     onChanged: (v) {
@@ -366,8 +384,7 @@ Future<DateTime?> _showMonthYearPicker(
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                onPressed: () =>
-                    Navigator.pop(context, DateTime(year, month)),
+                onPressed: () => Navigator.pop(context, DateTime(year, month)),
                 child: const Text('Apply'),
               ),
             ],
@@ -401,12 +418,7 @@ Future<DateTime?> _showYearPicker(
               initialValue: year,
               decoration: const InputDecoration(labelText: 'Year'),
               items: years
-                  .map(
-                    (y) => DropdownMenuItem(
-                      value: y,
-                      child: Text('$y'),
-                    ),
-                  )
+                  .map((y) => DropdownMenuItem(value: y, child: Text('$y')))
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => year = v);

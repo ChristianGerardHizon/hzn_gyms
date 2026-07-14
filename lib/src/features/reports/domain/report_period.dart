@@ -6,12 +6,7 @@ import 'report_aggregations.dart';
 part 'report_period.mapper.dart';
 
 /// Chart X-axis grain for trend series (independent of [ReportPeriod] name).
-enum TrendGranularity {
-  day,
-  week,
-  month,
-  year,
-}
+enum TrendGranularity { day, week, month, year }
 
 /// Time period grain for reports (chart bucketing + picker UI).
 @MappableEnum()
@@ -159,7 +154,12 @@ class ReportPeriodSelection with ReportPeriodSelectionMappable {
       ReportPeriodSelection.current(next);
 
   /// Set range start, snapped to [period] grain. Ensures start ≤ end.
+  ///
+  /// Day period always keeps a single calendar day (start and end of that day).
   ReportPeriodSelection withRangeStart(DateTime value) {
+    if (period == ReportPeriod.day) {
+      return withDay(value);
+    }
     final snapped = snapRangeStart(period, value);
     var end = rangeEnd;
     if (end.isBefore(snapped)) {
@@ -173,7 +173,12 @@ class ReportPeriodSelection with ReportPeriodSelectionMappable {
   }
 
   /// Set range end, snapped to [period] grain. Ensures start ≤ end.
+  ///
+  /// Day period always keeps a single calendar day (start and end of that day).
   ReportPeriodSelection withRangeEnd(DateTime value) {
+    if (period == ReportPeriod.day) {
+      return withDay(value);
+    }
     final snapped = snapRangeEnd(period, value);
     var start = rangeStart;
     if (snapped.isBefore(start)) {

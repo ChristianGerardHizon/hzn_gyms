@@ -116,13 +116,13 @@ void main() {
       expect(selection.displayRangeLabel, contains('Jul 4'));
     });
 
-    test('day period supports from/to range', () {
+    test('day range start/end keep a single calendar day', () {
       final selection = ReportPeriodSelection.current(ReportPeriod.day)
-          .withDay(DateTime(2026, 7, 1))
+          .withRangeStart(DateTime(2026, 7, 1))
           .withRangeEnd(DateTime(2026, 7, 3));
-      expect(startOfDay(selection.rangeStart), DateTime(2026, 7, 1));
+      expect(startOfDay(selection.rangeStart), DateTime(2026, 7, 3));
       expect(selection.rangeEnd.day, 3);
-      expect(selection.displayRangeLabel.contains('–'), isTrue);
+      expect(selection.displayRangeLabel.contains('–'), isFalse);
     });
   });
 
@@ -254,6 +254,26 @@ void main() {
       expect(itemTypeLabel('membership'), 'Membership');
       expect(itemTypeLabel('addon'), 'Add-on');
       expect(itemTypeLabel('walkIn'), 'Walk-in');
+    });
+  });
+
+  group('daySalesKpisFromSales', () {
+    test('counts paid completed sales and skips voided', () {
+      final result = daySalesKpisFromSales([
+        (status: 'paid', isPaid: true, totalAmount: 100),
+        (status: 'completed', isPaid: true, totalAmount: 50),
+        (status: 'paid', isPaid: false, totalAmount: 80),
+        (status: 'voided', isPaid: true, totalAmount: 999),
+        (status: 'awaitingPayment', isPaid: false, totalAmount: 40),
+      ]);
+      expect(result.transactionCount, 3);
+      expect(result.totalRevenue, 150);
+    });
+
+    test('returns zeros for empty input', () {
+      final result = daySalesKpisFromSales(const []);
+      expect(result.transactionCount, 0);
+      expect(result.totalRevenue, 0);
     });
   });
 

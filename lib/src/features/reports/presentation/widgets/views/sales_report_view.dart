@@ -51,8 +51,7 @@ class SalesReportView extends ConsumerWidget {
         (e) => MapEntry(itemTypeLabel(e.key), e.value),
       ),
     );
-    final multiDay = startOfDay(period.rangeStart) != startOfDay(period.rangeEnd);
-    final showTrend = period.period != ReportPeriod.day || multiDay;
+    final showTrend = period.period != ReportPeriod.day;
     final showSalesList = period.period == ReportPeriod.day;
 
     return SingleChildScrollView(
@@ -114,9 +113,9 @@ class SalesReportView extends ConsumerWidget {
                   child: BarChartWidget(
                     title: 'Top Selling by Revenue',
                     data: Map.fromEntries(
-                      report.topSellingProducts.take(5).map(
-                            (p) => MapEntry(p.productName, p.revenue),
-                          ),
+                      report.topSellingProducts
+                          .take(5)
+                          .map((p) => MapEntry(p.productName, p.revenue)),
                     ),
                     height: 200,
                     valueFormatter: (value) =>
@@ -156,7 +155,7 @@ class SalesReportView extends ConsumerWidget {
           ),
           if (showSalesList) ...[
             const SizedBox(height: 24),
-            _buildSalesList(context, report.sales, period),
+            _buildSalesList(context, report.sales),
           ],
           const SizedBox(height: 24),
           _buildTopProductsTable(context, report),
@@ -213,15 +212,9 @@ class SalesReportView extends ConsumerWidget {
     );
   }
 
-  Widget _buildSalesList(
-    BuildContext context,
-    List<Sale> sales,
-    ReportPeriodSelection period,
-  ) {
+  Widget _buildSalesList(BuildContext context, List<Sale> sales) {
     final theme = Theme.of(context);
-    final title = startOfDay(period.rangeStart) == startOfDay(period.rangeEnd)
-        ? 'Sales'
-        : 'Sales in Range';
+    const title = 'Sales';
 
     return Card(
       child: Padding(
@@ -231,9 +224,7 @@ class SalesReportView extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Expanded(
-                  child: Text(title, style: theme.textTheme.titleSmall),
-                ),
+                Expanded(child: Text(title, style: theme.textTheme.titleSmall)),
                 Text(
                   '${sales.length}',
                   style: theme.textTheme.labelLarge?.copyWith(
@@ -248,7 +239,7 @@ class SalesReportView extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                   child: Text(
-                    'No sales in this date range',
+                    'No sales on this day',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -265,8 +256,6 @@ class SalesReportView extends ConsumerWidget {
                   final sale = sales[index];
                   return TodaySaleListTile(
                     sale: sale,
-                    showDate: startOfDay(period.rangeStart) !=
-                        startOfDay(period.rangeEnd),
                     onTap: () => SaleDetailRoute(id: sale.id).push(context),
                   );
                 },
@@ -290,10 +279,7 @@ class SalesReportView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Top Selling Items',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Top Selling Items', style: theme.textTheme.titleSmall),
             const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -305,12 +291,14 @@ class SalesReportView extends ConsumerWidget {
                   DataColumn(label: Text('Revenue'), numeric: true),
                 ],
                 rows: report.topSellingProducts.map((product) {
-                  return DataRow(cells: [
-                    DataCell(Text(product.productName)),
-                    DataCell(Text(itemTypeLabel(product.itemType))),
-                    DataCell(Text(product.quantity.toString())),
-                    DataCell(Text(_currencyFormat.format(product.revenue))),
-                  ]);
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(product.productName)),
+                      DataCell(Text(itemTypeLabel(product.itemType))),
+                      DataCell(Text(product.quantity.toString())),
+                      DataCell(Text(_currencyFormat.format(product.revenue))),
+                    ],
+                  );
                 }).toList(),
               ),
             ),
@@ -329,10 +317,7 @@ class SalesReportView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Staff Performance',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Staff Performance', style: theme.textTheme.titleSmall),
             const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -343,11 +328,13 @@ class SalesReportView extends ConsumerWidget {
                   DataColumn(label: Text('Revenue'), numeric: true),
                 ],
                 rows: report.staffPerformance.map((staff) {
-                  return DataRow(cells: [
-                    DataCell(Text(staff.staffName)),
-                    DataCell(Text(staff.transactionCount.toString())),
-                    DataCell(Text(_currencyFormat.format(staff.revenue))),
-                  ]);
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(staff.staffName)),
+                      DataCell(Text(staff.transactionCount.toString())),
+                      DataCell(Text(_currencyFormat.format(staff.revenue))),
+                    ],
+                  );
                 }).toList(),
               ),
             ),

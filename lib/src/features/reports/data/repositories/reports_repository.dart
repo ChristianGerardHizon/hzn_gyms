@@ -56,8 +56,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
   RecordService get _saleItems =>
       _pb.collection(PocketBaseCollections.saleItems);
   RecordService get _sales => _pb.collection(PocketBaseCollections.sales);
-  RecordService get _checkIns =>
-      _pb.collection(PocketBaseCollections.checkIns);
+  RecordService get _checkIns => _pb.collection(PocketBaseCollections.checkIns);
 
   String? _viewFilter(
     ReportPeriodSelection period, {
@@ -81,242 +80,260 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required ReportPeriodSelection period,
     String? branchId,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final startDate = period.startDate;
-        final endDate = period.endDate;
-        final grain = period.trendGranularity;
+    return TaskEither.tryCatch(() async {
+      final startDate = period.startDate;
+      final endDate = period.endDate;
+      final grain = period.trendGranularity;
 
-        final salesView = salesSummaryViewFor(period.period);
-        final itemView = revenueByItemTypeViewFor(period.period);
-        final topView = topSellingViewFor(period.period);
+      final salesView = salesSummaryViewFor(period.period);
+      final itemView = revenueByItemTypeViewFor(period.period);
+      final topView = topSellingViewFor(period.period);
 
-        final salesFilter = _viewFilter(
-          period,
-          dateField: salesView.dateField,
-          asMonth: salesView.asMonth,
-          asYear: salesView.asYear,
-          branchId: branchId,
-        );
-        final itemFilter = _viewFilter(
-          period,
-          dateField: itemView.dateField,
-          asMonth: itemView.asMonth,
-          asYear: itemView.asYear,
-          branchId: branchId,
-        );
-        final topFilter = _viewFilter(
-          period,
-          dateField: topView.dateField,
-          asMonth: topView.asMonth,
-          asYear: topView.asYear,
-          branchId: branchId,
-        );
+      final salesFilter = _viewFilter(
+        period,
+        dateField: salesView.dateField,
+        asMonth: salesView.asMonth,
+        asYear: salesView.asYear,
+        branchId: branchId,
+      );
+      final itemFilter = _viewFilter(
+        period,
+        dateField: itemView.dateField,
+        asMonth: itemView.asMonth,
+        asYear: itemView.asYear,
+        branchId: branchId,
+      );
+      final topFilter = _viewFilter(
+        period,
+        dateField: topView.dateField,
+        asMonth: topView.asMonth,
+        asYear: topView.asYear,
+        branchId: branchId,
+      );
 
-        final salePeriodFilter = PBFilter()
-            .between('created', startDate, endDate)
-            .raw(
-              "(status = 'completed' || status = 'paid' || "
-              "status = 'awaitingPayment' || status = 'pending')",
-            );
-        if (branchId != null) {
-          salePeriodFilter.relation('branch', branchId);
+      final salePeriodFilter = PBFilter()
+          .between('created', startDate, endDate)
+          .raw(
+            "(status = 'completed' || status = 'paid' || "
+            "status = 'awaitingPayment' || status = 'pending')",
+          );
+      if (branchId != null) {
+        salePeriodFilter.relation('branch', branchId);
+      }
+
+      final results = await Future.wait([
+        _pb.collection(salesView.collection).getFullList(filter: salesFilter),
+        _pb.collection(topView.collection).getFullList(filter: topFilter),
+        _pb.collection(itemView.collection).getFullList(filter: itemFilter),
+        _sales.getFullList(
+          filter: salePeriodFilter.build(),
+          expand: 'cashier',
+          sort: '-created',
+        ),
+      ]);
+
+      final summaryRecords = results[0];
+      final topProductsRecords = results[1];
+      final itemTypeRecords = results[2];
+      final saleRecords = results[3];
+
+      final periodSales = saleRecords
+          .map((record) => SaleDto.fromRecord(record).toEntity())
+          .toList();
+
+      if (summaryRecords.isEmpty &&
+          itemTypeRecords.isEmpty &&
+          saleRecords.isEmpty) {
+        return SalesReport.empty;
+      }
+
+      num totalRevenue = 0;
+      int transactionCount = 0;
+      final revenueByBucket = <DateTime, num>{};
+      final revenueByPaymentMethod = <String, num>{};
+
+      for (final record in summaryRecords) {
+        final dateStr = record.getStringValue(salesView.dateField);
+        final revenue = record.getDoubleValue('total_revenue');
+        final count = record.getIntValue('transaction_count');
+        final paymentMethod = record.getStringValue('paymentMethod');
+
+        totalRevenue += revenue;
+        transactionCount += count;
+
+        final bucket = parseBucketStart(dateStr, grain);
+        if (bucket != null) {
+          revenueByBucket[bucket] = (revenueByBucket[bucket] ?? 0) + revenue;
         }
 
-        final results = await Future.wait([
-          _pb.collection(salesView.collection).getFullList(filter: salesFilter),
-          _pb.collection(topView.collection).getFullList(filter: topFilter),
-          _pb.collection(itemView.collection).getFullList(filter: itemFilter),
-          _sales.getFullList(
-            filter: salePeriodFilter.build(),
-            expand: 'cashier',
-            sort: '-created',
-          ),
-        ]);
-
-        final summaryRecords = results[0];
-        final topProductsRecords = results[1];
-        final itemTypeRecords = results[2];
-        final saleRecords = results[3];
-
-        final periodSales = saleRecords
-            .map((record) => SaleDto.fromRecord(record).toEntity())
-            .toList();
-
-        if (summaryRecords.isEmpty &&
-            itemTypeRecords.isEmpty &&
-            saleRecords.isEmpty) {
-          return SalesReport.empty;
+        if (paymentMethod.isNotEmpty) {
+          revenueByPaymentMethod[paymentMethod] =
+              (revenueByPaymentMethod[paymentMethod] ?? 0) + revenue;
         }
+      }
 
-        num totalRevenue = 0;
-        int transactionCount = 0;
-        final revenueByBucket = <DateTime, num>{};
-        final revenueByPaymentMethod = <String, num>{};
-
-        for (final record in summaryRecords) {
-          final dateStr = record.getStringValue(salesView.dateField);
-          final revenue = record.getDoubleValue('total_revenue');
-          final count = record.getIntValue('transaction_count');
-          final paymentMethod = record.getStringValue('paymentMethod');
-
-          totalRevenue += revenue;
-          transactionCount += count;
-
-          final bucket = parseBucketStart(dateStr, grain);
-          if (bucket != null) {
-            revenueByBucket[bucket] = (revenueByBucket[bucket] ?? 0) + revenue;
-          }
-
-          if (paymentMethod.isNotEmpty) {
-            revenueByPaymentMethod[paymentMethod] =
-                (revenueByPaymentMethod[paymentMethod] ?? 0) + revenue;
-          }
-        }
-
-        final avgValue =
-            transactionCount > 0 ? totalRevenue / transactionCount : 0;
-
-        // Include every sale line type (product, membership, walk-in, add-on, …).
-        final topProducts = aggregateTopSellingItems(
-          topProductsRecords.map(
-            (record) => (
-              name: record.getStringValue('productName'),
-              itemType: record.getStringValue('itemType'),
-              quantity: record.getDoubleValue('total_quantity_sold'),
-              revenue: record.getDoubleValue('total_revenue'),
+      // Day report: when the payment summary view has no rows but raw sales
+      // exist for the calendar day, derive KPIs from those sales so the Day
+      // tab is not an empty shell.
+      if (period.period == ReportPeriod.day &&
+          summaryRecords.isEmpty &&
+          periodSales.isNotEmpty) {
+        final dayKpis = daySalesKpisFromSales(
+          periodSales.map(
+            (sale) => (
+              status: sale.status,
+              isPaid: sale.isPaid,
+              totalAmount: sale.totalAmount,
             ),
           ),
-        )
-            .map(
-              (e) => ProductSalesSummary(
-                productName: e.name,
-                quantity: e.quantity,
-                revenue: e.revenue,
-                itemType: e.itemType,
-              ),
-            )
-            .toList();
-
-        final revenueByItemType = <String, num>{};
-        for (final record in itemTypeRecords) {
-          final type = record.getStringValue('itemType');
-          // Historical walk-in rows may still be typed as membership/addon with
-          // no linked member; views only expose itemType, so keep raw keys and
-          // map empty → product. New guest sales use itemType `walkIn`.
-          final key = normalizeSalesItemType(type);
-          revenueByItemType[key] =
-              (revenueByItemType[key] ?? 0) +
-              record.getDoubleValue('total_revenue');
-        }
-
-        var unpaidCount = 0;
-        num unpaidBalance = 0;
-        for (final sale in saleRecords) {
-          final status = sale.getStringValue('status');
-          if (status == 'voided' || status == 'refunded') continue;
-          final isPaid = sale.getBoolValue('isPaid');
-          final total = sale.getDoubleValue('totalAmount');
-          if (!isPaid && total > 0) {
-            unpaidCount++;
-            unpaidBalance += total;
-          }
-        }
-
-        final staffMap = <String, ({String name, int count, num revenue})>{};
-        for (final sale in saleRecords) {
-          final status = sale.getStringValue('status');
-          if (status == 'voided' || status == 'refunded') continue;
-          final cashierId = sale.getStringValue('cashier');
-          if (cashierId.isEmpty) continue;
-          final cashier = sale.get<RecordModel?>('expand.cashier');
-          final name = cashier?.getStringValue('name') ??
-              cashier?.getStringValue('username') ??
-              'Unknown';
-          final amount = sale.getDoubleValue('totalAmount');
-          final existing = staffMap[cashierId];
-          if (existing != null) {
-            staffMap[cashierId] = (
-              name: existing.name,
-              count: existing.count + 1,
-              revenue: existing.revenue + amount,
-            );
-          } else {
-            staffMap[cashierId] = (name: name, count: 1, revenue: amount);
-          }
-        }
-        final staffPerformance = staffMap.entries
-            .map(
-              (e) => StaffSalesSummary(
-                staffId: e.key,
-                staffName: e.value.name,
-                transactionCount: e.value.count,
-                revenue: e.value.revenue,
-              ),
-            )
-            .toList()
-          ..sort((a, b) => b.revenue.compareTo(a.revenue));
-
-        final revenueTrend = zeroFillBuckets(
-          values: revenueByBucket,
-          rangeStart: period.startDate,
-          rangeEnd: period.chartEndDate,
-          grain: grain,
         );
+        if (dayKpis.transactionCount > 0) {
+          totalRevenue = dayKpis.totalRevenue;
+          transactionCount = dayKpis.transactionCount;
+        }
+      }
 
-        return SalesReport(
-          totalRevenue: totalRevenue,
-          transactionCount: transactionCount,
-          averageTransactionValue: avgValue,
-          revenueTrend: revenueTrend,
-          revenueByPaymentMethod: revenueByPaymentMethod,
-          topSellingProducts: topProducts.take(10).toList(),
-          revenueByItemType: revenueByItemType,
-          unpaidSalesCount: unpaidCount,
-          unpaidBalance: unpaidBalance,
-          staffPerformance: staffPerformance,
-          sales: periodSales,
-        );
-      },
-      Failure.handle,
-    ).run();
+      final avgValue = transactionCount > 0
+          ? totalRevenue / transactionCount
+          : 0;
+
+      // Include every sale line type (product, membership, walk-in, add-on, …).
+      final topProducts =
+          aggregateTopSellingItems(
+                topProductsRecords.map(
+                  (record) => (
+                    name: record.getStringValue('productName'),
+                    itemType: record.getStringValue('itemType'),
+                    quantity: record.getDoubleValue('total_quantity_sold'),
+                    revenue: record.getDoubleValue('total_revenue'),
+                  ),
+                ),
+              )
+              .map(
+                (e) => ProductSalesSummary(
+                  productName: e.name,
+                  quantity: e.quantity,
+                  revenue: e.revenue,
+                  itemType: e.itemType,
+                ),
+              )
+              .toList();
+
+      final revenueByItemType = <String, num>{};
+      for (final record in itemTypeRecords) {
+        final type = record.getStringValue('itemType');
+        // Historical walk-in rows may still be typed as membership/addon with
+        // no linked member; views only expose itemType, so keep raw keys and
+        // map empty → product. New guest sales use itemType `walkIn`.
+        final key = normalizeSalesItemType(type);
+        revenueByItemType[key] =
+            (revenueByItemType[key] ?? 0) +
+            record.getDoubleValue('total_revenue');
+      }
+
+      var unpaidCount = 0;
+      num unpaidBalance = 0;
+      for (final sale in saleRecords) {
+        final status = sale.getStringValue('status');
+        if (status == 'voided' || status == 'refunded') continue;
+        final isPaid = sale.getBoolValue('isPaid');
+        final total = sale.getDoubleValue('totalAmount');
+        if (!isPaid && total > 0) {
+          unpaidCount++;
+          unpaidBalance += total;
+        }
+      }
+
+      final staffMap = <String, ({String name, int count, num revenue})>{};
+      for (final sale in saleRecords) {
+        final status = sale.getStringValue('status');
+        if (status == 'voided' || status == 'refunded') continue;
+        final cashierId = sale.getStringValue('cashier');
+        if (cashierId.isEmpty) continue;
+        final cashier = sale.get<RecordModel?>('expand.cashier');
+        final name =
+            cashier?.getStringValue('name') ??
+            cashier?.getStringValue('username') ??
+            'Unknown';
+        final amount = sale.getDoubleValue('totalAmount');
+        final existing = staffMap[cashierId];
+        if (existing != null) {
+          staffMap[cashierId] = (
+            name: existing.name,
+            count: existing.count + 1,
+            revenue: existing.revenue + amount,
+          );
+        } else {
+          staffMap[cashierId] = (name: name, count: 1, revenue: amount);
+        }
+      }
+      final staffPerformance =
+          staffMap.entries
+              .map(
+                (e) => StaffSalesSummary(
+                  staffId: e.key,
+                  staffName: e.value.name,
+                  transactionCount: e.value.count,
+                  revenue: e.value.revenue,
+                ),
+              )
+              .toList()
+            ..sort((a, b) => b.revenue.compareTo(a.revenue));
+
+      final revenueTrend = zeroFillBuckets(
+        values: revenueByBucket,
+        rangeStart: period.startDate,
+        rangeEnd: period.chartEndDate,
+        grain: grain,
+      );
+
+      return SalesReport(
+        totalRevenue: totalRevenue,
+        transactionCount: transactionCount,
+        averageTransactionValue: avgValue,
+        revenueTrend: revenueTrend,
+        revenueByPaymentMethod: revenueByPaymentMethod,
+        topSellingProducts: topProducts.take(10).toList(),
+        revenueByItemType: revenueByItemType,
+        unpaidSalesCount: unpaidCount,
+        unpaidBalance: unpaidBalance,
+        staffPerformance: staffPerformance,
+        sales: periodSales,
+      );
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<InventoryReport> getInventoryReport({String? branchId}) async {
-    return TaskEither.tryCatch(
-      () async {
-        final branchFilter =
-            branchId != null ? 'branch = "$branchId"' : null;
+    return TaskEither.tryCatch(() async {
+      final branchFilter = branchId != null ? 'branch = "$branchId"' : null;
 
-        final results = await Future.wait([
-          _pb
-              .collection(PocketBaseCollections.vwInventoryStatus)
-              .getFullList(filter: branchFilter),
-          _pb
-              .collection(PocketBaseCollections.vwLowStockProducts)
-              .getFullList(filter: branchFilter),
-          _pb
-              .collection(PocketBaseCollections.vwLowStockLotProducts)
-              .getFullList(filter: branchFilter),
-          _pb
-              .collection(PocketBaseCollections.vwExpiredLots)
-              .getFullList(filter: branchFilter),
-          _pb
-              .collection(PocketBaseCollections.vwNearExpirationLots)
-              .getFullList(filter: branchFilter),
-        ]);
+      final results = await Future.wait([
+        _pb
+            .collection(PocketBaseCollections.vwInventoryStatus)
+            .getFullList(filter: branchFilter),
+        _pb
+            .collection(PocketBaseCollections.vwLowStockProducts)
+            .getFullList(filter: branchFilter),
+        _pb
+            .collection(PocketBaseCollections.vwLowStockLotProducts)
+            .getFullList(filter: branchFilter),
+        _pb
+            .collection(PocketBaseCollections.vwExpiredLots)
+            .getFullList(filter: branchFilter),
+        _pb
+            .collection(PocketBaseCollections.vwNearExpirationLots)
+            .getFullList(filter: branchFilter),
+      ]);
 
-        return _aggregateInventoryFromViews(
-          inventoryRecords: results[0],
-          lowStockRecords: results[1],
-          lowStockLotRecords: results[2],
-          expiredLotCount: results[3].length,
-          nearExpirationLotCount: results[4].length,
-        );
-      },
-      Failure.handle,
-    ).run();
+      return _aggregateInventoryFromViews(
+        inventoryRecords: results[0],
+        lowStockRecords: results[1],
+        lowStockLotRecords: results[2],
+        expiredLotCount: results[3].length,
+        nearExpirationLotCount: results[4].length,
+      );
+    }, Failure.handle).run();
   }
 
   InventoryReport _aggregateInventoryFromViews({
@@ -360,8 +377,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       }
 
       final categoryId = product.getStringValue('category');
-      final categoryName =
-          categoryId.isEmpty ? 'Uncategorized' : categoryId;
+      final categoryName = categoryId.isEmpty ? 'Uncategorized' : categoryId;
       final categoryExpand = product.get<RecordModel?>('expand.category');
       final resolvedCategory =
           categoryExpand?.getStringValue('name') ?? categoryName;
@@ -414,137 +430,131 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required ReportPeriodSelection period,
     String? branchId,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final startDate = period.startDate;
-        final endDate = period.endDate;
-        final grain = period.trendGranularity;
+    return TaskEither.tryCatch(() async {
+      final startDate = period.startDate;
+      final endDate = period.endDate;
+      final grain = period.trendGranularity;
 
-        final branchFilter = branchId != null
-            ? PBFilter().relation('branch', branchId)
-            : PBFilter();
+      final branchFilter = branchId != null
+          ? PBFilter().relation('branch', branchId)
+          : PBFilter();
 
-        final periodFilter = PBFilter().between('created', startDate, endDate);
-        final mmPeriodFilter = PBFilter().and(branchFilter).and(periodFilter);
+      final periodFilter = PBFilter().between('created', startDate, endDate);
+      final mmPeriodFilter = PBFilter().and(branchFilter).and(periodFilter);
 
-        final now = DateTime.now();
-        final activeFilter = PBFilter()
-            .equals('status', 'active')
-            .lessOrEqual('startDate', now)
-            .greaterOrEqual('endDate', DateTime(now.year, now.month, now.day));
-        if (branchId != null) {
-          activeFilter.relation('branch', branchId);
-        }
+      final now = DateTime.now();
+      final activeFilter = PBFilter()
+          .equals('status', 'active')
+          .lessOrEqual('startDate', now)
+          .greaterOrEqual('endDate', DateTime(now.year, now.month, now.day));
+      if (branchId != null) {
+        activeFilter.relation('branch', branchId);
+      }
 
-        final sevenDays = now.add(const Duration(days: 7));
-        final expiringFilter = PBFilter()
-            .equals('status', 'active')
-            .greaterOrEqual(
-              'endDate',
-              DateTime(now.year, now.month, now.day),
-            )
-            .lessOrEqual(
-              'endDate',
-              DateTime(
-                sevenDays.year,
-                sevenDays.month,
-                sevenDays.day,
-                23,
-                59,
-                59,
-              ),
-            );
-        if (branchId != null) {
-          expiringFilter.relation('branch', branchId);
-        }
+      final sevenDays = now.add(const Duration(days: 7));
+      final expiringFilter = PBFilter()
+          .equals('status', 'active')
+          .greaterOrEqual('endDate', DateTime(now.year, now.month, now.day))
+          .lessOrEqual(
+            'endDate',
+            DateTime(
+              sevenDays.year,
+              sevenDays.month,
+              sevenDays.day,
+              23,
+              59,
+              59,
+            ),
+          );
+      if (branchId != null) {
+        expiringFilter.relation('branch', branchId);
+      }
 
-        final endedInPeriodFilter = PBFilter()
-            .between('endDate', startDate, endDate)
-            .raw(
-              "(status = 'expired' || status = 'cancelled' || status = 'active')",
-            );
-        if (branchId != null) {
-          endedInPeriodFilter.relation('branch', branchId);
-        }
+      final endedInPeriodFilter = PBFilter()
+          .between('endDate', startDate, endDate)
+          .raw(
+            "(status = 'expired' || status = 'cancelled' || status = 'active')",
+          );
+      if (branchId != null) {
+        endedInPeriodFilter.relation('branch', branchId);
+      }
 
-        final results = await Future.wait([
-          _members.getFullList(
-            filter: PBFilter().between('created', startDate, endDate).build(),
-            sort: 'created',
-          ),
-          _memberMemberships.getFullList(
-            filter: mmPeriodFilter.build(),
-            expand: 'member,membership',
-            sort: 'created',
-          ),
-          _memberMemberships.getFullList(filter: activeFilter.build()),
-          _memberMemberships.getFullList(filter: expiringFilter.build()),
-          _memberMemberships.getFullList(
-            filter: endedInPeriodFilter.build(),
-            fields: 'id,member,endDate,created',
-          ),
-          _saleItems.getFullList(
-            filter: () {
-              final f = PBFilter()
-                  .between('sale.created', startDate, endDate)
-                  .raw("(itemType = 'membership' || itemType = 'addon')")
-                  .raw(
-                    "(sale.status = 'completed' || sale.status = 'paid')",
-                  );
-              if (branchId != null) {
-                f.raw('sale.branch = "$branchId"');
-              }
-              return f.build();
-            }(),
-            expand: 'sale',
-          ),
-        ]);
+      final results = await Future.wait([
+        _members.getFullList(
+          filter: PBFilter().between('created', startDate, endDate).build(),
+          sort: 'created',
+        ),
+        _memberMemberships.getFullList(
+          filter: mmPeriodFilter.build(),
+          expand: 'member,membership',
+          sort: 'created',
+        ),
+        _memberMemberships.getFullList(filter: activeFilter.build()),
+        _memberMemberships.getFullList(filter: expiringFilter.build()),
+        _memberMemberships.getFullList(
+          filter: endedInPeriodFilter.build(),
+          fields: 'id,member,endDate,created',
+        ),
+        _saleItems.getFullList(
+          filter: () {
+            final f = PBFilter()
+                .between('sale.created', startDate, endDate)
+                .raw("(itemType = 'membership' || itemType = 'addon')")
+                .raw("(sale.status = 'completed' || sale.status = 'paid')");
+            if (branchId != null) {
+              f.raw('sale.branch = "$branchId"');
+            }
+            return f.build();
+          }(),
+          expand: 'sale',
+        ),
+      ]);
 
-        final memberRecords = results[0];
-        final periodMemberMemberships = results[1];
-        final activeMemberMemberships = results[2];
-        final expiringRecords = results[3];
-        final endedRecords = results[4];
-        final membershipSaleItems = results[5];
+      final memberRecords = results[0];
+      final periodMemberMemberships = results[1];
+      final activeMemberMemberships = results[2];
+      final expiringRecords = results[3];
+      final endedRecords = results[4];
+      final membershipSaleItems = results[5];
 
-        final periodMmIds =
-            periodMemberMemberships.map((r) => r.id).toList(growable: false);
-        final addOnRecords = await _fetchAddOnsForMemberships(periodMmIds);
+      final periodMmIds = periodMemberMemberships
+          .map((r) => r.id)
+          .toList(growable: false);
+      final addOnRecords = await _fetchAddOnsForMemberships(periodMmIds);
 
-        final memberIds = periodMemberMemberships
-            .map((r) => r.getStringValue('member'))
-            .where((id) => id.isNotEmpty)
-            .toSet()
-            .toList();
-        final priorByMember = await _fetchPriorMembershipDates(memberIds);
+      final memberIds = periodMemberMemberships
+          .map((r) => r.getStringValue('member'))
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      final priorByMember = await _fetchPriorMembershipDates(memberIds);
 
-        final createdTimes = <DateTime>[];
-        for (final member in memberRecords) {
-          final created =
-              DateTime.tryParse(member.getStringValue('created'))?.toLocal();
-          if (created != null) createdTimes.add(created);
-        }
-        final registrationsTrend = zeroFillBuckets(
-          values: bucketTimestamps(createdTimes, grain),
-          rangeStart: period.startDate,
-          rangeEnd: period.chartEndDate,
-          grain: grain,
-        );
+      final createdTimes = <DateTime>[];
+      for (final member in memberRecords) {
+        final created = DateTime.tryParse(
+          member.getStringValue('created'),
+        )?.toLocal();
+        if (created != null) createdTimes.add(created);
+      }
+      final registrationsTrend = zeroFillBuckets(
+        values: bucketTimestamps(createdTimes, grain),
+        rangeStart: period.startDate,
+        rangeEnd: period.chartEndDate,
+        grain: grain,
+      );
 
-        return _aggregateMembershipReport(
-          memberRecords: memberRecords,
-          periodMemberMemberships: periodMemberMemberships,
-          activeMemberMemberships: activeMemberMemberships,
-          addOns: addOnRecords,
-          membershipSaleItems: membershipSaleItems,
-          expiringSoonCount: expiringRecords.length,
-          endedRecords: endedRecords,
-          priorByMember: priorByMember,
-          registrationsTrend: registrationsTrend,
-        );
-      },
-      Failure.handle,
-    ).run();
+      return _aggregateMembershipReport(
+        memberRecords: memberRecords,
+        periodMemberMemberships: periodMemberMemberships,
+        activeMemberMemberships: activeMemberMemberships,
+        addOns: addOnRecords,
+        membershipSaleItems: membershipSaleItems,
+        expiringSoonCount: expiringRecords.length,
+        endedRecords: endedRecords,
+        priorByMember: priorByMember,
+        registrationsTrend: registrationsTrend,
+      );
+    }, Failure.handle).run();
   }
 
   Future<List<RecordModel>> _fetchAddOnsForMemberships(
@@ -553,9 +563,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     if (membershipIds.isEmpty) return const [];
     final filters = buildIdOrFilters('memberMembership', membershipIds);
     final chunks = await Future.wait(
-      filters.map(
-        (f) => _memberMembershipAddOns.getFullList(filter: f),
-      ),
+      filters.map((f) => _memberMembershipAddOns.getFullList(filter: f)),
     );
     return chunks.expand((e) => e).toList();
   }
@@ -576,8 +584,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
     final map = <String, List<DateTime>>{};
     for (final record in chunks.expand((e) => e)) {
       final memberId = record.getStringValue('member');
-      final created =
-          DateTime.tryParse(record.getStringValue('created'))?.toLocal();
+      final created = DateTime.tryParse(
+        record.getStringValue('created'),
+      )?.toLocal();
       if (memberId.isEmpty || created == null) continue;
       map.putIfAbsent(memberId, () => []).add(created);
     }
@@ -626,12 +635,15 @@ class ReportsRepositoryImpl implements ReportsRepository {
       }
 
       final memberId = record.getStringValue('member');
-      final created =
-          DateTime.tryParse(record.getStringValue('created'))?.toLocal();
+      final created = DateTime.tryParse(
+        record.getStringValue('created'),
+      )?.toLocal();
       if (memberId.isNotEmpty && created != null) {
-        periodForClassify.add(
-          (id: record.id, memberId: memberId, created: created),
-        );
+        periodForClassify.add((
+          id: record.id,
+          memberId: memberId,
+          created: created,
+        ));
       }
     }
 
@@ -670,8 +682,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
     }
     for (final mm in periodMemberMemberships) {
       final memberId = mm.getStringValue('member');
-      final start =
-          DateTime.tryParse(mm.getStringValue('startDate'))?.toLocal();
+      final start = DateTime.tryParse(
+        mm.getStringValue('startDate'),
+      )?.toLocal();
       if (memberId.isEmpty || start == null) continue;
       laterStarts.putIfAbsent(memberId, () => []).add(start);
     }
@@ -712,105 +725,103 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required ReportPeriodSelection period,
     String? branchId,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final grain = period.trendGranularity;
-        final view = checkinsViewFor(period.period);
-        final filter = _viewFilter(
-          period,
-          dateField: view.dateField,
-          asMonth: view.asMonth,
-          asYear: view.asYear,
-          branchId: branchId,
+    return TaskEither.tryCatch(() async {
+      final grain = period.trendGranularity;
+      final view = checkinsViewFor(period.period);
+      final filter = _viewFilter(
+        period,
+        dateField: view.dateField,
+        asMonth: view.asMonth,
+        asYear: view.asYear,
+        branchId: branchId,
+      );
+
+      final records = await _pb
+          .collection(view.collection)
+          .getFullList(filter: filter);
+
+      if (records.isEmpty && period.period != ReportPeriod.day) {
+        return AttendanceReport.empty;
+      }
+
+      var totalCheckIns = 0;
+      final byMethod = <String, num>{};
+      final byBucket = <DateTime, num>{};
+      // unique_members from views are per-row; sum is an upper bound when
+      // methods split. Prefer sum of checkin_count for totals.
+      final uniqueEstimate = <int>[];
+
+      for (final record in records) {
+        final count = record.getIntValue('checkin_count');
+        totalCheckIns += count;
+        uniqueEstimate.add(record.getIntValue('unique_members'));
+
+        final method = record.getStringValue('method');
+        final methodLabel = method.isEmpty ? 'unknown' : method;
+        byMethod[methodLabel] = (byMethod[methodLabel] ?? 0) + count;
+
+        final dateStr = record.getStringValue(view.dateField);
+        final bucket = parseBucketStart(dateStr, grain);
+        if (bucket != null) {
+          byBucket[bucket] = (byBucket[bucket] ?? 0) + count;
+        }
+      }
+
+      final checkInsTrend = zeroFillBuckets(
+        values: byBucket,
+        rangeStart: period.startDate,
+        rangeEnd: period.chartEndDate,
+        grain: grain,
+      );
+
+      // Peak hours: Day only — fetch today's raw check-ins.
+      var checkInsByHour = <String, num>{};
+      var withoutMembership = 0;
+      var uniqueMembers = uniqueEstimate.fold<int>(0, (a, b) => a + b);
+
+      if (period.period == ReportPeriod.day) {
+        final dayFilter = PBFilter().between(
+          'checkInTime',
+          period.startDate,
+          period.endDate,
         );
-
-        final records =
-            await _pb.collection(view.collection).getFullList(filter: filter);
-
-        if (records.isEmpty && period.period != ReportPeriod.day) {
-          return AttendanceReport.empty;
+        if (branchId != null) {
+          dayFilter.relation('branch', branchId);
         }
-
-        var totalCheckIns = 0;
-        final byMethod = <String, num>{};
-        final byBucket = <DateTime, num>{};
-        // unique_members from views are per-row; sum is an upper bound when
-        // methods split. Prefer sum of checkin_count for totals.
-        final uniqueEstimate = <int>[];
-
-        for (final record in records) {
-          final count = record.getIntValue('checkin_count');
-          totalCheckIns += count;
-          uniqueEstimate.add(record.getIntValue('unique_members'));
-
-          final method = record.getStringValue('method');
-          final methodLabel = method.isEmpty ? 'unknown' : method;
-          byMethod[methodLabel] = (byMethod[methodLabel] ?? 0) + count;
-
-          final dateStr = record.getStringValue(view.dateField);
-          final bucket = parseBucketStart(dateStr, grain);
-          if (bucket != null) {
-            byBucket[bucket] = (byBucket[bucket] ?? 0) + count;
+        final raw = await _checkIns.getFullList(filter: dayFilter.build());
+        final times = <DateTime>[];
+        final memberIds = <String>{};
+        withoutMembership = 0;
+        for (final record in raw) {
+          final time = DateTime.tryParse(
+            record.getStringValue('checkInTime'),
+          )?.toLocal();
+          if (time != null) times.add(time);
+          final memberId = record.getStringValue('member');
+          if (memberId.isNotEmpty) memberIds.add(memberId);
+          if (record.getStringValue('memberMembership').isEmpty) {
+            withoutMembership++;
           }
         }
-
-        final checkInsTrend = zeroFillBuckets(
-          values: byBucket,
-          rangeStart: period.startDate,
-          rangeEnd: period.chartEndDate,
-          grain: grain,
-        );
-
-        // Peak hours: Day only — fetch today's raw check-ins.
-        var checkInsByHour = <String, num>{};
-        var withoutMembership = 0;
-        var uniqueMembers = uniqueEstimate.fold<int>(0, (a, b) => a + b);
-
-        if (period.period == ReportPeriod.day) {
-          final dayFilter = PBFilter().between(
-            'checkInTime',
-            period.startDate,
-            period.endDate,
-          );
-          if (branchId != null) {
-            dayFilter.relation('branch', branchId);
-          }
-          final raw = await _checkIns.getFullList(filter: dayFilter.build());
-          final times = <DateTime>[];
-          final memberIds = <String>{};
-          withoutMembership = 0;
-          for (final record in raw) {
-            final time =
-                DateTime.tryParse(record.getStringValue('checkInTime'))
-                    ?.toLocal();
-            if (time != null) times.add(time);
-            final memberId = record.getStringValue('member');
-            if (memberId.isNotEmpty) memberIds.add(memberId);
-            if (record.getStringValue('memberMembership').isEmpty) {
-              withoutMembership++;
-            }
-          }
-          checkInsByHour = aggregateCheckInsByHour(times);
-          uniqueMembers = memberIds.length;
-          if (raw.isNotEmpty) {
-            totalCheckIns = raw.length;
-          }
+        checkInsByHour = aggregateCheckInsByHour(times);
+        uniqueMembers = memberIds.length;
+        if (raw.isNotEmpty) {
+          totalCheckIns = raw.length;
         }
+      }
 
-        if (totalCheckIns == 0 && records.isEmpty) {
-          return AttendanceReport.empty;
-        }
+      if (totalCheckIns == 0 && records.isEmpty) {
+        return AttendanceReport.empty;
+      }
 
-        return AttendanceReport(
-          totalCheckIns: totalCheckIns,
-          uniqueMembers: uniqueMembers,
-          checkInsTrend: checkInsTrend,
-          checkInsByMethod: byMethod,
-          checkInsByHour: checkInsByHour,
-          withoutActiveMembershipCount: withoutMembership,
-        );
-      },
-      Failure.handle,
-    ).run();
+      return AttendanceReport(
+        totalCheckIns: totalCheckIns,
+        uniqueMembers: uniqueMembers,
+        checkInsTrend: checkInsTrend,
+        checkInsByMethod: byMethod,
+        checkInsByHour: checkInsByHour,
+        withoutActiveMembershipCount: withoutMembership,
+      );
+    }, Failure.handle).run();
   }
 }

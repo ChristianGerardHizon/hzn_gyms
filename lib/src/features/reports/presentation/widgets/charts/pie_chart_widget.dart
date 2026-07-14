@@ -77,10 +77,7 @@ class _PieChartWidgetState extends State<PieChartWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.title != null) ...[
-          Text(
-            widget.title!,
-            style: theme.textTheme.titleSmall,
-          ),
+          Text(widget.title!, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
         ],
         SizedBox(
@@ -101,7 +98,8 @@ class _PieChartWidgetState extends State<PieChartWidget> {
                             return;
                           }
                           touchedIndex = pieTouchResponse
-                              .touchedSection!.touchedSectionIndex;
+                              .touchedSection!
+                              .touchedSectionIndex;
                         });
                       },
                     ),
@@ -112,8 +110,9 @@ class _PieChartWidgetState extends State<PieChartWidget> {
                       final index = entry.key;
                       final isTouched = index == touchedIndex;
                       final value = entry.value.value;
-                      final percentage =
-                          total > 0 ? (value / total * 100) : 0.0;
+                      final percentage = total > 0
+                          ? (value / total * 100)
+                          : 0.0;
                       final color = colors[index % colors.length];
 
                       return PieChartSectionData(
@@ -126,10 +125,7 @@ class _PieChartWidgetState extends State<PieChartWidget> {
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           shadows: const [
-                            Shadow(
-                              color: Colors.black26,
-                              blurRadius: 2,
-                            ),
+                            Shadow(color: Colors.black26, blurRadius: 2),
                           ],
                         ),
                       );
@@ -139,9 +135,7 @@ class _PieChartWidgetState extends State<PieChartWidget> {
               ),
               if (widget.showLegend) ...[
                 const SizedBox(width: 16),
-                Expanded(
-                  child: _buildLegend(entries, colors, total),
-                ),
+                Expanded(child: _buildLegend(entries, colors, total)),
               ],
             ],
           ),
@@ -180,10 +174,7 @@ class _PieChartWidgetState extends State<PieChartWidget> {
                     color: color,
                     borderRadius: BorderRadius.circular(2),
                     border: isTouched
-                        ? Border.all(
-                            color: theme.colorScheme.outline,
-                            width: 2,
-                          )
+                        ? Border.all(color: theme.colorScheme.outline, width: 2)
                         : null,
                   ),
                 ),
