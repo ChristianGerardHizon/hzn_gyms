@@ -78,6 +78,9 @@ abstract class Pagination {
   /// Default page size for list queries
   static const int defaultPageSize = 20;
 
+  /// Page size for the members list
+  static const int membersPageSize = defaultPageSize;
+
   /// Maximum page size allowed
   static const int maxPageSize = 100;
 }

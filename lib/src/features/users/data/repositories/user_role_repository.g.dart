@@ -15,21 +15,25 @@ final userRoleRepositoryProvider = UserRoleRepositoryProvider._();
 
 /// Provides the UserRoleRepository instance.
 
-final class UserRoleRepositoryProvider extends $FunctionalProvider<
-    UserRoleRepository,
-    UserRoleRepository,
-    UserRoleRepository> with $Provider<UserRoleRepository> {
+final class UserRoleRepositoryProvider
+    extends
+        $FunctionalProvider<
+          UserRoleRepository,
+          UserRoleRepository,
+          UserRoleRepository
+        >
+    with $Provider<UserRoleRepository> {
   /// Provides the UserRoleRepository instance.
   UserRoleRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'userRoleRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userRoleRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$userRoleRepositoryHash();
@@ -37,8 +41,8 @@ final class UserRoleRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<UserRoleRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   UserRoleRepository create(Ref ref) {

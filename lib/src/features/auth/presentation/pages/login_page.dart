@@ -39,10 +39,9 @@ class LoginPage extends HookConsumerWidget {
         // Clear any previous error
         errorMessage.value = null;
         final values = formKey.currentState!.value;
-        ref.read(authControllerProvider.notifier).login(
-              values['username'] as String,
-              values['password'] as String,
-            );
+        ref
+            .read(authControllerProvider.notifier)
+            .login(values['username'] as String, values['password'] as String);
       }
     }
 
@@ -73,9 +72,9 @@ class LoginPage extends HookConsumerWidget {
                   Text(
                     t.auth.signInToContinue,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
                   ),
                   const SizedBox(height: 48),
 
@@ -84,10 +83,9 @@ class LoginPage extends HookConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .error
-                            .withValues(alpha: 0.1),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: Theme.of(context).colorScheme.error,

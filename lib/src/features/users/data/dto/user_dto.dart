@@ -21,6 +21,7 @@ class UserDto with UserDtoMappable {
   final bool verified;
   final String? role;
   final String? branch;
+  final List<String> allowedBranches;
   final bool isDeleted;
   final String? created;
   final String? updated;
@@ -28,6 +29,7 @@ class UserDto with UserDtoMappable {
   // Expanded fields (populated from expand)
   final String? roleName;
   final String? branchName;
+  final List<String> allowedBranchNames;
 
   const UserDto({
     required this.id,
@@ -40,11 +42,13 @@ class UserDto with UserDtoMappable {
     this.verified = false,
     this.role,
     this.branch,
+    this.allowedBranches = const [],
     this.isDeleted = false,
     this.created,
     this.updated,
     this.roleName,
     this.branchName,
+    this.allowedBranchNames = const [],
   });
 
   /// Creates a DTO from a PocketBase RecordModel.
@@ -59,6 +63,9 @@ class UserDto with UserDtoMappable {
     final branchExpanded = record.get<String>('expand.branch.name');
     final branchName = branchExpanded.isNotEmpty ? branchExpanded : null;
 
+    final allowedBranches = _parseIdList(json['allowedBranches']);
+    final allowedBranchNames = _parseExpandedNames(record, json['expand']);
+
     return UserDto(
       id: json['id'] as String? ?? '',
       collectionId: json['collectionId'] as String? ?? '',
@@ -70,12 +77,44 @@ class UserDto with UserDtoMappable {
       verified: json['verified'] as bool? ?? false,
       role: json['role'] as String?,
       branch: json['branch'] as String?,
+      allowedBranches: allowedBranches,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
       roleName: roleName,
       branchName: branchName,
+      allowedBranchNames: allowedBranchNames,
     );
+  }
+
+  static List<String> _parseIdList(dynamic value) {
+    if (value is! List) return const [];
+    return value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+  }
+
+  static List<String> _parseExpandedNames(RecordModel record, dynamic expand) {
+    // Prefer typed multi-relation expand (List<RecordModel>)
+    final expanded = record.getListValue<RecordModel>(
+      'expand.allowedBranches',
+      const [],
+    );
+    if (expanded.isNotEmpty) {
+      return expanded
+          .map((item) => item.getStringValue('name'))
+          .where((name) => name.isNotEmpty)
+          .toList();
+    }
+
+    if (expand is! Map) return const [];
+    final allowed = expand['allowedBranches'];
+    if (allowed is! List) return const [];
+    return allowed
+        .map((item) {
+          if (item is Map) return item['name']?.toString() ?? '';
+          return '';
+        })
+        .where((name) => name.isNotEmpty)
+        .toList();
   }
 
   /// Converts the DTO to a domain User entity.
@@ -90,6 +129,8 @@ class UserDto with UserDtoMappable {
       roleName: roleName,
       branchId: branch,
       branchName: branchName,
+      allowedBranchIds: allowedBranches,
+      allowedBranchNames: allowedBranchNames,
       isDeleted: isDeleted,
       created: parseToLocal(created),
       updated: parseToLocal(updated),

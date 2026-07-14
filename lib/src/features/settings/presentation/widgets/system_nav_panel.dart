@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import '../../../../core/permissions/current_user_permissions.dart';
 
 /// System management modes.
 enum SystemMode {
@@ -12,9 +15,8 @@ enum SystemMode {
 
 /// Vertical navigation panel for selecting system mode.
 ///
-/// Displays icons for Product Categories, Printers, Appearance, and Import
-/// in a NavigationRail-style layout.
-class SystemNavPanel extends StatelessWidget {
+/// Admin sees all modes; roles with only settings access see Appearance.
+class SystemNavPanel extends ConsumerWidget {
   const SystemNavPanel({
     super.key,
     required this.currentMode,
@@ -28,15 +30,61 @@ class SystemNavPanel extends StatelessWidget {
   final ValueChanged<SystemMode> onModeChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final perms =
+        ref.watch(currentUserPermissionsProvider).value ??
+            CurrentUserPermissions.empty;
+    final isAdmin = perms.canManageSystem;
+
+    final modes = <(SystemMode, IconData, IconData, String)>[
+      if (isAdmin) ...[
+        (
+          SystemMode.productCategories,
+          Icons.inventory_2_outlined,
+          Icons.inventory_2,
+          'Categories',
+        ),
+        (
+          SystemMode.quantityUnits,
+          Icons.straighten_outlined,
+          Icons.straighten,
+          'Units',
+        ),
+        (
+          SystemMode.printers,
+          Icons.print_outlined,
+          Icons.print,
+          'Printers',
+        ),
+        (
+          SystemMode.cashierGroups,
+          Icons.point_of_sale_outlined,
+          Icons.point_of_sale,
+          'Cashier',
+        ),
+      ],
+      if (perms.canViewSettings)
+        (
+          SystemMode.appearance,
+          Icons.palette_outlined,
+          Icons.palette,
+          'Appearance',
+        ),
+      if (isAdmin)
+        (
+          SystemMode.import,
+          Icons.file_upload_outlined,
+          Icons.file_upload,
+          'Import',
+        ),
+    ];
 
     return SizedBox(
       width: 80,
       child: Column(
         children: [
           const SizedBox(height: 8),
-          // Header icon
           Padding(
             padding: const EdgeInsets.all(8),
             child: Icon(
@@ -47,59 +95,16 @@ class SystemNavPanel extends StatelessWidget {
           ),
           const Divider(),
           const SizedBox(height: 8),
-          // Product Categories button
-          _NavButton(
-            icon: Icons.inventory_2_outlined,
-            selectedIcon: Icons.inventory_2,
-            label: 'Categories',
-            isSelected: currentMode == SystemMode.productCategories,
-            onTap: () => onModeChanged(SystemMode.productCategories),
-          ),
-          const SizedBox(height: 4),
-          // Quantity Units button
-          _NavButton(
-            icon: Icons.straighten_outlined,
-            selectedIcon: Icons.straighten,
-            label: 'Units',
-            isSelected: currentMode == SystemMode.quantityUnits,
-            onTap: () => onModeChanged(SystemMode.quantityUnits),
-          ),
-          const SizedBox(height: 4),
-          // Printers button
-          _NavButton(
-            icon: Icons.print_outlined,
-            selectedIcon: Icons.print,
-            label: 'Printers',
-            isSelected: currentMode == SystemMode.printers,
-            onTap: () => onModeChanged(SystemMode.printers),
-          ),
-          const SizedBox(height: 4),
-          // Cashier Groups button
-          _NavButton(
-            icon: Icons.point_of_sale_outlined,
-            selectedIcon: Icons.point_of_sale,
-            label: 'Cashier',
-            isSelected: currentMode == SystemMode.cashierGroups,
-            onTap: () => onModeChanged(SystemMode.cashierGroups),
-          ),
-          const SizedBox(height: 4),
-          // Appearance button
-          _NavButton(
-            icon: Icons.palette_outlined,
-            selectedIcon: Icons.palette,
-            label: 'Appearance',
-            isSelected: currentMode == SystemMode.appearance,
-            onTap: () => onModeChanged(SystemMode.appearance),
-          ),
-          const SizedBox(height: 4),
-          // Import button
-          _NavButton(
-            icon: Icons.file_upload_outlined,
-            selectedIcon: Icons.file_upload,
-            label: 'Import',
-            isSelected: currentMode == SystemMode.import,
-            onTap: () => onModeChanged(SystemMode.import),
-          ),
+          for (final entry in modes) ...[
+            _NavButton(
+              icon: entry.$2,
+              selectedIcon: entry.$3,
+              label: entry.$4,
+              isSelected: currentMode == entry.$1,
+              onTap: () => onModeChanged(entry.$1),
+            ),
+            const SizedBox(height: 4),
+          ],
           const Spacer(),
         ],
       ),

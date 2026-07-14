@@ -24,8 +24,14 @@ class User with UserMappable {
   /// Whether the user's account has been verified.
   final bool verified;
 
-  /// The user's branch ID (if assigned to a branch).
+  /// The user's default/home branch ID (if assigned).
   final String? branch;
+
+  /// Branch IDs the user may switch to.
+  final List<String> allowedBranches;
+
+  /// FK to UserRole (PocketBase `role` relation id).
+  final String? roleId;
 
   const User({
     required this.id,
@@ -34,5 +40,7 @@ class User with UserMappable {
     this.avatarUrl,
     this.verified = false,
     this.branch,
+    this.allowedBranches = const [],
+    this.roleId,
   });
 }

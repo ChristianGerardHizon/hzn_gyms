@@ -10,7 +10,10 @@ import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../domain/card_check_in_result.dart';
 import '../controllers/check_in_controller.dart';
+import '../widgets/check_in_error_dialog.dart';
 import '../widgets/check_in_success_dialog.dart';
 import '../widgets/last_check_in_panel.dart';
 import '../widgets/recent_check_ins_list.dart';
@@ -18,7 +21,7 @@ import '../widgets/recent_check_ins_list.dart';
 /// Main check-in page.
 ///
 /// Provides:
-/// - Search bar for member lookup (by name or mobile)
+/// - Single input for card ID (exact, on submit) or name/mobile search
 /// - Member card showing name and active membership status
 /// - Check-in button
 /// - Today's recent check-ins list
@@ -28,15 +31,23 @@ class CheckInPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final cardScanController = useTextEditingController();
-    final cardScanFocusNode = useFocusNode();
-    final isCardScanning = useState(false);
-    final searchController = useTextEditingController();
+    final inputController = useTextEditingController();
+    final inputFocusNode = useFocusNode();
+    useListenable(inputController);
     final searchResults = useState<List<Member>>([]);
     final selectedMember = useState<Member?>(null);
     final activeMembership = useState<MemberMembership?>(null);
     final isSearching = useState(false);
     final isCheckingIn = useState(false);
+    final isCardCheckingIn = useState(false);
+
+    // Keep focus on the input for card scanners.
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        inputFocusNode.requestFocus();
+      });
+      return null;
+    }, const []);
 
     Future<void> searchMembers(String query) async {
       if (query.trim().isEmpty) {
@@ -58,31 +69,43 @@ class CheckInPage extends HookConsumerWidget {
     Future<void> selectMember(Member member) async {
       selectedMember.value = member;
       searchResults.value = [];
-      searchController.text = member.name;
+      inputController.text = member.name;
 
-      // Fetch active membership
+      // Fetch active membership valid at the current branch
+      final branchId = ref.read(effectiveBranchIdForWriteProvider);
       final mmRepo = ref.read(memberMembershipRepositoryProvider);
-      final result = await mmRepo.fetchActive(member.id);
-      result.fold(
-        (_) => activeMembership.value = null,
-        (memberships) {
-          activeMembership.value =
-              memberships.isNotEmpty ? memberships.first : null;
-        },
+      final result = await mmRepo.fetchActive(
+        member.id,
+        validAtBranchId: branchId,
       );
+      result.fold((_) => activeMembership.value = null, (memberships) {
+        activeMembership.value = memberships.isNotEmpty
+            ? memberships.first
+            : null;
+      });
+    }
+
+    void clearSelection() {
+      selectedMember.value = null;
+      activeMembership.value = null;
+      inputController.clear();
+      searchResults.value = [];
+      inputFocusNode.requestFocus();
     }
 
     Future<void> handleCheckIn() async {
       final member = selectedMember.value;
       if (member == null) return;
 
-      // Block check-in if member has no active membership
+      // Block check-in if member has no membership valid at this branch
       if (activeMembership.value == null) {
         if (context.mounted) {
           showErrorSnackBar(
             context,
             message:
-                '${member.name} has no active membership. Only members with an active membership can check in.',
+                '${member.name} has no membership valid at this branch. '
+                'Only members with an active membership for this branch '
+                'can check in.',
           );
         }
         return;
@@ -103,71 +126,127 @@ class CheckInPage extends HookConsumerWidget {
         // Capture before resetting
         final hadActiveMembership = activeMembership.value != null;
 
-        // Reset search
-        selectedMember.value = null;
-        activeMembership.value = null;
-        searchController.clear();
+        clearSelection();
 
         await showCheckInSuccessDialog(
           context,
           memberName: member.name,
           hasActiveMembership: hadActiveMembership,
         );
+        if (context.mounted) {
+          inputFocusNode.requestFocus();
+        }
       } else if (context.mounted) {
         showErrorSnackBar(context, message: 'Failed to check in');
       }
     }
 
-    Future<void> handleCardScan(String cardValue) async {
-      if (cardValue.trim().isEmpty) return;
+    /// On submit: exact card ID check-in, or confirm selected member.
+    /// Typing (onChanged) continues to drive name/mobile search results.
+    Future<void> handleSubmit(String value) async {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return;
 
-      isCardScanning.value = true;
+      // Member already selected from search — check them in.
+      if (selectedMember.value != null) {
+        await handleCheckIn();
+        return;
+      }
+
+      isCardCheckingIn.value = true;
 
       final result = await ref
           .read(checkInControllerProvider.notifier)
-          .cardCheckIn(cardValue: cardValue.trim());
+          .cardCheckIn(cardValue: trimmed);
 
-      isCardScanning.value = false;
-      cardScanController.clear();
-      cardScanFocusNode.requestFocus();
+      isCardCheckingIn.value = false;
 
-      if (result != null && context.mounted) {
-        await showCheckInSuccessDialog(
-          context,
-          memberName: result.memberName,
-          hasActiveMembership: true,
-        );
-      } else if (context.mounted) {
+      if (!context.mounted) return;
+
+      switch (result) {
+        case CardCheckInSuccess(:final memberName):
+          clearSelection();
+          await showCheckInSuccessDialog(
+            context,
+            memberName: memberName,
+            hasActiveMembership: true,
+          );
+          if (context.mounted) {
+            inputFocusNode.requestFocus();
+          }
+          return;
+        case CardCheckInNoActiveMembership(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: 'No Active Membership',
+            message:
+                '$memberName has no active membership and cannot check in.',
+          );
+          inputController.clear();
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInMembershipNotValidAtBranch(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Not Valid at This Branch',
+            message:
+                '$memberName has an active membership, but it is not valid '
+                'at this branch.',
+          );
+          inputController.clear();
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInNoBranch():
+          await showCheckInErrorDialog(
+            context,
+            title: 'Select a Branch',
+            message:
+                'Choose a specific branch before checking in. '
+                '"All branches" cannot be used for check-in.',
+          );
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInFailed():
+          showErrorSnackBar(context, message: 'Failed to check in');
+          inputFocusNode.requestFocus();
+          return;
+        case CardCheckInCardNotFound():
+          break;
+      }
+
+      // Not an exact card match — keep name search results if any.
+      if (searchResults.value.isNotEmpty) {
+        inputFocusNode.requestFocus();
+        return;
+      }
+
+      if (context.mounted) {
         showErrorSnackBar(
           context,
           message:
-              'Card not recognized or member has no active membership.',
+              'No matching card or member found. Enter a card ID exactly, or search by name.',
         );
+        inputController.clear();
+        inputFocusNode.requestFocus();
       }
-    }
-
-    void clearSelection() {
-      selectedMember.value = null;
-      activeMembership.value = null;
-      searchController.clear();
-      searchResults.value = [];
     }
 
     // Shared check-in form widgets
     Widget buildCheckInForm() {
+      final isBusy = isCardCheckingIn.value || isCheckingIn.value;
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Card scan input
           TextField(
-            controller: cardScanController,
-            focusNode: cardScanFocusNode,
+            controller: inputController,
+            focusNode: inputFocusNode,
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.credit_card),
-              hintText: 'Scan card or enter card ID...',
+              prefixIcon: const Icon(Icons.badge_outlined),
+              hintText: 'Scan card, enter card ID, or search by name...',
               border: const OutlineInputBorder(),
               isDense: true,
-              suffixIcon: isCardScanning.value
+              suffixIcon: isCardCheckingIn.value
                   ? const Padding(
                       padding: EdgeInsets.all(12),
                       child: SizedBox(
@@ -176,48 +255,14 @@ class CheckInPage extends HookConsumerWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     )
-                  : null,
-            ),
-            enabled: !isCardScanning.value,
-            onSubmitted: handleCardScan,
-            textInputAction: TextInputAction.go,
-          ),
-
-          // Divider between card scan and manual search
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                const Expanded(child: Divider()),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'or search manually',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const Expanded(child: Divider()),
-              ],
-            ),
-          ),
-
-          // Search bar
-          TextField(
-            controller: searchController,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: 'Search member by name or mobile...',
-              border: const OutlineInputBorder(),
-              isDense: true,
-              suffixIcon: searchController.text.isNotEmpty
+                  : inputController.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: clearSelection,
                     )
                   : null,
             ),
+            enabled: !isBusy,
             onChanged: (query) {
               if (selectedMember.value != null) {
                 selectedMember.value = null;
@@ -225,11 +270,12 @@ class CheckInPage extends HookConsumerWidget {
               }
               searchMembers(query);
             },
+            onSubmitted: handleSubmit,
+            textInputAction: TextInputAction.go,
           ),
 
           // Search results dropdown
-          if (searchResults.value.isNotEmpty &&
-              selectedMember.value == null)
+          if (searchResults.value.isNotEmpty && selectedMember.value == null)
             Card(
               margin: const EdgeInsets.only(top: 4),
               child: ConstrainedBox(
@@ -241,17 +287,16 @@ class CheckInPage extends HookConsumerWidget {
                     final member = searchResults.value[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor:
-                            theme.colorScheme.primaryContainer,
+                        backgroundColor: theme.colorScheme.primaryContainer,
                         child: Icon(
                           Icons.person,
-                          color:
-                              theme.colorScheme.onPrimaryContainer,
+                          color: theme.colorScheme.onPrimaryContainer,
                           size: 20,
                         ),
                       ),
                       title: Text(member.name),
-                      subtitle: member.mobileNumber != null &&
+                      subtitle:
+                          member.mobileNumber != null &&
                               member.mobileNumber!.isNotEmpty
                           ? Text(member.mobileNumber!)
                           : null,
@@ -281,9 +326,8 @@ class CheckInPage extends HookConsumerWidget {
             _SelectedMemberCard(
               member: selectedMember.value!,
               activeMembership: activeMembership.value,
-              onViewProfile: () => MemberDetailRoute(
-                id: selectedMember.value!.id,
-              ).go(context),
+              onViewProfile: () =>
+                  MemberDetailRoute(id: selectedMember.value!.id).go(context),
             ),
             const SizedBox(height: 16),
 
@@ -313,8 +357,7 @@ class CheckInPage extends HookConsumerWidget {
               SizedBox(
                 height: 56,
                 child: FilledButton.icon(
-                  onPressed:
-                      isCheckingIn.value ? null : handleCheckIn,
+                  onPressed: isCheckingIn.value ? null : handleCheckIn,
                   icon: isCheckingIn.value
                       ? const SizedBox(
                           width: 20,
@@ -326,9 +369,7 @@ class CheckInPage extends HookConsumerWidget {
                         )
                       : const Icon(Icons.how_to_reg, size: 24),
                   label: Text(
-                    isCheckingIn.value
-                        ? 'Checking in...'
-                        : 'Check In',
+                    isCheckingIn.value ? 'Checking in...' : 'Check In',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.onPrimary,
                     ),
@@ -345,8 +386,7 @@ class CheckInPage extends HookConsumerWidget {
       return Column(
         children: [
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Icon(
@@ -372,8 +412,9 @@ class CheckInPage extends HookConsumerWidget {
 
     final isMobile = Breakpoints.isMobile(context);
     final todaysCheckIns = ref.watch(checkInControllerProvider).value ?? [];
-    final latestCheckIn =
-        todaysCheckIns.isNotEmpty ? todaysCheckIns.first : null;
+    final latestCheckIn = todaysCheckIns.isNotEmpty
+        ? todaysCheckIns.first
+        : null;
 
     // Sidebar for tablet/desktop: last check-in details
     Widget buildSidebar() {
@@ -385,8 +426,9 @@ class CheckInPage extends HookConsumerWidget {
               Icon(
                 Icons.how_to_reg_outlined,
                 size: 64,
-                color: theme.colorScheme.onSurfaceVariant
-                    .withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -453,10 +495,7 @@ class CheckInPage extends HookConsumerWidget {
                 ),
                 const VerticalDivider(width: 1),
                 // Right: last check-in details sidebar
-                Expanded(
-                  flex: 2,
-                  child: buildSidebar(),
-                ),
+                Expanded(flex: 2, child: buildSidebar()),
               ],
             ),
     );
@@ -555,7 +594,7 @@ class _SelectedMemberCard extends StatelessWidget {
                         Text(
                           hasActiveMembership
                               ? activeMembership!.membershipName ??
-                                  'Active Membership'
+                                    'Active Membership'
                               : 'No Active Membership',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,

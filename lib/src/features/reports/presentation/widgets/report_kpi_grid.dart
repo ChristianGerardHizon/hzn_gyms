@@ -56,15 +56,11 @@ class ReportKpiGrid extends StatelessWidget {
       }
 
       if (rows.isNotEmpty) rows.add(SizedBox(height: spacing));
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rowWidgets,
-      ));
+      rows.add(
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: rowWidgets),
+      );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: rows,
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 }

@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
 import '../controllers/membership_provider.dart';
@@ -14,10 +15,7 @@ import '../widgets/membership_form_dialog.dart';
 
 /// Membership plan detail page.
 class MembershipDetailPage extends HookConsumerWidget {
-  const MembershipDetailPage({
-    super.key,
-    required this.membershipId,
-  });
+  const MembershipDetailPage({super.key, required this.membershipId});
 
   final String membershipId;
 
@@ -93,9 +91,35 @@ class MembershipDetailPage extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Plan Details',
-                        style: theme.textTheme.titleMedium,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Plan Details',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ),
+                          if (membership.walkInBadgeLabel != null)
+                            Chip(
+                              avatar: Icon(
+                                Icons.directions_walk,
+                                size: 16,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              label: Text(
+                                membership.walkInBadgeLabel!,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                              backgroundColor:
+                                  theme.colorScheme.secondaryContainer,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       _InfoRow(label: 'Name', value: membership.name),
@@ -112,6 +136,10 @@ class MembershipDetailPage extends HookConsumerWidget {
                       _InfoRow(
                         label: 'Price',
                         value: membership.price.toCurrency(),
+                      ),
+                      _InfoRow(
+                        label: 'Plan type',
+                        value: membership.planTypeDisplay,
                       ),
                       _InfoRow(
                         label: 'Status',
@@ -136,7 +164,7 @@ class MembershipDetailPage extends HookConsumerWidget {
       ),
       error: (error, stack) => Scaffold(
         appBar: AppBar(automaticallyImplyLeading: !isTablet),
-        body: Center(child: Text('Error: $error')),
+        body: ErrorState.fromError(error),
       ),
     );
   }
@@ -212,8 +240,9 @@ class _AddOnsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final addOnsAsync =
-        ref.watch(membershipAddOnsControllerProvider(membershipId));
+    final addOnsAsync = ref.watch(
+      membershipAddOnsControllerProvider(membershipId),
+    );
 
     return Card(
       child: Padding(
@@ -252,10 +281,12 @@ class _AddOnsSection extends ConsumerWidget {
 
                 return Column(
                   children: addOns
-                      .map((addOn) => _AddOnTile(
-                            addOn: addOn,
-                            membershipId: membershipId,
-                          ))
+                      .map(
+                        (addOn) => _AddOnTile(
+                          addOn: addOn,
+                          membershipId: membershipId,
+                        ),
+                      )
                       .toList(),
                 );
               },
@@ -263,15 +294,11 @@ class _AddOnsSection extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (_, __) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Text(
-                    'Error loading add-ons',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
+              error: (error, _) => ErrorState.fromError(
+                error,
+                compact: true,
+                onRetry: () => ref.invalidate(
+                  membershipAddOnsControllerProvider(membershipId),
                 ),
               ),
             ),
@@ -282,18 +309,12 @@ class _AddOnsSection extends ConsumerWidget {
   }
 
   Future<void> _showAddOnForm(BuildContext context) async {
-    await showMembershipAddOnFormDialog(
-      context,
-      membershipId: membershipId,
-    );
+    await showMembershipAddOnFormDialog(context, membershipId: membershipId);
   }
 }
 
 class _AddOnTile extends ConsumerWidget {
-  const _AddOnTile({
-    required this.addOn,
-    required this.membershipId,
-  });
+  const _AddOnTile({required this.addOn, required this.membershipId});
 
   final MembershipAddOn addOn;
   final String membershipId;
@@ -309,29 +330,29 @@ class _AddOnTile extends ConsumerWidget {
             ? theme.colorScheme.primaryContainer
             : theme.colorScheme.surfaceContainerHighest,
         child: Icon(
-          Icons.extension,
+          addOn.extendsDuration ? Icons.event_available : Icons.extension,
           color: addOn.isActive
               ? theme.colorScheme.onPrimaryContainer
               : theme.colorScheme.onSurfaceVariant,
         ),
       ),
       title: Text(addOn.name),
-      subtitle: Text(addOn.price.toCurrency()),
+      subtitle: Text(
+        addOn.extendsDuration
+            ? '${addOn.durationDisplay} · ${addOn.price.toCurrency()}'
+            : addOn.price.toCurrency(),
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (!addOn.isActive)
             Chip(
-              label: Text(
-                'Inactive',
-                style: theme.textTheme.labelSmall,
-              ),
+              label: Text('Inactive', style: theme.textTheme.labelSmall),
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
             ),
           PopupMenuButton<String>(
-            onSelected: (value) =>
-                _handleAction(context, ref, value),
+            onSelected: (value) => _handleAction(context, ref, value),
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'edit',
@@ -374,9 +395,7 @@ class _AddOnTile extends ConsumerWidget {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Delete Add-On'),
-          content: Text(
-            'Are you sure you want to delete "${addOn.name}"?',
-          ),
+          content: Text('Are you sure you want to delete "${addOn.name}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -430,12 +449,7 @@ class _InfoRow extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
         ],
       ),
     );

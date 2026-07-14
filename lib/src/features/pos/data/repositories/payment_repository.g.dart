@@ -12,20 +12,24 @@ part of 'payment_repository.dart';
 @ProviderFor(paymentRepository)
 final paymentRepositoryProvider = PaymentRepositoryProvider._();
 
-final class PaymentRepositoryProvider extends $FunctionalProvider<
-    PaymentRepository,
-    PaymentRepository,
-    PaymentRepository> with $Provider<PaymentRepository> {
+final class PaymentRepositoryProvider
+    extends
+        $FunctionalProvider<
+          PaymentRepository,
+          PaymentRepository,
+          PaymentRepository
+        >
+    with $Provider<PaymentRepository> {
   PaymentRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'paymentRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$paymentRepositoryHash();
@@ -33,8 +37,8 @@ final class PaymentRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<PaymentRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   PaymentRepository create(Ref ref) {

@@ -15,19 +15,25 @@ final printerConfigProvider = PrinterConfigFamily._();
 
 /// Provider to fetch a single printer config by ID.
 
-final class PrinterConfigProvider extends $FunctionalProvider<
-        AsyncValue<PrinterConfig?>, PrinterConfig?, FutureOr<PrinterConfig?>>
+final class PrinterConfigProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PrinterConfig?>,
+          PrinterConfig?,
+          FutureOr<PrinterConfig?>
+        >
     with $FutureModifier<PrinterConfig?>, $FutureProvider<PrinterConfig?> {
   /// Provider to fetch a single printer config by ID.
-  PrinterConfigProvider._(
-      {required PrinterConfigFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'printerConfigProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  PrinterConfigProvider._({
+    required PrinterConfigFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'printerConfigProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$printerConfigHash();
@@ -42,16 +48,13 @@ final class PrinterConfigProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<PrinterConfig?> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<PrinterConfig?> create(Ref ref) {
     final argument = this.argument as String;
-    return printerConfig(
-      ref,
-      argument,
-    );
+    return printerConfig(ref, argument);
   }
 
   @override
@@ -72,19 +75,17 @@ String _$printerConfigHash() => r'97e8ed3d7b784d4f8b9678eaf68a75d1ec3f674c';
 final class PrinterConfigFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<PrinterConfig?>, String> {
   PrinterConfigFamily._()
-      : super(
-          retry: null,
-          name: r'printerConfigProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'printerConfigProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider to fetch a single printer config by ID.
 
-  PrinterConfigProvider call(
-    String id,
-  ) =>
+  PrinterConfigProvider call(String id) =>
       PrinterConfigProvider._(argument: id, from: this);
 
   @override
@@ -98,20 +99,25 @@ final defaultPrinterProvider = DefaultPrinterProvider._();
 
 /// Provider to fetch the default printer configuration.
 
-final class DefaultPrinterProvider extends $FunctionalProvider<
-        AsyncValue<PrinterConfig?>, PrinterConfig?, FutureOr<PrinterConfig?>>
+final class DefaultPrinterProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PrinterConfig?>,
+          PrinterConfig?,
+          FutureOr<PrinterConfig?>
+        >
     with $FutureModifier<PrinterConfig?>, $FutureProvider<PrinterConfig?> {
   /// Provider to fetch the default printer configuration.
   DefaultPrinterProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'defaultPrinterProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'defaultPrinterProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$defaultPrinterHash();
@@ -119,8 +125,8 @@ final class DefaultPrinterProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<PrinterConfig?> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<PrinterConfig?> create(Ref ref) {

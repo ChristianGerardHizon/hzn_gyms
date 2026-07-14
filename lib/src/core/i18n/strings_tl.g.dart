@@ -37,18 +37,18 @@ class TranslationsTl with BaseTranslations<AppLocale, Translations> implements T
 	TranslationsTl $copyWith({TranslationMetadata<AppLocale, Translations>? meta}) => TranslationsTl(meta: meta ?? this.$meta);
 
 	// Translations
-	@override late final _TranslationsAuthTl auth = _TranslationsAuthTl._(_root);
-	@override late final _TranslationsCommonTl common = _TranslationsCommonTl._(_root);
-	@override late final _TranslationsFailuresTl failures = _TranslationsFailuresTl._(_root);
-	@override late final _TranslationsFieldsTl fields = _TranslationsFieldsTl._(_root);
-	@override late final _TranslationsNavigationTl navigation = _TranslationsNavigationTl._(_root);
-	@override late final _TranslationsSortTl sort = _TranslationsSortTl._(_root);
-	@override late final _TranslationsValidationTl validation = _TranslationsValidationTl._(_root);
+	@override late final _Translations$auth$tl auth = _Translations$auth$tl._(_root);
+	@override late final _Translations$common$tl common = _Translations$common$tl._(_root);
+	@override late final _Translations$failures$tl failures = _Translations$failures$tl._(_root);
+	@override late final _Translations$fields$tl fields = _Translations$fields$tl._(_root);
+	@override late final _Translations$navigation$tl navigation = _Translations$navigation$tl._(_root);
+	@override late final _Translations$sort$tl sort = _Translations$sort$tl._(_root);
+	@override late final _Translations$validation$tl validation = _Translations$validation$tl._(_root);
 }
 
 // Path: auth
-class _TranslationsAuthTl implements TranslationsAuthEn {
-	_TranslationsAuthTl._(this._root);
+class _Translations$auth$tl implements Translations$auth$en {
+	_Translations$auth$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -78,8 +78,8 @@ class _TranslationsAuthTl implements TranslationsAuthEn {
 }
 
 // Path: common
-class _TranslationsCommonTl implements TranslationsCommonEn {
-	_TranslationsCommonTl._(this._root);
+class _Translations$common$tl implements Translations$common$en {
+	_Translations$common$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -119,8 +119,8 @@ class _TranslationsCommonTl implements TranslationsCommonEn {
 }
 
 // Path: failures
-class _TranslationsFailuresTl implements TranslationsFailuresEn {
-	_TranslationsFailuresTl._(this._root);
+class _Translations$failures$tl implements Translations$failures$en {
+	_Translations$failures$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -142,8 +142,8 @@ class _TranslationsFailuresTl implements TranslationsFailuresEn {
 }
 
 // Path: fields
-class _TranslationsFieldsTl implements TranslationsFieldsEn {
-	_TranslationsFieldsTl._(this._root);
+class _Translations$fields$tl implements Translations$fields$en {
+	_Translations$fields$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -153,9 +153,6 @@ class _TranslationsFieldsTl implements TranslationsFieldsEn {
 	@override String get password => 'Password';
 	@override String get passwordConfirmation => 'Password confirmation';
 	@override String get name => 'Pangalan';
-	@override String get owner => 'May-ari';
-	@override String get species => 'Uri ng Hayop';
-	@override String get breed => 'Lahi';
 	@override String get contactNumber => 'Contact Number';
 	@override String get address => 'Address';
 	@override String get searchFields => 'Mga Field na Hahanapin';
@@ -163,6 +160,7 @@ class _TranslationsFieldsTl implements TranslationsFieldsEn {
 	@override String get requiredField => 'Kinakailangan';
 	@override String get atLeastOneRequired => 'Kailangan ng kahit isang field';
 	@override String get receiptNumber => 'Numero ng Resibo';
+	@override String get descriptor => 'Paglalarawan';
 	@override String get customerName => 'Pangalan ng Customer';
 	@override String get paymentRef => 'Reference ng Bayad';
 	@override String get notes => 'Mga Tala';
@@ -171,8 +169,8 @@ class _TranslationsFieldsTl implements TranslationsFieldsEn {
 }
 
 // Path: navigation
-class _TranslationsNavigationTl implements TranslationsNavigationEn {
-	_TranslationsNavigationTl._(this._root);
+class _Translations$navigation$tl implements Translations$navigation$en {
+	_Translations$navigation$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -190,18 +188,19 @@ class _TranslationsNavigationTl implements TranslationsNavigationEn {
 	@override String get sales => 'Cashier';
 	@override String get salesHistory => 'Mga Benta';
 	@override String get organization => 'Organisasyon';
-	@override String get services => 'Mga Serbisyo';
 	@override String get checkIn => 'Check-In';
 	@override String get members => 'Mga Miyembro';
 	@override String get memberships => 'Mga Membership';
+	@override String get outbox => 'Outbox';
 	@override String get system => 'Sistema';
 	@override String get account => 'Account';
 	@override String get noBranch => 'Walang Sangay';
+	@override String get allBranches => 'Lahat ng Sangay';
 }
 
 // Path: sort
-class _TranslationsSortTl implements TranslationsSortEn {
-	_TranslationsSortTl._(this._root);
+class _Translations$sort$tl implements Translations$sort$en {
+	_Translations$sort$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -221,8 +220,8 @@ class _TranslationsSortTl implements TranslationsSortEn {
 }
 
 // Path: validation
-class _TranslationsValidationTl implements TranslationsValidationEn {
-	_TranslationsValidationTl._(this._root);
+class _Translations$validation$tl implements Translations$validation$en {
+	_Translations$validation$tl._(this._root);
 
 	final TranslationsTl _root; // ignore: unused_field
 
@@ -318,9 +317,6 @@ extension on TranslationsTl {
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Pangalan',
-			'fields.owner' => 'May-ari',
-			'fields.species' => 'Uri ng Hayop',
-			'fields.breed' => 'Lahi',
 			'fields.contactNumber' => 'Contact Number',
 			'fields.address' => 'Address',
 			'fields.searchFields' => 'Mga Field na Hahanapin',
@@ -328,6 +324,7 @@ extension on TranslationsTl {
 			'fields.requiredField' => 'Kinakailangan',
 			'fields.atLeastOneRequired' => 'Kailangan ng kahit isang field',
 			'fields.receiptNumber' => 'Numero ng Resibo',
+			'fields.descriptor' => 'Paglalarawan',
 			'fields.customerName' => 'Pangalan ng Customer',
 			'fields.paymentRef' => 'Reference ng Bayad',
 			'fields.notes' => 'Mga Tala',
@@ -346,13 +343,14 @@ extension on TranslationsTl {
 			'navigation.sales' => 'Cashier',
 			'navigation.salesHistory' => 'Mga Benta',
 			'navigation.organization' => 'Organisasyon',
-			'navigation.services' => 'Mga Serbisyo',
 			'navigation.checkIn' => 'Check-In',
 			'navigation.members' => 'Mga Miyembro',
 			'navigation.memberships' => 'Mga Membership',
+			'navigation.outbox' => 'Outbox',
 			'navigation.system' => 'Sistema',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'Walang Sangay',
+			'navigation.allBranches' => 'Lahat ng Sangay',
 			'sort.sortBy' => 'Ayusin Ayon Sa',
 			'sort.direction' => 'Direksyon',
 			'sort.ascending' => 'Pataas',

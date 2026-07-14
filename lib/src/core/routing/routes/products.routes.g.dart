@@ -6,25 +6,23 @@ part of 'products.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $productsShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$productsShellRoute];
 
 RouteBase get $productsShellRoute => ShellRouteData.$route(
-      factory: $ProductsShellRouteExtension._fromState,
+  factory: $ProductsShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/products',
+      factory: $ProductsRoute._fromState,
       routes: [
         GoRouteData.$route(
-          path: '/products',
-          factory: $ProductsRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: ':id',
-              factory: $ProductDetailRoute._fromState,
-            ),
-          ],
+          path: ':id',
+          factory: $ProductDetailRoute._fromState,
         ),
       ],
-    );
+    ),
+  ],
+);
 
 extension $ProductsShellRouteExtension on ProductsShellRoute {
   static ProductsShellRoute _fromState(GoRouterState state) =>
@@ -35,9 +33,7 @@ mixin $ProductsRoute on GoRouteData {
   static ProductsRoute _fromState(GoRouterState state) => const ProductsRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/products',
-      );
+  String get location => GoRouteData.$location('/products');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -64,11 +60,9 @@ mixin $ProductDetailRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-        '/products/${Uri.encodeComponent(_self.id)}',
-        queryParams: {
-          if (_self.tab != null) 'tab': _self.tab,
-        },
-      );
+    '/products/${Uri.encodeComponent(_self.id)}',
+    queryParams: {if (_self.tab != null) 'tab': _self.tab},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

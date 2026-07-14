@@ -27,7 +27,10 @@ class MembershipsController extends _$MembershipsController {
   /// Refreshes the membership list.
   Future<void> refresh() async {
     _repository.invalidateCache();
-    state = const AsyncLoading();
+    // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
 
     final branchId = ref.read(currentBranchIdProvider);
     final result = await _repository.fetchAll(branchId: branchId);
@@ -41,36 +44,27 @@ class MembershipsController extends _$MembershipsController {
   /// Creates a new membership plan.
   Future<Membership?> createMembership(Membership membership) async {
     final result = await _repository.create(membership);
-    return result.fold(
-      (failure) => null,
-      (created) {
-        refresh();
-        return created;
-      },
-    );
+    return result.fold((failure) => null, (created) {
+      refresh();
+      return created;
+    });
   }
 
   /// Updates an existing membership plan.
   Future<bool> updateMembership(Membership membership) async {
     final result = await _repository.update(membership);
-    return result.fold(
-      (failure) => false,
-      (updated) {
-        refresh();
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (updated) {
+      refresh();
+      return true;
+    });
   }
 
   /// Deletes a membership plan.
   Future<bool> deleteMembership(String id) async {
     final result = await _repository.delete(id);
-    return result.fold(
-      (failure) => false,
-      (_) {
-        refresh();
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (_) {
+      refresh();
+      return true;
+    });
   }
 }

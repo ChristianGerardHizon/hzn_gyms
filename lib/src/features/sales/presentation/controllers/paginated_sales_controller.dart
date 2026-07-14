@@ -114,7 +114,10 @@ class PaginatedSalesController extends _$PaginatedSalesController {
 
   /// Refreshes the list (respects current search, sort, and branch filter).
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
+    // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncValue.loading();
+    }
 
     final result = _currentSearchQuery != null
         ? await _repository.searchPaginated(
@@ -153,8 +156,7 @@ class PaginatedSalesController extends _$PaginatedSalesController {
     _currentSearchQuery = query;
     _currentSearchFields = fields;
 
-    state = const AsyncValue.loading();
-
+    // Keep previous data so the list panel (and search input) stay mounted.
     final result = await _repository.searchPaginated(
       query,
       fields: fields,

@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -132,6 +133,12 @@ class MemberMapper extends ClassMapperBase<Member> {
     _$emergencyContact,
     opt: true,
   );
+  static String? _$branch(Member v) => v.branch;
+  static const Field<Member, String> _f$branch = Field(
+    'branch',
+    _$branch,
+    opt: true,
+  );
   static DateTime? _$created(Member v) => v.created;
   static const Field<Member, DateTime> _f$created = Field(
     'created',
@@ -142,6 +149,12 @@ class MemberMapper extends ClassMapperBase<Member> {
   static const Field<Member, DateTime> _f$updated = Field(
     'updated',
     _$updated,
+    opt: true,
+  );
+  static SyncStatus? _$syncStatus(Member v) => v.syncStatus;
+  static const Field<Member, SyncStatus> _f$syncStatus = Field(
+    'syncStatus',
+    _$syncStatus,
     opt: true,
   );
 
@@ -159,8 +172,10 @@ class MemberMapper extends ClassMapperBase<Member> {
     #rfidCardId: _f$rfidCardId,
     #email: _f$email,
     #emergencyContact: _f$emergencyContact,
+    #branch: _f$branch,
     #created: _f$created,
     #updated: _f$updated,
+    #syncStatus: _f$syncStatus,
   };
 
   static Member _instantiate(DecodingData data) {
@@ -177,8 +192,10 @@ class MemberMapper extends ClassMapperBase<Member> {
       rfidCardId: data.dec(_f$rfidCardId),
       email: data.dec(_f$email),
       emergencyContact: data.dec(_f$emergencyContact),
+      branch: data.dec(_f$branch),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
+      syncStatus: data.dec(_f$syncStatus),
     );
   }
 
@@ -241,8 +258,10 @@ abstract class MemberCopyWith<$R, $In extends Member, $Out>
     String? rfidCardId,
     String? email,
     String? emergencyContact,
+    String? branch,
     DateTime? created,
     DateTime? updated,
+    SyncStatus? syncStatus,
   });
   MemberCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -267,8 +286,10 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     Object? rfidCardId = $none,
     Object? email = $none,
     Object? emergencyContact = $none,
+    Object? branch = $none,
     Object? created = $none,
     Object? updated = $none,
+    Object? syncStatus = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -283,8 +304,10 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
       if (rfidCardId != $none) #rfidCardId: rfidCardId,
       if (email != $none) #email: email,
       if (emergencyContact != $none) #emergencyContact: emergencyContact,
+      if (branch != $none) #branch: branch,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
+      if (syncStatus != $none) #syncStatus: syncStatus,
     }),
   );
   @override
@@ -301,8 +324,10 @@ class _MemberCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Member, $Out>
     rfidCardId: data.get(#rfidCardId, or: $value.rfidCardId),
     email: data.get(#email, or: $value.email),
     emergencyContact: data.get(#emergencyContact, or: $value.emergencyContact),
+    branch: data.get(#branch, or: $value.branch),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
+    syncStatus: data.get(#syncStatus, or: $value.syncStatus),
   );
 
   @override

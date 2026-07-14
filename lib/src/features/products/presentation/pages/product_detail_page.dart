@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/routing/routes/products.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/product_tab.dart';
 import '../controllers/paginated_products_controller.dart';
 import '../controllers/product_provider.dart';
@@ -119,20 +120,9 @@ class ProductDetailPage extends HookConsumerWidget {
           title: const Text('Error'),
           automaticallyImplyLeading: !isTablet,
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(productProvider(productId)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          onRetry: () => ref.invalidate(productProvider(productId)),
         ),
       ),
     );

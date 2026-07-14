@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/database/database_provider.dart';
+import '../../../../core/sync/sync_status.dart';
 import '../../data/repositories/member_membership_repository.dart';
 import '../../domain/member_membership.dart';
 
@@ -18,9 +20,37 @@ class MemberMembershipsController extends _$MemberMembershipsController {
     final result = await _repository.fetchByMember(memberId);
 
     return result.fold(
-      (failure) => throw failure,
-      (memberships) => memberships,
+      (failure) async {
+        final pending = await _loadPending(memberId);
+        if (pending.isNotEmpty) return pending;
+        throw failure;
+      },
+      (memberships) async {
+        final pending = await _loadPending(memberId);
+        return [...pending, ...memberships];
+      },
     );
+  }
+
+  Future<List<MemberMembership>> _loadPending(String memberId) async {
+    final db = ref.read(appDatabaseProvider);
+    final rows = await db.pendingMemberMembershipsDao.getByMember(memberId);
+    return rows
+        .where((r) => r.syncStatus != SyncStatus.synced.name)
+        .map(
+          (r) => MemberMembership(
+            id: r.id,
+            memberId: r.memberId,
+            membershipId: r.membershipId,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            status: MemberMembershipStatus.active,
+            branchId: '',
+            membershipName: r.planName,
+            saleId: r.saleId,
+          ),
+        )
+        .toList();
   }
 
   /// Refreshes the member's memberships.
@@ -30,21 +60,25 @@ class MemberMembershipsController extends _$MemberMembershipsController {
 
     final result = await _repository.fetchByMember(memberId);
 
-    state = result.fold(
-      (failure) => AsyncError(failure, StackTrace.current),
-      (memberships) => AsyncData(memberships),
+    state = await result.fold(
+      (failure) async {
+        final pending = await _loadPending(memberId);
+        if (pending.isNotEmpty) return AsyncData(pending);
+        return AsyncError(failure, StackTrace.current);
+      },
+      (memberships) async {
+        final pending = await _loadPending(memberId);
+        return AsyncData([...pending, ...memberships]);
+      },
     );
   }
 
   /// Cancels a member's membership.
   Future<bool> cancelMembership(String memberMembershipId) async {
     final result = await _repository.cancel(memberMembershipId);
-    return result.fold(
-      (failure) => false,
-      (_) {
-        refresh();
-        return true;
-      },
-    );
+    return result.fold((failure) => false, (_) {
+      refresh();
+      return true;
+    });
   }
 }

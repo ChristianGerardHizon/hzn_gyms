@@ -116,6 +116,8 @@ class SaleSearchFieldsDialog extends ConsumerWidget {
     switch (field) {
       case 'receiptNumber':
         return t.fields.receiptNumber;
+      case 'descriptor':
+        return t.fields.descriptor;
       case 'customerName':
         return t.fields.customerName;
       case 'paymentRef':

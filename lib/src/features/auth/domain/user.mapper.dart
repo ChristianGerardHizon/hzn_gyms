@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -46,6 +47,19 @@ class UserMapper extends ClassMapperBase<User> {
     _$branch,
     opt: true,
   );
+  static List<String> _$allowedBranches(User v) => v.allowedBranches;
+  static const Field<User, List<String>> _f$allowedBranches = Field(
+    'allowedBranches',
+    _$allowedBranches,
+    opt: true,
+    def: const [],
+  );
+  static String? _$roleId(User v) => v.roleId;
+  static const Field<User, String> _f$roleId = Field(
+    'roleId',
+    _$roleId,
+    opt: true,
+  );
 
   @override
   final MappableFields<User> fields = const {
@@ -55,6 +69,8 @@ class UserMapper extends ClassMapperBase<User> {
     #avatarUrl: _f$avatarUrl,
     #verified: _f$verified,
     #branch: _f$branch,
+    #allowedBranches: _f$allowedBranches,
+    #roleId: _f$roleId,
   };
 
   static User _instantiate(DecodingData data) {
@@ -65,6 +81,8 @@ class UserMapper extends ClassMapperBase<User> {
       avatarUrl: data.dec(_f$avatarUrl),
       verified: data.dec(_f$verified),
       branch: data.dec(_f$branch),
+      allowedBranches: data.dec(_f$allowedBranches),
+      roleId: data.dec(_f$roleId),
     );
   }
 
@@ -114,6 +132,8 @@ extension UserValueCopy<$R, $Out> on ObjectCopyWith<$R, User, $Out> {
 
 abstract class UserCopyWith<$R, $In extends User, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches;
   $R call({
     String? id,
     String? name,
@@ -121,6 +141,8 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     String? avatarUrl,
     bool? verified,
     String? branch,
+    List<String>? allowedBranches,
+    String? roleId,
   });
   UserCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -132,6 +154,13 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
   @override
   late final ClassMapperBase<User> $mapper = UserMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches => ListCopyWith(
+    $value.allowedBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranches: v),
+  );
+  @override
   $R call({
     String? id,
     String? name,
@@ -139,6 +168,8 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     Object? avatarUrl = $none,
     bool? verified,
     Object? branch = $none,
+    List<String>? allowedBranches,
+    Object? roleId = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -147,6 +178,8 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (avatarUrl != $none) #avatarUrl: avatarUrl,
       if (verified != null) #verified: verified,
       if (branch != $none) #branch: branch,
+      if (allowedBranches != null) #allowedBranches: allowedBranches,
+      if (roleId != $none) #roleId: roleId,
     }),
   );
   @override
@@ -157,6 +190,8 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     avatarUrl: data.get(#avatarUrl, or: $value.avatarUrl),
     verified: data.get(#verified, or: $value.verified),
     branch: data.get(#branch, or: $value.branch),
+    allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
+    roleId: data.get(#roleId, or: $value.roleId),
   );
 
   @override

@@ -15,19 +15,25 @@ final authStorageProvider = AuthStorageProvider._();
 
 /// Provides auth storage operations for saving/loading authentication data.
 
-final class AuthStorageProvider extends $FunctionalProvider<AuthStorageService,
-    AuthStorageService, AuthStorageService> with $Provider<AuthStorageService> {
+final class AuthStorageProvider
+    extends
+        $FunctionalProvider<
+          AuthStorageService,
+          AuthStorageService,
+          AuthStorageService
+        >
+    with $Provider<AuthStorageService> {
   /// Provides auth storage operations for saving/loading authentication data.
   AuthStorageProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'authStorageProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'authStorageProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$authStorageHash();
@@ -35,8 +41,8 @@ final class AuthStorageProvider extends $FunctionalProvider<AuthStorageService,
   @$internal
   @override
   $ProviderElement<AuthStorageService> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   AuthStorageService create(Ref ref) {

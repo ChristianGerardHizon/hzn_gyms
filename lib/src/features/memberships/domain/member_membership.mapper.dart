@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -119,6 +120,15 @@ class MemberMembershipMapper extends ClassMapperBase<MemberMembership> {
     _$membershipName,
     opt: true,
   );
+  static List<String> _$membershipValidBranches(MemberMembership v) =>
+      v.membershipValidBranches;
+  static const Field<MemberMembership, List<String>>
+  _f$membershipValidBranches = Field(
+    'membershipValidBranches',
+    _$membershipValidBranches,
+    opt: true,
+    def: const [],
+  );
   static String? _$saleId(MemberMembership v) => v.saleId;
   static const Field<MemberMembership, String> _f$saleId = Field(
     'saleId',
@@ -161,6 +171,7 @@ class MemberMembershipMapper extends ClassMapperBase<MemberMembership> {
     #branchId: _f$branchId,
     #memberName: _f$memberName,
     #membershipName: _f$membershipName,
+    #membershipValidBranches: _f$membershipValidBranches,
     #saleId: _f$saleId,
     #soldBy: _f$soldBy,
     #notes: _f$notes,
@@ -179,6 +190,7 @@ class MemberMembershipMapper extends ClassMapperBase<MemberMembership> {
       branchId: data.dec(_f$branchId),
       memberName: data.dec(_f$memberName),
       membershipName: data.dec(_f$membershipName),
+      membershipValidBranches: data.dec(_f$membershipValidBranches),
       saleId: data.dec(_f$saleId),
       soldBy: data.dec(_f$soldBy),
       notes: data.dec(_f$notes),
@@ -249,6 +261,8 @@ extension MemberMembershipValueCopy<$R, $Out>
 
 abstract class MemberMembershipCopyWith<$R, $In extends MemberMembership, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get membershipValidBranches;
   $R call({
     String? id,
     String? memberId,
@@ -259,6 +273,7 @@ abstract class MemberMembershipCopyWith<$R, $In extends MemberMembership, $Out>
     String? branchId,
     String? memberName,
     String? membershipName,
+    List<String>? membershipValidBranches,
     String? saleId,
     String? soldBy,
     String? notes,
@@ -279,6 +294,13 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MemberMembership> $mapper =
       MemberMembershipMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get membershipValidBranches => ListCopyWith(
+    $value.membershipValidBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(membershipValidBranches: v),
+  );
+  @override
   $R call({
     String? id,
     String? memberId,
@@ -289,6 +311,7 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
     String? branchId,
     Object? memberName = $none,
     Object? membershipName = $none,
+    List<String>? membershipValidBranches,
     Object? saleId = $none,
     Object? soldBy = $none,
     Object? notes = $none,
@@ -305,6 +328,8 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
       if (branchId != null) #branchId: branchId,
       if (memberName != $none) #memberName: memberName,
       if (membershipName != $none) #membershipName: membershipName,
+      if (membershipValidBranches != null)
+        #membershipValidBranches: membershipValidBranches,
       if (saleId != $none) #saleId: saleId,
       if (soldBy != $none) #soldBy: soldBy,
       if (notes != $none) #notes: notes,
@@ -323,6 +348,10 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
     branchId: data.get(#branchId, or: $value.branchId),
     memberName: data.get(#memberName, or: $value.memberName),
     membershipName: data.get(#membershipName, or: $value.membershipName),
+    membershipValidBranches: data.get(
+      #membershipValidBranches,
+      or: $value.membershipValidBranches,
+    ),
     saleId: data.get(#saleId, or: $value.saleId),
     soldBy: data.get(#soldBy, or: $value.soldBy),
     notes: data.get(#notes, or: $value.notes),

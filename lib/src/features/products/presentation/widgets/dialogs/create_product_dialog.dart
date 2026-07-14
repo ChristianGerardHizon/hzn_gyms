@@ -37,7 +37,7 @@ class CreateProductDialog extends HookConsumerWidget {
     // Watch categories and branches
     final categoriesAsync = ref.watch(productCategoriesProvider);
     final branchesAsync = ref.watch(branchesControllerProvider);
-    final userBranchId = ref.watch(currentBranchIdProvider);
+    final userBranchId = ref.watch(effectiveBranchIdForWriteProvider);
 
     Future<void> handleSave(BuildContext dialogContext) async {
       final isValid = formKey.currentState!.saveAndValidate();

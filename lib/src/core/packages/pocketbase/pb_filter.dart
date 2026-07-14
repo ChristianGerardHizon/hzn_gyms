@@ -7,10 +7,10 @@ import '../../utils/date_utils.dart';
 /// Example:
 /// ```dart
 /// final filter = PBFilter()
-///   .equals('species', 'dog')
+///   .equals('name', 'John')
 ///   .notDeleted()
 ///   .build();
-/// // Result: "species = 'dog' && isDeleted = false"
+/// // Result: "name = 'John' && isDeleted = false"
 /// ```
 class PBFilter {
   final List<String> _conditions;
@@ -165,6 +165,14 @@ class PBFilter {
       final currentConditions = _conditions.join(' && ');
       _conditions.clear();
       _conditions.add('($currentConditions) || ($otherConditions)');
+    }
+    return this;
+  }
+
+  /// Adds a raw filter expression (already parenthesized if needed).
+  PBFilter raw(String expression) {
+    if (expression.isNotEmpty) {
+      _conditions.add(expression);
     }
     return this;
   }

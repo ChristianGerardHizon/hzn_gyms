@@ -9,6 +9,7 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../domain/membership_add_on.dart';
 import '../dto/membership_add_on_dto.dart';
+import '../local/membership_cache_local_data_source.dart';
 
 part 'membership_add_on_repository.g.dart';
 
@@ -39,14 +40,18 @@ abstract class MembershipAddOnRepository {
 /// Provides the MembershipAddOnRepository instance.
 @Riverpod(keepAlive: true)
 MembershipAddOnRepository membershipAddOnRepository(Ref ref) {
-  return MembershipAddOnRepositoryImpl(ref.watch(pocketbaseProvider));
+  return MembershipAddOnRepositoryImpl(
+    ref.watch(pocketbaseProvider),
+    ref.watch(membershipCacheLocalDataSourceProvider),
+  );
 }
 
 /// Implementation of [MembershipAddOnRepository] using PocketBase.
 class MembershipAddOnRepositoryImpl implements MembershipAddOnRepository {
-  final PocketBase _pb;
+  MembershipAddOnRepositoryImpl(this._pb, this._localCache);
 
-  MembershipAddOnRepositoryImpl(this._pb);
+  final PocketBase _pb;
+  final MembershipCacheLocalDataSource _localCache;
 
   RecordService get _collection =>
       _pb.collection(PocketBaseCollections.membershipAddOns);
@@ -90,94 +95,94 @@ class MembershipAddOnRepositoryImpl implements MembershipAddOnRepository {
       return Right(cached);
     }
 
-    return TaskEither.tryCatch(
-      () async {
-        final filter = PBFilter().relation('membership', membershipId);
+    final result = await TaskEither.tryCatch(() async {
+      final filter = PBFilter().relation('membership', membershipId);
 
-        final records = await _collection.getFullList(
-          filter: filter.build(),
-          sort: 'name',
-        );
+      final records = await _collection.getFullList(
+        filter: filter.build(),
+        sort: 'name',
+      );
 
-        final addOns = records.map(_toEntity).toList();
-        _cache[membershipId] = addOns;
-        _cacheTimestamps[membershipId] = DateTime.now();
+      final addOns = records.map(_toEntity).toList();
+      await _localCache.upsertAddOns(addOns);
+      _cache[membershipId] = addOns;
+      _cacheTimestamps[membershipId] = DateTime.now();
 
+      if (activeOnly == true) {
+        return addOns.where((a) => a.isActive).toList();
+      }
+      return addOns;
+    }, Failure.handle).run();
+
+    return result.fold((failure) async {
+      final cached = await _localCache.getAddOnsForPlan(membershipId);
+      if (cached.isNotEmpty) {
+        var addOns = cached;
         if (activeOnly == true) {
-          return addOns.where((a) => a.isActive).toList();
+          addOns = addOns.where((a) => a.isActive).toList();
         }
-        return addOns;
-      },
-      Failure.handle,
-    ).run();
+        return Right(addOns);
+      }
+      return left(failure);
+    }, (addOns) => right(addOns));
   }
 
   @override
   FutureEither<MembershipAddOn> fetchOne(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'Add-on ID cannot be empty',
-            null,
-            'invalid_add_on_id',
-          );
-        }
+    return TaskEither.tryCatch(() async {
+      if (id.isEmpty) {
+        throw const DataFailure(
+          'Add-on ID cannot be empty',
+          null,
+          'invalid_add_on_id',
+        );
+      }
 
-        final record = await _collection.getOne(id);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.getOne(id);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<MembershipAddOn> create(MembershipAddOn addOn) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'membership': addOn.membershipId,
-          'name': addOn.name,
-          'description': addOn.description,
-          'price': addOn.price,
-          'isActive': addOn.isActive,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'membership': addOn.membershipId,
+        'name': addOn.name,
+        'description': addOn.description,
+        'price': addOn.price,
+        'durationDays': addOn.durationDays,
+        'isActive': addOn.isActive,
+      };
 
-        final record = await _collection.create(body: body);
-        _invalidateMembershipCache(addOn.membershipId);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body);
+      _invalidateMembershipCache(addOn.membershipId);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<MembershipAddOn> update(MembershipAddOn addOn) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': addOn.name,
-          'description': addOn.description,
-          'price': addOn.price,
-          'isActive': addOn.isActive,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'name': addOn.name,
+        'description': addOn.description,
+        'price': addOn.price,
+        'durationDays': addOn.durationDays,
+        'isActive': addOn.isActive,
+      };
 
-        final record = await _collection.update(addOn.id, body: body);
-        _invalidateMembershipCache(addOn.membershipId);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.update(addOn.id, body: body);
+      _invalidateMembershipCache(addOn.membershipId);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> delete(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _collection.delete(id);
-        invalidateCache();
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      await _collection.delete(id);
+      invalidateCache();
+    }, Failure.handle).run();
   }
 }

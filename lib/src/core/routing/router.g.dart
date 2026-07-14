@@ -26,15 +26,15 @@ final class RouterProvider
   ///
   /// Configured with auth redirects and error handling.
   RouterProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'routerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'routerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$routerHash();
@@ -58,4 +58,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'916937d3aab1aecc6fce4091d27133f7998f98d7';
+String _$routerHash() => r'cc1189e13002c0e56be4ffaee6fe3c7f0e83b2c3';

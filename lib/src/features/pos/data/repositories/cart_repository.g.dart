@@ -16,15 +16,15 @@ final class CartRepositoryProvider
     extends $FunctionalProvider<CartRepository, CartRepository, CartRepository>
     with $Provider<CartRepository> {
   CartRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'cartRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cartRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$cartRepositoryHash();

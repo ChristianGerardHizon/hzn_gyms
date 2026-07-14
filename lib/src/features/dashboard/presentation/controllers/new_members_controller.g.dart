@@ -29,15 +29,15 @@ final class TodaysNewMembersCountProvider
   /// Queries the members collection with a date filter on `created`.
   /// Members are global (no branch filter).
   TodaysNewMembersCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'todaysNewMembersCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todaysNewMembersCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$todaysNewMembersCountHash();
@@ -54,4 +54,55 @@ final class TodaysNewMembersCountProvider
 }
 
 String _$todaysNewMembersCountHash() =>
-    r'52fbc35d5aaf52a91b147e30dc9b90e819bd953d';
+    r'ac616133ea3d40457fc1a236175704b6d2d6a24f';
+
+/// Members registered today (KPI breakdown list).
+///
+/// Same filter as [todaysNewMembersCount]; sorted newest first.
+
+@ProviderFor(todaysNewMembersList)
+final todaysNewMembersListProvider = TodaysNewMembersListProvider._();
+
+/// Members registered today (KPI breakdown list).
+///
+/// Same filter as [todaysNewMembersCount]; sorted newest first.
+
+final class TodaysNewMembersListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Member>>,
+          List<Member>,
+          FutureOr<List<Member>>
+        >
+    with $FutureModifier<List<Member>>, $FutureProvider<List<Member>> {
+  /// Members registered today (KPI breakdown list).
+  ///
+  /// Same filter as [todaysNewMembersCount]; sorted newest first.
+  TodaysNewMembersListProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todaysNewMembersListProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$todaysNewMembersListHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Member>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Member>> create(Ref ref) {
+    return todaysNewMembersList(ref);
+  }
+}
+
+String _$todaysNewMembersListHash() =>
+    r'c24aa11942214f4636455ce0a5cb43fe6dae5afe';

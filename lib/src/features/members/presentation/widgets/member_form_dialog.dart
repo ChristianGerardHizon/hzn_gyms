@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -28,6 +29,7 @@ import '../../../memberships/presentation/widgets/membership_purchase_content.da
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/member.dart';
 import '../controllers/members_controller.dart';
+import '../controllers/member_provider.dart';
 import '../controllers/paginated_members_controller.dart';
 
 /// Result from the member form dialog.
@@ -55,7 +57,9 @@ Future<MemberFormResult?> showMemberFormDialog(
 }) {
   return showConstrainedDialog<MemberFormResult>(
     context: context,
-    fullScreen: true,
+    // The edit form is a plain form that shrink-wraps on desktop/tablet, while
+    // the create flow is a full-screen 3-step wizard.
+    fullScreen: member == null,
     builder: (context) => MemberFormDialog(member: member),
   );
 }
@@ -89,6 +93,8 @@ class _MemberEditForm extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final isSaving = useState(false);
+    final photoBytes = useState<Uint8List?>(null);
+    final selectedPhoto = useState<XFile?>(null);
 
     final initialValues = <String, dynamic>{
       'name': member.name,
@@ -124,13 +130,24 @@ class _MemberEditForm extends HookConsumerWidget {
         remarks: values['remarks'] as String?,
         rfidCardId: member.rfidCardId,
         addedBy: member.addedBy,
+        branch: member.branch,
       );
+
+      http.MultipartFile? photoFile;
+      if (photoBytes.value != null && selectedPhoto.value != null) {
+        photoFile = http.MultipartFile.fromBytes(
+          'photo',
+          photoBytes.value!,
+          filename: selectedPhoto.value!.name,
+        );
+      }
 
       final success = await ref
           .read(membersControllerProvider.notifier)
-          .updateMember(memberData);
+          .updateMemberWithPhoto(memberData, photo: photoFile);
 
       ref.read(paginatedMembersControllerProvider.notifier).refresh();
+      ref.invalidate(memberProvider(member.id));
 
       isSaving.value = false;
 
@@ -156,8 +173,48 @@ class _MemberEditForm extends HookConsumerWidget {
       dirtyGuard: dirtyGuard,
       isSaving: isSaving.value,
       onSave: handleSave,
-      fullScreen: true,
-      child: _MemberFormFields(member: member),
+      child: Column(
+        children: [
+          Center(
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 48,
+                  backgroundImage: _editFormPhotoProvider(
+                    photoBytes: photoBytes.value,
+                    memberPhoto: member.photo,
+                  ),
+                  child: photoBytes.value == null && member.photo == null
+                      ? const Icon(Icons.person, size: 48)
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 85,
+                    );
+                    if (image != null) {
+                      selectedPhoto.value = image;
+                      photoBytes.value = await image.readAsBytes();
+                    }
+                  },
+                  icon: const Icon(Icons.photo_camera),
+                  label: Text(
+                    photoBytes.value != null ? 'Change Photo' : 'Update Photo',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _MemberFormFields(member: member),
+        ],
+      ),
     );
   }
 }
@@ -197,6 +254,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
       isSaving.value = true;
       final values = formKey.currentState!.value;
 
+      final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
       final memberData = Member(
         id: '',
         name: values['name'] as String,
@@ -207,6 +265,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
         address: values['address'] as String?,
         emergencyContact: values['emergencyContact'] as String?,
         remarks: values['remarks'] as String?,
+        branch: branchId.isEmpty ? null : branchId,
       );
 
       // 1. Create member (with photo if selected)
@@ -239,38 +298,39 @@ class _MemberCreateWizard extends HookConsumerWidget {
       Sale? createdSale;
       if (selectedMembership.value != null) {
         final plan = selectedMembership.value!;
-        final branchId = ref.read(currentBranchIdProvider) ?? '';
         final auth = ref.read(currentAuthProvider);
         final startDate = DateTime.now();
-        final endDate = startDate.add(Duration(days: plan.durationDays));
+        final endDate = startDate.add(
+          Duration(
+            days:
+                plan.durationDays +
+                MembershipAddOn.totalBonusDays(selectedAddOns.value),
+          ),
+        );
 
         // 2a. Create a Sale record for this membership purchase
         final saleResult = await createMembershipSale(
           ref: ref,
           memberId: created.id,
-          memberName: created.name,
+          customerName: created.name,
           plan: plan,
           addOns: selectedAddOns.value,
           branchId: branchId,
         );
-        saleResult.fold(
-          (failure) {
-            // Sale failed — warn but continue with membership creation
-            if (context.mounted) {
-              showErrorSnackBar(
-                context,
-                message: 'Member created but failed to record sale',
-                useRootMessenger: false,
-              );
-            }
-          },
-          (sale) => createdSale = sale,
-        );
+        saleResult.fold((failure) {
+          // Sale failed — warn but continue with membership creation
+          if (context.mounted) {
+            showErrorSnackBar(
+              context,
+              message: 'Member created but failed to record sale',
+              useRootMessenger: false,
+            );
+          }
+        }, (sale) => createdSale = sale);
         final saleId = createdSale?.id;
 
         // 2b. Create MemberMembership record linked to the sale
-        final membershipRepo =
-            ref.read(memberMembershipRepositoryProvider);
+        final membershipRepo = ref.read(memberMembershipRepositoryProvider);
         final result = await membershipRepo.create(
           memberId: created.id,
           membershipId: plan.id,
@@ -291,16 +351,14 @@ class _MemberCreateWizard extends HookConsumerWidget {
           if (context.mounted) {
             showErrorSnackBar(
               context,
-              message:
-                  'Member created but failed to purchase membership',
+              message: 'Member created but failed to purchase membership',
               useRootMessenger: false,
             );
           }
         } else {
           // 2c. Create add-on records
           if (selectedAddOns.value.isNotEmpty) {
-            final addOnRepo =
-                ref.read(memberMembershipAddOnRepositoryProvider);
+            final addOnRepo = ref.read(memberMembershipAddOnRepositoryProvider);
             for (final addOn in selectedAddOns.value) {
               await addOnRepo.create(
                 memberMembershipId: createdMembership.id,
@@ -328,15 +386,15 @@ class _MemberCreateWizard extends HookConsumerWidget {
         if (context.mounted) {
           num? totalPrice;
           if (createdSale != null) {
-            final addOnTotal = selectedAddOns.value
-                .fold<num>(0, (sum, a) => sum + a.price);
-            totalPrice =
-                (selectedMembership.value?.price ?? 0) + addOnTotal;
+            final addOnTotal = selectedAddOns.value.fold<num>(
+              0,
+              (sum, a) => sum + a.price,
+            );
+            totalPrice = (selectedMembership.value?.price ?? 0) + addOnTotal;
           }
-          Navigator.of(context).pop(MemberFormResult(
-            sale: createdSale,
-            totalPrice: totalPrice,
-          ));
+          Navigator.of(
+            context,
+          ).pop(MemberFormResult(sale: createdSale, totalPrice: totalPrice));
         }
       }
     }
@@ -391,94 +449,100 @@ class _MemberCreateWizard extends HookConsumerWidget {
               child: Scaffold(
                 backgroundColor: Colors.transparent,
                 body: Column(
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: isSaving.value
-                              ? null
-                              : () async {
-                                  if (currentStep.value == 0) {
-                                    if (await dirtyGuard
-                                        .confirmDiscard(context)) {
-                                      if (context.mounted) {
-                                        Navigator.of(context).pop();
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: isSaving.value
+                                ? null
+                                : () async {
+                                    if (currentStep.value == 0) {
+                                      if (await dirtyGuard.confirmDiscard(
+                                        context,
+                                      )) {
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop();
+                                        }
                                       }
+                                    } else {
+                                      Navigator.of(context).pop();
                                     }
-                                  } else {
-                                    Navigator.of(context).pop();
-                                  }
-                                },
-                        ),
-                        Expanded(
-                          child: Text(
-                            'New Member',
-                            style: theme.textTheme.titleLarge,
+                                  },
                           ),
-                        ),
-                      ],
+                          Expanded(
+                            child: Text(
+                              'New Member',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
-                  // Step indicator
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: StepIndicator(
-                      currentStep: currentStep.value,
-                      steps: const ['Details', 'Photo', 'Membership', 'Review'],
+                    // Step indicator
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: StepIndicator(
+                        currentStep: currentStep.value,
+                        steps: const [
+                          'Details',
+                          'Photo',
+                          'Membership',
+                          'Review',
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Step content
-                  Expanded(
-                    child: IndexedStack(
-                      index: currentStep.value,
-                      children: [
-                        // Step 0: Member Details
-                        _MemberDetailsStep(
-                          formKey: formKey,
-                          onNext: () => currentStep.value = 1,
-                        ),
+                    // Step content
+                    Expanded(
+                      child: IndexedStack(
+                        index: currentStep.value,
+                        children: [
+                          // Step 0: Member Details
+                          _MemberDetailsStep(
+                            formKey: formKey,
+                            onNext: () => currentStep.value = 1,
+                          ),
 
-                        // Step 1: Photo
-                        _PhotoStep(
-                          selectedPhoto: selectedPhoto,
-                          photoBytes: photoBytes,
-                          onNext: () => currentStep.value = 2,
-                          onBack: () => currentStep.value = 0,
-                        ),
+                          // Step 1: Photo
+                          _PhotoStep(
+                            selectedPhoto: selectedPhoto,
+                            photoBytes: photoBytes,
+                            onNext: () => currentStep.value = 2,
+                            onBack: () => currentStep.value = 0,
+                          ),
 
-                        // Step 2: Membership
-                        _MembershipStep(
-                          selectedMembership: selectedMembership,
-                          selectedAddOns: selectedAddOns,
-                          onNext: () => currentStep.value = 3,
-                          onSkip: () => currentStep.value = 3,
-                          onBack: () => currentStep.value = 1,
-                        ),
+                          // Step 2: Membership
+                          _MembershipStep(
+                            selectedMembership: selectedMembership,
+                            selectedAddOns: selectedAddOns,
+                            onNext: () => currentStep.value = 3,
+                            onSkip: () => currentStep.value = 3,
+                            onBack: () => currentStep.value = 1,
+                          ),
 
-                        // Step 3: Review
-                        _ReviewStep(
-                          formKey: formKey,
-                          photoBytes: photoBytes,
-                          selectedMembership: selectedMembership,
-                          selectedAddOns: selectedAddOns,
-                          isSaving: isSaving.value,
-                          onSave: handleFinish,
-                          onBack: () => currentStep.value = 2,
-                        ),
-                      ],
+                          // Step 3: Review
+                          _ReviewStep(
+                            formKey: formKey,
+                            photoBytes: photoBytes,
+                            selectedMembership: selectedMembership,
+                            selectedAddOns: selectedAddOns,
+                            isSaving: isSaving.value,
+                            onSave: handleFinish,
+                            onBack: () => currentStep.value = 2,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -493,10 +557,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
 // =============================================================================
 
 class _MemberDetailsStep extends StatelessWidget {
-  const _MemberDetailsStep({
-    required this.formKey,
-    required this.onNext,
-  });
+  const _MemberDetailsStep({required this.formKey, required this.onNext});
 
   final GlobalKey<FormBuilderState> formKey;
   final VoidCallback onNext;
@@ -611,21 +672,12 @@ class _PhotoStep extends HookWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              OutlinedButton(
-                onPressed: onBack,
-                child: const Text('Back'),
-              ),
+              OutlinedButton(onPressed: onBack, child: const Text('Back')),
               const Spacer(),
               if (selectedPhoto.value == null)
-                TextButton(
-                  onPressed: onNext,
-                  child: const Text('Skip'),
-                )
+                TextButton(onPressed: onNext, child: const Text('Skip'))
               else
-                FilledButton(
-                  onPressed: onNext,
-                  child: const Text('Next'),
-                ),
+                FilledButton(onPressed: onNext, child: const Text('Next')),
             ],
           ),
         ),
@@ -711,10 +763,7 @@ class _MembershipStep extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              OutlinedButton(
-                onPressed: onBack,
-                child: const Text('Back'),
-              ),
+              OutlinedButton(onPressed: onBack, child: const Text('Back')),
               const Spacer(),
               if (selectedMembership.value == null)
                 TextButton(
@@ -722,10 +771,7 @@ class _MembershipStep extends StatelessWidget {
                   child: const Text('Skip'),
                 )
               else
-                FilledButton(
-                  onPressed: onNext,
-                  child: const Text('Next'),
-                ),
+                FilledButton(onPressed: onNext, child: const Text('Next')),
             ],
           ),
         ),
@@ -819,17 +865,30 @@ class _ReviewStep extends StatelessWidget {
                 if (email != null && email.isNotEmpty)
                   _ReviewRow(label: 'Email', value: email),
                 if (dob != null)
-                  _ReviewRow(label: 'Date of Birth', value: dateFormat.format(dob)),
+                  _ReviewRow(
+                    label: 'Date of Birth',
+                    value: dateFormat.format(dob),
+                  ),
                 if (sex != null)
                   _ReviewRow(label: 'Sex', value: sex.displayName),
                 if (address != null && address.isNotEmpty)
                   _ReviewRow(label: 'Address', value: address),
                 if (emergencyContact != null && emergencyContact.isNotEmpty)
-                  _ReviewRow(label: 'Emergency Contact', value: emergencyContact),
+                  _ReviewRow(
+                    label: 'Emergency Contact',
+                    value: emergencyContact,
+                  ),
                 if (remarks != null && remarks.isNotEmpty)
                   _ReviewRow(label: 'Remarks', value: remarks),
-                if ([mobile, email, address, emergencyContact, remarks]
-                    .every((v) => v == null || v.isEmpty) && dob == null && sex == null)
+                if ([
+                      mobile,
+                      email,
+                      address,
+                      emergencyContact,
+                      remarks,
+                    ].every((v) => v == null || v.isEmpty) &&
+                    dob == null &&
+                    sex == null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
@@ -872,31 +931,47 @@ class _ReviewStep extends StatelessWidget {
                   ),
                   if (addOns.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    ...addOns.map((addOn) => ListTile(
-                          dense: true,
-                          leading: const Icon(Icons.extension, size: 20),
-                          title: Text(addOn.name),
-                          trailing: Text(addOn.price.toCurrency()),
-                        )),
+                    ...addOns.map(
+                      (addOn) => ListTile(
+                        dense: true,
+                        leading: Icon(
+                          addOn.extendsDuration
+                              ? Icons.event_available
+                              : Icons.extension,
+                          size: 20,
+                        ),
+                        title: Text(addOn.name),
+                        subtitle: addOn.extendsDuration
+                            ? Text(addOn.durationDisplay)
+                            : null,
+                        trailing: Text(addOn.price.toCurrency()),
+                      ),
+                    ),
                     const Divider(),
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Total',
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           Text(
                             (plan.price +
                                     addOns.fold<num>(
-                                        0, (sum, a) => sum + a.price))
+                                      0,
+                                      (sum, a) => sum + a.price,
+                                    ))
                                 .toCurrency(),
-                            style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -1040,10 +1115,9 @@ class _MemberFormFields extends StatelessWidget {
           initialValue: member?.sex,
           decoration: const InputDecoration(labelText: 'Sex'),
           items: MemberSex.values
-              .map((s) => DropdownMenuItem(
-                    value: s,
-                    child: Text(s.displayName),
-                  ))
+              .map(
+                (s) => DropdownMenuItem(value: s, child: Text(s.displayName)),
+              )
               .toList(),
         ),
         const SizedBox(height: 16),
@@ -1059,8 +1133,7 @@ class _MemberFormFields extends StatelessWidget {
         FormBuilderTextField(
           name: 'emergencyContact',
           initialValue: member?.emergencyContact,
-          decoration:
-              const InputDecoration(labelText: 'Emergency Contact'),
+          decoration: const InputDecoration(labelText: 'Emergency Contact'),
           textInputAction: TextInputAction.next,
           textCapitalization: TextCapitalization.words,
         ),
@@ -1075,4 +1148,14 @@ class _MemberFormFields extends StatelessWidget {
       ],
     );
   }
+}
+
+ImageProvider<Object>? _editFormPhotoProvider({
+  required Uint8List? photoBytes,
+  required String? memberPhoto,
+}) {
+  if (photoBytes != null) return MemoryImage(photoBytes);
+  if (memberPhoto == null || memberPhoto.isEmpty) return null;
+  if (memberPhoto.startsWith('/')) return FileImage(File(memberPhoto));
+  return NetworkImage(memberPhoto);
 }

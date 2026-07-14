@@ -18,15 +18,15 @@ final class UserSearchQueryProvider
     extends $NotifierProvider<UserSearchQuery, String> {
   /// Provider for user search query state.
   UserSearchQueryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'userSearchQueryProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userSearchQueryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$userSearchQueryHash();
@@ -54,8 +54,14 @@ abstract class _$UserSearchQuery extends $Notifier<String> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<String, String>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<String, String>, String, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -70,15 +76,15 @@ final class UserSearchFieldsProvider
     extends $NotifierProvider<UserSearchFields, Set<String>> {
   /// Provider for managing which fields are included in user search.
   UserSearchFieldsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'userSearchFieldsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userSearchFieldsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$userSearchFieldsHash();
@@ -106,8 +112,14 @@ abstract class _$UserSearchFields extends $Notifier<Set<String>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Set<String>, Set<String>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Set<String>, Set<String>>, Set<String>, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

@@ -14,19 +14,23 @@ part of 'membership_add_ons_controller.dart';
 final membershipAddOnsControllerProvider = MembershipAddOnsControllerFamily._();
 
 /// Controller for managing add-ons for a specific membership plan.
-final class MembershipAddOnsControllerProvider extends $AsyncNotifierProvider<
-    MembershipAddOnsController, List<MembershipAddOn>> {
+final class MembershipAddOnsControllerProvider
+    extends
+        $AsyncNotifierProvider<
+          MembershipAddOnsController,
+          List<MembershipAddOn>
+        > {
   /// Controller for managing add-ons for a specific membership plan.
-  MembershipAddOnsControllerProvider._(
-      {required MembershipAddOnsControllerFamily super.from,
-      required String super.argument})
-      : super(
-          retry: null,
-          name: r'membershipAddOnsControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  MembershipAddOnsControllerProvider._({
+    required MembershipAddOnsControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'membershipAddOnsControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$membershipAddOnsControllerHash();
@@ -62,25 +66,24 @@ String _$membershipAddOnsControllerHash() =>
 final class MembershipAddOnsControllerFamily extends $Family
     with
         $ClassFamilyOverride<
-            MembershipAddOnsController,
-            AsyncValue<List<MembershipAddOn>>,
-            List<MembershipAddOn>,
-            FutureOr<List<MembershipAddOn>>,
-            String> {
+          MembershipAddOnsController,
+          AsyncValue<List<MembershipAddOn>>,
+          List<MembershipAddOn>,
+          FutureOr<List<MembershipAddOn>>,
+          String
+        > {
   MembershipAddOnsControllerFamily._()
-      : super(
-          retry: null,
-          name: r'membershipAddOnsControllerProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'membershipAddOnsControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Controller for managing add-ons for a specific membership plan.
 
-  MembershipAddOnsControllerProvider call(
-    String membershipId,
-  ) =>
+  MembershipAddOnsControllerProvider call(String membershipId) =>
       MembershipAddOnsControllerProvider._(argument: membershipId, from: this);
 
   @override
@@ -94,23 +97,24 @@ abstract class _$MembershipAddOnsController
   late final _$args = ref.$arg as String;
   String get membershipId => _$args;
 
-  FutureOr<List<MembershipAddOn>> build(
-    String membershipId,
-  );
+  FutureOr<List<MembershipAddOn>> build(String membershipId);
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref
-        as $Ref<AsyncValue<List<MembershipAddOn>>, List<MembershipAddOn>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<MembershipAddOn>>, List<MembershipAddOn>>,
-        AsyncValue<List<MembershipAddOn>>,
-        Object?,
-        Object?>;
-    element.handleCreate(
-        ref,
-        () => build(
-              _$args,
-            ));
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<List<MembershipAddOn>>, List<MembershipAddOn>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<MembershipAddOn>>,
+                List<MembershipAddOn>
+              >,
+              AsyncValue<List<MembershipAddOn>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -18,7 +18,9 @@ import '../../../features/settings/presentation/widgets/quantity_unit_detail_pan
 import '../../../features/settings/presentation/controllers/quantity_units_controller.dart';
 import '../../../features/settings/presentation/widgets/dialogs/quantity_unit_form_dialog.dart';
 import '../../../features/quantity_units/domain/quantity_unit.dart';
+import '../../permissions/current_user_permissions.dart';
 import '../../utils/breakpoints.dart';
+import '../../widgets/state/error_state.dart';
 
 part 'system.routes.g.dart';
 
@@ -87,6 +89,23 @@ class SystemRoute extends GoRouteData with $SystemRoute {
 
   @override
   String? redirect(BuildContext context, GoRouterState state) {
+    final perms = ProviderScope.containerOf(context)
+        .read(currentUserPermissionsProvider)
+        .value;
+    // Wait until the role loads — defaulting to empty would send staff to the
+    // tablet admin tab (product-categories) before settings.view is known.
+    if (perms == null) return null;
+
+    // Non-admin with settings access lands on Appearance only.
+    if (!perms.canManageSystem && perms.canViewSettings) {
+      if (state.uri.path == path ||
+          (!state.uri.path.startsWith('$path/appearance') &&
+              state.uri.path.startsWith(path))) {
+        return '$path/appearance';
+      }
+      return null;
+    }
+
     // Only redirect on tablet - mobile shows landing page
     if (Breakpoints.isTabletOrLarger(context) && state.uri.path == path) {
       return '$path/product-categories';
@@ -242,12 +261,16 @@ class CashierGroupDetailRoute extends GoRouteData
 // ============================================================================
 
 /// Mobile landing page for system settings with option cards.
-class _MobileSystemLandingPage extends StatelessWidget {
+class _MobileSystemLandingPage extends ConsumerWidget {
   const _MobileSystemLandingPage();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final perms =
+        ref.watch(currentUserPermissionsProvider).value ??
+            CurrentUserPermissions.empty;
+    final isAdmin = perms.canManageSystem;
 
     return Scaffold(
       appBar: AppBar(
@@ -256,53 +279,58 @@ class _MobileSystemLandingPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SystemOptionCard(
-            icon: Icons.inventory_2,
-            title: 'Product Categories',
-            description: 'Manage product category hierarchy',
-            color: theme.colorScheme.secondary,
-            onTap: () => const ProductCategoriesRoute().go(context),
-          ),
-          const SizedBox(height: 16),
-          _SystemOptionCard(
-            icon: Icons.straighten,
-            title: 'Quantity Units',
-            description: 'Manage units of measurement',
-            color: Colors.cyan,
-            onTap: () => const QuantityUnitsRoute().go(context),
-          ),
-          const SizedBox(height: 16),
-          _SystemOptionCard(
-            icon: Icons.print,
-            title: 'Printers',
-            description: 'Configure thermal receipt printers',
-            color: Colors.orange,
-            onTap: () => const PrinterSettingsRoute().go(context),
-          ),
-          const SizedBox(height: 16),
-          _SystemOptionCard(
-            icon: Icons.point_of_sale,
-            title: 'Cashier Layout',
-            description: 'Customize cashier page groups',
-            color: Colors.teal,
-            onTap: () => const CashierGroupsRoute().go(context),
-          ),
-          const SizedBox(height: 16),
-          _SystemOptionCard(
-            icon: Icons.palette,
-            title: 'Appearance',
-            description: 'Customize app theme and colors',
-            color: Colors.purple,
-            onTap: () => const AppearanceRoute().go(context),
-          ),
-          const SizedBox(height: 16),
-          _SystemOptionCard(
-            icon: Icons.file_upload,
-            title: 'Import',
-            description: 'Import products from CSV file',
-            color: Colors.indigo,
-            onTap: () => const ImportRoute().go(context),
-          ),
+          if (isAdmin) ...[
+            _SystemOptionCard(
+              icon: Icons.inventory_2,
+              title: 'Product Categories',
+              description: 'Manage product category hierarchy',
+              color: theme.colorScheme.secondary,
+              onTap: () => const ProductCategoriesRoute().go(context),
+            ),
+            const SizedBox(height: 16),
+            _SystemOptionCard(
+              icon: Icons.straighten,
+              title: 'Quantity Units',
+              description: 'Manage units of measurement',
+              color: Colors.cyan,
+              onTap: () => const QuantityUnitsRoute().go(context),
+            ),
+            const SizedBox(height: 16),
+            _SystemOptionCard(
+              icon: Icons.print,
+              title: 'Printers',
+              description: 'Configure thermal receipt printers',
+              color: Colors.orange,
+              onTap: () => const PrinterSettingsRoute().go(context),
+            ),
+            const SizedBox(height: 16),
+            _SystemOptionCard(
+              icon: Icons.point_of_sale,
+              title: 'Cashier Layout',
+              description: 'Customize cashier page groups',
+              color: Colors.teal,
+              onTap: () => const CashierGroupsRoute().go(context),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (perms.canViewSettings) ...[
+            _SystemOptionCard(
+              icon: Icons.palette,
+              title: 'Appearance',
+              description: 'Customize app theme and colors',
+              color: Colors.purple,
+              onTap: () => const AppearanceRoute().go(context),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (isAdmin)
+            _SystemOptionCard(
+              icon: Icons.file_upload,
+              title: 'Import',
+              description: 'Import products from CSV file',
+              color: Colors.indigo,
+              onTap: () => const ImportRoute().go(context),
+            ),
         ],
       ),
     );
@@ -401,20 +429,9 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
       ),
       body: categoriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => controller.refresh(),
         ),
         data: (categories) {
           if (categories.isEmpty) {
@@ -549,20 +566,9 @@ class _MobilePrinterListPage extends ConsumerWidget {
       ),
       body: printersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => controller.refresh(),
         ),
         data: (printers) {
           if (printers.isEmpty) {
@@ -688,20 +694,9 @@ class _MobileQuantityUnitsListPage extends ConsumerWidget {
       ),
       body: unitsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => controller.refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState.fromError(
+          error,
+          onRetry: () => controller.refresh(),
         ),
         data: (units) {
           if (units.isEmpty) {

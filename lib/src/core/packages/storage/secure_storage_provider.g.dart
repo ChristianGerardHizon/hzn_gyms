@@ -19,23 +19,27 @@ final secureStorageProvider = SecureStorageProvider._();
 ///
 /// Used for storing sensitive data like authentication tokens.
 
-final class SecureStorageProvider extends $FunctionalProvider<
-    FlutterSecureStorage,
-    FlutterSecureStorage,
-    FlutterSecureStorage> with $Provider<FlutterSecureStorage> {
+final class SecureStorageProvider
+    extends
+        $FunctionalProvider<
+          FlutterSecureStorage,
+          FlutterSecureStorage,
+          FlutterSecureStorage
+        >
+    with $Provider<FlutterSecureStorage> {
   /// Provides a singleton FlutterSecureStorage instance.
   ///
   /// Used for storing sensitive data like authentication tokens.
   SecureStorageProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'secureStorageProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'secureStorageProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$secureStorageHash();
@@ -43,8 +47,8 @@ final class SecureStorageProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<FlutterSecureStorage> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   FlutterSecureStorage create(Ref ref) {

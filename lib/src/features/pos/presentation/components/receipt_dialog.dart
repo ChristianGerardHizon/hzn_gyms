@@ -177,7 +177,7 @@ class ReceiptDialog extends HookConsumerWidget {
     final currentAuth = ref.watch(currentAuthProvider);
 
     // Watch branch for business info on receipts
-    final branchId = ref.watch(currentBranchIdProvider);
+    final branchId = ref.watch(effectiveBranchIdForWriteProvider);
     final branchAsync = ref.watch(branchProvider(branchId ?? ''));
 
     Future<void> handleThermalPrint({bool showSuccessMessage = true}) async {

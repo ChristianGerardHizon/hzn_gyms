@@ -6,19 +6,15 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
-import '../../../../../core/i18n/strings.g.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
-import '../../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form_feedback.dart';
 import '../../../domain/branch.dart';
 import '../../controllers/branches_controller.dart';
 
 /// Dialog for creating or editing a branch.
 class BranchFormDialog extends HookConsumerWidget {
-  const BranchFormDialog({
-    super.key,
-    this.branch,
-  });
+  const BranchFormDialog({super.key, this.branch});
 
   final Branch? branch;
 
@@ -26,9 +22,6 @@ class BranchFormDialog extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final t = Translations.of(context);
-
     // Form key
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final dirtyGuard = useFormDirtyGuard(
@@ -108,169 +101,100 @@ class BranchFormDialog extends HookConsumerWidget {
       }
     }
 
-    return DialogCloseHandler(
-      onClose: (ctx) => dirtyGuard.confirmDiscard(ctx),
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: dirtyGuard.onPopInvokedWithResult,
-        child: ConstrainedDialogContent(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: isSaving.value
-                          ? null
-                          : () async {
-                              if (await dirtyGuard.confirmDiscard(context)) {
-                                if (context.mounted) context.pop();
-                              }
-                            },
-                    ),
-                    Expanded(
-                      child: Text(
-                        isEditing ? 'Edit Branch' : 'New Branch',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: TextButton(
-                        onPressed: isSaving.value
-                            ? null
-                            : () async {
-                                if (await dirtyGuard.confirmDiscard(context)) {
-                                  if (context.mounted) context.pop();
-                                }
-                              },
-                        child: Text(t.common.cancel),
-                      ),
-                    ),
-                    FilledButton(
-                      onPressed: isSaving.value ? null : handleSave,
-                      child: isSaving.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(t.common.save),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Content
-              Expanded(
-                child: FormBuilder(
-                  key: formKey,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-
-                        // Name field
-                        FormBuilderTextField(
-                          name: 'name',
-                          initialValue: branch?.name,
-                          decoration: const InputDecoration(
-                            labelText: 'Name *',
-                            hintText: 'Enter branch name (internal)',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.store),
-                          ),
-                          enabled: !isSaving.value,
-                          validator: FormBuilderValidators.required(
-                            errorText: 'Name is required',
-                          ),
-                          textInputAction: TextInputAction.next,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Address field
-                        FormBuilderTextField(
-                          name: 'address',
-                          initialValue: branch?.address,
-                          decoration: const InputDecoration(
-                            labelText: 'Address *',
-                            hintText: 'Enter address',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.location_on),
-                          ),
-                          enabled: !isSaving.value,
-                          maxLines: 2,
-                          validator: FormBuilderValidators.required(
-                            errorText: 'Address is required',
-                          ),
-                          textInputAction: TextInputAction.next,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Contact number field
-                        FormBuilderTextField(
-                          name: 'contactNumber',
-                          initialValue: branch?.contactNumber,
-                          decoration: const InputDecoration(
-                            labelText: 'Contact Number *',
-                            hintText: 'Enter contact number',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.phone),
-                          ),
-                          enabled: !isSaving.value,
-                          keyboardType: TextInputType.phone,
-                          validator: FormBuilderValidators.required(
-                            errorText: 'Contact number is required',
-                          ),
-                          textInputAction: TextInputAction.next,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Operating hours field
-                        FormBuilderTextField(
-                          name: 'operatingHours',
-                          initialValue: branch?.operatingHours,
-                          decoration: const InputDecoration(
-                            labelText: 'Operating Hours',
-                            hintText: 'e.g., Mon-Sat 8:00 AM - 5:00 PM',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.schedule),
-                          ),
-                          enabled: !isSaving.value,
-                          textInputAction: TextInputAction.next,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Cut-off time field
-                        FormBuilderTextField(
-                          name: 'cutOffTime',
-                          initialValue: branch?.cutOffTime,
-                          decoration: const InputDecoration(
-                            labelText: 'Cut-off Time',
-                            hintText: 'e.g., 4:30 PM',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.timer_off),
-                          ),
-                          enabled: !isSaving.value,
-                          textInputAction: TextInputAction.done,
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    return FormDialogScaffold(
+      title: isEditing ? 'Edit Branch' : 'New Branch',
+      formKey: formKey,
+      dirtyGuard: dirtyGuard,
+      isSaving: isSaving.value,
+      onSave: (_) => handleSave(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Name field
+          FormBuilderTextField(
+            name: 'name',
+            initialValue: branch?.name,
+            decoration: const InputDecoration(
+              labelText: 'Name *',
+              hintText: 'Enter branch name (internal)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.store),
+            ),
+            enabled: !isSaving.value,
+            validator: FormBuilderValidators.required(
+              errorText: 'Name is required',
+            ),
+            textInputAction: TextInputAction.next,
           ),
-        ),
+          const SizedBox(height: 16),
+
+          // Address field
+          FormBuilderTextField(
+            name: 'address',
+            initialValue: branch?.address,
+            decoration: const InputDecoration(
+              labelText: 'Address *',
+              hintText: 'Enter address',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.location_on),
+            ),
+            enabled: !isSaving.value,
+            maxLines: 2,
+            validator: FormBuilderValidators.required(
+              errorText: 'Address is required',
+            ),
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+
+          // Contact number field
+          FormBuilderTextField(
+            name: 'contactNumber',
+            initialValue: branch?.contactNumber,
+            decoration: const InputDecoration(
+              labelText: 'Contact Number *',
+              hintText: 'Enter contact number',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.phone),
+            ),
+            enabled: !isSaving.value,
+            keyboardType: TextInputType.phone,
+            validator: FormBuilderValidators.required(
+              errorText: 'Contact number is required',
+            ),
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+
+          // Operating hours field
+          FormBuilderTextField(
+            name: 'operatingHours',
+            initialValue: branch?.operatingHours,
+            decoration: const InputDecoration(
+              labelText: 'Operating Hours',
+              hintText: 'e.g., Mon-Sat 8:00 AM - 5:00 PM',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.schedule),
+            ),
+            enabled: !isSaving.value,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
+
+          // Cut-off time field
+          FormBuilderTextField(
+            name: 'cutOffTime',
+            initialValue: branch?.cutOffTime,
+            decoration: const InputDecoration(
+              labelText: 'Cut-off Time',
+              hintText: 'e.g., 4:30 PM',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.timer_off),
+            ),
+            enabled: !isSaving.value,
+            textInputAction: TextInputAction.done,
+          ),
+        ],
       ),
     );
   }

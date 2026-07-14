@@ -1,5 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
+import '../../../core/sync/sync_status.dart';
+
 part 'member.mapper.dart';
 
 /// Sex/gender options for members.
@@ -39,8 +41,10 @@ class Member with MemberMappable {
     this.rfidCardId,
     this.email,
     this.emergencyContact,
+    this.branch,
     this.created,
     this.updated,
+    this.syncStatus,
   });
 
   /// PocketBase record ID.
@@ -79,11 +83,20 @@ class Member with MemberMappable {
   /// Emergency contact info (optional).
   final String? emergencyContact;
 
+  /// Branch FK ID (home branch).
+  final String? branch;
+
   /// Creation timestamp.
   final DateTime? created;
 
   /// Last update timestamp.
   final DateTime? updated;
+
+  /// Client-only sync status from local DB (not sent to PocketBase).
+  final SyncStatus? syncStatus;
+
+  /// Whether this member has a pending local sync.
+  bool get isPendingSync => syncStatus == SyncStatus.pending;
 
   /// Display string for list tiles.
   String get subtitle => mobileNumber ?? '';

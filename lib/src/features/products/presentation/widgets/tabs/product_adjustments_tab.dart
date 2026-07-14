@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/product.dart';
 import '../../../domain/product_adjustment.dart';
 import '../../../domain/product_adjustment_type.dart';
@@ -25,23 +26,12 @@ class ProductAdjustmentsTab extends ConsumerWidget {
 
     return adjustmentsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            Text('Error: $error'),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => ref
-                  .read(productAdjustmentsControllerProvider(product.id)
-                      .notifier)
-                  .refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, _) => ErrorState.fromError(
+        error,
+        compact: true,
+        onRetry: () => ref
+            .read(productAdjustmentsControllerProvider(product.id).notifier)
+            .refresh(),
       ),
       data: (adjustments) {
         if (adjustments.isEmpty) {

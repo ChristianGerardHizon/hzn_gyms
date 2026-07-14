@@ -6,9 +6,12 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/breakpoints.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
+import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/presentation/payments_controller.dart';
@@ -45,20 +48,9 @@ class SaleDetailPage extends ConsumerWidget {
                   onPressed: () => const SalesHistoryRoute().go(context),
                 ),
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error loading sale: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(saleProvider(saleId)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          onRetry: () => ref.invalidate(saleProvider(saleId)),
         ),
       ),
       data: (sale) {
@@ -103,6 +95,8 @@ class _SaleDetailContent extends HookConsumerWidget {
     final paymentsAsync = ref.watch(salePaymentsProvider(sale.id));
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
     final currencyFormat = NumberFormat.currency(symbol: '₱');
+    final headline = sale.detailTitle;
+    final showReceiptSubtitle = headline != sale.receiptNumber;
 
     return Scaffold(
       appBar: AppBar(
@@ -113,7 +107,11 @@ class _SaleDetailContent extends HookConsumerWidget {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => const SalesHistoryRoute().go(context),
               ),
-        title: Text(sale.receiptNumber),
+        title: Text(
+          headline,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.print),
@@ -156,9 +154,23 @@ class _SaleDetailContent extends HookConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  sale.receiptNumber,
-                                  style: theme.textTheme.titleLarge,
+                                  headline,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                                if (showReceiptSubtitle) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    sale.receiptNumber,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color:
+                                          theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 4),
                                 Text(
                                   sale.created != null
@@ -175,12 +187,10 @@ class _SaleDetailContent extends HookConsumerWidget {
                         ],
                       ),
                       const Divider(height: 24),
-                      if (sale.customerName != null &&
-                          sale.customerName!.isNotEmpty)
-                        _CustomerInfoRow(
-                          customerName: sale.customerName!,
-                          customerId: sale.customerId,
-                        ),
+                      _CustomerInfoRow(
+                        customerName: sale.customerDisplay,
+                        customerId: sale.customerId,
+                      ),
                       if (sale.notes != null && sale.notes!.isNotEmpty)
                         _InfoRow(
                           icon: Icons.note,
@@ -209,9 +219,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (error, _) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Error loading items: $error'),
+                  error: (error, _) => ErrorState.fromError(
+                    error,
+                    compact: true,
                   ),
                   data: (items) => items.isEmpty
                       ? const Padding(
@@ -283,6 +293,8 @@ class _SaleDetailContent extends HookConsumerWidget {
     final isVoided = statusLower == 'voided';
     final isPending = statusLower == 'pending';
     final isAwaitingPayment = statusLower == 'awaitingpayment';
+    final canVoidSale =
+        ref.watch(currentUserPermissionsProvider).value?.canVoidSales ?? false;
 
     // Show voided info card instead of actions
     if (isVoided) {
@@ -438,15 +450,16 @@ class _SaleDetailContent extends HookConsumerWidget {
                       ),
                     ),
                   if (isPending || isAwaitingPayment)
-                    const PopupMenuItem<String>(
-                      value: 'voided',
-                      child: ListTile(
-                        leading: Icon(Icons.cancel, color: Colors.red),
-                        title: Text('Void Sale'),
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
+                    if (canVoidSale)
+                      const PopupMenuItem<String>(
+                        value: 'voided',
+                        child: ListTile(
+                          leading: Icon(Icons.cancel, color: Colors.red),
+                          title: Text('Void Sale'),
+                          contentPadding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
-                    ),
                 ],
               ],
             ),
@@ -505,7 +518,7 @@ class _SaleDetailContent extends HookConsumerWidget {
   Widget _buildPaymentCard(
     BuildContext context,
     WidgetRef ref,
-    AsyncValue<List<dynamic>> paymentsAsync,
+    AsyncValue<List<Payment>> paymentsAsync,
     NumberFormat currencyFormat,
   ) {
     final theme = Theme.of(context);
@@ -573,9 +586,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                   child: CircularProgressIndicator(),
                 ),
               ),
-              error: (error, _) => Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text('Error loading payments: $error'),
+              error: (error, _) => ErrorState.fromError(
+                error,
+                compact: true,
               ),
               data: (payments) {
                 // Calculate totals
@@ -588,6 +601,18 @@ class _SaleDetailContent extends HookConsumerWidget {
                   }
                 }
                 final balanceDue = sale.totalAmount - totalPaid;
+                final statusLower = sale.status.toLowerCase();
+                final canVoidPayment = (ref
+                            .watch(currentUserPermissionsProvider)
+                            .value
+                            ?.canVoidSales ??
+                        false) &&
+                    statusLower != 'voided' &&
+                    statusLower != 'refunded';
+                final canRecordPayment =
+                    statusLower != 'voided' &&
+                    statusLower != 'refunded' &&
+                    balanceDue > 0;
 
                 return Column(
                   children: [
@@ -720,12 +745,50 @@ class _SaleDetailContent extends HookConsumerWidget {
                                       ),
                                   ],
                                 ),
-                                trailing: Text(
-                                  '${isRefund ? '-' : '+'}${currencyFormat.format(payment.amount)}',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: isRefund ? Colors.red : Colors.green,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${isRefund ? '-' : '+'}${currencyFormat.format(payment.amount)}',
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
+                                        color: isRefund
+                                            ? Colors.red
+                                            : Colors.green,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (canVoidPayment)
+                                      PopupMenuButton<String>(
+                                        icon: const Icon(Icons.more_vert),
+                                        tooltip: 'Payment actions',
+                                        onSelected: (value) {
+                                          if (value == 'void') {
+                                            _voidPayment(
+                                              context,
+                                              ref,
+                                              payment,
+                                              currencyFormat,
+                                            );
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem<String>(
+                                            value: 'void',
+                                            child: ListTile(
+                                              leading: Icon(
+                                                Icons.cancel,
+                                                color: theme.colorScheme.error,
+                                              ),
+                                              title: const Text('Void Payment'),
+                                              contentPadding: EdgeInsets.zero,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  ],
                                 ),
                               ),
                               // Show proof of payment button if available
@@ -764,7 +827,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                     ],
 
                     // Record payment button
-                    if (balanceDue > 0) ...[
+                    if (canRecordPayment) ...[
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -793,6 +856,65 @@ class _SaleDetailContent extends HookConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _voidPayment(
+    BuildContext context,
+    WidgetRef ref,
+    Payment payment,
+    NumberFormat currencyFormat,
+  ) async {
+    final isRefund = payment.type == PaymentType.refund;
+    final amountLabel = currencyFormat.format(payment.amount);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isRefund ? 'Void Refund?' : 'Void Payment?'),
+        content: Text(
+          isRefund
+              ? 'Remove this $amountLabel refund? The sale balance will be recalculated.'
+              : 'Remove this $amountLabel payment? The sale balance will be recalculated.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Void'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await ref
+        .read(paymentsControllerProvider.notifier)
+        .deletePayment(payment.id, sale.id);
+
+    if (!context.mounted) return;
+
+    if (success) {
+      ref.invalidate(saleProvider(sale.id));
+      ref.invalidate(salePaymentsProvider(sale.id));
+      showSuccessSnackBar(
+        context,
+        message: isRefund ? 'Refund voided' : 'Payment voided',
+      );
+    } else {
+      showErrorSnackBar(
+        context,
+        message: isRefund
+            ? 'Failed to void refund'
+            : 'Failed to void payment',
+      );
+    }
   }
 
   void _showPaymentProofDialog(BuildContext context, String imageUrl) {

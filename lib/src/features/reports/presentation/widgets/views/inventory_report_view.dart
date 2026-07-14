@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/utils/breakpoints.dart';
+import '../../../../../core/widgets/state/error_state.dart';
 import '../../../domain/inventory_report.dart';
 import '../../controllers/inventory_report_controller.dart';
 import '../charts/bar_chart_widget.dart';
@@ -22,9 +24,7 @@ class InventoryReportView extends ConsumerWidget {
     return reportAsync.when(
       data: (report) => _buildContent(context, report),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Text('Error loading inventory report: $error'),
-      ),
+      error: (error, stack) => ErrorState.fromError(error, compact: true),
     );
   }
 
@@ -38,48 +38,61 @@ class InventoryReportView extends ConsumerWidget {
           _buildKpiSection(context, report),
           const SizedBox(height: 24),
 
-          // Charts Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Stock Status Pie Chart
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: PieChartWidget(
-                      title: 'Stock Status',
-                      data: report.stockStatusBreakdown.map(
-                        (k, v) => MapEntry(k, v),
-                      ),
-                      height: 220,
-                      colors: const [
-                        Color(0xFF4CAF50), // In Stock - Green
-                        Color(0xFFFBC02D), // Low Stock - Yellow
-                        Color(0xFFF44336), // Out of Stock - Red
-                      ],
+          // Charts — stacked on mobile, side-by-side on wider layouts
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < Breakpoints.mobile;
+              final stockStatusChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: PieChartWidget(
+                    title: 'Stock Status',
+                    data: report.stockStatusBreakdown.map(
+                      (k, v) => MapEntry(k, v),
                     ),
+                    height: 220,
+                    colors: const [
+                      Color(0xFF4CAF50), // In Stock - Green
+                      Color(0xFFFBC02D), // Low Stock - Yellow
+                      Color(0xFFF44336), // Out of Stock - Red
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // Products by Category Bar Chart
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: BarChartWidget(
-                      title: 'Products by Category',
-                      data: report.productsByCategory.map(
-                        (k, v) => MapEntry(k, v),
-                      ),
-                      height: 220,
-                      barColor: Colors.deepPurple,
+              );
+              final productsByCategoryChart = Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: BarChartWidget(
+                    title: 'Products by Category',
+                    data: report.productsByCategory.map(
+                      (k, v) => MapEntry(k, v),
                     ),
+                    height: 220,
+                    barColor: Colors.deepPurple,
                   ),
                 ),
-              ),
-            ],
+              );
+
+              if (isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    stockStatusChart,
+                    const SizedBox(height: 16),
+                    productsByCategoryChart,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: stockStatusChart),
+                  const SizedBox(width: 16),
+                  Expanded(child: productsByCategoryChart),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
 
@@ -162,10 +175,7 @@ class InventoryReportView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Low Stock Items',
-                style: theme.textTheme.titleSmall,
-              ),
+              Text('Low Stock Items', style: theme.textTheme.titleSmall),
               const SizedBox(height: 16),
               Center(
                 child: Padding(
@@ -190,10 +200,7 @@ class InventoryReportView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Low Stock Items',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Low Stock Items', style: theme.textTheme.titleSmall),
             const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -206,17 +213,21 @@ class InventoryReportView extends ConsumerWidget {
                   DataColumn(label: Text('Expiration')),
                 ],
                 rows: report.lowStockItems.map((item) {
-                  return DataRow(cells: [
-                    DataCell(Text(item.productName)),
-                    DataCell(Text(item.categoryName)),
-                    DataCell(Text(item.currentStock.toString())),
-                    DataCell(Text(item.threshold.toString())),
-                    DataCell(Text(
-                      item.expirationDate != null
-                          ? dateFormat.format(item.expirationDate!)
-                          : '-',
-                    )),
-                  ]);
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(item.productName)),
+                      DataCell(Text(item.categoryName)),
+                      DataCell(Text(item.currentStock.toString())),
+                      DataCell(Text(item.threshold.toString())),
+                      DataCell(
+                        Text(
+                          item.expirationDate != null
+                              ? dateFormat.format(item.expirationDate!)
+                              : '-',
+                        ),
+                      ),
+                    ],
+                  );
                 }).toList(),
               ),
             ),

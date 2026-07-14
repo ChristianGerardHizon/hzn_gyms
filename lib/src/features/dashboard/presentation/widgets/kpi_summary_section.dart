@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/routing/routes/check_in.routes.dart';
-import '../../../../core/routing/routes/members.routes.dart';
-import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../controllers/active_members_count_controller.dart';
 import '../controllers/new_members_controller.dart';
 import '../controllers/todays_checkins_controller.dart';
 import '../controllers/todays_sales_controller.dart';
+import 'kpi_breakdown_dialogs.dart';
 import 'kpi_card.dart';
 
 /// Section displaying KPI summary cards on the dashboard.
@@ -18,6 +16,8 @@ import 'kpi_card.dart';
 /// - Today's check-ins
 /// - Active members (with active memberships)
 /// - New members registered today
+///
+/// Tapping a card opens a breakdown dialog with aggregates and the item list.
 class KpiSummarySection extends ConsumerWidget {
   const KpiSummarySection({super.key});
 
@@ -46,7 +46,7 @@ class KpiSummarySection extends ConsumerWidget {
                     subtitle: _formatCurrency(summary.total),
                     compact: true,
                     color: Colors.green,
-                    onTap: () => const SalesHistoryRoute().go(context),
+                    onTap: () => showTodaysSalesBreakdownDialog(context),
                   ),
                   loading: () => _buildLoadingCard(),
                   error: (_, __) => _buildErrorCard(
@@ -66,7 +66,7 @@ class KpiSummarySection extends ConsumerWidget {
                     subtitle: 'Members checked in',
                     compact: true,
                     color: Colors.teal,
-                    onTap: () => const CheckInRoute().go(context),
+                    onTap: () => showTodaysCheckInsBreakdownDialog(context),
                   ),
                   loading: () => _buildLoadingCard(),
                   error: (_, __) => _buildErrorCard(
@@ -91,7 +91,7 @@ class KpiSummarySection extends ConsumerWidget {
                     subtitle: 'With active membership',
                     compact: true,
                     color: Colors.purple,
-                    onTap: () => const MembersRoute().go(context),
+                    onTap: () => showActiveMembersBreakdownDialog(context),
                   ),
                   loading: () => _buildLoadingCard(),
                   error: (_, __) => _buildErrorCard(
@@ -111,6 +111,7 @@ class KpiSummarySection extends ConsumerWidget {
                     subtitle: 'Registered today',
                     compact: true,
                     color: Colors.blue,
+                    onTap: () => showNewMembersBreakdownDialog(context),
                   ),
                   loading: () => _buildLoadingCard(),
                   error: (_, __) => _buildErrorCard(
@@ -142,11 +143,7 @@ class KpiSummarySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-  ) {
+  Widget _buildErrorCard(BuildContext context, String title, IconData icon) {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
@@ -193,10 +190,7 @@ class KpiSummarySection extends ConsumerWidget {
   }
 
   String _formatCurrency(num amount) {
-    final formatter = NumberFormat.currency(
-      symbol: '\u20B1',
-      decimalDigits: 2,
-    );
+    final formatter = NumberFormat.currency(symbol: '\u20B1', decimalDigits: 2);
     return formatter.format(amount);
   }
 }

@@ -4,14 +4,20 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/constants.dart';
+import '../../../../core/database/database_provider.dart';
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/foundation/type_defs.dart';
+import '../../../../core/packages/pocketbase/pb_connectivity_provider.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../../core/sync/outbox_service.dart';
+import '../../../../core/sync/sync_status.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/member.dart';
 import '../dto/member_dto.dart';
+import '../local/member_local_data_source.dart';
 
 part 'member_repository.g.dart';
 
@@ -36,8 +42,10 @@ abstract class MemberRepository {
   FutureEither<List<Member>> search(String query, {List<String>? fields});
 
   /// Creates a new member with an optional photo.
-  FutureEither<Member> createWithPhoto(Member member,
-      {http.MultipartFile? photo});
+  FutureEither<Member> createWithPhoto(
+    Member member, {
+    http.MultipartFile? photo,
+  });
 
   /// Updates a member's photo image.
   FutureEither<Member> updatePhoto(String id, http.MultipartFile file);
@@ -60,122 +68,148 @@ abstract class MemberRepository {
     String? filter,
   });
 
+  /// Syncs all members from PocketBase into the local cache.
+  FutureEither<void> syncAllMembers({String? filter, String? sort});
+
   /// Invalidates the member list cache.
-  void invalidateCache();
+  Future<void> invalidateCache();
 }
 
-/// Provides the MemberRepository instance.
+/// Provides the [MemberRepository] instance.
 @Riverpod(keepAlive: true)
 MemberRepository memberRepository(Ref ref) {
-  return MemberRepositoryImpl(ref.watch(pocketbaseProvider));
+  return MemberRepositoryImpl(
+    pb: ref.watch(pocketbaseProvider),
+    localDataSource: ref.watch(memberLocalDataSourceProvider),
+    outboxService: OutboxService(ref.watch(appDatabaseProvider)),
+    isOnline: () => ref.read(pbConnectivityProvider).value ?? false,
+    hasAuth: () => ref.read(currentAuthProvider) != null,
+  );
 }
 
-/// Implementation of [MemberRepository] using PocketBase.
+/// Implementation of [MemberRepository] using PocketBase with Drift cache.
 class MemberRepositoryImpl implements MemberRepository {
-  final PocketBase _pb;
+  MemberRepositoryImpl({
+    required PocketBase pb,
+    required MemberLocalDataSource localDataSource,
+    required OutboxService outboxService,
+    required bool Function() isOnline,
+    required bool Function() hasAuth,
+  }) : _pb = pb,
+       _localDataSource = localDataSource,
+       _outboxService = outboxService,
+       _isOnline = isOnline,
+       _hasAuth = hasAuth;
 
-  MemberRepositoryImpl(this._pb);
+  final PocketBase _pb;
+  final MemberLocalDataSource _localDataSource;
+  final OutboxService _outboxService;
+  final bool Function() _isOnline;
+  final bool Function() _hasAuth;
 
   RecordService get _collection =>
       _pb.collection(PocketBaseCollections.members);
-
-  // Cache for member list
-  List<Member>? _cachedMembers;
-  DateTime? _cacheTimestamp;
-  String? _cachedFilter;
-  String? _cachedSort;
-
-  // Cache TTL (5 minutes)
-  static const _cacheTtl = Duration(minutes: 5);
-
-  /// Checks if the cache is valid.
-  bool _isCacheValid(String? filter, String? sort) {
-    if (_cachedMembers == null || _cacheTimestamp == null) return false;
-    if (_cachedFilter != filter || _cachedSort != sort) return false;
-    return DateTime.now().difference(_cacheTimestamp!) < _cacheTtl;
-  }
-
-  @override
-  void invalidateCache() {
-    _cachedMembers = null;
-    _cacheTimestamp = null;
-    _cachedFilter = null;
-    _cachedSort = null;
-  }
 
   Member _toEntity(RecordModel record) {
     return MemberDto.fromRecord(record).toEntity(baseUrl: _pb.baseURL);
   }
 
+  Map<String, dynamic> _memberBody(
+    Member member, {
+    bool includeAddedBy = true,
+  }) {
+    return {
+      'name': member.name,
+      'mobileNumber': member.mobileNumber,
+      'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
+      'address': member.address,
+      'sex': member.sex?.name,
+      'remarks': member.remarks,
+      if (includeAddedBy) 'addedBy': member.addedBy,
+      'rfidCardId': member.rfidCardId,
+      'email': member.email,
+      'emergencyContact': member.emergencyContact,
+      'branch': member.branch,
+    };
+  }
+
+  bool _shouldQueueOffline() {
+    return !_isOnline() && canWriteOffline(_pb, hasAuth: _hasAuth());
+  }
+
+  Future<void> _upsertRecord(RecordModel record) {
+    return _localDataSource.upsertFromDtos([MemberDto.fromRecord(record)]);
+  }
+
+  Future<void> _upsertRecords(List<RecordModel> records) {
+    return _localDataSource.upsertFromDtos(records.map(MemberDto.fromRecord));
+  }
+
+  @override
+  Future<void> invalidateCache() => _localDataSource.clearSynced();
+
   @override
   FutureEither<List<Member>> fetchAll({String? filter, String? sort}) async {
-    if (_isCacheValid(filter, sort)) {
-      return Right(_cachedMembers!);
-    }
+    return TaskEither.tryCatch(() async {
+      final sortValue = sort ?? 'name';
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: sortValue,
+      );
 
-    return TaskEither.tryCatch(
-      () async {
-        final records = await _collection.getFullList(
-          filter: filter,
-          sort: sort ?? 'name',
-        );
+      final dtos = records.map(MemberDto.fromRecord).toList();
+      await _localDataSource.replaceAllFromDtos(dtos);
 
-        final members = records.map(_toEntity).toList();
+      // Read back from cache so pending offline members remain visible.
+      return _localDataSource.getAll(sort: sortValue);
+    }, Failure.handle).run();
+  }
 
-        // Update cache
-        _cachedMembers = members;
-        _cacheTimestamp = DateTime.now();
-        _cachedFilter = filter;
-        _cachedSort = sort;
-
-        return members;
-      },
-      Failure.handle,
-    ).run();
+  @override
+  FutureEither<void> syncAllMembers({String? filter, String? sort}) async {
+    return TaskEither.tryCatch(() async {
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: sort ?? 'name',
+      );
+      await _localDataSource.replaceAllFromDtos(
+        records.map(MemberDto.fromRecord),
+      );
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> fetchOne(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'Member ID cannot be empty',
-            null,
-            'invalid_member_id',
-          );
-        }
+    if (id.isEmpty) {
+      return left(
+        const DataFailure(
+          'Member ID cannot be empty',
+          null,
+          'invalid_member_id',
+        ),
+      );
+    }
 
-        final record = await _collection.getOne(id);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+    final cached = await _localDataSource.getMemberById(id);
+    if (cached != null && !_isOnline()) {
+      return right(cached);
+    }
+
+    final result = await TaskEither.tryCatch(() async {
+      final record = await _collection.getOne(id);
+      await _upsertRecord(record);
+      return _toEntity(record);
+    }, Failure.handle).run();
+
+    return result.fold((failure) {
+      if (cached != null) return right(cached);
+      return left(failure);
+    }, (member) => right(member));
   }
 
   @override
-  FutureEither<Member> create(Member member) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': member.name,
-          'mobileNumber': member.mobileNumber,
-          'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
-          'address': member.address,
-          'sex': member.sex?.name,
-          'remarks': member.remarks,
-          'addedBy': member.addedBy,
-          'rfidCardId': member.rfidCardId,
-          'email': member.email,
-          'emergencyContact': member.emergencyContact,
-        };
-
-        final record = await _collection.create(body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+  FutureEither<Member> create(Member member) {
+    return createWithPhoto(member);
   }
 
   @override
@@ -183,65 +217,126 @@ class MemberRepositoryImpl implements MemberRepository {
     Member member, {
     http.MultipartFile? photo,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': member.name,
-          'mobileNumber': member.mobileNumber,
-          'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
-          'address': member.address,
-          'sex': member.sex?.name,
-          'remarks': member.remarks,
-          'addedBy': member.addedBy,
-          'rfidCardId': member.rfidCardId,
-          'email': member.email,
-          'emergencyContact': member.emergencyContact,
-        };
+    if (_shouldQueueOffline()) {
+      return _queueMemberCreate(member, photo: photo);
+    }
 
-        final record = await _collection.create(
-          body: body,
-          files: photo != null ? [photo] : [],
+    final id = member.id.isEmpty ? generateClientId() : member.id;
+    final body = _memberBody(member)..['id'] = id;
+
+    final result = await TaskEither.tryCatch(() async {
+      final record = await _collection.create(
+        body: body,
+        files: photo != null ? [photo] : [],
+      );
+      await _localDataSource.upsertFromDtos([
+        MemberDto.fromRecord(record),
+      ], syncStatus: SyncStatus.synced);
+      return _toEntity(record);
+    }, Failure.handle).run();
+
+    return result.fold((failure) {
+      if (isNetworkFailure(failure) &&
+          canWriteOffline(_pb, hasAuth: _hasAuth())) {
+        return _queueMemberCreate(member.copyWith(id: id), photo: photo);
+      }
+      return left(failure);
+    }, (created) => right(created));
+  }
+
+  FutureEither<Member> _queueMemberCreate(
+    Member member, {
+    http.MultipartFile? photo,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final id = member.id.isEmpty ? generateClientId() : member.id;
+      final body = _memberBody(member);
+      List<int>? photoBytes;
+      String? photoFilename;
+      String? localPhotoPath;
+
+      if (photo != null) {
+        photoBytes = await _readMultipartBytes(photo);
+        photoFilename = photo.filename;
+        localPhotoPath = await _localDataSource.saveLocalPhoto(
+          memberId: id,
+          bytes: photoBytes,
+          filename: photoFilename ?? 'photo.jpg',
         );
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      }
+
+      final pendingMember = member.copyWith(
+        id: id,
+        syncStatus: SyncStatus.pending,
+        photo: localPhotoPath,
+      );
+
+      await _localDataSource.upsertMembers(
+        [pendingMember],
+        syncStatus: SyncStatus.pending,
+        localPhotoPath: localPhotoPath,
+      );
+
+      await _outboxService.enqueueMemberCreate(
+        clientRecordId: id,
+        payload: body,
+        photoBytes: photoBytes,
+        photoFilename: photoFilename,
+      );
+
+      return pendingMember;
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> update(Member member) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': member.name,
-          'mobileNumber': member.mobileNumber,
-          'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
-          'address': member.address,
-          'sex': member.sex?.name,
-          'remarks': member.remarks,
-          'rfidCardId': member.rfidCardId,
-          'email': member.email,
-          'emergencyContact': member.emergencyContact,
-        };
+    if (_shouldQueueOffline()) {
+      return _queueMemberUpdate(member);
+    }
 
-        final record = await _collection.update(member.id, body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+    final body = _memberBody(member, includeAddedBy: false);
+
+    final result = await TaskEither.tryCatch(() async {
+      final record = await _collection.update(member.id, body: body);
+      await _localDataSource.upsertFromDtos([
+        MemberDto.fromRecord(record),
+      ], syncStatus: SyncStatus.synced);
+      return _toEntity(record);
+    }, Failure.handle).run();
+
+    return result.fold((failure) {
+      if (isNetworkFailure(failure) &&
+          canWriteOffline(_pb, hasAuth: _hasAuth())) {
+        return _queueMemberUpdate(member);
+      }
+      return left(failure);
+    }, (updated) => right(updated));
+  }
+
+  FutureEither<Member> _queueMemberUpdate(Member member) async {
+    return TaskEither.tryCatch(() async {
+      final body = _memberBody(member, includeAddedBy: false);
+      final pendingMember = member.copyWith(syncStatus: SyncStatus.pending);
+
+      await _localDataSource.upsertMembers([
+        pendingMember,
+      ], syncStatus: SyncStatus.pending);
+
+      await _outboxService.enqueueMemberUpdate(
+        clientRecordId: member.id,
+        payload: body,
+      );
+
+      return pendingMember;
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> delete(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _collection.delete(id);
-        invalidateCache();
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      await _collection.delete(id);
+      await _localDataSource.deleteMember(id);
+    }, Failure.handle).run();
   }
 
   @override
@@ -249,33 +344,97 @@ class MemberRepositoryImpl implements MemberRepository {
     String query, {
     List<String>? fields,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final searchFields = fields ?? ['name', 'mobileNumber'];
-        final filter =
-            PBFilter().searchFields(query, searchFields).build();
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'mobileNumber'];
+      final filter = PBFilter().searchFields(query, searchFields).build();
 
-        final records = await _collection.getFullList(
-          filter: filter,
-          sort: 'name',
-        );
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: 'name',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      await _upsertRecords(records);
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<Member> updatePhoto(String id, http.MultipartFile file) async {
-    return TaskEither.tryCatch(
-      () async {
-        final record = await _collection.update(id, files: [file]);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+    if (_shouldQueueOffline()) {
+      return _queueMemberPhotoUpdate(id, file);
+    }
+
+    final result = await TaskEither.tryCatch(() async {
+      final record = await _collection.update(id, files: [file]);
+      await _localDataSource.upsertFromDtos([
+        MemberDto.fromRecord(record),
+      ], syncStatus: SyncStatus.synced);
+      return _toEntity(record);
+    }, Failure.handle).run();
+
+    return result.fold((failure) {
+      if (isNetworkFailure(failure) &&
+          canWriteOffline(_pb, hasAuth: _hasAuth())) {
+        return _queueMemberPhotoUpdate(id, file);
+      }
+      return left(failure);
+    }, (updated) => right(updated));
+  }
+
+  FutureEither<Member> _queueMemberPhotoUpdate(
+    String id,
+    http.MultipartFile file,
+  ) async {
+    return TaskEither.tryCatch(() async {
+      final cached = await _localDataSource.getMemberById(id);
+      if (cached == null) {
+        throw const DataFailure('Member not found in cache', null, 'not_found');
+      }
+
+      final photoBytes = await _readMultipartBytes(file);
+      final photoFilename = file.filename ?? 'photo.jpg';
+      final localPhotoPath = await _localDataSource.saveLocalPhoto(
+        memberId: id,
+        bytes: photoBytes,
+        filename: photoFilename,
+      );
+
+      final pendingMember = cached.copyWith(
+        photo: localPhotoPath,
+        syncStatus: SyncStatus.pending,
+      );
+
+      await _localDataSource.upsertMembers(
+        [pendingMember],
+        syncStatus: SyncStatus.pending,
+        localPhotoPath: localPhotoPath,
+      );
+
+      await _outboxService.enqueueMemberUpdate(
+        clientRecordId: id,
+        payload: _memberBody(cached, includeAddedBy: false),
+        photoBytes: photoBytes,
+        photoFilename: photoFilename,
+      );
+
+      return pendingMember;
+    }, Failure.handle).run();
+  }
+
+  Future<List<int>> _readMultipartBytes(http.MultipartFile file) async {
+    final stream = file.finalize();
+    final chunks = <List<int>>[];
+    await for (final chunk in stream) {
+      chunks.add(chunk);
+    }
+    final totalLength = chunks.fold<int>(0, (sum, c) => sum + c.length);
+    final bytes = List<int>.filled(totalLength, 0);
+    var offset = 0;
+    for (final chunk in chunks) {
+      bytes.setRange(offset, offset + chunk.length, chunk);
+      offset += chunk.length;
+    }
+    return bytes;
   }
 
   @override
@@ -285,24 +444,23 @@ class MemberRepositoryImpl implements MemberRepository {
     String? filter,
     String? sort,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _collection.getList(
-          page: page,
-          perPage: perPage,
-          filter: filter,
-          sort: sort ?? 'name',
-        );
+    return TaskEither.tryCatch(() async {
+      final result = await _collection.getList(
+        page: page,
+        perPage: perPage,
+        filter: filter,
+        sort: sort ?? 'name',
+      );
 
-        return PaginatedResult<Member>(
-          items: result.items.map(_toEntity).toList(),
-          page: result.page,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
-        );
-      },
-      Failure.handle,
-    ).run();
+      await _upsertRecords(result.items);
+
+      return PaginatedResult<Member>(
+        items: result.items.map(_toEntity).toList(),
+        page: result.page,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      );
+    }, Failure.handle).run();
   }
 
   @override
@@ -314,30 +472,29 @@ class MemberRepositoryImpl implements MemberRepository {
     String? sort,
     String? filter,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final searchFields = fields ?? ['name', 'mobileNumber'];
-        final searchFilter =
-            PBFilter().searchFields(query, searchFields).build();
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'mobileNumber'];
+      final searchFilter = PBFilter().searchFields(query, searchFields).build();
 
-        final combinedFilter =
-            filter != null ? '$searchFilter && $filter' : searchFilter;
+      final combinedFilter = filter != null
+          ? '$searchFilter && $filter'
+          : searchFilter;
 
-        final result = await _collection.getList(
-          page: page,
-          perPage: perPage,
-          filter: combinedFilter,
-          sort: sort ?? 'name',
-        );
+      final result = await _collection.getList(
+        page: page,
+        perPage: perPage,
+        filter: combinedFilter,
+        sort: sort ?? 'name',
+      );
 
-        return PaginatedResult<Member>(
-          items: result.items.map(_toEntity).toList(),
-          page: result.page,
-          totalItems: result.totalItems,
-          totalPages: result.totalPages,
-        );
-      },
-      Failure.handle,
-    ).run();
+      await _upsertRecords(result.items);
+
+      return PaginatedResult<Member>(
+        items: result.items.map(_toEntity).toList(),
+        page: result.page,
+        totalItems: result.totalItems,
+        totalPages: result.totalPages,
+      );
+    }, Failure.handle).run();
   }
 }

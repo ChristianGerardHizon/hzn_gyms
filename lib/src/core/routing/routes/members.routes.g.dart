@@ -6,25 +6,20 @@ part of 'members.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $membersShellRoute,
-    ];
+List<RouteBase> get $appRoutes => [$membersShellRoute];
 
 RouteBase get $membersShellRoute => ShellRouteData.$route(
-      factory: $MembersShellRouteExtension._fromState,
+  factory: $MembersShellRouteExtension._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: '/members',
+      factory: $MembersRoute._fromState,
       routes: [
-        GoRouteData.$route(
-          path: '/members',
-          factory: $MembersRoute._fromState,
-          routes: [
-            GoRouteData.$route(
-              path: ':id',
-              factory: $MemberDetailRoute._fromState,
-            ),
-          ],
-        ),
+        GoRouteData.$route(path: ':id', factory: $MemberDetailRoute._fromState),
       ],
-    );
+    ),
+  ],
+);
 
 extension $MembersShellRouteExtension on MembersShellRoute {
   static MembersShellRoute _fromState(GoRouterState state) =>
@@ -35,9 +30,7 @@ mixin $MembersRoute on GoRouteData {
   static MembersRoute _fromState(GoRouterState state) => const MembersRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/members',
-      );
+  String get location => GoRouteData.$location('/members');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -54,16 +47,14 @@ mixin $MembersRoute on GoRouteData {
 }
 
 mixin $MemberDetailRoute on GoRouteData {
-  static MemberDetailRoute _fromState(GoRouterState state) => MemberDetailRoute(
-        id: state.pathParameters['id']!,
-      );
+  static MemberDetailRoute _fromState(GoRouterState state) =>
+      MemberDetailRoute(id: state.pathParameters['id']!);
 
   MemberDetailRoute get _self => this as MemberDetailRoute;
 
   @override
-  String get location => GoRouteData.$location(
-        '/members/${Uri.encodeComponent(_self.id)}',
-      );
+  String get location =>
+      GoRouteData.$location('/members/${Uri.encodeComponent(_self.id)}');
 
   @override
   void go(BuildContext context) => context.go(location);

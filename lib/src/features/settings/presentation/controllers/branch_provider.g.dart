@@ -19,15 +19,16 @@ final class BranchProvider
     extends $FunctionalProvider<AsyncValue<Branch?>, Branch?, FutureOr<Branch?>>
     with $FutureModifier<Branch?>, $FutureProvider<Branch?> {
   /// Provider to fetch a single branch by ID.
-  BranchProvider._(
-      {required BranchFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'branchProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  BranchProvider._({
+    required BranchFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'branchProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$branchHash();
@@ -47,10 +48,7 @@ final class BranchProvider
   @override
   FutureOr<Branch?> create(Ref ref) {
     final argument = this.argument as String;
-    return branch(
-      ref,
-      argument,
-    );
+    return branch(ref, argument);
   }
 
   @override
@@ -71,20 +69,17 @@ String _$branchHash() => r'3adc9eab54590cf04cd78670c6ba0ef6b3057159';
 final class BranchFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Branch?>, String> {
   BranchFamily._()
-      : super(
-          retry: null,
-          name: r'branchProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'branchProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider to fetch a single branch by ID.
 
-  BranchProvider call(
-    String id,
-  ) =>
-      BranchProvider._(argument: id, from: this);
+  BranchProvider call(String id) => BranchProvider._(argument: id, from: this);
 
   @override
   String toString() => r'branchProvider';

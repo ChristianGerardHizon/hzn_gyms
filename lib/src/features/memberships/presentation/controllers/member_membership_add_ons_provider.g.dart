@@ -15,24 +15,27 @@ final memberMembershipAddOnsProvider = MemberMembershipAddOnsFamily._();
 
 /// Provider for fetching add-ons selected for a specific member membership.
 
-final class MemberMembershipAddOnsProvider extends $FunctionalProvider<
-        AsyncValue<List<MemberMembershipAddOn>>,
-        List<MemberMembershipAddOn>,
-        FutureOr<List<MemberMembershipAddOn>>>
+final class MemberMembershipAddOnsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MemberMembershipAddOn>>,
+          List<MemberMembershipAddOn>,
+          FutureOr<List<MemberMembershipAddOn>>
+        >
     with
         $FutureModifier<List<MemberMembershipAddOn>>,
         $FutureProvider<List<MemberMembershipAddOn>> {
   /// Provider for fetching add-ons selected for a specific member membership.
-  MemberMembershipAddOnsProvider._(
-      {required MemberMembershipAddOnsFamily super.from,
-      required String super.argument})
-      : super(
-          retry: null,
-          name: r'memberMembershipAddOnsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  MemberMembershipAddOnsProvider._({
+    required MemberMembershipAddOnsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberMembershipAddOnsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$memberMembershipAddOnsHash();
@@ -47,16 +50,13 @@ final class MemberMembershipAddOnsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<MemberMembershipAddOn>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<MemberMembershipAddOn>> create(Ref ref) {
     final argument = this.argument as String;
-    return memberMembershipAddOns(
-      ref,
-      argument,
-    );
+    return memberMembershipAddOns(ref, argument);
   }
 
   @override
@@ -78,24 +78,26 @@ String _$memberMembershipAddOnsHash() =>
 
 final class MemberMembershipAddOnsFamily extends $Family
     with
-        $FunctionalFamilyOverride<FutureOr<List<MemberMembershipAddOn>>,
-            String> {
+        $FunctionalFamilyOverride<
+          FutureOr<List<MemberMembershipAddOn>>,
+          String
+        > {
   MemberMembershipAddOnsFamily._()
-      : super(
-          retry: null,
-          name: r'memberMembershipAddOnsProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'memberMembershipAddOnsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for fetching add-ons selected for a specific member membership.
 
-  MemberMembershipAddOnsProvider call(
-    String memberMembershipId,
-  ) =>
+  MemberMembershipAddOnsProvider call(String memberMembershipId) =>
       MemberMembershipAddOnsProvider._(
-          argument: memberMembershipId, from: this);
+        argument: memberMembershipId,
+        from: this,
+      );
 
   @override
   String toString() => r'memberMembershipAddOnsProvider';

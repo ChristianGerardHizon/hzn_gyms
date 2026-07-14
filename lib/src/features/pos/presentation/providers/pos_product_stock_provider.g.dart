@@ -21,23 +21,28 @@ final posProductStockProvider = PosProductStockFamily._();
 /// Handles both lot-tracked and non-lot-tracked products.
 /// For lot-tracked products, sums all lot quantities to determine stock status.
 
-final class PosProductStockProvider extends $FunctionalProvider<
-        AsyncValue<ProductStatus>, ProductStatus, FutureOr<ProductStatus>>
+final class PosProductStockProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ProductStatus>,
+          ProductStatus,
+          FutureOr<ProductStatus>
+        >
     with $FutureModifier<ProductStatus>, $FutureProvider<ProductStatus> {
   /// Provider that calculates stock status for a product.
   ///
   /// Handles both lot-tracked and non-lot-tracked products.
   /// For lot-tracked products, sums all lot quantities to determine stock status.
-  PosProductStockProvider._(
-      {required PosProductStockFamily super.from,
-      required Product super.argument})
-      : super(
-          retry: null,
-          name: r'posProductStockProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  PosProductStockProvider._({
+    required PosProductStockFamily super.from,
+    required Product super.argument,
+  }) : super(
+         retry: null,
+         name: r'posProductStockProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$posProductStockHash();
@@ -52,16 +57,13 @@ final class PosProductStockProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<ProductStatus> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<ProductStatus> create(Ref ref) {
     final argument = this.argument as Product;
-    return posProductStock(
-      ref,
-      argument,
-    );
+    return posProductStock(ref, argument);
   }
 
   @override
@@ -85,22 +87,20 @@ String _$posProductStockHash() => r'af8754dde9e5729b8d53c26dd9692c13eb8cc712';
 final class PosProductStockFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ProductStatus>, Product> {
   PosProductStockFamily._()
-      : super(
-          retry: null,
-          name: r'posProductStockProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'posProductStockProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider that calculates stock status for a product.
   ///
   /// Handles both lot-tracked and non-lot-tracked products.
   /// For lot-tracked products, sums all lot quantities to determine stock status.
 
-  PosProductStockProvider call(
-    Product product,
-  ) =>
+  PosProductStockProvider call(Product product) =>
       PosProductStockProvider._(argument: product, from: this);
 
   @override

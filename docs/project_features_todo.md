@@ -4,8 +4,7 @@
 - [x] details (mobile number, date of birth, address, sex, remarks, addedBy)
 - [x] show current membership
 - [x] show check ins
-- [ ] link rfid card for check in
-- [ ] link medical records (optional)
+- [ ] link RFID card for check-in
 
 ## 2. Dashboard
 - [x] show a list of expiring members

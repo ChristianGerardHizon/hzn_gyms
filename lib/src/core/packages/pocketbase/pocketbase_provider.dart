@@ -10,9 +10,8 @@ part 'pocketbase_provider.g.dart';
 /// Environment URLs for PocketBase
 abstract class PocketBaseUrls {
   static const String dev = 'http://127.0.0.1:8090';
-  // TODO: Update these URLs when new backend is set up
-  static const String staging = 'https://staging.ebegym.com';
-  static const String prod = 'https://ebegym.com';
+  static const String staging = 'https://staging.ebegym.hznsystems.com';
+  static const String prod = 'https://ebegym.hznsystems.com';
 }
 
 /// Environment passed via --dart-define=ENV=<value>

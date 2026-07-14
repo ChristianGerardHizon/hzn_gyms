@@ -15,15 +15,15 @@ final cartControllerProvider = CartControllerProvider._();
 final class CartControllerProvider
     extends $AsyncNotifierProvider<CartController, CartState> {
   CartControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'cartControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cartControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$cartControllerHash();
@@ -33,7 +33,7 @@ final class CartControllerProvider
   CartController create() => CartController();
 }
 
-String _$cartControllerHash() => r'd532a6be31ebc4808b42c3f837eadb1faa40e3f5';
+String _$cartControllerHash() => r'86a121fd1035ae059fce4edab03c9a2277121a6f';
 
 abstract class _$CartController extends $AsyncNotifier<CartState> {
   FutureOr<CartState> build();
@@ -41,11 +41,14 @@ abstract class _$CartController extends $AsyncNotifier<CartState> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<CartState>, CartState>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<CartState>, CartState>,
-        AsyncValue<CartState>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<CartState>, CartState>,
+              AsyncValue<CartState>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -58,18 +61,19 @@ final cartTotalProvider = CartTotalProvider._();
 /// Provider for cart total.
 
 final class CartTotalProvider
-    extends $FunctionalProvider<double, double, double> with $Provider<double> {
+    extends $FunctionalProvider<double, double, double>
+    with $Provider<double> {
   /// Provider for cart total.
   CartTotalProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'cartTotalProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cartTotalProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$cartTotalHash();
@@ -107,15 +111,15 @@ final class CartItemsProvider
     with $Provider<List<CartItem>> {
   /// Provider for cart product items.
   CartItemsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'cartItemsProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cartItemsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$cartItemsHash();

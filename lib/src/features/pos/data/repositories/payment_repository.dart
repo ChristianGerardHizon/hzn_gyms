@@ -10,6 +10,7 @@ import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../domain/payment.dart';
 import '../../domain/payment_method.dart';
 import '../../domain/payment_type.dart';
+import '../../domain/sale_payment_status.dart';
 import '../dto/payment_dto.dart';
 
 part 'payment_repository.g.dart';
@@ -137,43 +138,32 @@ class PaymentRepositoryImpl implements PaymentRepository {
       filter: 'sale = "$saleId"',
     );
 
-    num total = 0;
-    for (final record in records) {
-      final amount = record.getDoubleValue('amount');
-      final type = record.getStringValue('type').toLowerCase();
-      if (type == 'refund') {
-        total -= amount;
-      } else {
-        total += amount;
-      }
-    }
-    return total;
+    return calculateNetPaidAmount(
+      records.map(
+        (record) => (
+          type: record.getStringValue('type'),
+          amount: record.getDoubleValue('amount'),
+        ),
+      ),
+    );
   }
 
   /// Updates sale.isPaid and status based on total payments vs totalAmount.
   Future<void> _updateSaleIsPaid(String saleId) async {
-    // Get sale to know total amount and current status
     final sale = await _sales.getOne(saleId);
     final totalAmount = sale.getDoubleValue('totalAmount');
     final currentStatus = sale.getStringValue('status');
-
-    // Calculate total paid
     final totalPaid = await _calculateTotalPaid(saleId);
 
-    // Update isPaid
-    final isPaid = totalPaid >= totalAmount;
-    final body = <String, dynamic>{'isPaid': isPaid};
+    final resolved = resolveSalePaymentState(
+      totalAmount: totalAmount,
+      totalPaid: totalPaid,
+      currentStatus: currentStatus,
+    );
 
-    // Auto-update status based on payment state
-    // Only update if not already refunded or voided
-    if (currentStatus != 'refunded' && currentStatus != 'voided') {
-      if (isPaid) {
-        body['status'] = 'paid';
-      } else if (totalPaid > 0) {
-        body['status'] = 'awaitingPayment';
-      } else {
-        body['status'] = 'pending';
-      }
+    final body = <String, dynamic>{'isPaid': resolved.isPaid};
+    if (resolved.status != null) {
+      body['status'] = resolved.status;
     }
 
     await _sales.update(saleId, body: body);

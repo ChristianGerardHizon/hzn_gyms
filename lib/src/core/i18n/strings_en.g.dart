@@ -40,18 +40,18 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	Translations $copyWith({TranslationMetadata<AppLocale, Translations>? meta}) => Translations(meta: meta ?? this.$meta);
 
 	// Translations
-	late final TranslationsAuthEn auth = TranslationsAuthEn._(_root);
-	late final TranslationsCommonEn common = TranslationsCommonEn._(_root);
-	late final TranslationsFailuresEn failures = TranslationsFailuresEn._(_root);
-	late final TranslationsFieldsEn fields = TranslationsFieldsEn._(_root);
-	late final TranslationsNavigationEn navigation = TranslationsNavigationEn._(_root);
-	late final TranslationsSortEn sort = TranslationsSortEn._(_root);
-	late final TranslationsValidationEn validation = TranslationsValidationEn._(_root);
+	late final Translations$auth$en auth = Translations$auth$en._(_root);
+	late final Translations$common$en common = Translations$common$en._(_root);
+	late final Translations$failures$en failures = Translations$failures$en._(_root);
+	late final Translations$fields$en fields = Translations$fields$en._(_root);
+	late final Translations$navigation$en navigation = Translations$navigation$en._(_root);
+	late final Translations$sort$en sort = Translations$sort$en._(_root);
+	late final Translations$validation$en validation = Translations$validation$en._(_root);
 }
 
 // Path: auth
-class TranslationsAuthEn {
-	TranslationsAuthEn._(this._root);
+class Translations$auth$en {
+	Translations$auth$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -110,8 +110,8 @@ class TranslationsAuthEn {
 }
 
 // Path: common
-class TranslationsCommonEn {
-	TranslationsCommonEn._(this._root);
+class Translations$common$en {
+	Translations$common$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -215,8 +215,8 @@ class TranslationsCommonEn {
 }
 
 // Path: failures
-class TranslationsFailuresEn {
-	TranslationsFailuresEn._(this._root);
+class Translations$failures$en {
+	Translations$failures$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -266,8 +266,8 @@ class TranslationsFailuresEn {
 }
 
 // Path: fields
-class TranslationsFieldsEn {
-	TranslationsFieldsEn._(this._root);
+class Translations$fields$en {
+	Translations$fields$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -287,15 +287,6 @@ class TranslationsFieldsEn {
 
 	/// en: 'Name'
 	String get name => 'Name';
-
-	/// en: 'Owner'
-	String get owner => 'Owner';
-
-	/// en: 'Species'
-	String get species => 'Species';
-
-	/// en: 'Breed'
-	String get breed => 'Breed';
 
 	/// en: 'Contact Number'
 	String get contactNumber => 'Contact Number';
@@ -318,6 +309,9 @@ class TranslationsFieldsEn {
 	/// en: 'Receipt Number'
 	String get receiptNumber => 'Receipt Number';
 
+	/// en: 'Description'
+	String get descriptor => 'Description';
+
 	/// en: 'Customer Name'
 	String get customerName => 'Customer Name';
 
@@ -335,8 +329,8 @@ class TranslationsFieldsEn {
 }
 
 // Path: navigation
-class TranslationsNavigationEn {
-	TranslationsNavigationEn._(this._root);
+class Translations$navigation$en {
+	Translations$navigation$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -381,9 +375,6 @@ class TranslationsNavigationEn {
 	/// en: 'Organization'
 	String get organization => 'Organization';
 
-	/// en: 'Services'
-	String get services => 'Services';
-
 	/// en: 'Check-In'
 	String get checkIn => 'Check-In';
 
@@ -393,6 +384,9 @@ class TranslationsNavigationEn {
 	/// en: 'Memberships'
 	String get memberships => 'Memberships';
 
+	/// en: 'Outbox'
+	String get outbox => 'Outbox';
+
 	/// en: 'System'
 	String get system => 'System';
 
@@ -401,11 +395,14 @@ class TranslationsNavigationEn {
 
 	/// en: 'No Branch'
 	String get noBranch => 'No Branch';
+
+	/// en: 'All Branches'
+	String get allBranches => 'All Branches';
 }
 
 // Path: sort
-class TranslationsSortEn {
-	TranslationsSortEn._(this._root);
+class Translations$sort$en {
+	Translations$sort$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -449,8 +446,8 @@ class TranslationsSortEn {
 }
 
 // Path: validation
-class TranslationsValidationEn {
-	TranslationsValidationEn._(this._root);
+class Translations$validation$en {
+	Translations$validation$en._(this._root);
 
 	final Translations _root; // ignore: unused_field
 
@@ -570,9 +567,6 @@ extension on Translations {
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Name',
-			'fields.owner' => 'Owner',
-			'fields.species' => 'Species',
-			'fields.breed' => 'Breed',
 			'fields.contactNumber' => 'Contact Number',
 			'fields.address' => 'Address',
 			'fields.searchFields' => 'Search Fields',
@@ -580,6 +574,7 @@ extension on Translations {
 			'fields.requiredField' => 'Required',
 			'fields.atLeastOneRequired' => 'At least one field required',
 			'fields.receiptNumber' => 'Receipt Number',
+			'fields.descriptor' => 'Description',
 			'fields.customerName' => 'Customer Name',
 			'fields.paymentRef' => 'Payment Reference',
 			'fields.notes' => 'Notes',
@@ -598,13 +593,14 @@ extension on Translations {
 			'navigation.sales' => 'Cashier',
 			'navigation.salesHistory' => 'Sales',
 			'navigation.organization' => 'Organization',
-			'navigation.services' => 'Services',
 			'navigation.checkIn' => 'Check-In',
 			'navigation.members' => 'Members',
 			'navigation.memberships' => 'Memberships',
+			'navigation.outbox' => 'Outbox',
 			'navigation.system' => 'System',
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'No Branch',
+			'navigation.allBranches' => 'All Branches',
 			'sort.sortBy' => 'Sort By',
 			'sort.direction' => 'Direction',
 			'sort.ascending' => 'Ascending',

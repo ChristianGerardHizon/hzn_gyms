@@ -19,15 +19,16 @@ final class MemberProvider
     extends $FunctionalProvider<AsyncValue<Member?>, Member?, FutureOr<Member?>>
     with $FutureModifier<Member?>, $FutureProvider<Member?> {
   /// Provider for a single member by ID.
-  MemberProvider._(
-      {required MemberFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'memberProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  MemberProvider._({
+    required MemberFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$memberHash();
@@ -47,10 +48,7 @@ final class MemberProvider
   @override
   FutureOr<Member?> create(Ref ref) {
     final argument = this.argument as String;
-    return member(
-      ref,
-      argument,
-    );
+    return member(ref, argument);
   }
 
   @override
@@ -64,27 +62,24 @@ final class MemberProvider
   }
 }
 
-String _$memberHash() => r'fd89b8c389699a0f0e89bed5ec7974d055967ea5';
+String _$memberHash() => r'398253d04ca3d3199bca0660c7176c006a8d6b51';
 
 /// Provider for a single member by ID.
 
 final class MemberFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<Member?>, String> {
   MemberFamily._()
-      : super(
-          retry: null,
-          name: r'memberProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'memberProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for a single member by ID.
 
-  MemberProvider call(
-    String id,
-  ) =>
-      MemberProvider._(argument: id, from: this);
+  MemberProvider call(String id) => MemberProvider._(argument: id, from: this);
 
   @override
   String toString() => r'memberProvider';

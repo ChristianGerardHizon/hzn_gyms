@@ -28,15 +28,16 @@ final class UserProvider
   ///
   /// Checks the entity cache first (for newly created users),
   /// then falls back to a network fetch.
-  UserProvider._(
-      {required UserFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'userProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  UserProvider._({
+    required UserFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'userProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$userHash();
@@ -56,10 +57,7 @@ final class UserProvider
   @override
   FutureOr<User?> create(Ref ref) {
     final argument = this.argument as String;
-    return user(
-      ref,
-      argument,
-    );
+    return user(ref, argument);
   }
 
   @override
@@ -83,23 +81,20 @@ String _$userHash() => r'c5095c53fa0b812f777764cd75dbb11f1012bcc9';
 final class UserFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<User?>, String> {
   UserFamily._()
-      : super(
-          retry: null,
-          name: r'userProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'userProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for a single user by ID.
   ///
   /// Checks the entity cache first (for newly created users),
   /// then falls back to a network fetch.
 
-  UserProvider call(
-    String id,
-  ) =>
-      UserProvider._(argument: id, from: this);
+  UserProvider call(String id) => UserProvider._(argument: id, from: this);
 
   @override
   String toString() => r'userProvider';

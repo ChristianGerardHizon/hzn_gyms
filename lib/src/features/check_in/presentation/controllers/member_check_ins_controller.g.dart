@@ -15,20 +15,25 @@ final memberCheckInsProvider = MemberCheckInsFamily._();
 
 /// Provider for fetching a specific member's check-in history.
 
-final class MemberCheckInsProvider extends $FunctionalProvider<
-        AsyncValue<List<CheckIn>>, List<CheckIn>, FutureOr<List<CheckIn>>>
+final class MemberCheckInsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<CheckIn>>,
+          List<CheckIn>,
+          FutureOr<List<CheckIn>>
+        >
     with $FutureModifier<List<CheckIn>>, $FutureProvider<List<CheckIn>> {
   /// Provider for fetching a specific member's check-in history.
-  MemberCheckInsProvider._(
-      {required MemberCheckInsFamily super.from,
-      required String super.argument})
-      : super(
-          retry: null,
-          name: r'memberCheckInsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  MemberCheckInsProvider._({
+    required MemberCheckInsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberCheckInsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$memberCheckInsHash();
@@ -43,16 +48,13 @@ final class MemberCheckInsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<CheckIn>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<CheckIn>> create(Ref ref) {
     final argument = this.argument as String;
-    return memberCheckIns(
-      ref,
-      argument,
-    );
+    return memberCheckIns(ref, argument);
   }
 
   @override
@@ -73,19 +75,17 @@ String _$memberCheckInsHash() => r'136df7cc4b0427ccdcfaece98f9e82cc6d3cd056';
 final class MemberCheckInsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<CheckIn>>, String> {
   MemberCheckInsFamily._()
-      : super(
-          retry: null,
-          name: r'memberCheckInsProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'memberCheckInsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for fetching a specific member's check-in history.
 
-  MemberCheckInsProvider call(
-    String memberId,
-  ) =>
+  MemberCheckInsProvider call(String memberId) =>
       MemberCheckInsProvider._(argument: memberId, from: this);
 
   @override

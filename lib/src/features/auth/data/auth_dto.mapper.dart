@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -70,6 +71,13 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
     _$branch,
     opt: true,
   );
+  static List<String> _$allowedBranches(AuthDto v) => v.allowedBranches;
+  static const Field<AuthDto, List<String>> _f$allowedBranches = Field(
+    'allowedBranches',
+    _$allowedBranches,
+    opt: true,
+    def: const [],
+  );
 
   @override
   final MappableFields<AuthDto> fields = const {
@@ -84,6 +92,7 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
     #verified: _f$verified,
     #role: _f$role,
     #branch: _f$branch,
+    #allowedBranches: _f$allowedBranches,
   };
 
   static AuthDto _instantiate(DecodingData data) {
@@ -99,6 +108,7 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
       verified: data.dec(_f$verified),
       role: data.dec(_f$role),
       branch: data.dec(_f$branch),
+      allowedBranches: data.dec(_f$allowedBranches),
     );
   }
 
@@ -159,6 +169,8 @@ extension AuthDtoValueCopy<$R, $Out> on ObjectCopyWith<$R, AuthDto, $Out> {
 
 abstract class AuthDtoCopyWith<$R, $In extends AuthDto, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches;
   $R call({
     String? token,
     String? id,
@@ -171,6 +183,7 @@ abstract class AuthDtoCopyWith<$R, $In extends AuthDto, $Out>
     bool? verified,
     String? role,
     String? branch,
+    List<String>? allowedBranches,
   });
   AuthDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -184,6 +197,13 @@ class _AuthDtoCopyWithImpl<$R, $Out>
   late final ClassMapperBase<AuthDto> $mapper =
       AuthDtoMapper.ensureInitialized();
   @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get allowedBranches => ListCopyWith(
+    $value.allowedBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(allowedBranches: v),
+  );
+  @override
   $R call({
     String? token,
     String? id,
@@ -196,6 +216,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
     bool? verified,
     Object? role = $none,
     Object? branch = $none,
+    List<String>? allowedBranches,
   }) => $apply(
     FieldCopyWithData({
       if (token != null) #token: token,
@@ -209,6 +230,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
       if (verified != null) #verified: verified,
       if (role != $none) #role: role,
       if (branch != $none) #branch: branch,
+      if (allowedBranches != null) #allowedBranches: allowedBranches,
     }),
   );
   @override
@@ -224,6 +246,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
     verified: data.get(#verified, or: $value.verified),
     role: data.get(#role, or: $value.role),
     branch: data.get(#branch, or: $value.branch),
+    allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
   );
 
   @override

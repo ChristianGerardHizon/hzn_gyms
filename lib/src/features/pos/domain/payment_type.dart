@@ -9,6 +9,13 @@ enum PaymentType {
   deposit,
   refund;
 
+  /// Types selectable when recording a payment against a sale.
+  /// Excludes [refund], which is not offered in the payment UI.
+  static const List<PaymentType> forRecording = [
+    PaymentType.payment,
+    PaymentType.deposit,
+  ];
+
   String get displayName => switch (this) {
         PaymentType.payment => 'Payment',
         PaymentType.deposit => 'GCash/Bank',

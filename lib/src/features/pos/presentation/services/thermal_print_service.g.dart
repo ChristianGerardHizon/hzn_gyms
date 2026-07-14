@@ -18,15 +18,15 @@ final class ThermalPrintServiceProvider
     extends $AsyncNotifierProvider<ThermalPrintService, void> {
   /// Service for thermal printing operations.
   ThermalPrintServiceProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'thermalPrintServiceProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'thermalPrintServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$thermalPrintServiceHash();
@@ -47,11 +47,14 @@ abstract class _$ThermalPrintService extends $AsyncNotifier<void> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<void>, void>,
-        AsyncValue<void>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

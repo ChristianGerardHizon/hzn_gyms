@@ -26,8 +26,9 @@ class ReportKpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = featured ? Colors.white : theme.colorScheme.onSurface;
-    final subtitleColor =
-        featured ? Colors.white70 : theme.colorScheme.onSurfaceVariant;
+    final subtitleColor = featured
+        ? Colors.white70
+        : theme.colorScheme.onSurfaceVariant;
     final accentColor = featured ? Colors.white.withAlpha(60) : color;
 
     return Card(
@@ -48,10 +49,7 @@ class ReportKpiCard extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            color.withAlpha(220),
-                            color.withAlpha(180),
-                          ],
+                          colors: [color.withAlpha(220), color.withAlpha(180)],
                         ),
                       )
                     : null,

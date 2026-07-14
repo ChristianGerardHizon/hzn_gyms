@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -68,6 +69,12 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
     _$customerName,
     opt: true,
   );
+  static String? _$descriptor(SaleDto v) => v.descriptor;
+  static const Field<SaleDto, String> _f$descriptor = Field(
+    'descriptor',
+    _$descriptor,
+    opt: true,
+  );
   static String? _$notes(SaleDto v) => v.notes;
   static const Field<SaleDto, String> _f$notes = Field(
     'notes',
@@ -106,6 +113,7 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
     #isPaid: _f$isPaid,
     #customer: _f$customer,
     #customerName: _f$customerName,
+    #descriptor: _f$descriptor,
     #notes: _f$notes,
     #voidedBy: _f$voidedBy,
     #created: _f$created,
@@ -125,6 +133,7 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
       isPaid: data.dec(_f$isPaid),
       customer: data.dec(_f$customer),
       customerName: data.dec(_f$customerName),
+      descriptor: data.dec(_f$descriptor),
       notes: data.dec(_f$notes),
       voidedBy: data.dec(_f$voidedBy),
       created: data.dec(_f$created),
@@ -201,6 +210,7 @@ abstract class SaleDtoCopyWith<$R, $In extends SaleDto, $Out>
     bool? isPaid,
     String? customer,
     String? customerName,
+    String? descriptor,
     String? notes,
     String? voidedBy,
     String? created,
@@ -230,6 +240,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
     bool? isPaid,
     Object? customer = $none,
     Object? customerName = $none,
+    Object? descriptor = $none,
     Object? notes = $none,
     Object? voidedBy = $none,
     Object? created = $none,
@@ -247,6 +258,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
       if (isPaid != null) #isPaid: isPaid,
       if (customer != $none) #customer: customer,
       if (customerName != $none) #customerName: customerName,
+      if (descriptor != $none) #descriptor: descriptor,
       if (notes != $none) #notes: notes,
       if (voidedBy != $none) #voidedBy: voidedBy,
       if (created != $none) #created: created,
@@ -266,6 +278,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
     isPaid: data.get(#isPaid, or: $value.isPaid),
     customer: data.get(#customer, or: $value.customer),
     customerName: data.get(#customerName, or: $value.customerName),
+    descriptor: data.get(#descriptor, or: $value.descriptor),
     notes: data.get(#notes, or: $value.notes),
     voidedBy: data.get(#voidedBy, or: $value.voidedBy),
     created: data.get(#created, or: $value.created),

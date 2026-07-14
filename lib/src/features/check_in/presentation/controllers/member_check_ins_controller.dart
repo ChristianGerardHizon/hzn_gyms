@@ -11,8 +11,5 @@ Future<List<CheckIn>> memberCheckIns(Ref ref, String memberId) async {
   final repository = ref.read(checkInRepositoryProvider);
   final result = await repository.fetchByMember(memberId);
 
-  return result.fold(
-    (failure) => [],
-    (checkIns) => checkIns,
-  );
+  return result.fold((failure) => [], (checkIns) => checkIns);
 }

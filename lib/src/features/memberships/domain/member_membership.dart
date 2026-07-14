@@ -1,5 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
+import '../../../core/utils/date_utils.dart';
+
 part 'member_membership.mapper.dart';
 
 /// Status of a member's membership subscription.
@@ -39,6 +41,7 @@ class MemberMembership with MemberMembershipMappable {
     required this.branchId,
     this.memberName,
     this.membershipName,
+    this.membershipValidBranches = const [],
     this.saleId,
     this.soldBy,
     this.notes,
@@ -73,6 +76,9 @@ class MemberMembership with MemberMembershipMappable {
   /// Membership plan name (for display, from expand).
   final String? membershipName;
 
+  /// Plan `validBranches` from expand. Empty = valid at all branches.
+  final List<String> membershipValidBranches;
+
   /// Linked sale ID (if purchased through POS).
   final String? saleId;
 
@@ -92,16 +98,24 @@ class MemberMembership with MemberMembershipMappable {
   bool get isCurrentlyActive {
     if (status != MemberMembershipStatus.active) return false;
     final now = DateTime.now();
-    return now.isAfter(startDate) && now.isBefore(endDate);
+    return now.isAfter(startDate) && !isBeforeToday(endDate);
   }
 
-  /// Whether this subscription has expired based on date.
-  bool get isExpired => DateTime.now().isAfter(endDate);
+  /// Whether the linked plan grants access at [branchId].
+  ///
+  /// Empty [membershipValidBranches] means all branches.
+  bool isValidAtBranch(String branchId) =>
+      membershipValidBranches.isEmpty ||
+      membershipValidBranches.contains(branchId);
 
-  /// Days remaining until expiry (0 if expired).
+  /// Whether this subscription has expired based on date.
+  ///
+  /// The end date is inclusive — still active through that calendar day.
+  bool get isExpired => isBeforeToday(endDate);
+
+  /// Days remaining until expiry (`0` on the expiration day).
   int get daysRemaining {
-    final now = DateTime.now();
-    if (now.isAfter(endDate)) return 0;
-    return endDate.difference(now).inDays;
+    final days = calendarDaysUntil(endDate);
+    return days < 0 ? 0 : days;
   }
 }

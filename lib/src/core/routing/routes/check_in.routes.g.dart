@@ -6,22 +6,16 @@ part of 'check_in.routes.dart';
 // GoRouterGenerator
 // **************************************************************************
 
-List<RouteBase> get $appRoutes => [
-      $checkInRoute,
-    ];
+List<RouteBase> get $appRoutes => [$checkInRoute];
 
-RouteBase get $checkInRoute => GoRouteData.$route(
-      path: '/check-in',
-      factory: $CheckInRoute._fromState,
-    );
+RouteBase get $checkInRoute =>
+    GoRouteData.$route(path: '/check-in', factory: $CheckInRoute._fromState);
 
 mixin $CheckInRoute on GoRouteData {
   static CheckInRoute _fromState(GoRouterState state) => const CheckInRoute();
 
   @override
-  String get location => GoRouteData.$location(
-        '/check-in',
-      );
+  String get location => GoRouteData.$location('/check-in');
 
   @override
   void go(BuildContext context) => context.go(location);

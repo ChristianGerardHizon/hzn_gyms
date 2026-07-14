@@ -6,6 +6,7 @@ import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/check_in.dart';
 import '../controllers/member_check_ins_controller.dart';
 
@@ -22,8 +23,7 @@ class LastCheckInPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final memberAsync = ref.watch(memberProvider(checkIn.memberId));
-    final checkInsAsync =
-        ref.watch(memberCheckInsProvider(checkIn.memberId));
+    final checkInsAsync = ref.watch(memberCheckInsProvider(checkIn.memberId));
     final membershipsAsync = ref.watch(
       memberActiveMembershipProvider(checkIn.memberId),
     );
@@ -64,10 +64,8 @@ class LastCheckInPanel extends ConsumerWidget {
                 memberAsync.when(
                   loading: () => CachedAvatar(radius: 40),
                   error: (_, __) => CachedAvatar(radius: 40),
-                  data: (member) => CachedAvatar(
-                    imageUrl: member?.photo,
-                    radius: 40,
-                  ),
+                  data: (member) =>
+                      CachedAvatar(imageUrl: member?.photo, radius: 40),
                 ),
                 const SizedBox(height: 12),
 
@@ -162,8 +160,7 @@ class LastCheckInPanel extends ConsumerWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: displayCheckIns.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: 4),
+                      separatorBuilder: (_, __) => const SizedBox(height: 4),
                       itemBuilder: (context, index) {
                         final ci = displayCheckIns[index];
                         final isToday = _isToday(ci.checkInTime);
@@ -186,9 +183,8 @@ class LastCheckInPanel extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () => MemberDetailRoute(
-                      id: checkIn.memberId,
-                    ).go(context),
+                    onPressed: () =>
+                        MemberDetailRoute(id: checkIn.memberId).go(context),
                     child: const Text('View Full Profile'),
                   ),
                 ),
@@ -285,12 +281,19 @@ class _CheckInHistoryTile extends StatelessWidget {
   }
 }
 
-/// Provider that fetches the first active membership for a member.
+/// Provider that fetches the first active membership for a member
+/// that is valid at the current branch.
 /// Used by the sidebar to display membership info without a full controller.
-final memberActiveMembershipProvider =
-    FutureProvider.family.autoDispose((ref, String memberId) async {
+final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
+  ref,
+  String memberId,
+) async {
+  final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
-  final result = await repo.fetchActive(memberId);
+  final result = await repo.fetchActive(
+    memberId,
+    validAtBranchId: branchId,
+  );
   return result.fold(
     (_) => null,
     (memberships) => memberships.isNotEmpty ? memberships.first : null,

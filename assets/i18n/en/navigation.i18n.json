@@ -12,11 +12,12 @@
     "sales": "Cashier",
     "salesHistory": "Sales",
     "organization": "Organization",
-    "services": "Services",
     "checkIn": "Check-In",
     "members": "Members",
     "memberships": "Memberships",
+    "outbox": "Outbox",
     "system": "System",
     "account": "Account",
-    "noBranch": "No Branch"
+    "noBranch": "No Branch",
+    "allBranches": "All Branches"
 }

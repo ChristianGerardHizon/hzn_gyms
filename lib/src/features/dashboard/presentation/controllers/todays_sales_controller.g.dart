@@ -17,21 +17,26 @@ final todaySalesProvider = TodaySalesProvider._();
 /// Today's sales data.
 /// Filtered by the current branch.
 
-final class TodaySalesProvider extends $FunctionalProvider<
-        AsyncValue<List<Sale>>, List<Sale>, FutureOr<List<Sale>>>
+final class TodaySalesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Sale>>,
+          List<Sale>,
+          FutureOr<List<Sale>>
+        >
     with $FutureModifier<List<Sale>>, $FutureProvider<List<Sale>> {
   /// Today's sales data.
   /// Filtered by the current branch.
   TodaySalesProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'todaySalesProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todaySalesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$todaySalesHash();
@@ -60,10 +65,13 @@ final todaySalesSummaryProvider = TodaySalesSummaryProvider._();
 /// Uses vw_todays_sales view for optimized query.
 /// Filtered by the current branch.
 
-final class TodaySalesSummaryProvider extends $FunctionalProvider<
-        AsyncValue<TodaySalesSummary>,
-        TodaySalesSummary,
-        FutureOr<TodaySalesSummary>>
+final class TodaySalesSummaryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<TodaySalesSummary>,
+          TodaySalesSummary,
+          FutureOr<TodaySalesSummary>
+        >
     with
         $FutureModifier<TodaySalesSummary>,
         $FutureProvider<TodaySalesSummary> {
@@ -71,15 +79,15 @@ final class TodaySalesSummaryProvider extends $FunctionalProvider<
   /// Uses vw_todays_sales view for optimized query.
   /// Filtered by the current branch.
   TodaySalesSummaryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'todaySalesSummaryProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todaySalesSummaryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$todaySalesSummaryHash();
@@ -87,8 +95,8 @@ final class TodaySalesSummaryProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<TodaySalesSummary> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<TodaySalesSummary> create(Ref ref) {

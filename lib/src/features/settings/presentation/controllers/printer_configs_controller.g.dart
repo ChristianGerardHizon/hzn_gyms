@@ -18,21 +18,22 @@ final printerConfigsControllerProvider = PrinterConfigsControllerProvider._();
 /// Controller for managing printer configuration list state.
 ///
 /// Provides methods for fetching and CRUD operations on printer configs.
-final class PrinterConfigsControllerProvider extends $AsyncNotifierProvider<
-    PrinterConfigsController, List<PrinterConfig>> {
+final class PrinterConfigsControllerProvider
+    extends
+        $AsyncNotifierProvider<PrinterConfigsController, List<PrinterConfig>> {
   /// Controller for managing printer configuration list state.
   ///
   /// Provides methods for fetching and CRUD operations on printer configs.
   PrinterConfigsControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'printerConfigsControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'printerConfigsControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$printerConfigsControllerHash();
@@ -43,7 +44,7 @@ final class PrinterConfigsControllerProvider extends $AsyncNotifierProvider<
 }
 
 String _$printerConfigsControllerHash() =>
-    r'd39e06de8e80adc3020c119471b55e4986cd39a7';
+    r'ba22254a3d5d669e06fab2799d5140da45f36ae1';
 
 /// Controller for managing printer configuration list state.
 ///
@@ -57,11 +58,14 @@ abstract class _$PrinterConfigsController
   void runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<List<PrinterConfig>>, List<PrinterConfig>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<List<PrinterConfig>>, List<PrinterConfig>>,
-        AsyncValue<List<PrinterConfig>>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<PrinterConfig>>, List<PrinterConfig>>,
+              AsyncValue<List<PrinterConfig>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

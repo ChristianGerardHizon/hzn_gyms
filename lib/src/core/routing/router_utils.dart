@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../navigation/app_nav_destination.dart';
+import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'routes/auth.routes.dart';
 import 'routes/dashboard.routes.dart';
@@ -91,6 +93,23 @@ abstract class RouterUtils {
     // 5. Not authenticated + protected route - redirect to login
     if (!isAuthenticated && !isIgnored) {
       return LoginRoute.path;
+    }
+
+    // 6. Role permission guards for authenticated shell routes
+    if (isAuthenticated && !isIgnored) {
+      final permsAsync = ref.read(currentUserPermissionsProvider);
+      final perms = permsAsync.value;
+      if (perms == null) {
+        // While the role is loading, block admin-only destinations so a deep
+        // link cannot flash Organization / Reports / Outbox / System tabs.
+        if (isPermissionSensitivePath(currentPath)) {
+          return DashboardRoute.path;
+        }
+        return null;
+      }
+      if (!canAccessPath(currentPath, perms)) {
+        return fallbackPathFor(perms);
+      }
     }
 
     // No redirect needed

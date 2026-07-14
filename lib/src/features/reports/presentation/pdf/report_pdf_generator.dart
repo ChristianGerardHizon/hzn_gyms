@@ -12,6 +12,7 @@ import 'package:printing/printing.dart';
 import '../../../../core/pdf/pdf_task_runner.dart';
 import '../../../../core/utils/permission_service.dart';
 import '../../domain/report_period.dart';
+import 'report_pdf_constants.dart';
 
 /// Data container for report PDF generation.
 class ReportPdfData {
@@ -22,14 +23,16 @@ class ReportPdfData {
     required this.kpiData,
     this.tableHeaders,
     this.tableRows,
+    this.tableTitle,
     this.additionalNotes,
+    this.footerDisclaimer,
   });
 
   /// Title of the report (e.g., "Sales Report").
   final String reportTitle;
 
   /// The time period of the report.
-  final ReportPeriod period;
+  final ReportPeriodSelection period;
 
   /// When the report was generated.
   final DateTime generatedAt;
@@ -43,16 +46,19 @@ class ReportPdfData {
   /// Optional table rows (list of lists).
   final List<List<String>>? tableRows;
 
+  /// Optional table section title (defaults to "DETAILED DATA").
+  final String? tableTitle;
+
   /// Optional additional notes.
   final String? additionalNotes;
+
+  /// Optional footer disclaimer (defaults to [kDefaultReportFooterDisclaimer]).
+  final String? footerDisclaimer;
 }
 
 /// Payload sent to the background isolate for report PDF generation.
 class _ReportPdfPayload {
-  _ReportPdfPayload({
-    required this.data,
-    required this.logoBytes,
-  });
+  _ReportPdfPayload({required this.data, required this.logoBytes});
 
   final ReportPdfData data;
   final Uint8List logoBytes;
@@ -65,29 +71,25 @@ Future<Uint8List> _buildReportPdfBytes(_ReportPdfPayload payload) async {
   final pdf = pw.Document();
 
   pdf.addPage(
-    pw.Page(
+    pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(40),
-      build: (context) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _buildHeader(data, logoImage),
+      footer: (context) => _buildFooter(data),
+      build: (context) => [
+        _buildHeader(data, logoImage),
+        pw.SizedBox(height: 20),
+        _buildReportInfo(data),
+        pw.SizedBox(height: 20),
+        _buildKpiSection(data),
+        if (data.tableHeaders != null && data.tableRows != null) ...[
           pw.SizedBox(height: 20),
-          _buildReportInfo(data),
-          pw.SizedBox(height: 20),
-          _buildKpiSection(data),
-          if (data.tableHeaders != null && data.tableRows != null) ...[
-            pw.SizedBox(height: 20),
-            _buildDataTable(data),
-          ],
-          if (data.additionalNotes != null) ...[
-            pw.SizedBox(height: 20),
-            _buildNotes(data),
-          ],
-          pw.Spacer(),
-          _buildFooter(),
+          _buildDataTable(data),
         ],
-      ),
+        if (data.additionalNotes != null) ...[
+          pw.SizedBox(height: 20),
+          _buildNotes(data),
+        ],
+      ],
     ),
   );
 
@@ -152,6 +154,11 @@ pw.Widget _buildReportInfo(ReportPdfData data) {
             ),
             pw.SizedBox(height: 4),
             pw.Text(
+              'Range: ${data.period.displayRangeLabel}',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
               'From: ${DateFormat('MMM d, y').format(data.period.startDate)}',
               style: const pw.TextStyle(fontSize: 10),
             ),
@@ -160,10 +167,7 @@ pw.Widget _buildReportInfo(ReportPdfData data) {
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.end,
           children: [
-            pw.Text(
-              'Generated:',
-              style: const pw.TextStyle(fontSize: 10),
-            ),
+            pw.Text('Generated:', style: const pw.TextStyle(fontSize: 10)),
             pw.SizedBox(height: 4),
             pw.Text(
               dateFormat.format(data.generatedAt),
@@ -184,10 +188,7 @@ pw.Widget _buildKpiSection(ReportPdfData data) {
     children: [
       pw.Text(
         'KEY METRICS',
-        style: pw.TextStyle(
-          fontSize: 12,
-          fontWeight: pw.FontWeight.bold,
-        ),
+        style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
       ),
       pw.SizedBox(height: 12),
       pw.Wrap(
@@ -199,8 +200,7 @@ pw.Widget _buildKpiSection(ReportPdfData data) {
             padding: const pw.EdgeInsets.all(12),
             decoration: pw.BoxDecoration(
               border: pw.Border.all(color: PdfColors.grey300),
-              borderRadius:
-                  const pw.BorderRadius.all(pw.Radius.circular(4)),
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -237,11 +237,8 @@ pw.Widget _buildDataTable(ReportPdfData data) {
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Text(
-        'DETAILED DATA',
-        style: pw.TextStyle(
-          fontSize: 12,
-          fontWeight: pw.FontWeight.bold,
-        ),
+        data.tableTitle ?? 'DETAILED DATA',
+        style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
       ),
       pw.SizedBox(height: 8),
       pw.Table(
@@ -249,8 +246,9 @@ pw.Widget _buildDataTable(ReportPdfData data) {
         children: [
           pw.TableRow(
             decoration: const pw.BoxDecoration(color: PdfColors.grey200),
-            children:
-                headers.map((h) => _tableCell(h, isHeader: true)).toList(),
+            children: headers
+                .map((h) => _tableCell(h, isHeader: true))
+                .toList(),
           ),
           ...rows.map((row) {
             return pw.TableRow(
@@ -288,32 +286,40 @@ pw.Widget _buildNotes(ReportPdfData data) {
       children: [
         pw.Text(
           'Notes',
-          style: pw.TextStyle(
-            fontSize: 10,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 4),
-        pw.Text(
-          data.additionalNotes!,
-          style: const pw.TextStyle(fontSize: 9),
-        ),
+        pw.Text(data.additionalNotes!, style: const pw.TextStyle(fontSize: 9)),
       ],
     ),
   );
 }
 
-pw.Widget _buildFooter() {
+pw.Widget _buildFooter(ReportPdfData data) {
+  final disclaimer =
+      data.footerDisclaimer ?? kDefaultReportFooterDisclaimer;
+
   return pw.Column(
     children: [
       pw.Divider(thickness: 0.5, color: PdfColors.grey400),
       pw.SizedBox(height: 8),
       pw.Center(
         child: pw.Text(
-          'This report was automatically generated. Data is accurate as of the generation date.',
+          disclaimer,
           style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+          textAlign: pw.TextAlign.center,
         ),
       ),
+      if (data.footerDisclaimer != null) ...[
+        pw.SizedBox(height: 4),
+        pw.Center(
+          child: pw.Text(
+            kDefaultReportFooterDisclaimer,
+            style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey500),
+            textAlign: pw.TextAlign.center,
+          ),
+        ),
+      ],
     ],
   );
 }
@@ -363,10 +369,7 @@ class ReportPdfGenerator {
 
     // On web, use sharePdf which triggers a download
     if (kIsWeb) {
-      await Printing.sharePdf(
-        bytes: result.bytes,
-        filename: '$filename.pdf',
-      );
+      await Printing.sharePdf(bytes: result.bytes, filename: '$filename.pdf');
       return filename;
     }
 
@@ -374,7 +377,7 @@ class ReportPdfGenerator {
     final saveResult = await FileSaver.instance.saveAs(
       name: filename,
       bytes: result.bytes,
-      ext: 'pdf',
+      fileExtension: 'pdf',
       mimeType: MimeType.pdf,
     );
 
@@ -386,8 +389,9 @@ class ReportPdfGenerator {
       context: context,
       message: 'Generating report...',
       preload: () async {
-        final logoData =
-            await rootBundle.load('assets/icons/app_icon_transparent.png');
+        final logoData = await rootBundle.load(
+          'assets/icons/app_icon_transparent.png',
+        );
         return _ReportPdfPayload(
           data: data,
           logoBytes: logoData.buffer.asUint8List(),

@@ -5,6 +5,7 @@ part 'sale_search_controller.g.dart';
 /// Available search fields for sales.
 const saleSearchableFields = [
   'receiptNumber',
+  'descriptor',
   'customerName',
   'paymentRef',
   'notes',
@@ -29,7 +30,11 @@ class SaleSearchQuery extends _$SaleSearchQuery {
 @riverpod
 class SaleSearchFields extends _$SaleSearchFields {
   @override
-  Set<String> build() => {'receiptNumber'}; // Default: only receipt number
+  Set<String> build() => {
+        'receiptNumber',
+        'descriptor',
+        'customerName',
+      };
 
   void toggleField(String field) {
     if (state.contains(field)) {
@@ -42,13 +47,21 @@ class SaleSearchFields extends _$SaleSearchFields {
   }
 
   void reset() {
-    state = {'receiptNumber'};
+    state = {
+      'receiptNumber',
+      'descriptor',
+      'customerName',
+    };
   }
 
   void setFields(Set<String> fields) {
     // Ensure at least one field is selected
     if (fields.isEmpty) {
-      state = {'receiptNumber'}; // fallback to receiptNumber
+      state = {
+        'receiptNumber',
+        'descriptor',
+        'customerName',
+      };
     } else {
       state = fields;
     }

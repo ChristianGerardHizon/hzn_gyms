@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/user_role.dart';
 import '../controllers/user_roles_controller.dart';
 import '../widgets/empty_role_detail_state.dart';
@@ -23,25 +24,14 @@ class UserRolesPage extends HookConsumerWidget {
     final isTablet = Breakpoints.isTabletOrLarger(context);
 
     return rolesAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      skipLoadingOnReload: true,
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: ${error.toString()}'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () =>
-                    ref.read(userRolesControllerProvider.notifier).refresh(),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        body: ErrorState.fromError(
+          error,
+          onRetry: () =>
+              ref.read(userRolesControllerProvider.notifier).refresh(),
         ),
       ),
       data: (roles) {
@@ -58,9 +48,9 @@ class UserRolesPage extends HookConsumerWidget {
         final selectedRole = selectedRoleId.value == null
             ? null
             : roles.cast<UserRole?>().firstWhere(
-                  (role) => role?.id == selectedRoleId.value,
-                  orElse: () => null,
-                );
+                (role) => role?.id == selectedRoleId.value,
+                orElse: () => null,
+              );
 
         final listPanel = UserRoleListPanel(
           roles: roles,
@@ -92,7 +82,10 @@ class UserRolesPage extends HookConsumerWidget {
   }
 
   void _showDeleteConfirmation(
-      BuildContext context, WidgetRef ref, UserRole role) {
+    BuildContext context,
+    WidgetRef ref,
+    UserRole role,
+  ) {
     if (role.isSystem) {
       showErrorSnackBar(context, message: 'System roles cannot be deleted');
       return;
@@ -102,8 +95,9 @@ class UserRolesPage extends HookConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete'),
-        content:
-            Text('Are you sure you want to delete the "${role.name}" role?'),
+        content: Text(
+          'Are you sure you want to delete the "${role.name}" role?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

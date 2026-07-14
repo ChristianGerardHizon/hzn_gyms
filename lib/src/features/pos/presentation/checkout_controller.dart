@@ -50,7 +50,7 @@ class CheckoutController extends _$CheckoutController {
       return left(const GenericFailure('Not authenticated'));
     }
 
-    final branchId = ref.read(currentBranchIdProvider);
+    final branchId = ref.read(effectiveBranchIdForWriteProvider);
     if (branchId == null) {
       return left(const GenericFailure('No branch selected'));
     }
@@ -110,7 +110,10 @@ class CheckoutController extends _$CheckoutController {
       status: initialStatus,
       isPaid: initialStatus == 'paid',
       customerId: customerId,
-      customerName: customerName,
+      customerName: Sale.resolveCustomerName(
+        customerId: customerId,
+        customerName: customerName,
+      ),
       notes: notes,
     );
 

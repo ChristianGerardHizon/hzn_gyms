@@ -52,20 +52,19 @@ class MemberMembershipAddOnRepositoryImpl
   FutureEither<List<MemberMembershipAddOn>> fetchByMemberMembership(
     String memberMembershipId,
   ) async {
-    return TaskEither.tryCatch(
-      () async {
-        final filter =
-            PBFilter().relation('memberMembership', memberMembershipId);
+    return TaskEither.tryCatch(() async {
+      final filter = PBFilter().relation(
+        'memberMembership',
+        memberMembershipId,
+      );
 
-        final records = await _collection.getFullList(
-          filter: filter.build(),
-          sort: 'addOnName',
-        );
+      final records = await _collection.getFullList(
+        filter: filter.build(),
+        sort: 'addOnName',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 
   @override
@@ -75,19 +74,16 @@ class MemberMembershipAddOnRepositoryImpl
     required String addOnName,
     required num price,
   }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'memberMembership': memberMembershipId,
-          'membershipAddOn': membershipAddOnId,
-          'addOnName': addOnName,
-          'price': price,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'memberMembership': memberMembershipId,
+        'membershipAddOn': membershipAddOnId,
+        'addOnName': addOnName,
+        'price': price,
+      };
 
-        final record = await _collection.create(body: body);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 }

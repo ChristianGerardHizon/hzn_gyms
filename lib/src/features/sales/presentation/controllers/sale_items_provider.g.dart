@@ -15,19 +15,25 @@ final saleItemsProvider = SaleItemsFamily._();
 
 /// Provider for fetching sale items by sale ID.
 
-final class SaleItemsProvider extends $FunctionalProvider<
-        AsyncValue<List<SaleItem>>, List<SaleItem>, FutureOr<List<SaleItem>>>
+final class SaleItemsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<SaleItem>>,
+          List<SaleItem>,
+          FutureOr<List<SaleItem>>
+        >
     with $FutureModifier<List<SaleItem>>, $FutureProvider<List<SaleItem>> {
   /// Provider for fetching sale items by sale ID.
-  SaleItemsProvider._(
-      {required SaleItemsFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'saleItemsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  SaleItemsProvider._({
+    required SaleItemsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'saleItemsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$saleItemsHash();
@@ -42,16 +48,13 @@ final class SaleItemsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<SaleItem>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<SaleItem>> create(Ref ref) {
     final argument = this.argument as String;
-    return saleItems(
-      ref,
-      argument,
-    );
+    return saleItems(ref, argument);
   }
 
   @override
@@ -72,19 +75,17 @@ String _$saleItemsHash() => r'6743a1b1941a85e6cc1a6619842676fe5a7109b7';
 final class SaleItemsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<SaleItem>>, String> {
   SaleItemsFamily._()
-      : super(
-          retry: null,
-          name: r'saleItemsProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'saleItemsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for fetching sale items by sale ID.
 
-  SaleItemsProvider call(
-    String saleId,
-  ) =>
+  SaleItemsProvider call(String saleId) =>
       SaleItemsProvider._(argument: saleId, from: this);
 
   @override

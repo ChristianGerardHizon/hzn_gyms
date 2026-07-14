@@ -14,19 +14,20 @@ part of 'paginated_sales_controller.dart';
 final paginatedSalesControllerProvider = PaginatedSalesControllerProvider._();
 
 /// Controller for managing paginated sales list.
-final class PaginatedSalesControllerProvider extends $AsyncNotifierProvider<
-    PaginatedSalesController, PaginatedState<Sale>> {
+final class PaginatedSalesControllerProvider
+    extends
+        $AsyncNotifierProvider<PaginatedSalesController, PaginatedState<Sale>> {
   /// Controller for managing paginated sales list.
   PaginatedSalesControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'paginatedSalesControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paginatedSalesControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$paginatedSalesControllerHash();
@@ -37,7 +38,7 @@ final class PaginatedSalesControllerProvider extends $AsyncNotifierProvider<
 }
 
 String _$paginatedSalesControllerHash() =>
-    r'85cbab7f2e59f281db91f29c4f09e464248e87db';
+    r'74c1713127a56e9fce02f6502edc9176c5e78cd6';
 
 /// Controller for managing paginated sales list.
 
@@ -47,13 +48,20 @@ abstract class _$PaginatedSalesController
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref
-        as $Ref<AsyncValue<PaginatedState<Sale>>, PaginatedState<Sale>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<PaginatedState<Sale>>, PaginatedState<Sale>>,
-        AsyncValue<PaginatedState<Sale>>,
-        Object?,
-        Object?>;
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<PaginatedState<Sale>>, PaginatedState<Sale>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<PaginatedState<Sale>>,
+                PaginatedState<Sale>
+              >,
+              AsyncValue<PaginatedState<Sale>>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

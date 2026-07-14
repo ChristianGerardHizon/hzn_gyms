@@ -24,6 +24,7 @@ class AuthDto with AuthDtoMappable {
   final bool verified;
   final String? role;
   final String? branch;
+  final List<String> allowedBranches;
 
   const AuthDto({
     required this.token,
@@ -37,11 +38,16 @@ class AuthDto with AuthDtoMappable {
     this.verified = false,
     this.role,
     this.branch,
+    this.allowedBranches = const [],
   });
 
   /// Creates an AuthDto from a PocketBase auth result.
   factory AuthDto.fromAuthResult(RecordAuth result) {
     final json = result.record.toJson();
+    final allowed = json['allowedBranches'];
+    final allowedBranches = allowed is List
+        ? allowed.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+        : <String>[];
 
     return AuthDto(
       token: result.token,
@@ -55,6 +61,7 @@ class AuthDto with AuthDtoMappable {
       verified: json['verified'] as bool? ?? false,
       role: json['role'] as String?,
       branch: json['branch'] as String?,
+      allowedBranches: allowedBranches,
     );
   }
 
@@ -73,6 +80,8 @@ class AuthDto with AuthDtoMappable {
       avatarUrl: _buildAvatarUrl(domain),
       verified: verified,
       branch: branch,
+      allowedBranches: allowedBranches,
+      roleId: role != null && role!.isNotEmpty ? role : null,
     );
   }
 
@@ -89,6 +98,7 @@ class AuthDto with AuthDtoMappable {
       'verified': verified,
       'role': role,
       'branch': branch,
+      'allowedBranches': allowedBranches,
     });
   }
 }

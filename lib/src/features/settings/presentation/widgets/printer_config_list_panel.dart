@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/system.routes.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/printer_config.dart';
 import '../controllers/printer_configs_controller.dart';
 import 'dialogs/printer_config_form_dialog.dart';
@@ -54,23 +55,11 @@ class PrinterConfigListPanel extends ConsumerWidget {
         Expanded(
           child: printersAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () =>
-                        ref.invalidate(printerConfigsControllerProvider),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+            error: (error, _) => ErrorState.fromError(
+              error,
+              compact: true,
+              onRetry: () =>
+                  ref.invalidate(printerConfigsControllerProvider),
             ),
             data: (printers) {
               if (printers.isEmpty) {

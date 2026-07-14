@@ -27,6 +27,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
   // Expanded fields
   final String? memberName;
   final String? membershipName;
+  final List<String> membershipValidBranches;
 
   const MemberMembershipDto({
     required this.id,
@@ -45,6 +46,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
     this.updated,
     this.memberName,
     this.membershipName,
+    this.membershipValidBranches = const [],
   });
 
   /// Creates a DTO from a PocketBase RecordModel.
@@ -52,6 +54,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
     // Extract expanded member name
     final memberExpand = record.get<RecordModel?>('expand.member');
     final membershipExpand = record.get<RecordModel?>('expand.membership');
+    final membershipJson = membershipExpand?.toJson();
 
     return MemberMembershipDto(
       id: record.id,
@@ -70,7 +73,15 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
       updated: record.get<String>('updated'),
       memberName: memberExpand?.getStringValue('name'),
       membershipName: membershipExpand?.getStringValue('name'),
+      membershipValidBranches: _parseIdList(
+        membershipJson?['validBranches'],
+      ),
     );
+  }
+
+  static List<String> _parseIdList(dynamic value) {
+    if (value is! List) return const [];
+    return value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
   }
 
   /// Converts the DTO to a domain MemberMembership entity.
@@ -85,6 +96,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
       branchId: branch,
       memberName: memberName,
       membershipName: membershipName,
+      membershipValidBranches: membershipValidBranches,
       saleId: sale != null && sale!.isNotEmpty ? sale : null,
       soldBy: soldBy != null && soldBy!.isNotEmpty ? soldBy : null,
       notes: notes != null && notes!.isNotEmpty ? notes : null,

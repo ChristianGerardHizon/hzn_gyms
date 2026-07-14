@@ -15,19 +15,25 @@ final salePaymentsProvider = SalePaymentsFamily._();
 
 /// Provider that fetches payments for a specific sale.
 
-final class SalePaymentsProvider extends $FunctionalProvider<
-        AsyncValue<List<Payment>>, List<Payment>, FutureOr<List<Payment>>>
+final class SalePaymentsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Payment>>,
+          List<Payment>,
+          FutureOr<List<Payment>>
+        >
     with $FutureModifier<List<Payment>>, $FutureProvider<List<Payment>> {
   /// Provider that fetches payments for a specific sale.
-  SalePaymentsProvider._(
-      {required SalePaymentsFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'salePaymentsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  SalePaymentsProvider._({
+    required SalePaymentsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'salePaymentsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$salePaymentsHash();
@@ -42,16 +48,13 @@ final class SalePaymentsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<Payment>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<Payment>> create(Ref ref) {
     final argument = this.argument as String;
-    return salePayments(
-      ref,
-      argument,
-    );
+    return salePayments(ref, argument);
   }
 
   @override
@@ -72,19 +75,17 @@ String _$salePaymentsHash() => r'009ab90f5e8f0563f8f867d05a400c294b520a45';
 final class SalePaymentsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Payment>>, String> {
   SalePaymentsFamily._()
-      : super(
-          retry: null,
-          name: r'salePaymentsProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'salePaymentsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider that fetches payments for a specific sale.
 
-  SalePaymentsProvider call(
-    String saleId,
-  ) =>
+  SalePaymentsProvider call(String saleId) =>
       SalePaymentsProvider._(argument: saleId, from: this);
 
   @override
@@ -102,15 +103,16 @@ final class SaleTotalPaidProvider
     extends $FunctionalProvider<AsyncValue<num>, num, FutureOr<num>>
     with $FutureModifier<num>, $FutureProvider<num> {
   /// Provider that calculates the total paid amount for a sale.
-  SaleTotalPaidProvider._(
-      {required SaleTotalPaidFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'saleTotalPaidProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  SaleTotalPaidProvider._({
+    required SaleTotalPaidFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'saleTotalPaidProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$saleTotalPaidHash();
@@ -130,10 +132,7 @@ final class SaleTotalPaidProvider
   @override
   FutureOr<num> create(Ref ref) {
     final argument = this.argument as String;
-    return saleTotalPaid(
-      ref,
-      argument,
-    );
+    return saleTotalPaid(ref, argument);
   }
 
   @override
@@ -154,19 +153,17 @@ String _$saleTotalPaidHash() => r'02d024b499aa7b1171efd075b62fafcef74a921f';
 final class SaleTotalPaidFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<num>, String> {
   SaleTotalPaidFamily._()
-      : super(
-          retry: null,
-          name: r'saleTotalPaidProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'saleTotalPaidProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider that calculates the total paid amount for a sale.
 
-  SaleTotalPaidProvider call(
-    String saleId,
-  ) =>
+  SaleTotalPaidProvider call(String saleId) =>
       SaleTotalPaidProvider._(argument: saleId, from: this);
 
   @override
@@ -183,15 +180,15 @@ final class PaymentsControllerProvider
     extends $AsyncNotifierProvider<PaymentsController, void> {
   /// Controller for managing payments for a sale.
   PaymentsControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'paymentsControllerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'paymentsControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$paymentsControllerHash();
@@ -212,11 +209,14 @@ abstract class _$PaymentsController extends $AsyncNotifier<void> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<void>, void>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<void>, void>,
-        AsyncValue<void>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<void>, void>,
+              AsyncValue<void>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

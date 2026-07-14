@@ -1,0 +1,37 @@
+---
+description: Always add or update unit tests when changing application code
+alwaysApply: true
+---
+
+# Always Add Tests With Code Changes
+
+When you change application logic under `lib/`, **add or update unit tests in the same change**. Do not ship behavior-only PRs/diffs without tests.
+
+## Required
+
+- New behavior, bug fixes, and refactors of logic → matching tests under `test/` (mirror `lib/src/` paths)
+- Prefer pure unit tests for domain/utils; use `mocktail` + `ProviderContainer` overrides for controllers/orchestrators
+- Run `flutter test` for affected tests (or the full suite) before considering the work done
+- Reuse helpers in `test/helpers/` (`fixtures.dart`, `mocks.dart`) when possible
+
+## What needs tests
+
+- Core utils, foundation, sync helpers, filter builders
+- Domain getters/rules (memberships, cart, payments, stock, roles)
+- Orchestrators and controllers with branching business logic
+- Extracted pure helpers (prefer extracting hard-to-test private logic)
+
+## Exceptions (no new tests required)
+
+- Generated files (`*.g.dart`, `*.mapper.dart`, slang/i18n outputs)
+- Pure docs, comments, formatting-only, or asset-only changes
+- Trivial one-line wiring with no behavior change (still update tests if existing ones break)
+
+## Layout
+
+```
+lib/src/features/pos/domain/sale_payment_status.dart
+ → test/features/pos/domain/sale_payment_status_test.dart
+```
+
+See `docs/testing.md` for how to run the suite.

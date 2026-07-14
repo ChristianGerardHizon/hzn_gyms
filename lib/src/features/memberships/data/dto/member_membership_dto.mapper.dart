@@ -2,6 +2,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 // ignore_for_file: type=lint
+// ignore_for_file: invalid_use_of_protected_member
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
@@ -107,6 +108,15 @@ class MemberMembershipDtoMapper extends ClassMapperBase<MemberMembershipDto> {
     _$membershipName,
     opt: true,
   );
+  static List<String> _$membershipValidBranches(MemberMembershipDto v) =>
+      v.membershipValidBranches;
+  static const Field<MemberMembershipDto, List<String>>
+  _f$membershipValidBranches = Field(
+    'membershipValidBranches',
+    _$membershipValidBranches,
+    opt: true,
+    def: const [],
+  );
 
   @override
   final MappableFields<MemberMembershipDto> fields = const {
@@ -126,6 +136,7 @@ class MemberMembershipDtoMapper extends ClassMapperBase<MemberMembershipDto> {
     #updated: _f$updated,
     #memberName: _f$memberName,
     #membershipName: _f$membershipName,
+    #membershipValidBranches: _f$membershipValidBranches,
   };
 
   static MemberMembershipDto _instantiate(DecodingData data) {
@@ -146,6 +157,7 @@ class MemberMembershipDtoMapper extends ClassMapperBase<MemberMembershipDto> {
       updated: data.dec(_f$updated),
       memberName: data.dec(_f$memberName),
       membershipName: data.dec(_f$membershipName),
+      membershipValidBranches: data.dec(_f$membershipValidBranches),
     );
   }
 
@@ -219,6 +231,8 @@ abstract class MemberMembershipDtoCopyWith<
   $Out
 >
     implements ClassCopyWith<$R, $In, $Out> {
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get membershipValidBranches;
   $R call({
     String? id,
     String? collectionId,
@@ -236,6 +250,7 @@ abstract class MemberMembershipDtoCopyWith<
     String? updated,
     String? memberName,
     String? membershipName,
+    List<String>? membershipValidBranches,
   });
   MemberMembershipDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -250,6 +265,13 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
   @override
   late final ClassMapperBase<MemberMembershipDto> $mapper =
       MemberMembershipDtoMapper.ensureInitialized();
+  @override
+  ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>>
+  get membershipValidBranches => ListCopyWith(
+    $value.membershipValidBranches,
+    (v, t) => ObjectCopyWith(v, $identity, t),
+    (v) => call(membershipValidBranches: v),
+  );
   @override
   $R call({
     String? id,
@@ -268,6 +290,7 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
     Object? updated = $none,
     Object? memberName = $none,
     Object? membershipName = $none,
+    List<String>? membershipValidBranches,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -286,6 +309,8 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
       if (updated != $none) #updated: updated,
       if (memberName != $none) #memberName: memberName,
       if (membershipName != $none) #membershipName: membershipName,
+      if (membershipValidBranches != null)
+        #membershipValidBranches: membershipValidBranches,
     }),
   );
   @override
@@ -306,6 +331,10 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
     updated: data.get(#updated, or: $value.updated),
     memberName: data.get(#memberName, or: $value.memberName),
     membershipName: data.get(#membershipName, or: $value.membershipName),
+    membershipValidBranches: data.get(
+      #membershipValidBranches,
+      or: $value.membershipValidBranches,
+    ),
   );
 
   @override

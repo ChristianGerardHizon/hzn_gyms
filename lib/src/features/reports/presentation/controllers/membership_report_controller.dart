@@ -7,21 +7,17 @@ import 'report_period_controller.dart';
 
 part 'membership_report_controller.g.dart';
 
-/// Fetches and provides membership report data.
-@riverpod
+/// Fetches and caches membership report data.
+@Riverpod(keepAlive: true)
 Future<MembershipReport> membershipReport(Ref ref) async {
   final period = ref.watch(reportPeriodControllerProvider);
   final branchId = ref.watch(currentBranchIdProvider);
   final repository = ref.read(reportsRepositoryProvider);
 
   final result = await repository.getMembershipReport(
-    startDate: period.startDate,
-    endDate: period.endDate,
+    period: period,
     branchId: branchId,
   );
 
-  return result.fold(
-    (failure) => throw failure,
-    (report) => report,
-  );
+  return result.fold((failure) => throw failure, (report) => report);
 }

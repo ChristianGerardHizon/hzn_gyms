@@ -27,15 +27,15 @@ final class AuthControllerProvider
   /// Provides methods for login, logout, and session management.
   /// The state is [AuthState?] where null means not authenticated.
   AuthControllerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'authControllerProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'authControllerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$authControllerHash();
@@ -58,11 +58,14 @@ abstract class _$AuthController extends $AsyncNotifier<AuthState?> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<AuthState?>, AuthState?>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<AuthState?>, AuthState?>,
-        AsyncValue<AuthState?>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<AuthState?>, AuthState?>,
+              AsyncValue<AuthState?>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -75,18 +78,19 @@ final isAuthenticatedProvider = IsAuthenticatedProvider._();
 /// Convenience provider to check if user is authenticated.
 
 final class IsAuthenticatedProvider
-    extends $FunctionalProvider<bool, bool, bool> with $Provider<bool> {
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
   /// Convenience provider to check if user is authenticated.
   IsAuthenticatedProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'isAuthenticatedProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'isAuthenticatedProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$isAuthenticatedHash();
@@ -124,15 +128,15 @@ final class CurrentAuthProvider
     with $Provider<AuthState?> {
   /// Convenience provider to get the current user.
   CurrentAuthProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'currentAuthProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentAuthProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$currentAuthHash();

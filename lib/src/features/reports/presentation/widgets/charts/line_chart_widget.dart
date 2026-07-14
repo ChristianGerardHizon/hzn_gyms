@@ -59,10 +59,7 @@ class LineChartWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (title != null) ...[
-          Text(
-            title!,
-            style: theme.textTheme.titleSmall,
-          ),
+          Text(title!, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
         ],
         SizedBox(
@@ -75,7 +72,9 @@ class LineChartWidget extends StatelessWidget {
                 horizontalInterval: _calculateYInterval(),
                 getDrawingHorizontalLine: (value) {
                   return FlLine(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
                     strokeWidth: 1,
                   );
                 },
@@ -114,8 +113,8 @@ class LineChartWidget extends StatelessWidget {
                     reservedSize: 50,
                     interval: _calculateYInterval(),
                     getTitlesWidget: (value, meta) {
-                      final formatted = yAxisFormatter?.call(value) ??
-                          _formatNumber(value);
+                      final formatted =
+                          yAxisFormatter?.call(value) ?? _formatNumber(value);
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Text(
@@ -149,8 +148,8 @@ class LineChartWidget extends StatelessWidget {
                       final label = spot.x.toInt() < xLabels.length
                           ? xLabels[spot.x.toInt()]
                           : '';
-                      final value = yAxisFormatter?.call(spot.y) ??
-                          _formatNumber(spot.y);
+                      final value =
+                          yAxisFormatter?.call(spot.y) ?? _formatNumber(spot.y);
                       return LineTooltipItem(
                         '$label\n$value',
                         TextStyle(

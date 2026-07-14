@@ -15,21 +15,25 @@ final productCategoryRepositoryProvider = ProductCategoryRepositoryProvider._();
 
 /// Provides the ProductCategoryRepository instance.
 
-final class ProductCategoryRepositoryProvider extends $FunctionalProvider<
-    ProductCategoryRepository,
-    ProductCategoryRepository,
-    ProductCategoryRepository> with $Provider<ProductCategoryRepository> {
+final class ProductCategoryRepositoryProvider
+    extends
+        $FunctionalProvider<
+          ProductCategoryRepository,
+          ProductCategoryRepository,
+          ProductCategoryRepository
+        >
+    with $Provider<ProductCategoryRepository> {
   /// Provides the ProductCategoryRepository instance.
   ProductCategoryRepositoryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productCategoryRepositoryProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productCategoryRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productCategoryRepositoryHash();
@@ -37,8 +41,8 @@ final class ProductCategoryRepositoryProvider extends $FunctionalProvider<
   @$internal
   @override
   $ProviderElement<ProductCategoryRepository> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   ProductCategoryRepository create(Ref ref) {

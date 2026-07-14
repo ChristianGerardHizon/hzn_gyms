@@ -50,13 +50,10 @@ class AuthRepositoryImpl implements AuthRepository {
   final PocketBase pb;
   final AuthStorageService authStorage;
 
-  AuthRepositoryImpl({
-    required this.pb,
-    required this.authStorage,
-  });
+  AuthRepositoryImpl({required this.pb, required this.authStorage});
 
   RecordService get _collection => pb.collection(PocketBaseCollections.users);
-  String get _expand => 'branch';
+  String get _expand => 'branch,allowedBranches';
 
   /// Creates an AuthState from an AuthDto.
   AuthState _createAuthState(AuthDto dto) {
@@ -66,114 +63,92 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   FutureEither<AuthState> login(String username, String password) async {
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _collection.authWithPassword(
-          username,
-          password,
-          expand: _expand,
-        );
+    return TaskEither.tryCatch(() async {
+      final result = await _collection.authWithPassword(
+        username,
+        password,
+        expand: _expand,
+      );
 
-        final authDto = AuthDto.fromAuthResult(result);
-        await authStorage.save(authDto);
-        pb.authStore.save(authDto.token, authDto.toRecordModel());
-        return _createAuthState(authDto);
-      },
-      Failure.handle,
-    ).run();
+      final authDto = AuthDto.fromAuthResult(result);
+      await authStorage.save(authDto);
+      pb.authStore.save(authDto.token, authDto.toRecordModel());
+      return _createAuthState(authDto);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> logout() async {
-    return TaskEither.tryCatch(
-      () async {
-        pb.authStore.clear();
-        await authStorage.clear();
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      pb.authStore.clear();
+      await authStorage.clear();
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<AuthState> refresh() async {
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _collection.authRefresh(expand: _expand);
+    return TaskEither.tryCatch(() async {
+      final result = await _collection.authRefresh(expand: _expand);
 
-        final authDto = AuthDto.fromAuthResult(result);
-        await authStorage.save(authDto);
-        pb.authStore.save(authDto.token, authDto.toRecordModel());
-        return _createAuthState(authDto);
-      },
-      Failure.handle,
-    ).run();
+      final authDto = AuthDto.fromAuthResult(result);
+      await authStorage.save(authDto);
+      pb.authStore.save(authDto.token, authDto.toRecordModel());
+      return _createAuthState(authDto);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<AuthState> initialize() async {
-    return TaskEither.tryCatch(
-      () async {
-        // Try to load saved auth data
-        final savedAuth = await authStorage.get();
-        if (savedAuth == null) {
-          throw const NoAuthFailure('No saved authentication', null, 'no_auth');
-        }
+    return TaskEither.tryCatch(() async {
+      // Try to load saved auth data
+      final savedAuth = await authStorage.get();
+      if (savedAuth == null) {
+        throw const NoAuthFailure('No saved authentication', null, 'no_auth');
+      }
 
-        // Restore token to PocketBase authStore
-        pb.authStore.save(savedAuth.token, savedAuth.toRecordModel());
+      // Restore token to PocketBase authStore
+      pb.authStore.save(savedAuth.token, savedAuth.toRecordModel());
 
-        // Refresh to validate token and get latest user data
-        final result = await _collection.authRefresh(expand: _expand);
+      // Refresh to validate token and get latest user data
+      final result = await _collection.authRefresh(expand: _expand);
 
-        final authDto = AuthDto.fromAuthResult(result);
-        await authStorage.save(authDto);
-        return _createAuthState(authDto);
-      },
-      Failure.handle,
-    ).run();
+      final authDto = AuthDto.fromAuthResult(result);
+      await authStorage.save(authDto);
+      return _createAuthState(authDto);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<AuthState> getCachedAuth() async {
-    return TaskEither.tryCatch(
-      () async {
-        final savedAuth = await authStorage.get();
-        if (savedAuth == null) {
-          throw const NoAuthFailure('No saved authentication', null, 'no_auth');
-        }
+    return TaskEither.tryCatch(() async {
+      final savedAuth = await authStorage.get();
+      if (savedAuth == null) {
+        throw const NoAuthFailure('No saved authentication', null, 'no_auth');
+      }
 
-        // Restore token to PocketBase authStore so API calls work
-        pb.authStore.save(savedAuth.token, savedAuth.toRecordModel());
+      // Restore token to PocketBase authStore so API calls work
+      pb.authStore.save(savedAuth.token, savedAuth.toRecordModel());
 
-        return _createAuthState(savedAuth);
-      },
-      Failure.handle,
-    ).run();
+      return _createAuthState(savedAuth);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<AuthState> refreshInBackground() async {
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _collection.authRefresh(expand: _expand);
+    return TaskEither.tryCatch(() async {
+      final result = await _collection.authRefresh(expand: _expand);
 
-        final authDto = AuthDto.fromAuthResult(result);
-        await authStorage.save(authDto);
-        pb.authStore.save(authDto.token, authDto.toRecordModel());
-        return _createAuthState(authDto);
-      },
-      Failure.handle,
-    ).run();
+      final authDto = AuthDto.fromAuthResult(result);
+      await authStorage.save(authDto);
+      pb.authStore.save(authDto.token, authDto.toRecordModel());
+      return _createAuthState(authDto);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> requestPasswordReset(String email) async {
-    return TaskEither.tryCatch(
-      () async {
-        await _collection.requestPasswordReset(email);
-      },
-      Failure.handle,
-    ).run();
+    return TaskEither.tryCatch(() async {
+      await _collection.requestPasswordReset(email);
+    }, Failure.handle).run();
   }
-
 }

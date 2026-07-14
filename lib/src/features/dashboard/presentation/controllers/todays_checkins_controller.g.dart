@@ -20,15 +20,15 @@ final class TodaysCheckInsCountProvider
     with $FutureModifier<int>, $FutureProvider<int> {
   /// Count of check-ins today for the current branch.
   TodaysCheckInsCountProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'todaysCheckInsCountProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todaysCheckInsCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$todaysCheckInsCountHash();

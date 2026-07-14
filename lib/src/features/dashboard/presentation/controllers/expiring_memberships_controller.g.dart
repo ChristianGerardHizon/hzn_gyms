@@ -21,10 +21,13 @@ final expiringMembershipsProvider = ExpiringMembershipsProvider._();
 /// Queries memberMemberships where status = 'active'
 /// and endDate is between now and now + 7 days.
 
-final class ExpiringMembershipsProvider extends $FunctionalProvider<
-        AsyncValue<List<MemberMembership>>,
-        List<MemberMembership>,
-        FutureOr<List<MemberMembership>>>
+final class ExpiringMembershipsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<MemberMembership>>,
+          List<MemberMembership>,
+          FutureOr<List<MemberMembership>>
+        >
     with
         $FutureModifier<List<MemberMembership>>,
         $FutureProvider<List<MemberMembership>> {
@@ -33,15 +36,15 @@ final class ExpiringMembershipsProvider extends $FunctionalProvider<
   /// Queries memberMemberships where status = 'active'
   /// and endDate is between now and now + 7 days.
   ExpiringMembershipsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'expiringMembershipsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'expiringMembershipsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$expiringMembershipsHash();
@@ -49,8 +52,8 @@ final class ExpiringMembershipsProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<List<MemberMembership>> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<MemberMembership>> create(Ref ref) {
@@ -59,4 +62,4 @@ final class ExpiringMembershipsProvider extends $FunctionalProvider<
 }
 
 String _$expiringMembershipsHash() =>
-    r'f8ae560f239cb8d03dd6dbd337dece06ee3ede10';
+    r'30fc9d1929c32fafb3589b9528e60abe62c196ee';

@@ -83,137 +83,120 @@ class UserRoleRepositoryImpl implements UserRoleRepository {
       return Right(_cachedRoles!);
     }
 
-    return TaskEither.tryCatch(
-      () async {
-        final baseFilter = PBFilters.active.build();
-        final filterString =
-            filter != null ? '$baseFilter && $filter' : baseFilter;
+    return TaskEither.tryCatch(() async {
+      final baseFilter = PBFilters.active.build();
+      final filterString = filter != null
+          ? '$baseFilter && $filter'
+          : baseFilter;
 
-        final records = await _collection.getFullList(
-          filter: filterString,
-          sort: sort ?? 'name',
-        );
+      final records = await _collection.getFullList(
+        filter: filterString,
+        sort: sort ?? 'name',
+      );
 
-        final roles = records.map(_toEntity).toList();
+      final roles = records.map(_toEntity).toList();
 
-        // Update cache only if using default filter/sort
-        if (filter == null && sort == null) {
-          _cachedRoles = roles;
-          _cacheTimestamp = DateTime.now();
-        }
+      // Update cache only if using default filter/sort
+      if (filter == null && sort == null) {
+        _cachedRoles = roles;
+        _cacheTimestamp = DateTime.now();
+      }
 
-        return roles;
-      },
-      Failure.handle,
-    ).run();
+      return roles;
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<UserRole> fetchOne(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'Role ID cannot be empty',
-            null,
-            'invalid_role_id',
-          );
-        }
+    return TaskEither.tryCatch(() async {
+      if (id.isEmpty) {
+        throw const DataFailure(
+          'Role ID cannot be empty',
+          null,
+          'invalid_role_id',
+        );
+      }
 
-        final record = await _collection.getOne(id);
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.getOne(id);
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<UserRole> create(UserRole role) async {
-    return TaskEither.tryCatch(
-      () async {
-        final body = <String, dynamic>{
-          'name': role.name,
-          'description': role.description,
-          'permissions': role.permissions,
-          'isSystem': false, // User-created roles are never system roles
-          'isDeleted': false,
-        };
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'name': role.name,
+        'description': role.description,
+        'permissions': role.permissions,
+        'isSystem': false, // User-created roles are never system roles
+        'isDeleted': false,
+      };
 
-        final record = await _collection.create(body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.create(body: body);
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<UserRole> update(UserRole role) async {
-    return TaskEither.tryCatch(
-      () async {
-        // Prevent updating system roles
-        if (role.isSystem) {
-          throw const DataFailure(
-            'System roles cannot be modified',
-            null,
-            'system_role_protected',
-          );
-        }
+    return TaskEither.tryCatch(() async {
+      // Prevent updating system roles
+      if (role.isSystem) {
+        throw const DataFailure(
+          'System roles cannot be modified',
+          null,
+          'system_role_protected',
+        );
+      }
 
-        final body = <String, dynamic>{
-          'name': role.name,
-          'description': role.description,
-          'permissions': role.permissions,
-        };
+      final body = <String, dynamic>{
+        'name': role.name,
+        'description': role.description,
+        'permissions': role.permissions,
+      };
 
-        final record = await _collection.update(role.id, body: body);
-        invalidateCache();
-        return _toEntity(record);
-      },
-      Failure.handle,
-    ).run();
+      final record = await _collection.update(role.id, body: body);
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<void> delete(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        // Fetch the role first to check if it's a system role
-        final record = await _collection.getOne(id);
-        final role = _toEntity(record);
+    return TaskEither.tryCatch(() async {
+      // Fetch the role first to check if it's a system role
+      final record = await _collection.getOne(id);
+      final role = _toEntity(record);
 
-        if (role.isSystem) {
-          throw const DataFailure(
-            'System roles cannot be deleted',
-            null,
-            'system_role_protected',
-          );
-        }
+      if (role.isSystem) {
+        throw const DataFailure(
+          'System roles cannot be deleted',
+          null,
+          'system_role_protected',
+        );
+      }
 
-        await _collection.update(id, body: {'isDeleted': true});
-        invalidateCache();
-      },
-      Failure.handle,
-    ).run();
+      await _collection.update(id, body: {'isDeleted': true});
+      invalidateCache();
+    }, Failure.handle).run();
   }
 
   @override
   FutureEither<List<UserRole>> search(String query) async {
-    return TaskEither.tryCatch(
-      () async {
-        final filter = PBFilter()
-            .notDeleted()
-            .searchFields(query, ['name', 'description'])
-            .build();
+    return TaskEither.tryCatch(() async {
+      final filter = PBFilter().notDeleted().searchFields(query, [
+        'name',
+        'description',
+      ]).build();
 
-        final records = await _collection.getFullList(
-          filter: filter,
-          sort: 'name',
-        );
+      final records = await _collection.getFullList(
+        filter: filter,
+        sort: 'name',
+      );
 
-        return records.map(_toEntity).toList();
-      },
-      Failure.handle,
-    ).run();
+      return records.map(_toEntity).toList();
+    }, Failure.handle).run();
   }
 }

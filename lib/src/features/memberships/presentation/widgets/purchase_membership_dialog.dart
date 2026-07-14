@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
+import '../../../../core/widgets/form_feedback.dart';
+import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
+import '../controllers/member_memberships_controller.dart';
 import 'membership_purchase_content.dart';
 
 /// Result returned when a membership is purchased successfully.
 class MembershipPurchaseResult {
-  const MembershipPurchaseResult({required this.sale, required this.totalPrice});
-  final Sale sale;
+  const MembershipPurchaseResult({
+    this.sale,
+    required this.totalPrice,
+    this.queuedOffline = false,
+  });
+
+  /// Null when the renewal was excluded from sales (no receipt created).
+  final Sale? sale;
   final num totalPrice;
+  final bool queuedOffline;
+
+  bool get excludedFromSales => sale == null;
 }
 
 /// Shows a dialog for purchasing a membership for a member.
@@ -20,25 +34,119 @@ Future<MembershipPurchaseResult?> showPurchaseMembershipDialog(
   BuildContext context, {
   required String memberId,
   required String memberName,
+  String? preselectedMembershipId,
+  bool isRenewal = false,
 }) {
   return showConstrainedDialog<MembershipPurchaseResult>(
     context: context,
     builder: (context) => PurchaseMembershipDialog(
       memberId: memberId,
       memberName: memberName,
+      preselectedMembershipId: preselectedMembershipId,
+      isRenewal: isRenewal,
     ),
   );
+}
+
+/// Shows a walk-in / day-pass sale dialog (customer name + plan, no member).
+Future<MembershipPurchaseResult?> showWalkInSaleDialog(BuildContext context) {
+  return showConstrainedDialog<MembershipPurchaseResult>(
+    context: context,
+    builder: (context) => const PurchaseMembershipDialog(guestMode: true),
+  );
+}
+
+/// Opens the purchase (or renew) flow and records payment when complete.
+Future<void> purchaseMembershipAndRecordPayment(
+  BuildContext context,
+  WidgetRef ref, {
+  required String memberId,
+  required String memberName,
+  String? preselectedMembershipId,
+  bool isRenewal = false,
+}) async {
+  final result = await showPurchaseMembershipDialog(
+    context,
+    memberId: memberId,
+    memberName: memberName,
+    preselectedMembershipId: preselectedMembershipId,
+    isRenewal: isRenewal,
+  );
+
+  if (result == null) return;
+
+  ref.invalidate(memberMembershipsControllerProvider(memberId));
+
+  if (result.excludedFromSales) {
+    return;
+  }
+
+  if (result.queuedOffline) {
+    if (context.mounted) {
+      showInfoSnackBar(
+        context,
+        message: 'Membership queued — record payment once synced and online.',
+      );
+    }
+    return;
+  }
+
+  refreshTodaysSales(ref);
+
+  if (context.mounted) {
+    await showRecordPaymentDialog(
+      context,
+      sale: result.sale!,
+      balanceDue: result.totalPrice,
+    );
+    if (context.mounted) refreshTodaysSales(ref);
+  }
+}
+
+/// Opens walk-in sale flow and records payment when complete.
+Future<void> sellWalkInAndRecordPayment(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final result = await showWalkInSaleDialog(context);
+  if (result == null || !context.mounted) return;
+
+  if (result.queuedOffline) {
+    showInfoSnackBar(
+      context,
+      message: 'Sale queued — record payment once synced and online.',
+    );
+    return;
+  }
+
+  if (result.sale != null) {
+    // Show the new walk-in on Recent Transactions before payment.
+    refreshTodaysSales(ref);
+    await showRecordPaymentDialog(
+      context,
+      sale: result.sale!,
+      balanceDue: result.totalPrice,
+    );
+    // Refresh again so paid status / KPI totals match the payment.
+    if (context.mounted) refreshTodaysSales(ref);
+  }
 }
 
 class PurchaseMembershipDialog extends StatelessWidget {
   const PurchaseMembershipDialog({
     super.key,
-    required this.memberId,
-    required this.memberName,
+    this.memberId = '',
+    this.memberName = '',
+    this.preselectedMembershipId,
+    this.isRenewal = false,
+    this.guestMode = false,
   });
 
   final String memberId;
   final String memberName;
+  final String? preselectedMembershipId;
+  final bool isRenewal;
+  final bool guestMode;
 
   @override
   Widget build(BuildContext context) {
@@ -66,12 +174,18 @@ class PurchaseMembershipDialog extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Purchase Membership',
+                                guestMode
+                                    ? 'Walk-in'
+                                    : isRenewal
+                                    ? 'Renew Membership'
+                                    : 'Purchase Membership',
                                 style: theme.textTheme.titleLarge,
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'For $memberName',
+                                guestMode
+                                    ? 'Day pass — name and plan only'
+                                    : 'For $memberName',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
@@ -93,13 +207,18 @@ class PurchaseMembershipDialog extends StatelessWidget {
                     child: MembershipPurchaseContent(
                       memberId: memberId,
                       memberName: memberName,
-                      onPurchased: (sale, totalPrice) =>
-                          Navigator.of(context).pop(
-                        MembershipPurchaseResult(
-                          sale: sale,
-                          totalPrice: totalPrice,
-                        ),
-                      ),
+                      guestMode: guestMode,
+                      preselectedMembershipId: preselectedMembershipId,
+                      isRenewal: isRenewal,
+                      onPurchased:
+                          (sale, totalPrice, {queuedOffline = false}) =>
+                              Navigator.of(context).pop(
+                                MembershipPurchaseResult(
+                                  sale: sale,
+                                  totalPrice: totalPrice,
+                                  queuedOffline: queuedOffline,
+                                ),
+                              ),
                     ),
                   ),
                 ],

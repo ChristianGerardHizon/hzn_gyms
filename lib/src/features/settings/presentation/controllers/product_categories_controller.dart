@@ -24,7 +24,10 @@ class ProductCategoriesController extends _$ProductCategoriesController {
 
   /// Refreshes the category list.
   Future<void> refresh() async {
-    state = const AsyncLoading();
+    // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
+    if (!state.hasValue) {
+      state = const AsyncLoading();
+    }
 
     final result = await _repository.fetchAll();
 

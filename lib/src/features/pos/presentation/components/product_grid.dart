@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../products/domain/product.dart';
@@ -33,7 +34,7 @@ class ProductGrid extends ConsumerWidget {
         }
 
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return ErrorState.fromError(snapshot.error!, compact: true);
         }
 
         final result = snapshot.data;
@@ -42,7 +43,7 @@ class ProductGrid extends ConsumerWidget {
         }
 
         return result.fold(
-          (failure) => Center(child: Text('Error: ${failure.message}')),
+          (failure) => ErrorState.fromError(failure, compact: true),
           (products) {
             if (products.isEmpty) {
               return Center(
@@ -72,13 +73,13 @@ class ProductGrid extends ConsumerWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 // Responsive columns based on available width
-                // Mobile: 3 columns, Tablet: 4-5 columns, Large: 6+ columns
+                // Mobile: 2 columns, Tablet: 4-5 columns, Large: 6+ columns
                 final width = constraints.maxWidth;
-                final crossAxisCount = width < 400
-                    ? 3
-                    : width < 600
+                final crossAxisCount = width < 600
+                    ? 2
+                    : width < 900
                         ? 4
-                        : width < 900
+                        : width < 1200
                             ? 5
                             : 6;
 
@@ -87,12 +88,12 @@ class ProductGrid extends ConsumerWidget {
                 final childAspectRatio = crossAxisCount <= 3 ? 0.9 : 1.3;
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     childAspectRatio: childAspectRatio,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
                   ),
                   itemCount: products.length,
                   itemBuilder: (context, index) {
@@ -184,23 +185,21 @@ class _ProductCard extends ConsumerWidget {
             Opacity(
               opacity: isDisabled ? 0.5 : 1.0,
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Product name - expanded to fill available space
                     Expanded(
                       child: Text(
                         product.name,
-                        style: theme.textTheme.bodySmall?.copyWith(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Price - compact display at bottom
+                    const SizedBox(height: 6),
                     Text(
                       product.isVariablePrice
                           ? 'Variable'
@@ -257,28 +256,33 @@ class _ProductCard extends ConsumerWidget {
       showLotSelectionDialog(
         context,
         product: product,
-        onLotSelected: (lot, quantity) {
+        onLotSelected: (lot, quantity) async {
           if (product.isVariablePrice) {
             // Variable-price + lot-tracked: prompt for price after lot selection
-            showVariablePriceDialog(
+            final price = await showVariablePriceDialog(
               context,
               productName: product.name,
-            ).then((price) {
-              if (price != null) {
-                cartNotifier.addToCartWithLot(
-                  product,
-                  lot,
-                  quantity,
-                  customPrice: price,
-                );
+            );
+            if (price != null) {
+              final error = await cartNotifier.addToCartWithLot(
+                product,
+                lot,
+                quantity,
+                customPrice: price,
+              );
+              if (error != null && context.mounted) {
+                showErrorSnackBar(context, message: error);
               }
-            });
+            }
           } else {
-            cartNotifier.addToCartWithLot(
+            final error = await cartNotifier.addToCartWithLot(
               product,
               lot,
               quantity,
             );
+            if (error != null && context.mounted) {
+              showErrorSnackBar(context, message: error);
+            }
           }
         },
       );
@@ -287,14 +291,22 @@ class _ProductCard extends ConsumerWidget {
       showVariablePriceDialog(
         context,
         productName: product.name,
-      ).then((price) {
+      ).then((price) async {
         if (price != null) {
-          cartNotifier.addToCart(product, customPrice: price);
+          final error =
+              await cartNotifier.addToCart(product, customPrice: price);
+          if (error != null && context.mounted) {
+            showErrorSnackBar(context, message: error);
+          }
         }
       });
     } else {
       // Regular add to cart for non-lot products
-      cartNotifier.addToCart(product);
+      cartNotifier.addToCart(product).then((error) {
+        if (error != null && context.mounted) {
+          showErrorSnackBar(context, message: error);
+        }
+      });
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/product_lot.dart';
 import '../controllers/product_lots_controller.dart';
 import 'dialogs/create_lot_dialog.dart';
@@ -23,22 +24,12 @@ class ProductLotList extends ConsumerWidget {
 
     return lotsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 16),
-            Text('Error: $error'),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: () => ref
-                  .read(productLotsControllerProvider(productId).notifier)
-                  .refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, _) => ErrorState.fromError(
+        error,
+        compact: true,
+        onRetry: () => ref
+            .read(productLotsControllerProvider(productId).notifier)
+            .refresh(),
       ),
       data: (lots) {
         if (lots.isEmpty) {

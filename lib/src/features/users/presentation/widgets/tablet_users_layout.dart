@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/users.routes.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_users_controller.dart';
 import 'dialogs/create_user_dialog.dart';
 import 'empty_user_detail_state.dart';
@@ -13,10 +14,7 @@ import 'user_list_panel.dart';
 /// Left pane: User list with search
 /// Right pane: User detail from router or empty state
 class TabletUsersLayout extends ConsumerWidget {
-  const TabletUsersLayout({
-    super.key,
-    required this.detailChild,
-  });
+  const TabletUsersLayout({super.key, required this.detailChild});
 
   /// The detail panel content from the router.
   final Widget detailChild;
@@ -49,21 +47,11 @@ class TabletUsersLayout extends ConsumerWidget {
               child: const Icon(Icons.add),
             ),
             body: usersAsync.when(
+              skipLoadingOnReload: true,
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48),
-                    const SizedBox(height: 16),
-                    Text('Error: ${error.toString()}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => usersController.refresh(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              error: (error, stack) => ErrorState.fromError(
+                error,
+                onRetry: () => usersController.refresh(),
               ),
               data: (paginatedState) => UserListPanel(
                 paginatedState: paginatedState,

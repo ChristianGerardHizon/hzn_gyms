@@ -4,6 +4,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/widgets/state/error_state.dart';
 import '../cart_controller.dart';
 import 'checkout_dialog.dart';
 import 'variable_price_dialog.dart';
@@ -18,7 +19,7 @@ class CartView extends ConsumerWidget {
 
     return cartAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error: $error')),
+      error: (error, stack) => ErrorState.fromError(error, compact: true),
       data: (cartState) {
         final cartItems = cartState.items;
         final total = cartState.total;
@@ -75,7 +76,28 @@ class CartView extends ConsumerWidget {
                       children: [
                         ...cartItems.map((item) {
                           final product = item.product;
-                          if (product == null) return const SizedBox.shrink();
+                          if (product == null) {
+                            // Still show the line if expand failed so the cart
+                            // doesn't look empty after a successful add.
+                            return ListTile(
+                              title: Text(
+                                item.productId.isNotEmpty
+                                    ? 'Product ${item.productId}'
+                                    : 'Unknown product',
+                              ),
+                              subtitle: Text(
+                                'Qty ${item.quantity} · ${item.total.toCurrency()}',
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: isSyncing
+                                    ? null
+                                    : () => ref
+                                        .read(cartControllerProvider.notifier)
+                                        .removeItemById(item.id),
+                              ),
+                            );
+                          }
 
                           return _buildProductItemCard(
                             context, ref, theme, item, product, isSyncing);

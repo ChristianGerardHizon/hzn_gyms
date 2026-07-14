@@ -18,15 +18,15 @@ final class ProductSearchQueryProvider
     extends $NotifierProvider<ProductSearchQuery, String> {
   /// Provider for product search query state.
   ProductSearchQueryProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productSearchQueryProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productSearchQueryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productSearchQueryHash();
@@ -55,8 +55,14 @@ abstract class _$ProductSearchQuery extends $Notifier<String> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<String, String>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<String, String>, String, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String, String>,
+              String,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }
@@ -71,15 +77,15 @@ final class ProductSearchFieldsProvider
     extends $NotifierProvider<ProductSearchFields, Set<String>> {
   /// Provider for managing which fields are included in product search.
   ProductSearchFieldsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'productSearchFieldsProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'productSearchFieldsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$productSearchFieldsHash();
@@ -108,8 +114,14 @@ abstract class _$ProductSearchFields extends $Notifier<Set<String>> {
   @override
   void runBuild() {
     final ref = this.ref as $Ref<Set<String>, Set<String>>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Set<String>, Set<String>>, Set<String>, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Set<String>, Set<String>>,
+              Set<String>,
+              Object?,
+              Object?
+            >;
     element.handleCreate(ref, build);
   }
 }

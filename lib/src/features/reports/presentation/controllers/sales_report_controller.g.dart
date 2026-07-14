@@ -8,27 +8,32 @@ part of 'sales_report_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Fetches and provides sales report data.
+/// Fetches and caches sales report data.
 
 @ProviderFor(salesReport)
 final salesReportProvider = SalesReportProvider._();
 
-/// Fetches and provides sales report data.
+/// Fetches and caches sales report data.
 
-final class SalesReportProvider extends $FunctionalProvider<
-        AsyncValue<SalesReport>, SalesReport, FutureOr<SalesReport>>
+final class SalesReportProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<SalesReport>,
+          SalesReport,
+          FutureOr<SalesReport>
+        >
     with $FutureModifier<SalesReport>, $FutureProvider<SalesReport> {
-  /// Fetches and provides sales report data.
+  /// Fetches and caches sales report data.
   SalesReportProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'salesReportProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'salesReportProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$salesReportHash();
@@ -36,8 +41,8 @@ final class SalesReportProvider extends $FunctionalProvider<
   @$internal
   @override
   $FutureProviderElement<SalesReport> $createElement(
-          $ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<SalesReport> create(Ref ref) {
@@ -45,4 +50,4 @@ final class SalesReportProvider extends $FunctionalProvider<
   }
 }
 
-String _$salesReportHash() => r'a7a3da9f8f7b6081da9730afdc955cd5b4379448';
+String _$salesReportHash() => r'6f60843ad016bf0586d02b840eae1df248db9836';

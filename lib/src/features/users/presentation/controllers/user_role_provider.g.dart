@@ -15,19 +15,25 @@ final userRoleProvider = UserRoleFamily._();
 
 /// Provider for a single user role by ID.
 
-final class UserRoleProvider extends $FunctionalProvider<AsyncValue<UserRole?>,
-        UserRole?, FutureOr<UserRole?>>
+final class UserRoleProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<UserRole?>,
+          UserRole?,
+          FutureOr<UserRole?>
+        >
     with $FutureModifier<UserRole?>, $FutureProvider<UserRole?> {
   /// Provider for a single user role by ID.
-  UserRoleProvider._(
-      {required UserRoleFamily super.from, required String super.argument})
-      : super(
-          retry: null,
-          name: r'userRoleProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+  UserRoleProvider._({
+    required UserRoleFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'userRoleProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$userRoleHash();
@@ -47,10 +53,7 @@ final class UserRoleProvider extends $FunctionalProvider<AsyncValue<UserRole?>,
   @override
   FutureOr<UserRole?> create(Ref ref) {
     final argument = this.argument as String;
-    return userRole(
-      ref,
-      argument,
-    );
+    return userRole(ref, argument);
   }
 
   @override
@@ -71,19 +74,17 @@ String _$userRoleHash() => r'b4c49e5431183bac3d3ba9cdb9f40a03724eef26';
 final class UserRoleFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<UserRole?>, String> {
   UserRoleFamily._()
-      : super(
-          retry: null,
-          name: r'userRoleProvider',
-          dependencies: null,
-          $allTransitiveDependencies: null,
-          isAutoDispose: true,
-        );
+    : super(
+        retry: null,
+        name: r'userRoleProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
 
   /// Provider for a single user role by ID.
 
-  UserRoleProvider call(
-    String id,
-  ) =>
+  UserRoleProvider call(String id) =>
       UserRoleProvider._(argument: id, from: this);
 
   @override

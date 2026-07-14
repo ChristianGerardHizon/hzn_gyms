@@ -10,9 +10,13 @@ import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/members_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../../dashboard/presentation/controllers/todays_sales_controller.dart';
 import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
+import '../../../sales/presentation/controllers/sale_provider.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../domain/cart_item.dart';
+import '../../domain/sale.dart';
 import '../../domain/sale_item.dart';
 import '../cart_controller.dart';
 import '../checkout_controller.dart';
@@ -91,7 +95,7 @@ class CheckoutDialog extends HookConsumerWidget {
       final customerId = selectedMember.value?.id;
       final customerName = selectedMember.value?.name;
 
-      // Process checkout - create unpaid sale (payment handled separately)
+      // Process checkout - create unpaid sale, then collect payment
       final result =
           await ref.read(checkoutControllerProvider.notifier).processCheckout(
                 payNow: false,
@@ -104,12 +108,12 @@ class CheckoutDialog extends HookConsumerWidget {
 
       if (!context.mounted) return;
 
-      result.fold(
-        (failure) {
+      await result.fold(
+        (failure) async {
           showErrorSnackBar(context,
               message: failure.messageString, useRootMessenger: false);
         },
-        (sale) {
+        (sale) async {
           // Convert cart items to sale items for receipt
           final saleItems = cartItems
               .where((item) => item.product != null)
@@ -126,17 +130,42 @@ class CheckoutDialog extends HookConsumerWidget {
                   ))
               .toList();
 
-          // Refresh sales list & dashboard
+          // Refresh sales list & dashboard (include todaySales for Recent Transactions)
           ref.invalidate(paginatedSalesControllerProvider);
           ref.invalidate(todaySalesSummaryProvider);
+          ref.invalidate(todaySalesProvider);
 
           // Close checkout dialog
           context.pop();
 
-          // Show receipt with items
-          showReceiptDialog(
+          if (!context.mounted) return;
+
+          // Payment step (same flow as membership purchase)
+          await showRecordPaymentDialog(
             context,
             sale: sale,
+            balanceDue: sale.totalAmount,
+          );
+
+          if (!context.mounted) return;
+
+          // Prefer updated sale so receipt reflects payment status
+          ref.invalidate(saleProvider(sale.id));
+          ref.invalidate(paginatedSalesControllerProvider);
+          ref.invalidate(todaySalesSummaryProvider);
+          ref.invalidate(todaySalesProvider);
+
+          Sale receiptSale = sale;
+          try {
+            final refreshed = await ref.read(saleProvider(sale.id).future);
+            if (refreshed != null) receiptSale = refreshed;
+          } catch (_) {}
+
+          if (!context.mounted) return;
+
+          showReceiptDialog(
+            context,
+            sale: receiptSale,
             saleItems: saleItems,
           );
         },
@@ -490,6 +519,13 @@ class _MemberSelectionCard extends HookConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Leave empty for walk-in customers',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 12),
 
             // Selected member display or search field
@@ -659,6 +695,7 @@ class _QuickAddMemberDialog extends HookConsumerWidget {
         id: '',
         name: values['name'] as String,
         mobileNumber: values['mobileNumber'] as String,
+        branch: ref.read(effectiveBranchIdForWriteProvider),
       );
 
       final controller = ref.read(membersControllerProvider.notifier);

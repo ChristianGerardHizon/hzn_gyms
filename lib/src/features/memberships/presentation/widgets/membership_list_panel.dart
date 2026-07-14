@@ -10,10 +10,7 @@ import 'membership_form_dialog.dart';
 
 /// List panel for displaying membership plans with search and create.
 class MembershipListPanel extends HookConsumerWidget {
-  const MembershipListPanel({
-    super.key,
-    required this.memberships,
-  });
+  const MembershipListPanel({super.key, required this.memberships});
 
   final List<Membership> memberships;
 
@@ -27,17 +24,19 @@ class MembershipListPanel extends HookConsumerWidget {
       void listener() {
         searchQuery.value = searchController.text;
       }
+
       searchController.addListener(listener);
       return () => searchController.removeListener(listener);
     }, [searchController]);
 
     final filteredMemberships = searchQuery.value.isEmpty
-        ? memberships
+        ? List<Membership>.from(memberships)
         : memberships.where((m) {
             final query = searchQuery.value.toLowerCase();
             return m.name.toLowerCase().contains(query) ||
                 (m.description?.toLowerCase().contains(query) ?? false);
           }).toList();
+    filteredMemberships.sort(Membership.compareForList);
 
     return Scaffold(
       appBar: AppBar(
@@ -82,8 +81,9 @@ class MembershipListPanel extends HookConsumerWidget {
                         Icon(
                           Icons.card_membership_outlined,
                           size: 64,
-                          color: theme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -127,14 +127,26 @@ class MembershipListPanel extends HookConsumerWidget {
   }
 }
 
-class _MembershipListTile extends StatelessWidget {
+class _MembershipListTile extends ConsumerWidget {
   const _MembershipListTile({required this.membership});
 
   final Membership membership;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+
+    Future<void> toggleFavorite() async {
+      final updated = membership.copyWith(isFavorite: !membership.isFavorite);
+      final success = await ref
+          .read(membershipsControllerProvider.notifier)
+          .updateMembership(updated);
+      if (!success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update favorite')),
+        );
+      }
+    }
 
     return ListTile(
       leading: CircleAvatar(
@@ -150,23 +162,28 @@ class _MembershipListTile extends StatelessWidget {
       ),
       title: Text(membership.name),
       subtitle: Text(
-        '${membership.durationDisplay} - ${membership.price.toCurrency()}',
+        [
+          membership.durationDisplay,
+          membership.price.toCurrency(),
+          if (membership.walkInBadgeLabel != null) membership.walkInBadgeLabel!,
+          if (!membership.isActive) 'Inactive',
+        ].join(' · '),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      trailing: !membership.isActive
-          ? Chip(
-              label: Text(
-                'Inactive',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            )
-          : null,
+      trailing: IconButton(
+        icon: Icon(
+          membership.isFavorite ? Icons.star : Icons.star_border,
+          color: membership.isFavorite
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant,
+        ),
+        tooltip: membership.isFavorite
+            ? 'Remove from favorites'
+            : 'Add to favorites',
+        onPressed: toggleFavorite,
+      ),
       onTap: () => MembershipDetailRoute(id: membership.id).go(context),
     );
   }

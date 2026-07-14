@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
 
@@ -17,21 +18,9 @@ class RecentCheckInsList extends ConsumerWidget {
 
     return checkInsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 8),
-            Text('Error: $error'),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () =>
-                  ref.read(checkInControllerProvider.notifier).refresh(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      error: (error, _) => ErrorState.fromError(
+        error,
+        onRetry: () => ref.read(checkInControllerProvider.notifier).refresh(),
       ),
       data: (checkIns) {
         if (checkIns.isEmpty) {
@@ -42,8 +31,9 @@ class RecentCheckInsList extends ConsumerWidget {
                 Icon(
                   Icons.how_to_reg_outlined,
                   size: 64,
-                  color: theme.colorScheme.onSurfaceVariant
-                      .withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.3,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -65,10 +55,7 @@ class RecentCheckInsList extends ConsumerWidget {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final checkIn = checkIns[index];
-              return _CheckInListTile(
-                checkIn: checkIn,
-                timeFormat: timeFormat,
-              );
+              return _CheckInListTile(checkIn: checkIn, timeFormat: timeFormat);
             },
           ),
         );
@@ -78,10 +65,7 @@ class RecentCheckInsList extends ConsumerWidget {
 }
 
 class _CheckInListTile extends StatelessWidget {
-  const _CheckInListTile({
-    required this.checkIn,
-    required this.timeFormat,
-  });
+  const _CheckInListTile({required this.checkIn, required this.timeFormat});
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
@@ -93,11 +77,7 @@ class _CheckInListTile extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: Colors.green.withValues(alpha: 0.15),
-        child: const Icon(
-          Icons.how_to_reg,
-          color: Colors.green,
-          size: 20,
-        ),
+        child: const Icon(Icons.how_to_reg, color: Colors.green, size: 20),
       ),
       title: Text(checkIn.memberName ?? 'Unknown Member'),
       subtitle: Text(

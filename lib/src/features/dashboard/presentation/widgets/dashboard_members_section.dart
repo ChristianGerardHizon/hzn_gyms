@@ -6,8 +6,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
+import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
+import '../../../../core/widgets/state/empty_state.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../domain/dashboard_members_layout.dart';
 import '../controllers/dashboard_members_controller.dart';
+import '../controllers/dashboard_members_layout_controller.dart';
+import '../controllers/dashboard_members_page_errors.dart';
+import 'member_quick_view_dialog.dart';
 
 /// Section displaying members as a virtualized grid of photo cards.
 ///
@@ -21,13 +28,33 @@ class DashboardMembersSection extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rawSearchInput = useState('');
     final debouncedQuery = useState('');
-    final currentPage = useState(1);
     final allMembers = useState(<DashboardMember>[]);
     final totalItems = useState(0);
+    final totalPages = useState(0);
+    final loadedUpToPage = useState(0);
     final hasMore = useState(true);
     final isLoadingMore = useState(false);
     final hasLoadedOnce = useState(false);
     final statusFilter = useState(MemberStatusFilter.all);
+    final loadPerf = useRef<PerfTimer?>(null);
+    final prefetchInFlight = useRef(<int>{});
+    final prefetchGeneration = useRef(0);
+    final sectionMounted = useRef(true);
+    final layout = ref.watch(currentDashboardMembersLayoutProvider);
+
+    // Branch scope — local list state must reset when this changes, otherwise
+    // page-1 updates are ignored once [loadedUpToPage] > 0.
+    final branchId = ref.watch(currentBranchIdProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branchScopeKey = viewingAll ? 'all' : (branchId ?? 'none');
+
+    useEffect(() {
+      sectionMounted.value = true;
+      return () {
+        sectionMounted.value = false;
+        prefetchGeneration.value++;
+      };
+    }, const []);
 
     // Debounce search input by 400ms
     useEffect(() {
@@ -41,48 +68,187 @@ class DashboardMembersSection extends HookConsumerWidget {
       return timer.cancel;
     }, [rawSearchInput.value]);
 
-    // Reset pagination when debounced query or filter changes
+    // Reset pagination when branch, search, or status filter changes.
     useEffect(() {
-      currentPage.value = 1;
+      allMembers.value = [];
+      totalItems.value = 0;
+      loadedUpToPage.value = 0;
+      totalPages.value = 0;
       hasMore.value = true;
+      isLoadingMore.value = false;
+      hasLoadedOnce.value = false;
+      prefetchInFlight.value = <int>{};
+      prefetchGeneration.value++;
+      loadPerf.value?.finish('CANCELLED (branch/filter/search changed)');
+      loadPerf.value = null;
       return null;
-    }, [debouncedQuery.value, statusFilter.value]);
+    }, [branchScopeKey, debouncedQuery.value, statusFilter.value]);
 
-    // Fetch the current page (now with server-side filtering)
+    // Always watch page 1; later pages are prefetched into local state.
     final query = debouncedQuery.value.isEmpty ? null : debouncedQuery.value;
     final pageAsync = ref.watch(
       dashboardMembersPageProvider(
-        page: currentPage.value,
+        page: 1,
         searchQuery: query,
         statusFilter: statusFilter.value,
       ),
     );
 
-    // When new page data arrives, append it to the list
-    useEffect(() {
-      pageAsync.whenData((page) {
-        if (currentPage.value == 1) {
-          allMembers.value = page.items;
-        } else {
-          final existingIds = allMembers.value.map((m) => m.id).toSet();
+    Future<void> prefetchAhead(int basePage) async {
+      final generation = prefetchGeneration.value;
+      final pagesToFetch = <int>[
+        for (var p = basePage + 1; p <= basePage + 2; p++)
+          if (p <= totalPages.value &&
+              p > loadedUpToPage.value &&
+              !prefetchInFlight.value.contains(p))
+            p,
+      ];
+      if (pagesToFetch.isEmpty) return;
+
+      bool canCommit() => canCommitDashboardMembersPrefetch(
+            requestGeneration: generation,
+            currentGeneration: prefetchGeneration.value,
+            isMounted: sectionMounted.value && context.mounted,
+          );
+
+      if (!canCommit()) return;
+
+      prefetchInFlight.value = {
+        ...prefetchInFlight.value,
+        ...pagesToFetch,
+      };
+
+      try {
+        final results = await Future.wait(
+          pagesToFetch.map((pageNum) async {
+            final provider = dashboardMembersPageProvider(
+              page: pageNum,
+              searchQuery: query,
+              statusFilter: statusFilter.value,
+            );
+            // Keep a listener while awaiting so autoDispose cannot tear down
+            // the provider mid-load (prefetch only uses `.future`).
+            final sub = ref.listenManual(
+              provider,
+              (_, __) {},
+              fireImmediately: true,
+            );
+            try {
+              return await ref.read(provider.future);
+            } finally {
+              sub.close();
+            }
+          }),
+        );
+
+        if (!canCommit()) return;
+
+        results.sort((a, b) => a.page.compareTo(b.page));
+
+        var members = allMembers.value;
+        final existingIds = members.map((m) => m.id).toSet();
+        for (final page in results) {
           final newItems =
-              page.items.where((m) => !existingIds.contains(m.id));
-          allMembers.value = [...allMembers.value, ...newItems];
+              page.items.where((m) => !existingIds.contains(m.id)).toList();
+          if (newItems.isNotEmpty) {
+            members = [...members, ...newItems];
+            existingIds.addAll(newItems.map((m) => m.id));
+          }
+          totalItems.value = page.totalItems;
+          totalPages.value = page.totalPages;
         }
+        allMembers.value = members;
+
+        final highestFetched = results.last.page;
+        if (highestFetched > loadedUpToPage.value) {
+          loadedUpToPage.value = highestFetched;
+        }
+        hasMore.value = loadedUpToPage.value < totalPages.value;
+      } on Object catch (error) {
+        if (isProviderDisposedDuringLoading(error) ||
+            isUsedAfterDisposeError(error) ||
+            !canCommit()) {
+          return;
+        }
+        rethrow;
+      } finally {
+        // Always clear in-flight pages so a superseded/cancelled prefetch
+        // does not leave the load-more spinner stuck or skip later pages.
+        try {
+          final next = {...prefetchInFlight.value}..removeAll(pagesToFetch);
+          prefetchInFlight.value = next;
+          if (prefetchInFlight.value.isEmpty) {
+            isLoadingMore.value = false;
+          }
+        } on Object catch (error) {
+          if (!isUsedAfterDisposeError(error)) rethrow;
+        }
+      }
+    }
+
+    // Track provider lifecycle for performance debugging.
+    useEffect(() {
+      if (pageAsync.isLoading) {
+        loadPerf.value ??= PerfTimer(
+          'dashboardMembersSection p1 '
+          '${statusFilter.value.name}'
+          '${query != null ? ' q="$query"' : ''}',
+        );
+        loadPerf.value!.checkpoint('provider loading');
+      } else if (pageAsync.hasError) {
+        loadPerf.value?.checkpoint('provider error: ${pageAsync.error}');
+        loadPerf.value?.finish('FAILED');
+        loadPerf.value = null;
+      }
+      return null;
+    }, [pageAsync.isLoading, pageAsync.hasError, pageAsync.error]);
+
+    // When page 1 arrives after a reset, replace the list and silently
+    // prefetch pages 2–3 so two pages stay buffered ahead.
+    useEffect(() {
+      // Skip while refreshing — previous AsyncData would re-seed the list
+      // with the old branch's members right after a branch-scope reset.
+      if (pageAsync.isLoading) return null;
+
+      pageAsync.whenData((page) {
+        // Ignore re-emissions once this query has been initialized; otherwise
+        // page-1 data would wipe already-prefetched pages from the list.
+        if (loadedUpToPage.value > 0) return;
+        if (!sectionMounted.value || !context.mounted) return;
+
+        loadPerf.value?.checkpoint(
+          'provider data received (${page.items.length} items)',
+        );
+
+        allMembers.value = page.items;
         totalItems.value = page.totalItems;
+        totalPages.value = page.totalPages;
+        loadedUpToPage.value = 1;
         hasMore.value = page.hasMore;
         isLoadingMore.value = false;
         hasLoadedOnce.value = true;
+
+        loadPerf.value?.checkpoint(
+          'UI state updated (${allMembers.value.length} members shown)',
+        );
+        loadPerf.value?.finish();
+        loadPerf.value = null;
+
+        if (page.hasMore) {
+          unawaited(prefetchAhead(1));
+        }
       });
       return null;
-    }, [pageAsync]);
+    }, [pageAsync, branchScopeKey]);
 
-    // Initial loading state (never loaded any data yet)
-    final isInitialLoad = !hasLoadedOnce.value && pageAsync.isLoading;
+    // Full loading state after branch/search/filter reset (or first visit).
+    // Until page 1 has been applied for the current scope, never show the
+    // previous scope's cards (list was cleared) or a false empty state.
+    final isInitialLoad = !hasLoadedOnce.value && !pageAsync.hasError;
 
     // Show loading indicator in the grid area while searching/filtering
     final isSearchLoading =
-        pageAsync.isLoading && currentPage.value == 1 && hasLoadedOnce.value;
+        pageAsync.isLoading && hasLoadedOnce.value;
 
     return SliverMainAxisGroup(
       slivers: [
@@ -129,6 +295,74 @@ class DashboardMembersSection extends HookConsumerWidget {
                       ),
                     ),
                     const Spacer(),
+                    Builder(
+                      builder: (context) {
+                        final screenWidth = MediaQuery.sizeOf(context).width;
+                        final columnOptions =
+                            DashboardMembersLayout.allowedColumnsForWidth(
+                          screenWidth,
+                        );
+                        final effectiveColumns =
+                            layout.effectiveColumnsForWidth(screenWidth);
+
+                        return PopupMenuButton<_LayoutMenuAction>(
+                          tooltip: 'Layout options',
+                          icon:
+                              const Icon(Icons.view_quilt_outlined, size: 20),
+                          onSelected: (action) {
+                            final controller = ref.read(
+                              dashboardMembersLayoutControllerProvider
+                                  .notifier,
+                            );
+                            switch (action) {
+                              case _LayoutMenuAction.columns1:
+                                unawaited(controller.setColumns(1));
+                              case _LayoutMenuAction.columns2:
+                                unawaited(controller.setColumns(2));
+                              case _LayoutMenuAction.columns3:
+                                unawaited(controller.setColumns(3));
+                              case _LayoutMenuAction.columns4:
+                                unawaited(controller.setColumns(4));
+                              case _LayoutMenuAction.columns5:
+                                unawaited(controller.setColumns(5));
+                              case _LayoutMenuAction.photo:
+                                unawaited(controller.setShowPhoto(true));
+                              case _LayoutMenuAction.nameOnly:
+                                unawaited(controller.setShowPhoto(false));
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              enabled: false,
+                              child: Text('Columns'),
+                            ),
+                            ...columnOptions.map(
+                              (count) =>
+                                  CheckedPopupMenuItem<_LayoutMenuAction>(
+                                value: _layoutMenuActionForColumns(count),
+                                checked: effectiveColumns == count,
+                                child: Text('$count'),
+                              ),
+                            ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              enabled: false,
+                              child: Text('Display'),
+                            ),
+                            CheckedPopupMenuItem<_LayoutMenuAction>(
+                              value: _LayoutMenuAction.photo,
+                              checked: layout.showPhoto,
+                              child: const Text('Photo'),
+                            ),
+                            CheckedPopupMenuItem<_LayoutMenuAction>(
+                              value: _LayoutMenuAction.nameOnly,
+                              checked: !layout.showPhoto,
+                              child: const Text('Name only'),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                     TextButton(
                       onPressed: () => const MembersRoute().go(context),
                       child: const Text('View All'),
@@ -187,16 +421,10 @@ class DashboardMembersSection extends HookConsumerWidget {
         else if (allMembers.value.isEmpty && !pageAsync.isLoading)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text(
-                  statusFilter.value != MemberStatusFilter.all
-                      ? 'No ${statusFilter.value.label.toLowerCase()} members found'
-                      : 'No members found',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: _DashboardMembersEmptyState(
+                hasSearch: debouncedQuery.value.isNotEmpty,
+                statusFilter: statusFilter.value,
               ),
             ),
           )
@@ -219,29 +447,40 @@ class DashboardMembersSection extends HookConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) {
+                final screenWidth = MediaQuery.sizeOf(context).width;
                 final crossAxisCount =
-                    constraints.crossAxisExtent > 600 ? 4 : 3;
+                    layout.effectiveColumnsForWidth(screenWidth);
                 return SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: layout.childAspectRatio,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      // Auto-fetch next page when building items near the end
+                      // When near the end of the buffered list, prefetch the
+                      // next 2 pages so at least 2 pages stay ahead.
                       if (index >= allMembers.value.length - 4 &&
-                          hasMore.value &&
-                          !isLoadingMore.value &&
-                          !pageAsync.isLoading) {
+                          hasMore.value) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!sectionMounted.value || !context.mounted) {
+                            return;
+                          }
+                          if (!hasMore.value) return;
+                          // Show a spinner if the user has caught up to
+                          // in-flight background fetches.
+                          if (prefetchInFlight.value.isNotEmpty) {
+                            isLoadingMore.value = true;
+                            return;
+                          }
                           isLoadingMore.value = true;
-                          currentPage.value = currentPage.value + 1;
+                          unawaited(prefetchAhead(loadedUpToPage.value));
                         });
                       }
                       return _DashboardMemberCard(
                         dashboardMember: allMembers.value[index],
+                        showPhoto: layout.showPhoto,
                       );
                     },
                     childCount: allMembers.value.length,
@@ -251,8 +490,11 @@ class DashboardMembersSection extends HookConsumerWidget {
             ),
           ),
         ],
-        // Loading indicator while fetching next page
-        if (hasMore.value && (isLoadingMore.value || pageAsync.isLoading))
+        // Loading indicator only when the user is waiting on more pages
+        // (silent background prefetch does not show this).
+        if (hasMore.value &&
+            isLoadingMore.value &&
+            prefetchInFlight.value.isNotEmpty)
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
@@ -270,12 +512,83 @@ class DashboardMembersSection extends HookConsumerWidget {
   }
 }
 
-/// A card showing a member's photo with an expiration badge overlay
-/// and their name below.
+/// Empty state for the dashboard members grid.
+class _DashboardMembersEmptyState extends StatelessWidget {
+  const _DashboardMembersEmptyState({
+    required this.hasSearch,
+    required this.statusFilter,
+  });
+
+  final bool hasSearch;
+  final MemberStatusFilter statusFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final (:icon, :title, :subtitle) = switch ((hasSearch, statusFilter)) {
+      (true, _) => (
+          icon: Icons.search_off_rounded,
+          title: 'No members found',
+          subtitle: 'Try a different name or clear your search',
+        ),
+      (false, MemberStatusFilter.active) => (
+          icon: Icons.person_off_outlined,
+          title: 'No active members',
+          subtitle: 'No members currently have an active membership',
+        ),
+      (false, MemberStatusFilter.expiringSoon) => (
+          icon: Icons.event_busy_outlined,
+          title: 'None expiring soon',
+          subtitle: 'No memberships expire within the next 7 days',
+        ),
+      (false, MemberStatusFilter.expired) => (
+          icon: Icons.hourglass_disabled_outlined,
+          title: 'No expired members',
+          subtitle: 'There are no members with expired memberships',
+        ),
+      (false, MemberStatusFilter.all) => (
+          icon: Icons.people_outline,
+          title: 'No members yet',
+          subtitle: 'Registered members will appear here',
+        ),
+    };
+
+    return EmptyState(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      iconSize: 56,
+    );
+  }
+}
+
+/// Actions for the members layout popup menu.
+enum _LayoutMenuAction {
+  columns1,
+  columns2,
+  columns3,
+  columns4,
+  columns5,
+  photo,
+  nameOnly,
+}
+
+_LayoutMenuAction _layoutMenuActionForColumns(int count) => switch (count) {
+      1 => _LayoutMenuAction.columns1,
+      2 => _LayoutMenuAction.columns2,
+      3 => _LayoutMenuAction.columns3,
+      4 => _LayoutMenuAction.columns4,
+      _ => _LayoutMenuAction.columns5,
+    };
+
+/// A card showing a member's photo (optional) with expiration info and name.
 class _DashboardMemberCard extends StatelessWidget {
-  const _DashboardMemberCard({required this.dashboardMember});
+  const _DashboardMemberCard({
+    required this.dashboardMember,
+    required this.showPhoto,
+  });
 
   final DashboardMember dashboardMember;
+  final bool showPhoto;
 
   String? _thumbnailUrl(String? photoUrl) {
     if (photoUrl == null || photoUrl.isEmpty) return null;
@@ -288,6 +601,7 @@ class _DashboardMemberCard extends StatelessWidget {
     final theme = Theme.of(context);
     final days = dashboardMember.daysUntilExpiry;
     final isExpired = dashboardMember.isExpired;
+    final showBadge = days != null && (isExpired || days <= 7);
 
     return Card(
       clipBehavior: Clip.hardEdge,
@@ -299,66 +613,107 @@ class _DashboardMemberCard extends StatelessWidget {
             : BorderSide.none,
       ),
       child: InkWell(
-        onTap: () => MemberDetailRoute(id: dashboardMember.id).go(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CachedImage(
-                      imageUrl: _thumbnailUrl(dashboardMember.photo)),
-                  if (isExpired)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: _DaysLeftBadge(days: 0),
-                    )
-                  else if (days != null && days <= 7)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: _DaysLeftBadge(days: days),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Column(
-                children: [
-                  Text(
-                    dashboardMember.name,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    dashboardMember.membershipEndDate != null
-                        ? DateFormat('MMM d, y')
-                            .format(dashboardMember.membershipEndDate!)
-                        : 'No membership',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: isExpired
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontSize: 10,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
+        onTap: () => showMemberQuickViewDialog(
+          context,
+          memberId: dashboardMember.id,
+          dashboardMember: dashboardMember,
         ),
+        child: showPhoto
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedImage(
+                          imageUrl: _thumbnailUrl(dashboardMember.photo),
+                        ),
+                        if (showBadge)
+                          Positioned(
+                            top: 6,
+                            left: 6,
+                            child: _DaysLeftBadge(days: days),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: _MemberCardLabels(
+                      name: dashboardMember.name,
+                      expirationDate: dashboardMember.expirationDate,
+                      isExpired: isExpired,
+                    ),
+                  ),
+                ],
+              )
+            : Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (showBadge) ...[
+                      _DaysLeftBadge(days: days),
+                      const SizedBox(height: 4),
+                    ],
+                    _MemberCardLabels(
+                      name: dashboardMember.name,
+                      expirationDate: dashboardMember.expirationDate,
+                      isExpired: isExpired,
+                    ),
+                  ],
+                ),
+              ),
       ),
+    );
+  }
+}
+
+/// Name + expiration labels shared by photo and name-only cards.
+class _MemberCardLabels extends StatelessWidget {
+  const _MemberCardLabels({
+    required this.name,
+    required this.expirationDate,
+    required this.isExpired,
+  });
+
+  final String name;
+  final DateTime? expirationDate;
+  final bool isExpired;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Text(
+          name,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          expirationDate != null
+              ? DateFormat('MMM d, y').format(expirationDate!)
+              : 'No membership',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: isExpired
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurfaceVariant,
+            fontSize: 10,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -377,12 +732,15 @@ class _DaysLeftBadge extends StatelessWidget {
     if (days == null) {
       label = 'No membership';
       backgroundColor = Colors.grey.shade700;
-    } else if (days! <= 0) {
+    } else if (days == 0) {
+      label = 'Expires today';
+      backgroundColor = Colors.orange.shade700;
+    } else if (days! < 0) {
       label = 'Expired';
       backgroundColor = Colors.red.shade700;
     } else if (days == 1) {
       label = '1 day left';
-      backgroundColor = Colors.red.shade700;
+      backgroundColor = Colors.orange.shade700;
     } else {
       label = '$days days left';
       backgroundColor = Colors.orange.shade700;
