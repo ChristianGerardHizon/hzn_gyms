@@ -164,12 +164,16 @@ Tabbed analytics hub with period selector (Week / Month / Year / All Time), PDF 
 - **Roles** (`/organization/roles`) - Role and permission management (Admin, Staff, Cashier)
 - **Branches** (`/organization/branches`) - Multi-location support with address and contact info
 
+#### Profile (`/profile`)
+Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment).
+
 #### System Settings (`/system`)
 3-panel tablet layout for system configuration.
 
 **Modes:**
 - **Product Categories** (`/system/product-categories`) - Hierarchical product categories
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
+- **Appearance** (`/system/appearance`) - Theme settings (available to Staff via `settings.view`)
 
 ---
 
@@ -417,9 +421,11 @@ App Root (Shell)
 | 5 | `/members` | Members | `people` |
 | 6 | `/memberships` | Memberships | `card_membership` |
 | 7 | `/reports` | Reports | `analytics` |
-| 8 | `/organization` | Organization | `business` |
+| 8 | `/organization` or `/profile` | Organization (admin) / Profile (staff) | `business` / `person` |
 | 9 | `/outbox` | Outbox | `cloud_sync` |
 | 10 | `/system` | System | `settings` |
+
+Destinations are filtered by role permissions. Staff typically see Dashboard through Memberships, Profile, and System (Appearance only).
 
 ---
 

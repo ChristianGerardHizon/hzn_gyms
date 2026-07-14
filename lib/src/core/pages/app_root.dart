@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/check_in/presentation/widgets/global_rfid_listener.dart';
+import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
+import '../permissions/current_user_permissions.dart';
 import '../sync/outbox_sync_worker.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
@@ -13,6 +15,7 @@ import '../routing/routes/outbox.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/members.routes.dart';
 import '../routing/routes/memberships.routes.dart';
+import '../routing/routes/profile.routes.dart';
 import '../routing/routes/reports.routes.dart';
 import '../routing/routes/sales.routes.dart';
 import '../routing/routes/sales_history.routes.dart';
@@ -52,64 +55,48 @@ class _AppRootState extends ConsumerState<AppRoot> {
     });
   }
 
-  /// Route paths in order of navigation index.
-  static const _routePaths = [
-    DashboardRoute.path, // 0: /
-    CheckInRoute.path, // 1: /check-in
-    SalesRoute.path, // 2: /cashier
-    SalesHistoryRoute.path, // 3: /sales
-    ProductsRoute.path, // 4: /products
-    MembersRoute.path, // 5: /members
-    MembershipsRoute.path, // 6: /memberships
-    ReportsRoute.path, // 7: /reports
-    OrganizationRoute.path, // 8: /organization
-    OutboxRoute.path, // 9: /outbox
-    SystemRoute.path, // 10: /system
-  ];
-
-  /// Routes in order of navigation index.
-  static const _routes = <GoRouteData>[
-    DashboardRoute(), // 0
-    CheckInRoute(), // 1
-    SalesRoute(), // 2
-    SalesHistoryRoute(), // 3
-    ProductsRoute(), // 4
-    MembersRoute(), // 5
-    MembershipsRoute(), // 6
-    ReportsRoute(), // 7
-    OrganizationRoute(), // 8
-    OutboxRoute(), // 9
-    SystemRoute(), // 10
-  ];
-
-  /// Gets the selected index based on current route location.
-  int _getSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).uri.path;
-
-    // Try exact match first
-    final index = _routePaths.indexOf(location);
-    if (index >= 0) return index;
-
-    // For nested routes, check if location starts with any route path
-    // Skip index 0 ('/') to prevent matching everything
-    for (int i = 1; i < _routePaths.length; i++) {
-      if (location.startsWith(_routePaths[i])) {
-        return i;
-      }
-    }
-
-    // Fallback to dashboard
-    return 0;
-  }
-
-  void _onDestinationSelected(int index) {
-    if (index >= 0 && index < _routes.length) {
-      _routes[index].go(context);
+  void _goToDestination(AppNavDestination destination) {
+    switch (destination.id) {
+      case AppNavId.dashboard:
+        const DashboardRoute().go(context);
+      case AppNavId.checkIn:
+        const CheckInRoute().go(context);
+      case AppNavId.cashier:
+        const SalesRoute().go(context);
+      case AppNavId.sales:
+        const SalesHistoryRoute().go(context);
+      case AppNavId.products:
+        const ProductsRoute().go(context);
+      case AppNavId.members:
+        const MembersRoute().go(context);
+      case AppNavId.memberships:
+        const MembershipsRoute().go(context);
+      case AppNavId.reports:
+        const ReportsRoute().go(context);
+      case AppNavId.organization:
+        const OrganizationRoute().go(context);
+      case AppNavId.profile:
+        const ProfileRoute().go(context);
+      case AppNavId.outbox:
+        const OutboxRoute().go(context);
+      case AppNavId.system:
+        const SystemRoute().go(context);
     }
   }
 
   void _openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
+  }
+
+  List<AppNavDestination> _visibleDestinations() {
+    final permsAsync = ref.watch(currentUserPermissionsProvider);
+    // Avoid flashing admin destinations before role permissions resolve.
+    if (!permsAsync.hasValue) {
+      return const [
+        AppNavDestination(id: AppNavId.dashboard, path: DashboardRoute.path),
+      ];
+    }
+    return visibleAppNavDestinations(permsAsync.requireValue);
   }
 
   @override
@@ -119,7 +106,20 @@ class _AppRootState extends ConsumerState<AppRoot> {
     // Start outbox sync worker (drains when online).
     ref.watch(outboxSyncWorkerProvider);
 
+    // Redirect when current path is not allowed for this role.
+    ref.listen(currentUserPermissionsProvider, (previous, next) {
+      final perms = next.value;
+      if (perms == null || !context.mounted) return;
+      final location = GoRouterState.of(context).uri.path;
+      if (!canAccessPath(location, perms)) {
+        context.go(fallbackPathFor(perms));
+      }
+    });
+
     final isMobile = Breakpoints.isMobile(context);
+    final destinations = _visibleDestinations();
+    final location = GoRouterState.of(context).uri.path;
+    final selectedIndex = selectedNavIndexForPath(location, destinations);
 
     return GlobalRfidListener(
       child: PopScope(
@@ -156,8 +156,8 @@ class _AppRootState extends ConsumerState<AppRoot> {
           }
         },
         child: isMobile
-            ? _buildMobileLayout(context)
-            : _buildTabletLayout(context),
+            ? _buildMobileLayout(context, destinations, selectedIndex)
+            : _buildTabletLayout(context, destinations, selectedIndex),
       ),
     );
   }
@@ -170,14 +170,21 @@ class _AppRootState extends ConsumerState<AppRoot> {
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
-    final selectedIndex = _getSelectedIndex(context);
-
+  Widget _buildMobileLayout(
+    BuildContext context,
+    List<AppNavDestination> destinations,
+    int selectedIndex,
+  ) {
     return Scaffold(
       key: _scaffoldKey,
       drawer: MobileDrawer(
+        destinations: destinations,
         selectedIndex: selectedIndex,
-        onDestinationSelected: _onDestinationSelected,
+        onDestinationSelected: (index) {
+          if (index >= 0 && index < destinations.length) {
+            _goToDestination(destinations[index]);
+          }
+        },
       ),
       body: SafeArea(
         child: ColoredBox(
@@ -191,24 +198,36 @@ class _AppRootState extends ConsumerState<AppRoot> {
         ),
       ),
       bottomNavigationBar: MobileBottomNav(
+        destinations: destinations,
         selectedIndex: selectedIndex,
-        onDestinationSelected: _onDestinationSelected,
+        onDestinationSelected: (index) {
+          if (index >= 0 && index < destinations.length) {
+            _goToDestination(destinations[index]);
+          }
+        },
         onMoreTap: _openDrawer,
       ),
     );
   }
 
-  Widget _buildTabletLayout(BuildContext context) {
-    final selectedIndex = _getSelectedIndex(context);
-
+  Widget _buildTabletLayout(
+    BuildContext context,
+    List<AppNavDestination> destinations,
+    int selectedIndex,
+  ) {
     return Scaffold(
       body: SafeArea(
         child: Row(
           children: [
             // Navigation Rail
             TabletNavRail(
+              destinations: destinations,
               selectedIndex: selectedIndex,
-              onDestinationSelected: _onDestinationSelected,
+              onDestinationSelected: (index) {
+                if (index >= 0 && index < destinations.length) {
+                  _goToDestination(destinations[index]);
+                }
+              },
             ),
 
             const VerticalDivider(width: 1),

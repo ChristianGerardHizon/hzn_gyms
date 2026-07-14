@@ -122,6 +122,7 @@ abstract class Permissions {
   // Sales permissions
   static const salesView = 'sales.view';
   static const salesCreate = 'sales.create';
+  static const salesVoid = 'sales.void';
 
   // Users permissions
   static const usersView = 'users.view';
@@ -167,7 +168,7 @@ abstract class Permissions {
     'Reports': [reportsView],
     'Products': [productsView, productsCreate, productsEdit, productsDelete],
     'Inventory': [inventoryView, inventoryAdjust],
-    'Sales': [salesView, salesCreate],
+    'Sales': [salesView, salesCreate, salesVoid],
     'Users': [usersView, usersCreate, usersEdit, usersDelete],
     'Roles': [rolesView, rolesCreate, rolesEdit, rolesDelete],
     'Branches': [branchesView, branchesCreate, branchesEdit, branchesDelete],
@@ -380,6 +381,13 @@ abstract class Permissions {
         category: 'Sales',
         description: 'Process sales transactions',
         icon: Icons.add,
+      ),
+      const Permission(
+        key: salesVoid,
+        name: 'Void Sales',
+        category: 'Sales',
+        description: 'Void sales and payments (admin only)',
+        icon: Icons.cancel,
       ),
       // Users
       const Permission(

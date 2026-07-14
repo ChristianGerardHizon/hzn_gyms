@@ -54,6 +54,12 @@ class UserMapper extends ClassMapperBase<User> {
     opt: true,
     def: const [],
   );
+  static String? _$roleId(User v) => v.roleId;
+  static const Field<User, String> _f$roleId = Field(
+    'roleId',
+    _$roleId,
+    opt: true,
+  );
 
   @override
   final MappableFields<User> fields = const {
@@ -64,6 +70,7 @@ class UserMapper extends ClassMapperBase<User> {
     #verified: _f$verified,
     #branch: _f$branch,
     #allowedBranches: _f$allowedBranches,
+    #roleId: _f$roleId,
   };
 
   static User _instantiate(DecodingData data) {
@@ -75,6 +82,7 @@ class UserMapper extends ClassMapperBase<User> {
       verified: data.dec(_f$verified),
       branch: data.dec(_f$branch),
       allowedBranches: data.dec(_f$allowedBranches),
+      roleId: data.dec(_f$roleId),
     );
   }
 
@@ -134,6 +142,7 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     bool? verified,
     String? branch,
     List<String>? allowedBranches,
+    String? roleId,
   });
   UserCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -160,6 +169,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     bool? verified,
     Object? branch = $none,
     List<String>? allowedBranches,
+    Object? roleId = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -169,6 +179,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (verified != null) #verified: verified,
       if (branch != $none) #branch: branch,
       if (allowedBranches != null) #allowedBranches: allowedBranches,
+      if (roleId != $none) #roleId: roleId,
     }),
   );
   @override
@@ -180,6 +191,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     verified: data.get(#verified, or: $value.verified),
     branch: data.get(#branch, or: $value.branch),
     allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
+    roleId: data.get(#roleId, or: $value.roleId),
   );
 
   @override

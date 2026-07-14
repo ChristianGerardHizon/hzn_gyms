@@ -6,24 +6,23 @@ import '../../features/check_in/presentation/controllers/rfid_listener_status.da
 import '../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
+import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
 import 'branch_switcher.dart';
 import 'outbox_queue_badge.dart';
 
-/// Mobile drawer with full navigation menu.
-///
-/// Contains all navigation sections:
-/// - Primary: Dashboard, Cashier, Products
-/// - Secondary: Sales History, Reports, Organization, System
-/// - Actions: Logout
+/// Mobile drawer with permission-filtered navigation.
 class MobileDrawer extends ConsumerWidget {
   const MobileDrawer({
     super.key,
+    required this.destinations,
     required this.selectedIndex,
     required this.onDestinationSelected,
   });
 
-  /// Currently selected navigation index.
+  final List<AppNavDestination> destinations;
+
+  /// Currently selected navigation index into [destinations].
   final int selectedIndex;
 
   /// Callback when a destination is selected.
@@ -39,7 +38,6 @@ class MobileDrawer extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Header
             DrawerHeader(
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer,
@@ -79,88 +77,20 @@ class MobileDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // Branch switcher
             const BranchSwitcher(),
-
-            // Primary navigation
-            _DrawerItem(
-              icon: Icons.dashboard,
-              label: t.navigation.dashboard,
-              selected: selectedIndex == 0,
-              onTap: () => _selectAndClose(context, 0),
-            ),
-            _DrawerItem(
-              icon: Icons.how_to_reg,
-              label: t.navigation.checkIn,
-              selected: selectedIndex == 1,
-              onTap: () => _selectAndClose(context, 1),
-            ),
-            _DrawerItem(
-              icon: Icons.point_of_sale,
-              label: t.navigation.sales,
-              selected: selectedIndex == 2,
-              onTap: () => _selectAndClose(context, 2),
-            ),
-            _DrawerItem(
-              icon: Icons.receipt_long,
-              label: t.navigation.salesHistory,
-              selected: selectedIndex == 3,
-              onTap: () => _selectAndClose(context, 3),
-            ),
-            _DrawerItem(
-              icon: Icons.inventory_2,
-              label: t.navigation.products,
-              selected: selectedIndex == 4,
-              onTap: () => _selectAndClose(context, 4),
-            ),
-            _DrawerItem(
-              icon: Icons.people,
-              label: t.navigation.members,
-              selected: selectedIndex == 5,
-              onTap: () => _selectAndClose(context, 5),
-            ),
-            _DrawerItem(
-              icon: Icons.card_membership,
-              label: t.navigation.memberships,
-              selected: selectedIndex == 6,
-              onTap: () => _selectAndClose(context, 6),
-            ),
-
-            const Divider(),
-
-            // Secondary navigation
-            _DrawerItem(
-              icon: Icons.analytics,
-              label: t.navigation.reports,
-              selected: selectedIndex == 7,
-              onTap: () => _selectAndClose(context, 7),
-            ),
-            _DrawerItem(
-              icon: Icons.business,
-              label: t.navigation.organization,
-              selected: selectedIndex == 8,
-              onTap: () => _selectAndClose(context, 8),
-            ),
-            _DrawerItem(
-              icon: Icons.cloud_sync,
-              label: t.navigation.outbox,
-              selected: selectedIndex == 9,
-              onTap: () => _selectAndClose(context, 9),
-              leading: const OutboxQueueBadge(
-                child: Icon(Icons.cloud_sync),
+            for (var i = 0; i < destinations.length; i++) ...[
+              if (_shouldInsertDividerBefore(destinations, i)) const Divider(),
+              _DrawerItem(
+                icon: _iconFor(destinations[i].id),
+                label: _labelFor(destinations[i].id, t),
+                selected: selectedIndex == i,
+                onTap: () => _selectAndClose(context, i),
+                leading: destinations[i].id == AppNavId.outbox
+                    ? const OutboxQueueBadge(child: Icon(Icons.cloud_sync))
+                    : null,
               ),
-            ),
-            _DrawerItem(
-              icon: Icons.settings,
-              label: t.navigation.system,
-              selected: selectedIndex == 10,
-              onTap: () => _selectAndClose(context, 10),
-            ),
-
+            ],
             const Divider(),
-
-            // RFID listener status (above logout)
             ListTile(
               leading: const RfidListenerStatusIcon(),
               title: const Text('RFID scanner'),
@@ -172,8 +102,6 @@ class MobileDrawer extends ConsumerWidget {
               ),
               dense: true,
             ),
-
-            // Logout
             _DrawerItem(
               icon: Icons.logout,
               label: t.auth.logoutButton,
@@ -184,6 +112,81 @@ class MobileDrawer extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  bool _shouldInsertDividerBefore(
+    List<AppNavDestination> destinations,
+    int index,
+  ) {
+    if (index == 0) return false;
+    const secondary = {
+      AppNavId.reports,
+      AppNavId.organization,
+      AppNavId.profile,
+      AppNavId.outbox,
+      AppNavId.system,
+    };
+    final prev = destinations[index - 1].id;
+    final curr = destinations[index].id;
+    return !secondary.contains(prev) && secondary.contains(curr);
+  }
+
+  IconData _iconFor(AppNavId id) {
+    switch (id) {
+      case AppNavId.dashboard:
+        return Icons.dashboard;
+      case AppNavId.checkIn:
+        return Icons.how_to_reg;
+      case AppNavId.cashier:
+        return Icons.point_of_sale;
+      case AppNavId.sales:
+        return Icons.receipt_long;
+      case AppNavId.products:
+        return Icons.inventory_2;
+      case AppNavId.members:
+        return Icons.people;
+      case AppNavId.memberships:
+        return Icons.card_membership;
+      case AppNavId.reports:
+        return Icons.analytics;
+      case AppNavId.organization:
+        return Icons.business;
+      case AppNavId.profile:
+        return Icons.person;
+      case AppNavId.outbox:
+        return Icons.cloud_sync;
+      case AppNavId.system:
+        return Icons.settings;
+    }
+  }
+
+  String _labelFor(AppNavId id, Translations t) {
+    switch (id) {
+      case AppNavId.dashboard:
+        return t.navigation.dashboard;
+      case AppNavId.checkIn:
+        return t.navigation.checkIn;
+      case AppNavId.cashier:
+        return t.navigation.sales;
+      case AppNavId.sales:
+        return t.navigation.salesHistory;
+      case AppNavId.products:
+        return t.navigation.products;
+      case AppNavId.members:
+        return t.navigation.members;
+      case AppNavId.memberships:
+        return t.navigation.memberships;
+      case AppNavId.reports:
+        return t.navigation.reports;
+      case AppNavId.organization:
+        return t.navigation.organization;
+      case AppNavId.profile:
+        return t.navigation.profile;
+      case AppNavId.outbox:
+        return t.navigation.outbox;
+      case AppNavId.system:
+        return t.navigation.system;
+    }
   }
 
   void _selectAndClose(BuildContext context, int index) {

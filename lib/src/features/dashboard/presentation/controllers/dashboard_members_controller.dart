@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -130,6 +132,10 @@ String _dashboardMembersSort(MemberStatusFilter statusFilter) {
 /// Uses server-side pagination and filtering. A single API call
 /// replaces the previous 3-call approach (members + active memberships
 /// + all memberships).
+///
+/// Keeps itself alive briefly so silent prefetch via `.future` cannot dispose
+/// the provider while the network request is still in flight (Riverpod would
+/// otherwise throw "disposed during loading state").
 @riverpod
 Future<DashboardMembersPage> dashboardMembersPage(
   Ref ref, {
@@ -137,6 +143,19 @@ Future<DashboardMembersPage> dashboardMembersPage(
   String? searchQuery,
   MemberStatusFilter statusFilter = MemberStatusFilter.expiringSoon,
 }) async {
+  final link = ref.keepAlive();
+  Timer? disposeTimer;
+  ref.onCancel(() {
+    disposeTimer?.cancel();
+    disposeTimer = Timer(const Duration(seconds: 30), link.close);
+  });
+  ref.onResume(() {
+    disposeTimer?.cancel();
+  });
+  ref.onDispose(() {
+    disposeTimer?.cancel();
+  });
+
   final perf = PerfTimer(
     'dashboardMembersPage p$page ${statusFilter.name}'
     '${searchQuery != null && searchQuery.isNotEmpty ? ' q="$searchQuery"' : ''}',
