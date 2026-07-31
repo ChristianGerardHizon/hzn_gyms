@@ -10,10 +10,22 @@ class CardCheckInSuccess extends CardCheckInResult {
   const CardCheckInSuccess({
     required this.checkIn,
     required this.memberName,
+    required this.membershipEndDate,
+    this.membershipName,
+    this.membershipDaysRemaining,
   });
 
   final CheckIn checkIn;
   final String memberName;
+
+  /// Plan display name (from expand), when available.
+  final String? membershipName;
+
+  /// Inclusive end/expiry date of the membership used for check-in.
+  final DateTime membershipEndDate;
+
+  /// Days left until expiry (`0` on the expiration day), when known.
+  final int? membershipDaysRemaining;
 }
 
 /// No member card (or legacy RFID) matched the scanned value.

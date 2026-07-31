@@ -17,6 +17,7 @@ import '../permissions/current_user_permissions.dart';
 enum AppNavId {
   dashboard,
   checkIn,
+  checkInRecords,
   cashier,
   sales,
   products,
@@ -31,10 +32,7 @@ enum AppNavId {
 
 /// A top-level navigation destination with its route path.
 class AppNavDestination {
-  const AppNavDestination({
-    required this.id,
-    required this.path,
-  });
+  const AppNavDestination({required this.id, required this.path});
 
   final AppNavId id;
   final String path;
@@ -44,6 +42,10 @@ class AppNavDestination {
 const List<AppNavDestination> allAppNavDestinations = [
   AppNavDestination(id: AppNavId.dashboard, path: DashboardRoute.path),
   AppNavDestination(id: AppNavId.checkIn, path: CheckInRoute.path),
+  AppNavDestination(
+    id: AppNavId.checkInRecords,
+    path: CheckInRecordsRoute.path,
+  ),
   AppNavDestination(id: AppNavId.cashier, path: SalesRoute.path),
   AppNavDestination(id: AppNavId.sales, path: SalesHistoryRoute.path),
   AppNavDestination(id: AppNavId.products, path: ProductsRoute.path),
@@ -63,34 +65,38 @@ const List<AppNavDestination> allAppNavDestinations = [
 List<AppNavDestination> visibleAppNavDestinations(
   CurrentUserPermissions permissions,
 ) {
-  return allAppNavDestinations.where((dest) {
-    switch (dest.id) {
-      case AppNavId.dashboard:
-        return true;
-      case AppNavId.checkIn:
-        return permissions.has(Permissions.checkInsView);
-      case AppNavId.cashier:
-        return permissions.has(Permissions.salesCreate);
-      case AppNavId.sales:
-        return permissions.has(Permissions.salesView);
-      case AppNavId.products:
-        return permissions.has(Permissions.productsView);
-      case AppNavId.members:
-        return permissions.has(Permissions.membersView);
-      case AppNavId.memberships:
-        return permissions.has(Permissions.membershipsView);
-      case AppNavId.reports:
-        return permissions.has(Permissions.reportsView);
-      case AppNavId.organization:
-        return permissions.canManageUsers;
-      case AppNavId.profile:
-        return !permissions.canManageUsers;
-      case AppNavId.outbox:
-        return permissions.canManageSystem;
-      case AppNavId.system:
-        return permissions.canViewSettings;
-    }
-  }).toList(growable: false);
+  return allAppNavDestinations
+      .where((dest) {
+        switch (dest.id) {
+          case AppNavId.dashboard:
+            return true;
+          case AppNavId.checkIn:
+            return permissions.has(Permissions.checkInsView);
+          case AppNavId.checkInRecords:
+            return permissions.has(Permissions.checkInsView);
+          case AppNavId.cashier:
+            return permissions.has(Permissions.salesCreate);
+          case AppNavId.sales:
+            return permissions.has(Permissions.salesView);
+          case AppNavId.products:
+            return permissions.has(Permissions.productsView);
+          case AppNavId.members:
+            return permissions.has(Permissions.membersView);
+          case AppNavId.memberships:
+            return permissions.has(Permissions.membershipsView);
+          case AppNavId.reports:
+            return permissions.has(Permissions.reportsView);
+          case AppNavId.organization:
+            return permissions.canManageUsers;
+          case AppNavId.profile:
+            return !permissions.canManageUsers;
+          case AppNavId.outbox:
+            return permissions.canManageSystem;
+          case AppNavId.system:
+            return permissions.canViewSettings;
+        }
+      })
+      .toList(growable: false);
 }
 
 /// Maps a location path to an index in [destinations], or 0 (dashboard).
@@ -126,6 +132,9 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   }
 
   if (matchesRoutePath(location, CheckInRoute.path)) {
+    return permissions.has(Permissions.checkInsView);
+  }
+  if (matchesRoutePath(location, CheckInRecordsRoute.path)) {
     return permissions.has(Permissions.checkInsView);
   }
   if (matchesRoutePath(location, SalesRoute.path)) {

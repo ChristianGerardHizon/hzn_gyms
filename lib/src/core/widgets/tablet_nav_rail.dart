@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
-import '../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
@@ -40,9 +39,7 @@ class TabletNavRail extends ConsumerWidget {
       final icon = Icon(_iconFor(dest.id, selected: false));
       final selectedIcon = Icon(_iconFor(dest.id, selected: true));
       return NavigationRailDestination(
-        icon: dest.id == AppNavId.outbox
-            ? OutboxQueueBadge(child: icon)
-            : icon,
+        icon: dest.id == AppNavId.outbox ? OutboxQueueBadge(child: icon) : icon,
         selectedIcon: dest.id == AppNavId.outbox
             ? OutboxQueueBadge(child: selectedIcon)
             : selectedIcon,
@@ -84,8 +81,6 @@ class TabletNavRail extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const RfidListenerStatusIcon(),
-                      const SizedBox(height: 8),
                       IconButton(
                         icon: const Icon(Icons.logout),
                         tooltip: t.auth.logoutButton,
@@ -109,6 +104,8 @@ class TabletNavRail extends ConsumerWidget {
         return selected ? Icons.dashboard : Icons.dashboard_outlined;
       case AppNavId.checkIn:
         return selected ? Icons.how_to_reg : Icons.how_to_reg_outlined;
+      case AppNavId.checkInRecords:
+        return selected ? Icons.history : Icons.history_outlined;
       case AppNavId.cashier:
         return selected ? Icons.point_of_sale : Icons.point_of_sale_outlined;
       case AppNavId.sales:
@@ -118,7 +115,9 @@ class TabletNavRail extends ConsumerWidget {
       case AppNavId.members:
         return selected ? Icons.people : Icons.people_outlined;
       case AppNavId.memberships:
-        return selected ? Icons.card_membership : Icons.card_membership_outlined;
+        return selected
+            ? Icons.card_membership
+            : Icons.card_membership_outlined;
       case AppNavId.reports:
         return selected ? Icons.analytics : Icons.analytics_outlined;
       case AppNavId.organization:
@@ -138,6 +137,8 @@ class TabletNavRail extends ConsumerWidget {
         return t.navigation.dashboard;
       case AppNavId.checkIn:
         return t.navigation.checkIn;
+      case AppNavId.checkInRecords:
+        return t.navigation.checkInRecords;
       case AppNavId.cashier:
         return t.navigation.sales;
       case AppNavId.sales:

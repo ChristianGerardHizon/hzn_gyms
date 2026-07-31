@@ -52,6 +52,9 @@ DateTime endOfYear(DateTime date) =>
     DateTime(date.year, 12, 31, 23, 59, 59, 999);
 
 /// Builds a PocketBase filter for a date-like view field.
+///
+/// Year fields (`sale_year`, `checkin_year`) are JSON numbers from
+/// `strftime('%Y', …)` — compare without quotes. Month/day keys are strings.
 String? buildViewDateRangeFilter({
   required String field,
   required DateTime startDate,
@@ -60,19 +63,21 @@ String? buildViewDateRangeFilter({
   bool asMonth = false,
   bool asYear = false,
 }) {
-  final String start;
-  final String end;
+  final List<String> parts;
   if (asYear) {
-    start = formatViewYear(startDate);
-    end = formatViewYear(endDate);
+    // Numeric JSON year — quoted strings match nothing in PocketBase.
+    final start = formatViewYear(startDate);
+    final end = formatViewYear(endDate);
+    parts = <String>['$field >= $start', '$field <= $end'];
   } else if (asMonth) {
-    start = formatViewMonth(startDate);
-    end = formatViewMonth(endDate);
+    final start = formatViewMonth(startDate);
+    final end = formatViewMonth(endDate);
+    parts = <String>["$field >= '$start'", "$field <= '$end'"];
   } else {
-    start = formatViewDate(startDate);
-    end = formatViewDate(endDate);
+    final start = formatViewDate(startDate);
+    final end = formatViewDate(endDate);
+    parts = <String>["$field >= '$start'", "$field <= '$end'"];
   }
-  final parts = <String>["$field >= '$start'", "$field <= '$end'"];
   if (branchId != null && branchId.isNotEmpty) {
     parts.add('branch = "$branchId"');
   }
@@ -247,6 +252,61 @@ String normalizeSalesItemType(String? itemType) {
     if (sale.isPaid) totalRevenue += sale.totalAmount.toDouble();
   }
   return (totalRevenue: totalRevenue, transactionCount: transactionCount);
+}
+
+/// Counts unpaid / AR sales (excludes voided and refunded).
+({int unpaidCount, num unpaidBalance}) aggregateUnpaidSales(
+  Iterable<({String status, bool isPaid, num totalAmount})> sales,
+) {
+  var unpaidCount = 0;
+  num unpaidBalance = 0;
+  for (final sale in sales) {
+    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    if (!sale.isPaid && sale.totalAmount > 0) {
+      unpaidCount++;
+      unpaidBalance += sale.totalAmount;
+    }
+  }
+  return (unpaidCount: unpaidCount, unpaidBalance: unpaidBalance);
+}
+
+/// Aggregates cashier performance from lean sale rows.
+///
+/// [staffNames] maps cashier id → display name. Missing names become `Unknown`.
+List<({String staffId, String staffName, int transactionCount, num revenue})>
+aggregateStaffPerformance(
+  Iterable<({String status, String cashierId, num totalAmount})> sales, {
+  Map<String, String> staffNames = const {},
+}) {
+  final staffMap = <String, ({String name, int count, num revenue})>{};
+  for (final sale in sales) {
+    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    final cashierId = sale.cashierId;
+    if (cashierId.isEmpty) continue;
+    final name = staffNames[cashierId] ?? 'Unknown';
+    final amount = sale.totalAmount;
+    final existing = staffMap[cashierId];
+    if (existing != null) {
+      staffMap[cashierId] = (
+        name: existing.name,
+        count: existing.count + 1,
+        revenue: existing.revenue + amount,
+      );
+    } else {
+      staffMap[cashierId] = (name: name, count: 1, revenue: amount);
+    }
+  }
+  return staffMap.entries
+      .map(
+        (e) => (
+          staffId: e.key,
+          staffName: e.value.name,
+          transactionCount: e.value.count,
+          revenue: e.value.revenue,
+        ),
+      )
+      .toList()
+    ..sort((a, b) => b.revenue.compareTo(a.revenue));
 }
 
 /// Aggregates view rows into ranked top-selling items (all sale line types).

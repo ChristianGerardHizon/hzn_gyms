@@ -72,9 +72,7 @@ class CheckInController extends _$CheckInController {
   /// Looks up the card in `memberCards` collection first, then falls back
   /// to searching the legacy `rfidCardId` field on members for backward
   /// compatibility.
-  Future<CardCheckInResult> cardCheckIn({
-    required String cardValue,
-  }) async {
+  Future<CardCheckInResult> cardCheckIn({required String cardValue}) async {
     if (ref.read(viewingAllBranchesProvider)) {
       return const CardCheckInNoBranch();
     }
@@ -101,10 +99,7 @@ class CheckInController extends _$CheckInController {
         cardValue,
         fields: ['rfidCardId'],
       );
-      final members = searchResult.fold(
-        (_) => <Member>[],
-        (m) => m,
-      );
+      final members = searchResult.fold((_) => <Member>[], (m) => m);
       if (members.isNotEmpty) {
         final member = members.first;
         memberId = member.id;
@@ -145,15 +140,15 @@ class CheckInController extends _$CheckInController {
       memberMembershipId: activeMembership.id,
     );
 
-    return result.fold(
-      (failure) => const CardCheckInFailed(),
-      (checkIn) {
-        refresh();
-        return CardCheckInSuccess(
-          checkIn: checkIn,
-          memberName: resolvedName,
-        );
-      },
-    );
+    return result.fold((failure) => const CardCheckInFailed(), (checkIn) {
+      refresh();
+      return CardCheckInSuccess(
+        checkIn: checkIn,
+        memberName: resolvedName,
+        membershipName: activeMembership.membershipName,
+        membershipEndDate: activeMembership.endDate,
+        membershipDaysRemaining: activeMembership.daysRemaining,
+      );
+    });
   }
 }

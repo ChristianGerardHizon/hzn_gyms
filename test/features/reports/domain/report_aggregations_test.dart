@@ -149,15 +149,18 @@ void main() {
       expect(filter, contains("sale_month <= '2026-12'"));
     });
 
-    test('year filter uses YYYY', () {
+    test('year filter uses unquoted YYYY (JSON number field)', () {
       final filter = buildViewDateRangeFilter(
         field: 'sale_year',
         startDate: DateTime(2024, 1, 1),
         endDate: DateTime(2026, 12, 31),
         asYear: true,
       );
-      expect(filter, contains("sale_year >= '2024'"));
-      expect(filter, contains("sale_year <= '2026'"));
+      // Yearly views store sale_year as a number; quoted strings return 0 rows.
+      expect(filter, contains('sale_year >= 2024'));
+      expect(filter, contains('sale_year <= 2026'));
+      expect(filter, isNot(contains("'2024'")));
+      expect(filter, isNot(contains("'2026'")));
     });
   });
 
@@ -274,6 +277,51 @@ void main() {
       final result = daySalesKpisFromSales(const []);
       expect(result.transactionCount, 0);
       expect(result.totalRevenue, 0);
+    });
+  });
+
+  group('aggregateUnpaidSales', () {
+    test('sums unpaid balance and skips voided/refunded', () {
+      final result = aggregateUnpaidSales([
+        (status: 'completed', isPaid: false, totalAmount: 100),
+        (status: 'pending', isPaid: false, totalAmount: 50),
+        (status: 'paid', isPaid: true, totalAmount: 200),
+        (status: 'voided', isPaid: false, totalAmount: 999),
+        (status: 'refunded', isPaid: false, totalAmount: 80),
+        (status: 'completed', isPaid: false, totalAmount: 0),
+      ]);
+      expect(result.unpaidCount, 2);
+      expect(result.unpaidBalance, 150);
+    });
+  });
+
+  group('aggregateStaffPerformance', () {
+    test('groups by cashier and ranks by revenue', () {
+      final result = aggregateStaffPerformance(
+        [
+          (status: 'completed', cashierId: 'c1', totalAmount: 100),
+          (status: 'paid', cashierId: 'c1', totalAmount: 50),
+          (status: 'completed', cashierId: 'c2', totalAmount: 300),
+          (status: 'voided', cashierId: 'c2', totalAmount: 999),
+          (status: 'completed', cashierId: '', totalAmount: 40),
+        ],
+        staffNames: {'c1': 'Alice', 'c2': 'Bob'},
+      );
+      expect(result.length, 2);
+      expect(result.first.staffId, 'c2');
+      expect(result.first.staffName, 'Bob');
+      expect(result.first.revenue, 300);
+      expect(result.first.transactionCount, 1);
+      expect(result.last.staffName, 'Alice');
+      expect(result.last.transactionCount, 2);
+      expect(result.last.revenue, 150);
+    });
+
+    test('uses Unknown when name missing', () {
+      final result = aggregateStaffPerformance([
+        (status: 'completed', cashierId: 'c9', totalAmount: 10),
+      ]);
+      expect(result.single.staffName, 'Unknown');
     });
   });
 

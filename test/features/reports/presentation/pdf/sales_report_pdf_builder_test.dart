@@ -5,7 +5,7 @@ import 'package:ebe_gym/src/features/reports/presentation/pdf/sales_report_pdf_b
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 
-import '../../../helpers/fixtures.dart';
+import '../../../../helpers/fixtures.dart';
 
 void main() {
   final currencyFormat = NumberFormat.currency(symbol: 'P', decimalDigits: 2);
@@ -94,6 +94,22 @@ void main() {
       expect(data.kpiData['Transactions'], '3');
       expect(data.kpiData['Unpaid Sales'], '1');
       expect(data.kpiData['Unpaid Balance'], currencyFormat.format(200));
+    });
+
+    test('skips transaction table for non-Day periods even if sales present', () {
+      final sale = buildSale(totalAmount: 100);
+      final weekly = ReportPeriodSelection.current(ReportPeriod.weekly);
+      final data = buildSalesReportPdfData(
+        report: SalesReport.empty.copyWith(
+          sales: [sale],
+          revenueByItemType: {'product': 500},
+        ),
+        period: weekly,
+        currencyFormat: currencyFormat,
+      );
+
+      expect(data.tableTitle, isNull);
+      expect(data.tableHeaders, ['Item Type', 'Revenue']);
     });
   });
 }

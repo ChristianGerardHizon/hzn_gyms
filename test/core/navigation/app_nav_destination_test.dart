@@ -5,36 +5,38 @@ import 'package:ebe_gym/src/features/users/domain/user_role.dart';
 
 void main() {
   group('visibleAppNavDestinations', () {
-    test('Staff sees ops destinations plus Profile and System, not Org/Reports/Outbox',
-        () {
-      final staff = CurrentUserPermissions(
-        permissions: {
-          Permissions.membersView,
-          Permissions.membershipsView,
-          Permissions.checkInsView,
-          Permissions.productsView,
-          Permissions.salesView,
-          Permissions.salesCreate,
-          Permissions.settingsView,
-        },
-      );
+    test(
+      'Staff sees ops destinations plus Profile and System, not Org/Reports/Outbox',
+      () {
+        final staff = CurrentUserPermissions(
+          permissions: {
+            Permissions.membersView,
+            Permissions.membershipsView,
+            Permissions.checkInsView,
+            Permissions.productsView,
+            Permissions.salesView,
+            Permissions.salesCreate,
+            Permissions.settingsView,
+          },
+        );
 
-      final ids =
-          visibleAppNavDestinations(staff).map((d) => d.id).toList();
+        final ids = visibleAppNavDestinations(staff).map((d) => d.id).toList();
 
-      expect(ids, contains(AppNavId.dashboard));
-      expect(ids, contains(AppNavId.checkIn));
-      expect(ids, contains(AppNavId.cashier));
-      expect(ids, contains(AppNavId.sales));
-      expect(ids, contains(AppNavId.products));
-      expect(ids, contains(AppNavId.members));
-      expect(ids, contains(AppNavId.memberships));
-      expect(ids, contains(AppNavId.profile));
-      expect(ids, contains(AppNavId.system));
-      expect(ids, isNot(contains(AppNavId.organization)));
-      expect(ids, isNot(contains(AppNavId.reports)));
-      expect(ids, isNot(contains(AppNavId.outbox)));
-    });
+        expect(ids, contains(AppNavId.dashboard));
+        expect(ids, contains(AppNavId.checkIn));
+        expect(ids, contains(AppNavId.checkInRecords));
+        expect(ids, contains(AppNavId.cashier));
+        expect(ids, contains(AppNavId.sales));
+        expect(ids, contains(AppNavId.products));
+        expect(ids, contains(AppNavId.members));
+        expect(ids, contains(AppNavId.memberships));
+        expect(ids, contains(AppNavId.profile));
+        expect(ids, contains(AppNavId.system));
+        expect(ids, isNot(contains(AppNavId.organization)));
+        expect(ids, isNot(contains(AppNavId.reports)));
+        expect(ids, isNot(contains(AppNavId.outbox)));
+      },
+    );
 
     test('Admin with users.view sees Organization instead of Profile', () {
       final admin = CurrentUserPermissions(
@@ -99,9 +101,31 @@ void main() {
     test('allows profile and core ops paths', () {
       expect(canAccessPath('/profile', staff), isTrue);
       expect(canAccessPath('/check-in', staff), isTrue);
+      expect(canAccessPath('/check-in-records', staff), isTrue);
       expect(canAccessPath('/cashier', staff), isTrue);
       expect(canAccessPath('/sales', staff), isTrue);
       expect(canAccessPath('/members', staff), isTrue);
+    });
+
+    test('requires checkIns.view for check-in records', () {
+      final noCheckIns = CurrentUserPermissions(
+        permissions: {
+          Permissions.membersView,
+          Permissions.salesView,
+          Permissions.salesCreate,
+          Permissions.settingsView,
+        },
+      );
+      expect(canAccessPath('/check-in-records', noCheckIns), isFalse);
+      expect(canAccessPath('/check-in', noCheckIns), isFalse);
+    });
+
+    test('does not treat /check-in-records as under /check-in', () {
+      expect(matchesRoutePath('/check-in-records', '/check-in'), isFalse);
+      expect(
+        matchesRoutePath('/check-in-records', '/check-in-records'),
+        isTrue,
+      );
     });
 
     test('requires memberships.view for /memberships (not members.view)', () {
@@ -109,10 +133,7 @@ void main() {
       expect(canAccessPath('/memberships/abc', staff), isFalse);
 
       final withMemberships = CurrentUserPermissions(
-        permissions: {
-          ...staff.permissions,
-          Permissions.membershipsView,
-        },
+        permissions: {...staff.permissions, Permissions.membershipsView},
       );
       expect(canAccessPath('/memberships', withMemberships), isTrue);
       expect(canAccessPath('/memberships/abc', withMemberships), isTrue);
@@ -175,12 +196,8 @@ void main() {
           },
         ),
       );
-      final membersIndex =
-          dests.indexWhere((d) => d.id == AppNavId.members);
-      expect(
-        selectedNavIndexForPath('/members/abc', dests),
-        membersIndex,
-      );
+      final membersIndex = dests.indexWhere((d) => d.id == AppNavId.members);
+      expect(selectedNavIndexForPath('/members/abc', dests), membersIndex);
     });
   });
 }

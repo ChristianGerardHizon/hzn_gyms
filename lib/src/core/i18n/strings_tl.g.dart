@@ -189,6 +189,7 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get salesHistory => 'Mga Benta';
 	@override String get organization => 'Organisasyon';
 	@override String get checkIn => 'Check-In';
+	@override String get checkInRecords => 'Kasaysayan ng Check-In';
 	@override String get members => 'Mga Miyembro';
 	@override String get memberships => 'Mga Membership';
 	@override String get outbox => 'Outbox';
@@ -344,6 +345,7 @@ extension on TranslationsTl {
 			'navigation.salesHistory' => 'Mga Benta',
 			'navigation.organization' => 'Organisasyon',
 			'navigation.checkIn' => 'Check-In',
+			'navigation.checkInRecords' => 'Kasaysayan ng Check-In',
 			'navigation.members' => 'Mga Miyembro',
 			'navigation.memberships' => 'Mga Membership',
 			'navigation.outbox' => 'Outbox',

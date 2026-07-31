@@ -8,6 +8,7 @@ import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../pos/data/dto/sale_dto.dart';
+import '../../../pos/domain/sale.dart';
 import '../../domain/attendance_report.dart';
 import '../../domain/inventory_report.dart';
 import '../../domain/membership_report.dart';
@@ -20,7 +21,14 @@ part 'reports_repository.g.dart';
 
 /// Repository for fetching and aggregating report data.
 abstract class ReportsRepository {
+  /// View-based sales KPIs and charts (fast path — no raw `sales` download).
   FutureEither<SalesReport> getSalesReport({
+    required ReportPeriodSelection period,
+    String? branchId,
+  });
+
+  /// Lean unpaid / staff / Day transaction list (loads after [getSalesReport]).
+  FutureEither<SalesReportExtras> getSalesReportExtras({
     required ReportPeriodSelection period,
     String? branchId,
   });
@@ -75,14 +83,20 @@ class ReportsRepositoryImpl implements ReportsRepository {
     );
   }
 
+  /// PocketBase `fields` for Day transaction list (no expand).
+  static const _daySaleListFields =
+      'id,receiptNumber,branch,cashier,totalAmount,status,isPaid,'
+      'member,customerName,descriptor,notes,voidedBy,created,updated';
+
+  /// Minimal fields for unpaid + staff aggregation on longer periods.
+  static const _leanSaleAggFields = 'id,cashier,totalAmount,status,isPaid';
+
   @override
   FutureEither<SalesReport> getSalesReport({
     required ReportPeriodSelection period,
     String? branchId,
   }) async {
     return TaskEither.tryCatch(() async {
-      final startDate = period.startDate;
-      final endDate = period.endDate;
       final grain = period.trendGranularity;
 
       final salesView = salesSummaryViewFor(period.period);
@@ -111,39 +125,17 @@ class ReportsRepositoryImpl implements ReportsRepository {
         branchId: branchId,
       );
 
-      final salePeriodFilter = PBFilter()
-          .between('created', startDate, endDate)
-          .raw(
-            "(status = 'completed' || status = 'paid' || "
-            "status = 'awaitingPayment' || status = 'pending')",
-          );
-      if (branchId != null) {
-        salePeriodFilter.relation('branch', branchId);
-      }
-
       final results = await Future.wait([
         _pb.collection(salesView.collection).getFullList(filter: salesFilter),
         _pb.collection(topView.collection).getFullList(filter: topFilter),
         _pb.collection(itemView.collection).getFullList(filter: itemFilter),
-        _sales.getFullList(
-          filter: salePeriodFilter.build(),
-          expand: 'cashier',
-          sort: '-created',
-        ),
       ]);
 
       final summaryRecords = results[0];
       final topProductsRecords = results[1];
       final itemTypeRecords = results[2];
-      final saleRecords = results[3];
 
-      final periodSales = saleRecords
-          .map((record) => SaleDto.fromRecord(record).toEntity())
-          .toList();
-
-      if (summaryRecords.isEmpty &&
-          itemTypeRecords.isEmpty &&
-          saleRecords.isEmpty) {
+      if (summaryRecords.isEmpty && itemTypeRecords.isEmpty) {
         return SalesReport.empty;
       }
 
@@ -169,27 +161,6 @@ class ReportsRepositoryImpl implements ReportsRepository {
         if (paymentMethod.isNotEmpty) {
           revenueByPaymentMethod[paymentMethod] =
               (revenueByPaymentMethod[paymentMethod] ?? 0) + revenue;
-        }
-      }
-
-      // Day report: when the payment summary view has no rows but raw sales
-      // exist for the calendar day, derive KPIs from those sales so the Day
-      // tab is not an empty shell.
-      if (period.period == ReportPeriod.day &&
-          summaryRecords.isEmpty &&
-          periodSales.isNotEmpty) {
-        final dayKpis = daySalesKpisFromSales(
-          periodSales.map(
-            (sale) => (
-              status: sale.status,
-              isPaid: sale.isPaid,
-              totalAmount: sale.totalAmount,
-            ),
-          ),
-        );
-        if (dayKpis.transactionCount > 0) {
-          totalRevenue = dayKpis.totalRevenue;
-          transactionCount = dayKpis.transactionCount;
         }
       }
 
@@ -231,55 +202,6 @@ class ReportsRepositoryImpl implements ReportsRepository {
             record.getDoubleValue('total_revenue');
       }
 
-      var unpaidCount = 0;
-      num unpaidBalance = 0;
-      for (final sale in saleRecords) {
-        final status = sale.getStringValue('status');
-        if (status == 'voided' || status == 'refunded') continue;
-        final isPaid = sale.getBoolValue('isPaid');
-        final total = sale.getDoubleValue('totalAmount');
-        if (!isPaid && total > 0) {
-          unpaidCount++;
-          unpaidBalance += total;
-        }
-      }
-
-      final staffMap = <String, ({String name, int count, num revenue})>{};
-      for (final sale in saleRecords) {
-        final status = sale.getStringValue('status');
-        if (status == 'voided' || status == 'refunded') continue;
-        final cashierId = sale.getStringValue('cashier');
-        if (cashierId.isEmpty) continue;
-        final cashier = sale.get<RecordModel?>('expand.cashier');
-        final name =
-            cashier?.getStringValue('name') ??
-            cashier?.getStringValue('username') ??
-            'Unknown';
-        final amount = sale.getDoubleValue('totalAmount');
-        final existing = staffMap[cashierId];
-        if (existing != null) {
-          staffMap[cashierId] = (
-            name: existing.name,
-            count: existing.count + 1,
-            revenue: existing.revenue + amount,
-          );
-        } else {
-          staffMap[cashierId] = (name: name, count: 1, revenue: amount);
-        }
-      }
-      final staffPerformance =
-          staffMap.entries
-              .map(
-                (e) => StaffSalesSummary(
-                  staffId: e.key,
-                  staffName: e.value.name,
-                  transactionCount: e.value.count,
-                  revenue: e.value.revenue,
-                ),
-              )
-              .toList()
-            ..sort((a, b) => b.revenue.compareTo(a.revenue));
-
       final revenueTrend = zeroFillBuckets(
         values: revenueByBucket,
         rangeStart: period.startDate,
@@ -295,12 +217,133 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByPaymentMethod: revenueByPaymentMethod,
         topSellingProducts: topProducts.take(10).toList(),
         revenueByItemType: revenueByItemType,
-        unpaidSalesCount: unpaidCount,
-        unpaidBalance: unpaidBalance,
-        staffPerformance: staffPerformance,
-        sales: periodSales,
       );
     }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<SalesReportExtras> getSalesReportExtras({
+    required ReportPeriodSelection period,
+    String? branchId,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final includeSalesList = period.period == ReportPeriod.day;
+      final salePeriodFilter = PBFilter()
+          .between('created', period.startDate, period.endDate)
+          .raw(
+            "(status = 'completed' || status = 'paid' || "
+            "status = 'awaitingPayment' || status = 'pending')",
+          );
+      if (branchId != null) {
+        salePeriodFilter.relation('branch', branchId);
+      }
+
+      final saleRecords = await _sales.getFullList(
+        filter: salePeriodFilter.build(),
+        fields: includeSalesList ? _daySaleListFields : _leanSaleAggFields,
+        sort: includeSalesList ? '-created' : null,
+      );
+
+      if (saleRecords.isEmpty) {
+        return SalesReportExtras.empty;
+      }
+
+      final leanRows = saleRecords.map(
+        (sale) => (
+          status: sale.getStringValue('status'),
+          isPaid: sale.getBoolValue('isPaid'),
+          totalAmount: sale.getDoubleValue('totalAmount'),
+          cashierId: sale.getStringValue('cashier'),
+        ),
+      );
+
+      final unpaid = aggregateUnpaidSales(
+        leanRows.map(
+          (r) =>
+              (status: r.status, isPaid: r.isPaid, totalAmount: r.totalAmount),
+        ),
+      );
+
+      final cashierIds = leanRows
+          .map((r) => r.cashierId)
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      final staffNames = await _fetchUserDisplayNames(cashierIds);
+
+      final staff = aggregateStaffPerformance(
+        leanRows.map(
+          (r) => (
+            status: r.status,
+            cashierId: r.cashierId,
+            totalAmount: r.totalAmount,
+          ),
+        ),
+        staffNames: staffNames,
+      );
+
+      final periodSales = includeSalesList
+          ? saleRecords
+                .map((record) => SaleDto.fromRecord(record).toEntity())
+                .toList()
+          : const <Sale>[];
+
+      ({num totalRevenue, int transactionCount})? dayKpiOverride;
+      if (includeSalesList) {
+        final dayKpis = daySalesKpisFromSales(
+          leanRows.map(
+            (r) => (
+              status: r.status,
+              isPaid: r.isPaid,
+              totalAmount: r.totalAmount,
+            ),
+          ),
+        );
+        if (dayKpis.transactionCount > 0) {
+          dayKpiOverride = dayKpis;
+        }
+      }
+
+      return SalesReportExtras(
+        unpaidSalesCount: unpaid.unpaidCount,
+        unpaidBalance: unpaid.unpaidBalance,
+        staffPerformance: staff
+            .map(
+              (e) => StaffSalesSummary(
+                staffId: e.staffId,
+                staffName: e.staffName,
+                transactionCount: e.transactionCount,
+                revenue: e.revenue,
+              ),
+            )
+            .toList(),
+        sales: periodSales,
+        dayKpiOverride: dayKpiOverride,
+      );
+    }, Failure.handle).run();
+  }
+
+  Future<Map<String, String>> _fetchUserDisplayNames(
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return const {};
+    final filters = buildIdOrFilters('id', userIds);
+    final chunks = await Future.wait(
+      filters.map(
+        (f) => _pb
+            .collection(PocketBaseCollections.users)
+            .getFullList(filter: f, fields: 'id,name,username'),
+      ),
+    );
+    final names = <String, String>{};
+    for (final record in chunks.expand((e) => e)) {
+      final name = record.getStringValue('name');
+      final username = record.getStringValue('username');
+      names[record.id] = name.isNotEmpty
+          ? name
+          : (username.isNotEmpty ? username : 'Unknown');
+    }
+    return names;
   }
 
   @override

@@ -13,6 +13,7 @@
     "salesHistory": "Sales",
     "organization": "Organization",
     "checkIn": "Check-In",
+    "checkInRecords": "Check-In Records",
     "members": "Members",
     "memberships": "Memberships",
     "outbox": "Outbox",
