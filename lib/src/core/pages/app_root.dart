@@ -7,6 +7,8 @@ import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../permissions/current_user_permissions.dart';
 import '../sync/outbox_sync_worker.dart';
+import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../routing/routes/auth.routes.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/organization.routes.dart';
@@ -112,6 +114,16 @@ class _AppRootState extends ConsumerState<AppRoot> {
       final location = GoRouterState.of(context).uri.path;
       if (!canAccessPath(location, perms)) {
         context.go(fallbackPathFor(perms));
+      }
+    });
+
+    // Navigate to login directly on logout instead of relying solely on the
+    // router's redirect-on-refresh, which can miss this transition (see
+    // router.dart / login_page.dart for the matching login-side fix).
+    ref.listen(authControllerProvider, (previous, next) {
+      if (!context.mounted) return;
+      if (next.value == null && previous?.value != null) {
+        context.go(LoginRoute.path);
       }
     });
 

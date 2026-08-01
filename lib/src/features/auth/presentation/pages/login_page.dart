@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../../../core/assets/assets.gen.dart';
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/pending_redirect_provider.dart';
+import '../../../../core/routing/routes/dashboard.routes.dart';
 import '../../../../core/widgets/app_version_indicator.dart';
 import '../controllers/auth_controller.dart';
 
@@ -29,9 +32,21 @@ class LoginPage extends HookConsumerWidget {
       // On error, show error message
       if (next.hasError) {
         errorMessage.value = t.failures.invalidCredentials;
+        return;
       }
 
-      // On success, navigation is handled by router redirect (with pending URL support)
+      // On success, navigate directly instead of relying solely on the
+      // router's redirect-on-refresh, which can miss this transition when
+      // logging back in within the same session (see router.dart).
+      final justLoggedIn = next.value != null && prev?.value == null;
+      if (justLoggedIn) {
+        final pendingUrl = ref.read(pendingRedirectProvider.notifier).consume();
+        if (pendingUrl != null) {
+          context.go(pendingUrl);
+        } else {
+          const DashboardRoute().go(context);
+        }
+      }
     });
 
     void handleLogin() {
