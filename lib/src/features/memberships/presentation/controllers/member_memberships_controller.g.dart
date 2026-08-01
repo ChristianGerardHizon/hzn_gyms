@@ -66,7 +66,7 @@ final class MemberMembershipsControllerProvider
 }
 
 String _$memberMembershipsControllerHash() =>
-    r'0b98bde87cfd3e6c1d6752bc965e90915026314d';
+    r'11cbe0552652e38ebfdd8de5b37c2f094534d35c';
 
 /// Controller for managing a member's memberships (subscriptions).
 ///
