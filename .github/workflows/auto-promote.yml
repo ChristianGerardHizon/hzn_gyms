@@ -7,7 +7,14 @@ on:
 
 jobs:
   promote:
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'deploy')
+    if: >
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'deploy') &&
+      (
+        contains(github.event.pull_request.labels.*.name, 'version:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'version:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'version:major')
+      )
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -39,6 +46,9 @@ jobs:
             MINOR=$((MINOR + 1)); PATCH=0
           elif echo "$LABELS" | grep -q '"version:patch"'; then
             PATCH=$((PATCH + 1))
+          else
+            echo "::error::deploy label requires a version:* label (patch, minor, or major)"
+            exit 1
           fi
 
           VERSION="$MAJOR.$MINOR.$PATCH"
@@ -84,29 +94,26 @@ jobs:
 
           echo "Created PR #$PR_NUMBER"
 
-          # Forward version and minimum version labels from source PR
+          # Forward version and minimum version labels from source PR.
+          # Pass each label as its own --add-label (comma-joined names are one label).
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
-          FORWARD_LABELS=""
+          ADD_ARGS=()
 
           if echo "$LABELS" | grep -q '"version:major"'; then
-            FORWARD_LABELS="version:major"
+            ADD_ARGS+=(--add-label "version:major")
           elif echo "$LABELS" | grep -q '"version:minor"'; then
-            FORWARD_LABELS="version:minor"
+            ADD_ARGS+=(--add-label "version:minor")
           elif echo "$LABELS" | grep -q '"version:patch"'; then
-            FORWARD_LABELS="version:patch"
+            ADD_ARGS+=(--add-label "version:patch")
           fi
 
           if echo "$LABELS" | grep -q '"minimum version"'; then
-            if [ -n "$FORWARD_LABELS" ]; then
-              FORWARD_LABELS="$FORWARD_LABELS,minimum version"
-            else
-              FORWARD_LABELS="minimum version"
-            fi
+            ADD_ARGS+=(--add-label "minimum version")
           fi
 
-          if [ -n "$FORWARD_LABELS" ]; then
+          if [ ${#ADD_ARGS[@]} -gt 0 ]; then
             gh pr edit "$PR_NUMBER" \
               --repo "${{ github.repository }}" \
-              --add-label "$FORWARD_LABELS"
-            echo "Forwarded labels: $FORWARD_LABELS"
+              "${ADD_ARGS[@]}"
+            echo "Forwarded labels: ${ADD_ARGS[*]}"
           fi

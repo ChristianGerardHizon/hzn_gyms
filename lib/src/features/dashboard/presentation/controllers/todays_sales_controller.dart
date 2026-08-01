@@ -22,10 +22,12 @@ Future<List<Sale>> todaySales(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
   // Use local time to determine "today" for the user's timezone
   final today = DateTime.now().toLocal();
+  // Match vw_todays_sales: completed/paid only (excludes voided/pending).
   final result = await ref.read(salesRepositoryProvider).getSales(
     branchId: branchId,
     date: today,
     limit: todaysSalesListLimit,
+    statuses: const ['completed', 'paid'],
   );
   return result.fold(
     (failure) => [],

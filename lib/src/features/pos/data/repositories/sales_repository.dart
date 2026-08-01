@@ -26,6 +26,7 @@ abstract class SalesRepository {
     String? branchId,
     DateTime? date,
     int? limit,
+    List<String>? statuses,
   });
   FutureEither<List<SaleItem>> getSaleItems(String saleId);
 
@@ -188,6 +189,7 @@ class SalesRepositoryImpl implements SalesRepository {
     String? branchId,
     DateTime? date,
     int? limit,
+    List<String>? statuses,
   }) async {
     return TaskEither.tryCatch(
       () async {
@@ -208,6 +210,13 @@ class SalesRepositoryImpl implements SalesRepository {
           } else {
             filter = dateFilter;
           }
+        }
+
+        if (statuses != null && statuses.isNotEmpty) {
+          final statusFilter = statuses.length == 1
+              ? 'status = "${statuses.first}"'
+              : '(${statuses.map((s) => 'status = "$s"').join(' || ')})';
+          filter = filter.isEmpty ? statusFilter : '$filter && $statusFilter';
         }
 
         final filterOrNull = filter.isEmpty ? null : filter;

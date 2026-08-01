@@ -153,10 +153,13 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   }
   if (matchesRoutePath(location, SystemRoute.path)) {
     if (!permissions.canViewSettings) return false;
-    // Appearance is allowed with settings.view; other system tabs need admin.
+    // Appearance is allowed with settings.view; activity log with its own perm.
     if (location == SystemRoute.path ||
         location.startsWith('${SystemRoute.path}/appearance')) {
       return true;
+    }
+    if (location.startsWith('${SystemRoute.path}/activity-log')) {
+      return permissions.canViewActivityLog;
     }
     return permissions.canManageSystem;
   }

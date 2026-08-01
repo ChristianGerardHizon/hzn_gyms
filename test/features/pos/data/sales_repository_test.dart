@@ -224,6 +224,28 @@ void main() {
     );
   });
 
+  test('getSales applies statuses filter for completed and paid', () async {
+    when(
+      () => sales.getFullList(
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        fields: any(named: 'fields'),
+      ),
+    ).thenAnswer((invocation) async {
+      final filter = invocation.namedArguments[#filter] as String;
+      expect(filter, contains('status = "completed"'));
+      expect(filter, contains('status = "paid"'));
+      expect(filter, contains(' || '));
+      return [buildSaleRecord()];
+    });
+
+    final result = await repo.getSales(
+      branchId: 'branch-1',
+      statuses: const ['completed', 'paid'],
+    );
+    expect(result.getOrElse((_) => []).single.id, 'sale-1');
+  });
+
   test('getSaleItems expands product', () async {
     when(
       () => saleItems.getFullList(

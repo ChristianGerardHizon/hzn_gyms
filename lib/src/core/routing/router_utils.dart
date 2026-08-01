@@ -9,6 +9,7 @@ import '../navigation/app_nav_destination.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'routes/auth.routes.dart';
+import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
 
 /// Utility functions for router configuration.
@@ -20,6 +21,9 @@ abstract class RouterUtils {
     '/auth-loading',
     '/forgot-password',
   ];
+
+  /// Former top-level check-in records path (now nested under check-in).
+  static const String legacyCheckInRecordsPath = '/check-in-records';
 
   /// Global redirect function for auth guards.
   ///
@@ -33,6 +37,12 @@ abstract class RouterUtils {
   ) {
     final currentPath = state.matchedLocation;
     final fullUri = state.uri.toString();
+
+    // Legacy bookmark/deep link → nested records route.
+    // Use uri.path: unmatched locations may not set matchedLocation.
+    if (state.uri.path == legacyCheckInRecordsPath) {
+      return CheckInRecordsRoute.path;
+    }
 
     // Check if this route should skip auth check
     final isIgnored = ignoredRoutes.any(

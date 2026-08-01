@@ -95,6 +95,25 @@ void main() {
       expect(canAccessPath('/system/appearance', staff), isTrue);
       expect(canAccessPath('/system/product-categories', staff), isFalse);
       expect(canAccessPath('/system/printers', staff), isFalse);
+      expect(canAccessPath('/system/activity-log', staff), isFalse);
+    });
+
+    test('allows activity log when activityLog.view is granted', () {
+      final withActivityLog = CurrentUserPermissions(
+        permissions: {
+          ...staff.permissions,
+          Permissions.activityLogView,
+        },
+      );
+      expect(canAccessPath('/system/activity-log', withActivityLog), isTrue);
+      expect(
+        canAccessPath('/system/activity-log/abc', withActivityLog),
+        isTrue,
+      );
+      expect(
+        canAccessPath('/system/product-categories', withActivityLog),
+        isFalse,
+      );
     });
 
     test('allows profile and core ops paths', () {

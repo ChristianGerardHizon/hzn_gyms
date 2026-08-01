@@ -54,7 +54,7 @@ Same model as sannjose_animal_clinic:
 | `version:patch` | Bump patch, deploy staging |
 | `version:minor` | Bump minor, deploy staging |
 | `version:major` | Bump major, deploy staging |
-| `deploy` | After merge to staging, also open a staging→main production PR |
+| `deploy` | After merge to staging, open staging→main PR (**requires a `version:*` label too**) |
 | *(none, staging only)* | Merge without deploy |
 | `minimum version` | *(main only)* Also set minimum required app version |
 

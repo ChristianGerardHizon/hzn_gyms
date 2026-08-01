@@ -108,11 +108,14 @@ class SystemRoute extends GoRouteData with $SystemRoute {
     // tablet admin tab (product-categories) before settings.view is known.
     if (perms == null) return null;
 
-    // Non-admin with settings access lands on Appearance only.
+    // Non-admin with settings access: Appearance (+ Activity Log when allowed).
     if (!perms.canManageSystem && perms.canViewSettings) {
-      if (state.uri.path == path ||
-          (!state.uri.path.startsWith('$path/appearance') &&
-              state.uri.path.startsWith(path))) {
+      final current = state.uri.path;
+      final isAppearance = current.startsWith('$path/appearance');
+      final isActivityLog = current.startsWith('$path/activity-log') &&
+          perms.canViewActivityLog;
+      if (current == path ||
+          (!isAppearance && !isActivityLog && current.startsWith(path))) {
         return '$path/appearance';
       }
       return null;
