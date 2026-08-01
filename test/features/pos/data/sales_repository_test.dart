@@ -188,6 +188,42 @@ void main() {
     expect(result.getOrElse((_) => []).single.id, 'sale-1');
   });
 
+  test('getSales with limit uses getList instead of getFullList', () async {
+    when(
+      () => sales.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        fields: any(named: 'fields'),
+      ),
+    ).thenAnswer((invocation) async {
+      expect(invocation.namedArguments[#page], 1);
+      expect(invocation.namedArguments[#perPage], 50);
+      expect(
+        (invocation.namedArguments[#filter] as String).contains('branch'),
+        isTrue,
+      );
+      return ResultList<RecordModel>(
+        page: 1,
+        perPage: 50,
+        totalItems: 1,
+        totalPages: 1,
+        items: [buildSaleRecord()],
+      );
+    });
+
+    final result = await repo.getSales(branchId: 'branch-1', limit: 50);
+    expect(result.getOrElse((_) => []).single.id, 'sale-1');
+    verifyNever(
+      () => sales.getFullList(
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        fields: any(named: 'fields'),
+      ),
+    );
+  });
+
   test('getSaleItems expands product', () async {
     when(
       () => saleItems.getFullList(

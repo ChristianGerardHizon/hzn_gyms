@@ -22,7 +22,11 @@ abstract class SalesRepository {
     List<SaleItem> items,
   );
   FutureEither<Sale> getSale(String id);
-  FutureEither<List<Sale>> getSales({String? branchId, DateTime? date});
+  FutureEither<List<Sale>> getSales({
+    String? branchId,
+    DateTime? date,
+    int? limit,
+  });
   FutureEither<List<SaleItem>> getSaleItems(String saleId);
 
   /// Updates a sale record.
@@ -180,7 +184,11 @@ class SalesRepositoryImpl implements SalesRepository {
   }
 
   @override
-  FutureEither<List<Sale>> getSales({String? branchId, DateTime? date}) async {
+  FutureEither<List<Sale>> getSales({
+    String? branchId,
+    DateTime? date,
+    int? limit,
+  }) async {
     return TaskEither.tryCatch(
       () async {
         var filter = '';
@@ -202,8 +210,21 @@ class SalesRepositoryImpl implements SalesRepository {
           }
         }
 
+        final filterOrNull = filter.isEmpty ? null : filter;
+
+        if (limit != null) {
+          final page = await _sales.getList(
+            page: 1,
+            perPage: limit,
+            filter: filterOrNull,
+            sort: '-created',
+            fields: _listFields,
+          );
+          return page.items.map(_toSaleEntity).toList();
+        }
+
         final records = await _sales.getFullList(
-          filter: filter.isEmpty ? null : filter,
+          filter: filterOrNull,
           sort: '-created',
           fields: _listFields,
         );

@@ -550,6 +550,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 1 | Today's Sales KPI speed | `vw_todays_sales` uses indexable local-day UTC range (not `DATE()`); sales indexes; All-branches sums all view rows; recent transactions list capped at 50 |
 | Aug 1 | Day/Week report speed | Day/Week sales skip all-history SQL views; period-scoped sales+payments+saleItems aggregation; Day attendance uses a single checkIns range query |
 | Jul 15 | Check-In Records | New `/check-in-records` nav item lists who checked in on a selected date |
 | Jul 15 | Sales report load speed | Split view-based KPIs from lean unpaid/staff/Day list fetch; charts paint first without expand on every sale |
