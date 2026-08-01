@@ -21,24 +21,20 @@ class ActivityLogsController extends _$ActivityLogsController {
       refresh();
     });
 
-    ref.listen(currentBranchFilterProvider, (_, __) {
+    ref.listen(currentBranchIdProvider, (_, __) {
       refresh();
     });
 
     return _fetchPage(1);
   }
 
+  ActivityLogQuery get _effectiveQuery => activityLogQueryForBranch(
+        ref.read(activityLogFiltersControllerProvider),
+        ref.read(currentBranchIdProvider),
+      );
+
   Future<PaginatedState<ActivityLog>> _fetchPage(int page) async {
-    final query = ref.read(activityLogFiltersControllerProvider);
-    final branchFilter = ref.read(currentBranchFilterProvider);
-    final effectiveQuery = ActivityLogQuery(
-      startDate: query.startDate,
-      endDate: query.endDate,
-      collection: query.collection,
-      actorId: query.actorId,
-      branchId: branchFilter ?? query.branchId,
-      searchQuery: query.searchQuery,
-    );
+    final effectiveQuery = _effectiveQuery;
 
     final result = await _repository.fetchPaginated(
       query: effectiveQuery,
@@ -69,16 +65,7 @@ class ActivityLogsController extends _$ActivityLogsController {
     state = AsyncValue.data(currentState.copyWith(isLoadingMore: true));
 
     final nextPage = currentState.currentPage + 1;
-    final query = ref.read(activityLogFiltersControllerProvider);
-    final branchFilter = ref.read(currentBranchFilterProvider);
-    final effectiveQuery = ActivityLogQuery(
-      startDate: query.startDate,
-      endDate: query.endDate,
-      collection: query.collection,
-      actorId: query.actorId,
-      branchId: branchFilter ?? query.branchId,
-      searchQuery: query.searchQuery,
-    );
+    final effectiveQuery = _effectiveQuery;
 
     final result = await _repository.fetchPaginated(
       query: effectiveQuery,

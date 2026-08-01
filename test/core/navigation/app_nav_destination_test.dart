@@ -98,22 +98,23 @@ void main() {
       expect(canAccessPath('/system/activity-log', staff), isFalse);
     });
 
-    test('allows activity log when activityLog.view is granted', () {
+    test('keeps activity log admin-only', () {
       final withActivityLog = CurrentUserPermissions(
-        permissions: {
-          ...staff.permissions,
-          Permissions.activityLogView,
-        },
+        permissions: {...staff.permissions, 'activityLog.view'},
       );
-      expect(canAccessPath('/system/activity-log', withActivityLog), isTrue);
+      expect(canAccessPath('/system/activity-log', withActivityLog), isFalse);
       expect(
         canAccessPath('/system/activity-log/abc', withActivityLog),
-        isTrue,
+        isFalse,
       );
       expect(
         canAccessPath('/system/product-categories', withActivityLog),
         isFalse,
       );
+
+      const admin = CurrentUserPermissions(isAdmin: true);
+      expect(canAccessPath('/system/activity-log', admin), isTrue);
+      expect(canAccessPath('/system/activity-log/abc', admin), isTrue);
     });
 
     test('allows profile and core ops paths', () {
@@ -140,7 +141,10 @@ void main() {
 
     test('treats /check-in/records as under /check-in', () {
       expect(matchesRoutePath('/check-in/records', '/check-in'), isTrue);
-      expect(matchesRoutePath('/check-in/records', '/check-in/records'), isTrue);
+      expect(
+        matchesRoutePath('/check-in/records', '/check-in/records'),
+        isTrue,
+      );
     });
 
     test('requires memberships.view for /memberships (not members.view)', () {
@@ -173,6 +177,14 @@ void main() {
       const perms = CurrentUserPermissions(isAdmin: true);
       expect(perms.has(Permissions.salesVoid), isTrue);
       expect(perms.canVoidSales, isTrue);
+      expect(perms.canViewActivityLog, isTrue);
+    });
+
+    test('activity log requires system admin', () {
+      const legacyViewer = CurrentUserPermissions(
+        permissions: {'activityLog.view'},
+      );
+      expect(legacyViewer.canViewActivityLog, isFalse);
     });
 
     test('fromRole sets sales.void only when present', () {
@@ -238,10 +250,7 @@ void main() {
       expect(selectedNavIndexForPath('/members/abc', dests), membersIndex);
 
       final checkInIndex = dests.indexWhere((d) => d.id == AppNavId.checkIn);
-      expect(
-        selectedNavIndexForPath('/check-in/records', dests),
-        checkInIndex,
-      );
+      expect(selectedNavIndexForPath('/check-in/records', dests), checkInIndex);
     });
   });
 }

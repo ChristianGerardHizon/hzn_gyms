@@ -148,7 +148,6 @@ abstract class Permissions {
 
   // System permissions
   static const systemAdmin = 'system.admin';
-  static const activityLogView = 'activityLog.view';
 
   /// All permissions grouped by category (keys only).
   static const Map<String, List<String>> allByCategory = {
@@ -174,7 +173,7 @@ abstract class Permissions {
     'Roles': [rolesView, rolesCreate, rolesEdit, rolesDelete],
     'Branches': [branchesView, branchesCreate, branchesEdit, branchesDelete],
     'Settings': [settingsView, settingsEdit],
-    'System': [systemAdmin, activityLogView],
+    'System': [systemAdmin],
   };
 
   /// All permissions with full metadata.
@@ -493,13 +492,6 @@ abstract class Permissions {
         icon: Icons.edit,
       ),
       // System
-      const Permission(
-        key: activityLogView,
-        name: 'View Activity Log',
-        category: 'System',
-        description: 'View system-wide change history and audit trail',
-        icon: Icons.history,
-      ),
       const Permission(
         key: systemAdmin,
         name: 'System Admin',

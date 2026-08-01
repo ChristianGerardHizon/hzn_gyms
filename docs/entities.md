@@ -490,7 +490,7 @@ System-wide audit trail entries written by PocketBase hooks on record create/upd
 
 **Collection:** `activityLogs`
 
-**Note:** Records are created server-side only (API create/update/delete rules are empty). View access requires `activityLog.view` or `system.admin` permission.
+**Note:** Records are created server-side only (API create/update/delete rules are empty). View access requires the `system.admin` permission.
 
 ---
 

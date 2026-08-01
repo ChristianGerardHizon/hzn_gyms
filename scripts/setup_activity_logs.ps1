@@ -1,4 +1,4 @@
-# Creates activityLogs collection, indexes, API rules, and grants activityLog.view to Admin role.
+# Creates the admin-only activityLogs collection, indexes, and API rules.
 # Auth: PB_LOCAL_* or LOCAL_* from .env (superuser).
 #
 # Usage (from repo root):
@@ -49,7 +49,7 @@ $token = $auth.token
 $usersCol = (curl.exe -s "$base/api/collections/users" -H "Authorization: $token" | ConvertFrom-Json).id
 $branchesCol = (curl.exe -s "$base/api/collections/branches" -H "Authorization: $token" | ConvertFrom-Json).id
 
-$listRule = '@request.auth.id != "" && (@request.auth.role.permissions ?~ "activityLog.view" || @request.auth.role.permissions ?~ "system.admin")'
+$listRule = '@request.auth.id != "" && @request.auth.role.permissions ?~ "system.admin"'
 
 $existing = curl.exe -s "$base/api/collections/activityLogs" -H "Authorization: $token"
 if ($existing -match '"status":404') {
@@ -99,6 +99,27 @@ if ($existing -match '"status":404') {
   Write-Host 'activityLogs collection already exists — skipping create.'
 }
 
+# Keep existing collections aligned with the admin-only read policy.
+$rulesBodyPath = Join-Path $env:TEMP 'pb_patch_activity_logs_rules.json'
+[System.IO.File]::WriteAllText(
+  $rulesBodyPath,
+  (@{ listRule = $listRule; viewRule = $listRule } | ConvertTo-Json -Compress),
+  (New-Object System.Text.UTF8Encoding $false)
+)
+try {
+  $patchedRules = curl.exe -s -X PATCH "$base/api/collections/activityLogs" `
+    -H "Authorization: $token" `
+    -H 'Content-Type: application/json' `
+    --data-binary "@$rulesBodyPath"
+  $patchedRulesJson = $patchedRules | ConvertFrom-Json
+  if ($patchedRulesJson.status -ge 400) {
+    throw "Failed to update activityLogs API rules: $patchedRules"
+  }
+  Write-Host 'Updated activityLogs API rules to admin-only.'
+} finally {
+  Remove-Item $rulesBodyPath -Force -ErrorAction SilentlyContinue
+}
+
 # Ensure created/updated autodate fields exist (required for sort/filter by created).
 $colJson = curl.exe -s "$base/api/collections/activityLogs" -H "Authorization: $token"
 if ($colJson -notmatch '"status":404') {
@@ -134,32 +155,6 @@ if ($colJson -notmatch '"status":404') {
   } else {
     Write-Host 'activityLogs already has created/updated fields.'
   }
-}
-
-# Grant activityLog.view to Admin role
-$adminRoleId = 'sjnoy2sq6llcgqz'
-$roleJson = curl.exe -s "$base/api/collections/userRoles/records/$adminRoleId" -H "Authorization: $token"
-$role = $roleJson | ConvertFrom-Json
-$perms = [System.Collections.Generic.List[string]]@($role.permissions)
-if ($perms -notcontains 'activityLog.view') {
-  [void]$perms.Add('activityLog.view')
-  $patchPath = Join-Path $env:TEMP 'pb_patch_admin_role.json'
-  [System.IO.File]::WriteAllText(
-    $patchPath,
-    (@{ permissions = @($perms.ToArray()) } | ConvertTo-Json -Compress),
-    (New-Object System.Text.UTF8Encoding $false)
-  )
-  try {
-    $patched = curl.exe -s -X PATCH "$base/api/collections/userRoles/records/$adminRoleId" `
-      -H "Authorization: $token" `
-      -H 'Content-Type: application/json' `
-      --data-binary "@$patchPath"
-    Write-Host "Updated Admin role permissions: $patched"
-  } finally {
-    Remove-Item $patchPath -Force -ErrorAction SilentlyContinue
-  }
-} else {
-  Write-Host 'Admin role already has activityLog.view.'
 }
 
 Write-Host 'Done.'

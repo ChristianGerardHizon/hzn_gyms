@@ -35,8 +35,12 @@ class ActivityLogRepositoryImpl implements ActivityLogRepository {
   final PocketBase _pb;
 
   static const _expand = 'actor,branch';
+  // Expanded relations are only returned when listed explicitly alongside the
+  // record fields.
   static const _fields =
-      'id,action,collection,recordId,summary,changes,actor,branch,metadata,created,updated';
+      'id,action,collection,recordId,summary,changes,actor,branch,metadata,'
+      'created,updated,expand.actor.id,expand.actor.name,expand.branch.id,'
+      'expand.branch.name';
 
   RecordService get _collection =>
       _pb.collection(PocketBaseCollections.activityLogs);

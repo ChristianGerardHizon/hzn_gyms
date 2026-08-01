@@ -39,30 +39,22 @@ part 'system.routes.g.dart';
         // Product categories with detail
         TypedGoRoute<ProductCategoriesRoute>(
           path: 'product-categories',
-          routes: [
-            TypedGoRoute<ProductCategoryDetailRoute>(path: ':id'),
-          ],
+          routes: [TypedGoRoute<ProductCategoryDetailRoute>(path: ':id')],
         ),
         // Quantity units with detail
         TypedGoRoute<QuantityUnitsRoute>(
           path: 'quantity-units',
-          routes: [
-            TypedGoRoute<QuantityUnitDetailRoute>(path: ':id'),
-          ],
+          routes: [TypedGoRoute<QuantityUnitDetailRoute>(path: ':id')],
         ),
         // Printer settings with detail
         TypedGoRoute<PrinterSettingsRoute>(
           path: 'printers',
-          routes: [
-            TypedGoRoute<PrinterDetailRoute>(path: ':id'),
-          ],
+          routes: [TypedGoRoute<PrinterDetailRoute>(path: ':id')],
         ),
         // Cashier layout groups with detail
         TypedGoRoute<CashierGroupsRoute>(
           path: 'cashier-groups',
-          routes: [
-            TypedGoRoute<CashierGroupDetailRoute>(path: ':id'),
-          ],
+          routes: [TypedGoRoute<CashierGroupDetailRoute>(path: ':id')],
         ),
         // Appearance/theme settings
         TypedGoRoute<AppearanceRoute>(path: 'appearance'),
@@ -73,9 +65,7 @@ part 'system.routes.g.dart';
         // Activity log (audit trail)
         TypedGoRoute<ActivityLogRoute>(
           path: 'activity-log',
-          routes: [
-            TypedGoRoute<ActivityLogDetailRoute>(path: ':id'),
-          ],
+          routes: [TypedGoRoute<ActivityLogDetailRoute>(path: ':id')],
         ),
       ],
     ),
@@ -101,19 +91,19 @@ class SystemRoute extends GoRouteData with $SystemRoute {
 
   @override
   String? redirect(BuildContext context, GoRouterState state) {
-    final perms = ProviderScope.containerOf(context)
-        .read(currentUserPermissionsProvider)
-        .value;
+    final perms = ProviderScope.containerOf(
+      context,
+    ).read(currentUserPermissionsProvider).value;
     // Wait until the role loads — defaulting to empty would send staff to the
     // tablet admin tab (product-categories) before settings.view is known.
     if (perms == null) return null;
 
-    // Non-admin with settings access: Appearance (+ Activity Log when allowed).
+    // Non-admin with settings access: Appearance only.
     if (!perms.canManageSystem && perms.canViewSettings) {
       final current = state.uri.path;
       final isAppearance = current.startsWith('$path/appearance');
-      final isActivityLog = current.startsWith('$path/activity-log') &&
-          perms.canViewActivityLog;
+      final isActivityLog =
+          current.startsWith('$path/activity-log') && perms.canViewActivityLog;
       if (current == path ||
           (!isAppearance && !isActivityLog && current.startsWith(path))) {
         return '$path/appearance';
@@ -262,9 +252,9 @@ class ActivityLogRoute extends GoRouteData with $ActivityLogRoute {
 
   @override
   String? redirect(BuildContext context, GoRouterState state) {
-    final perms = ProviderScope.containerOf(context)
-        .read(currentUserPermissionsProvider)
-        .value;
+    final perms = ProviderScope.containerOf(
+      context,
+    ).read(currentUserPermissionsProvider).value;
     if (perms != null && !perms.canViewActivityLog) {
       return const AppearanceRoute().location;
     }
@@ -288,9 +278,9 @@ class ActivityLogDetailRoute extends GoRouteData with $ActivityLogDetailRoute {
 
   @override
   String? redirect(BuildContext context, GoRouterState state) {
-    final perms = ProviderScope.containerOf(context)
-        .read(currentUserPermissionsProvider)
-        .value;
+    final perms = ProviderScope.containerOf(
+      context,
+    ).read(currentUserPermissionsProvider).value;
     if (perms != null && !perms.canViewActivityLog) {
       return const AppearanceRoute().location;
     }
@@ -351,14 +341,12 @@ class _MobileSystemLandingPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final perms =
         ref.watch(currentUserPermissionsProvider).value ??
-            CurrentUserPermissions.empty;
+        CurrentUserPermissions.empty;
     final isAdmin = perms.canManageSystem;
     final canViewActivityLog = perms.canViewActivityLog;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('System Settings'),
-      ),
+      appBar: AppBar(title: const Text('System Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -477,11 +465,7 @@ class _SystemOptionCard extends StatelessWidget {
                       color: color.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      icon,
-                      size: 40,
-                      color: color,
-                    ),
+                    child: Icon(icon, size: 40, color: color),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -520,9 +504,7 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
     final controller = ref.read(productCategoriesControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Product Categories'),
-      ),
+      appBar: AppBar(title: const Text('Product Categories')),
       floatingActionButton: FloatingActionButton(
         heroTag: 'product_category_fab',
         onPressed: () => showProductCategoryFormDialog(context),
@@ -531,10 +513,8 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
       ),
       body: categoriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => ErrorState.fromError(
-          error,
-          onRetry: () => controller.refresh(),
-        ),
+        error: (error, stack) =>
+            ErrorState.fromError(error, onRetry: () => controller.refresh()),
         data: (categories) {
           if (categories.isEmpty) {
             return Center(
@@ -566,8 +546,7 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
           }
 
           // Build hierarchical display
-          final rootCategories =
-              categories.where((c) => !c.hasParent).toList();
+          final rootCategories = categories.where((c) => !c.hasParent).toList();
           final childCategories = categories.where((c) => c.hasParent).toList();
 
           return RefreshIndicator(
@@ -586,19 +565,22 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
                     _MobileCategoryListTile(
                       category: category,
                       isChild: false,
-                      onTap: () => ProductCategoryDetailRoute(id: category.id)
-                          .push(context),
+                      onTap: () => ProductCategoryDetailRoute(
+                        id: category.id,
+                      ).push(context),
                     ),
-                    ...children.map((child) => Padding(
-                          padding: const EdgeInsets.only(left: 24),
-                          child: _MobileCategoryListTile(
-                            category: child,
-                            isChild: true,
-                            onTap: () =>
-                                ProductCategoryDetailRoute(id: child.id)
-                                    .push(context),
-                          ),
-                        )),
+                    ...children.map(
+                      (child) => Padding(
+                        padding: const EdgeInsets.only(left: 24),
+                        child: _MobileCategoryListTile(
+                          category: child,
+                          isChild: true,
+                          onTap: () => ProductCategoryDetailRoute(
+                            id: child.id,
+                          ).push(context),
+                        ),
+                      ),
+                    ),
                   ],
                 );
               },
@@ -658,9 +640,7 @@ class _MobilePrinterListPage extends ConsumerWidget {
     final controller = ref.read(printerConfigsControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Printers'),
-      ),
+      appBar: AppBar(title: const Text('Printers')),
       floatingActionButton: FloatingActionButton(
         heroTag: 'printer_fab',
         onPressed: () => _showCreateSheet(context),
@@ -668,10 +648,8 @@ class _MobilePrinterListPage extends ConsumerWidget {
       ),
       body: printersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => ErrorState.fromError(
-          error,
-          onRetry: () => controller.refresh(),
-        ),
+        error: (error, stack) =>
+            ErrorState.fromError(error, onRetry: () => controller.refresh()),
         data: (printers) {
           if (printers.isEmpty) {
             return Center(
@@ -766,9 +744,7 @@ class _MobileImportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Import Products'),
-      ),
+      appBar: AppBar(title: const Text('Import Products')),
       body: const ImportLandingPanel(),
     );
   }
@@ -808,9 +784,7 @@ class _MobileQuantityUnitsListPage extends ConsumerWidget {
     final controller = ref.read(quantityUnitsControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quantity Units'),
-      ),
+      appBar: AppBar(title: const Text('Quantity Units')),
       floatingActionButton: FloatingActionButton(
         heroTag: 'quantity_unit_fab',
         onPressed: () => showQuantityUnitFormDialog(context),
@@ -819,10 +793,8 @@ class _MobileQuantityUnitsListPage extends ConsumerWidget {
       ),
       body: unitsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => ErrorState.fromError(
-          error,
-          onRetry: () => controller.refresh(),
-        ),
+        error: (error, stack) =>
+            ErrorState.fromError(error, onRetry: () => controller.refresh()),
         data: (units) {
           if (units.isEmpty) {
             return Center(
@@ -874,10 +846,7 @@ class _MobileQuantityUnitsListPage extends ConsumerWidget {
 }
 
 class _MobileQuantityUnitListTile extends StatelessWidget {
-  const _MobileQuantityUnitListTile({
-    required this.unit,
-    required this.onTap,
-  });
+  const _MobileQuantityUnitListTile({required this.unit, required this.onTap});
 
   final QuantityUnit unit;
   final VoidCallback onTap;

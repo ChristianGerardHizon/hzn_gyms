@@ -35,6 +35,36 @@ void main() {
     });
   });
 
+  group('activityLogQueryForBranch', () {
+    const query = ActivityLogQuery(collection: 'members', branchId: 'picked');
+
+    test('uses the selected branch id', () {
+      final scoped = activityLogQueryForBranch(query, 'global');
+
+      expect(scoped.branchId, 'global');
+      expect(scoped.collection, 'members');
+      expect(buildActivityLogFilter(scoped), contains('branch = "global"'));
+    });
+
+    test('keeps the query branch when viewing all branches', () {
+      expect(activityLogQueryForBranch(query, null).branchId, 'picked');
+      expect(
+        activityLogQueryForBranch(const ActivityLogQuery(), null).branchId,
+        isNull,
+      );
+    });
+
+    test('never emits a nested branch filter expression', () {
+      final filter = buildActivityLogFilter(
+        activityLogQueryForBranch(const ActivityLogQuery(), 'branch456'),
+      );
+
+      expect(filter, contains('branch = "branch456"'));
+      expect(filter, isNot(contains('isDeleted')));
+      expect('"'.allMatches(filter).length.isEven, isTrue);
+    });
+  });
+
   group('activityLogFormatters', () {
     test('maps collection and field labels', () {
       expect(activityLogCollectionLabel('members'), 'Members');

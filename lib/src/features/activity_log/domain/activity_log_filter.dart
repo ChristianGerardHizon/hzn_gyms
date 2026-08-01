@@ -23,6 +23,24 @@ class ActivityLogQuery {
 /// Default lookback when no start date is provided (7 days).
 const activityLogDefaultLookbackDays = 7;
 
+/// Applies the globally selected branch to [query].
+///
+/// [branchId] must be a plain record id (never a built filter string).
+/// `null` means "All branches" and keeps any branch chosen in [query].
+ActivityLogQuery activityLogQueryForBranch(
+  ActivityLogQuery query,
+  String? branchId,
+) {
+  return ActivityLogQuery(
+    startDate: query.startDate,
+    endDate: query.endDate,
+    collection: query.collection,
+    actorId: query.actorId,
+    branchId: branchId ?? query.branchId,
+    searchQuery: query.searchQuery,
+  );
+}
+
 /// Builds a PocketBase filter string for activity log queries.
 String buildActivityLogFilter(ActivityLogQuery query) {
   final filter = PBFilter();

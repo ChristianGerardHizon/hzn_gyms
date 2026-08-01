@@ -27,8 +27,7 @@ class CurrentUserPermissions {
     );
   }
 
-  bool has(String permission) =>
-      isAdmin || permissions.contains(permission);
+  bool has(String permission) => isAdmin || permissions.contains(permission);
 
   bool get canManageUsers => has(Permissions.usersView);
   bool get canViewReports => has(Permissions.reportsView);
@@ -36,8 +35,7 @@ class CurrentUserPermissions {
   bool get canVoidSales => has(Permissions.salesVoid);
   bool get canEditMemberships => has(Permissions.membershipsEdit);
   bool get canManageSystem => has(Permissions.systemAdmin);
-  bool get canViewActivityLog =>
-      has(Permissions.activityLogView) || has(Permissions.systemAdmin);
+  bool get canViewActivityLog => canManageSystem;
 }
 
 /// Loads the current user's role permissions from PocketBase.

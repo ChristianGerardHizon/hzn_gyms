@@ -192,7 +192,7 @@ Self-service account page for staff (and any user without `users.view`). Shows o
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
 - **Appearance** (`/system/appearance`) - Theme settings (available to Staff via `settings.view`)
 - **Debug** (`/system/debug`) - Admin tools; simulate RFID check-in dialogs
-- **Activity Log** (`/system/activity-log`) - System-wide change history with summary list and field-level diffs (requires `activityLog.view` or admin)
+- **Activity Log** (`/system/activity-log`) - Admin-only system-wide change history with summary list and field-level diffs
 
 ---
 
@@ -557,7 +557,7 @@ lib/src/
 | Aug 1 | Add Card scan-first | Member Detail Add Card waits for RFID/keyboard-wedge scan, then Label/Notes; manual Card ID entry as fallback |
 | Aug 1 | Check-In Records nested | Records moved under Check-In as app-bar button (`/check-in/records`); tap a record for details + member profile link; removed top-level nav item |
 | Aug 1 | Today's Sales KPI speed | `vw_todays_sales` uses indexable local-day UTC range (not `DATE()`); sales indexes; All-branches sums all view rows; recent transactions list capped at 50 |
-| Aug 1 | Activity log | System-wide audit trail via PocketBase hooks; summary list + field diff detail under System → Activity Log |
+| Aug 1 | Activity log | Admin-only system-wide audit trail via PocketBase hooks; summary list + field diff detail under System → Activity Log |
 | Aug 1 | Day/Week report speed | Day/Week sales skip all-history SQL views; period-scoped sales+payments+saleItems aggregation; Day attendance uses a single checkIns range query |
 | Jul 15 | Check-In Records | New `/check-in-records` nav item lists who checked in on a selected date |
 | Jul 15 | Sales report load speed | Split view-based KPIs from lean unpaid/staff/Day list fetch; charts paint first without expand on every sale |
