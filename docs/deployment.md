@@ -28,7 +28,7 @@ feature branch → staging → main
 
 - **All development PRs** merge into `staging`.
 - **Only `staging`** can merge into `main` (enforced by `branch-protection.yml`).
-- Adding the `promote-to-main` label on a staging PR auto-creates a release PR to `main`.
+- Adding the `deploy` label on a staging PR auto-creates a release PR to `main`.
 
 ---
 
@@ -37,16 +37,37 @@ feature branch → staging → main
 | File | Purpose |
 |------|---------|
 | `.github/workflows/deploy.yml` | Main deployment — staging + production builds and releases |
-| `.github/workflows/auto-promote.yml` | Auto-creates a PR from `staging` → `main` when a merged PR has the `promote-to-main` label |
+| `scripts/deploy.sh` | SSH/rsync deploy helper invoked by `deploy.yml` |
+| `.github/workflows/auto-promote.yml` | Auto-creates a PR from `staging` → `main` when a merged PR has the `deploy` label |
 | `.github/workflows/branch-protection.yml` | Blocks PRs to `main` that don't originate from `staging` |
 
 ---
 
 ## Deployment Flows
 
+### Version labels & release tags
+
+Same model as sannjose_animal_clinic:
+
+| PR label | Effect |
+|----------|--------|
+| `version:patch` | Bump patch, deploy staging |
+| `version:minor` | Bump minor, deploy staging |
+| `version:major` | Bump major, deploy staging |
+| `deploy` | After merge to staging, also open a staging→main production PR |
+| *(none, staging only)* | Merge without deploy |
+| `minimum version` | *(main only)* Also set minimum required app version |
+
+| Environment | GitHub Release tag |
+|-------------|--------------------|
+| Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK |
+| Production | `vX.Y.Z` — full release + APK |
+
+Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`).
+
 ### Staging Deployment
 
-**Trigger:** PR merged to `staging`, or manual `workflow_dispatch`.
+**Trigger:** PR merged to `staging` with a `version:*` label, or manual `workflow_dispatch`.
 
 ```
 PR merged to staging (or manual dispatch)
@@ -125,7 +146,7 @@ PR merged to main
 
 ### Auto-Promote Flow
 
-**Trigger:** PR with `promote-to-main` label merged to `staging`.
+**Trigger:** PR with `deploy` label merged to `staging`.
 
 ```
 Labeled PR merged to staging
@@ -294,6 +315,35 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 | macOS | Not configured | Would require macOS runner |
 | Linux | Not configured | Could use standard Ubuntu runner |
 | Windows | Not configured | Would require Windows runner |
+
+---
+
+## Deploy Script (`scripts/deploy.sh`)
+
+Shared bash script used by GitHub Actions (and local Linux/macOS emergency deploys). After SSH agent + known_hosts setup, it:
+
+1. `rsync --delete` `build/web/` → `pb_public/`
+2. `rsync --delete` `server/pb_migrations/` → `pb_migrations/`
+3. `rsync --delete` `server/pb_hooks/` → `pb_hooks/`
+4. `systemctl restart` the PocketBase service
+
+**Required env:** `SSH_HOST`, `SSH_USER`
+
+```bash
+# CI (already wired in deploy.yml)
+./scripts/deploy.sh staging
+./scripts/deploy.sh prod
+
+# Partial deploys
+./scripts/deploy.sh staging --hooks-only
+./scripts/deploy.sh staging --migrations-only
+./scripts/deploy.sh prod --restart-only
+```
+
+| Environment | Server root | Service |
+|-------------|-------------|---------|
+| staging | `/opt/pocketbase/ebegym-staging` | `pocketbase_ebegym-staging.service` |
+| prod | `/opt/pocketbase/ebegym` | `pocketbase_ebegym.service` |
 
 ---
 

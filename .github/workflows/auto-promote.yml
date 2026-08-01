@@ -7,15 +7,48 @@ on:
 
 jobs:
   promote:
-    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'promote-to-main')
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'deploy')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
       contents: read
     steps:
+      - name: Calculate next version
+        id: get_version
+        env:
+          URL: ${{ secrets.VERSION_MANAGER_URL }}
+          ID: ${{ secrets.VERSION_COLLECTION_ID }}
+        run: |
+          # Read current version from the same source as the deploy workflow
+          RESPONSE=$(curl -s "$URL/$ID")
+          MAJOR=$(echo $RESPONSE | jq -r '.major')
+          MINOR=$(echo $RESPONSE | jq -r '.minor')
+          PATCH=$(echo $RESPONSE | jq -r '.patch')
+
+          if [ "$MAJOR" == "null" ]; then
+            echo "version=unknown" >> $GITHUB_OUTPUT
+            echo "::warning::Failed to read version from API"
+            exit 0
+          fi
+
+          # Determine bump type from the PR labels
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          if echo "$LABELS" | grep -q '"version:major"'; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0
+          elif echo "$LABELS" | grep -q '"version:minor"'; then
+            MINOR=$((MINOR + 1)); PATCH=0
+          elif echo "$LABELS" | grep -q '"version:patch"'; then
+            PATCH=$((PATCH + 1))
+          fi
+
+          VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Calculated next version: $VERSION"
+
       - name: Create PR from staging to main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.get_version.outputs.version }}
         run: |
           # Check if an open PR from staging to main already exists
           EXISTING=$(gh pr list \
@@ -31,18 +64,49 @@ jobs:
             exit 0
           fi
 
-          gh pr create \
+          PR_URL=$(gh pr create \
             --repo "${{ github.repository }}" \
             --head staging \
             --base main \
-            --title "Release: promote staging to main" \
-            --body "$(cat <<'EOF'
-          ## Auto-promoted from staging
+            --title "Deploy v${VERSION} to Production" \
+            --body "$(cat <<EOF
+          ## Production Deployment — v${VERSION}
 
           This PR was automatically created after merging PR #${{ github.event.pull_request.number }} into staging.
 
           **Source PR:** ${{ github.event.pull_request.title }}
 
-          Please review and merge to trigger production deployment.
+          Merging this PR will build and deploy **v${VERSION}** to production.
           EOF
-          )"
+          )")
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+
+          echo "Created PR #$PR_NUMBER"
+
+          # Forward version and minimum version labels from source PR
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          FORWARD_LABELS=""
+
+          if echo "$LABELS" | grep -q '"version:major"'; then
+            FORWARD_LABELS="version:major"
+          elif echo "$LABELS" | grep -q '"version:minor"'; then
+            FORWARD_LABELS="version:minor"
+          elif echo "$LABELS" | grep -q '"version:patch"'; then
+            FORWARD_LABELS="version:patch"
+          fi
+
+          if echo "$LABELS" | grep -q '"minimum version"'; then
+            if [ -n "$FORWARD_LABELS" ]; then
+              FORWARD_LABELS="$FORWARD_LABELS,minimum version"
+            else
+              FORWARD_LABELS="minimum version"
+            fi
+          fi
+
+          if [ -n "$FORWARD_LABELS" ]; then
+            gh pr edit "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --add-label "$FORWARD_LABELS"
+            echo "Forwarded labels: $FORWARD_LABELS"
+          fi

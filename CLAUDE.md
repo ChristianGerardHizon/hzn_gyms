@@ -359,6 +359,11 @@ return ScaffoldMessenger(
   - **No label** — Skip deploy; the PR will merge without triggering a build (staging only)
   - For PRs targeting `main`, a version label is **required** — the deploy will fail without one.
   - Add the label using: `gh pr edit <number> --add-label "version:patch"`
+- **Optionally add the `deploy` label** on a staging PR to auto-open a staging→main production PR after merge (same as hizone_laundry)
+- **For PRs from `staging` to `main`, ask if this should be the new minimum required version:**
+  - If yes, add `minimum version`: `gh pr edit <number> --add-label "minimum version"`
+  - Deploy then also updates `minimumMajor` / `minimumMinor` / `minimumPatch` on the version manager
+- **Release tags (created by deploy):** staging → `staging-X.Y.Z` (prerelease); production → `vX.Y.Z`
 
 ### QA Notes
 
