@@ -24,7 +24,6 @@ void main() {
 
         expect(ids, contains(AppNavId.dashboard));
         expect(ids, contains(AppNavId.checkIn));
-        expect(ids, contains(AppNavId.checkInRecords));
         expect(ids, contains(AppNavId.cashier));
         expect(ids, contains(AppNavId.sales));
         expect(ids, contains(AppNavId.products));
@@ -101,13 +100,13 @@ void main() {
     test('allows profile and core ops paths', () {
       expect(canAccessPath('/profile', staff), isTrue);
       expect(canAccessPath('/check-in', staff), isTrue);
-      expect(canAccessPath('/check-in-records', staff), isTrue);
+      expect(canAccessPath('/check-in/records', staff), isTrue);
       expect(canAccessPath('/cashier', staff), isTrue);
       expect(canAccessPath('/sales', staff), isTrue);
       expect(canAccessPath('/members', staff), isTrue);
     });
 
-    test('requires checkIns.view for check-in records', () {
+    test('requires checkIns.view for check-in and nested records', () {
       final noCheckIns = CurrentUserPermissions(
         permissions: {
           Permissions.membersView,
@@ -116,16 +115,13 @@ void main() {
           Permissions.settingsView,
         },
       );
-      expect(canAccessPath('/check-in-records', noCheckIns), isFalse);
+      expect(canAccessPath('/check-in/records', noCheckIns), isFalse);
       expect(canAccessPath('/check-in', noCheckIns), isFalse);
     });
 
-    test('does not treat /check-in-records as under /check-in', () {
-      expect(matchesRoutePath('/check-in-records', '/check-in'), isFalse);
-      expect(
-        matchesRoutePath('/check-in-records', '/check-in-records'),
-        isTrue,
-      );
+    test('treats /check-in/records as under /check-in', () {
+      expect(matchesRoutePath('/check-in/records', '/check-in'), isTrue);
+      expect(matchesRoutePath('/check-in/records', '/check-in/records'), isTrue);
     });
 
     test('requires memberships.view for /memberships (not members.view)', () {
@@ -221,6 +217,12 @@ void main() {
       );
       final membersIndex = dests.indexWhere((d) => d.id == AppNavId.members);
       expect(selectedNavIndexForPath('/members/abc', dests), membersIndex);
+
+      final checkInIndex = dests.indexWhere((d) => d.id == AppNavId.checkIn);
+      expect(
+        selectedNavIndexForPath('/check-in/records', dests),
+        checkInIndex,
+      );
     });
   });
 }

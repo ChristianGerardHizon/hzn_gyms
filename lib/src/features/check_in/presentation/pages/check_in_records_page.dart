@@ -8,6 +8,7 @@ import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/check_in.dart';
 import '../controllers/check_in_records_controller.dart';
 import '../controllers/check_in_records_date_controller.dart';
+import '../widgets/check_in_record_detail_dialog.dart';
 
 /// Check-in history for a selected calendar date.
 class CheckInRecordsPage extends ConsumerWidget {
@@ -25,37 +26,41 @@ class CheckInRecordsPage extends ConsumerWidget {
     final isToday = selectedDate == toLocalDateOnly(DateTime.now());
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Check-In Records'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                ref.read(checkInRecordsControllerProvider.notifier).refresh(),
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
               horizontalPad,
-              isMobile ? 12 : 20,
+              isMobile ? 8 : 12,
               horizontalPad,
               isMobile ? 8 : 12,
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Check-In Records',
-                    style:
-                        (isMobile
-                                ? theme.textTheme.titleLarge
-                                : theme.textTheme.headlineMedium)
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                checkInsAsync.whenOrNull(
-                      data: (checkIns) => Text(
-                        '${checkIns.length} check-in${checkIns.length == 1 ? '' : 's'}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                  child: checkInsAsync.whenOrNull(
+                        data: (checkIns) => Text(
+                          '${checkIns.length} check-in'
+                          '${checkIns.length == 1 ? '' : 's'}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ) ??
-                    const SizedBox.shrink(),
+                      ) ??
+                      const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
@@ -230,6 +235,11 @@ class _CheckInRecordTile extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+      onTap: () => showCheckInRecordDetailDialog(context, checkIn: checkIn),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -480,6 +481,11 @@ class CheckInPage extends HookConsumerWidget {
           title: const Text('Check-In'),
           actions: [
             const RfidListenerStatusIcon(),
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: () => const CheckInRecordsRoute().push(context),
+              tooltip: 'Check-In Records',
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () =>

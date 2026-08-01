@@ -118,8 +118,6 @@ class MobileDrawer extends ConsumerWidget {
         return Icons.dashboard;
       case AppNavId.checkIn:
         return Icons.how_to_reg;
-      case AppNavId.checkInRecords:
-        return Icons.history;
       case AppNavId.cashier:
         return Icons.point_of_sale;
       case AppNavId.sales:
@@ -149,8 +147,6 @@ class MobileDrawer extends ConsumerWidget {
         return t.navigation.dashboard;
       case AppNavId.checkIn:
         return t.navigation.checkIn;
-      case AppNavId.checkInRecords:
-        return t.navigation.checkInRecords;
       case AppNavId.cashier:
         return t.navigation.sales;
       case AppNavId.sales:
