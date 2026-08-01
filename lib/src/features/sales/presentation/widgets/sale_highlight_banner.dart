@@ -117,6 +117,16 @@ class SaleHighlightBanner extends StatelessWidget {
       );
     }
 
+    // Priority 1b: Legacy refunded (no longer creatable in UI)
+    if (status == 'refunded') {
+      return _HighlightInfo(
+        color: Colors.orange,
+        icon: Icons.replay,
+        title: 'Refunded',
+        description: 'This sale was refunded (legacy status).',
+      );
+    }
+
     // Priority 2: Pending
     if (status == 'pending') {
       return _HighlightInfo(

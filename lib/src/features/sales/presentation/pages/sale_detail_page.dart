@@ -14,6 +14,7 @@ import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../pos/domain/sale_payment_status.dart';
 import '../../../pos/presentation/payments_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 import '../controllers/sale_items_provider.dart';
@@ -290,12 +291,16 @@ class _SaleDetailContent extends HookConsumerWidget {
     final isUpdating = useState(false);
     final statusLower = sale.status.toLowerCase();
     final isVoided = statusLower == 'voided';
+    final isRefunded = statusLower == 'refunded';
     final canVoidSale =
         ref.watch(currentUserPermissionsProvider).value?.canVoidSales ?? false;
 
-    // Show voided info card instead of actions
+    // Show closed-sale info instead of actions (voided + legacy refunded).
     if (isVoided) {
       return _buildVoidedInfoCard(context, ref, theme);
+    }
+    if (isRefunded) {
+      return _buildRefundedInfoCard(theme);
     }
 
     Future<void> voidSale() async {
@@ -415,6 +420,41 @@ class _SaleDetailContent extends HookConsumerWidget {
                 ],
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRefundedInfoCard(ThemeData theme) {
+    return Card(
+      color: Colors.orange.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const Icon(Icons.replay, color: Colors.orange),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Refunded',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.orange.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    'This sale was refunded (legacy status). Payment actions are disabled.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -559,9 +599,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                             .value
                             ?.canVoidSales ??
                         false) &&
-                    statusLower != 'voided';
+                    !isClosedSaleStatus(statusLower);
                 final canRecordPayment =
-                    statusLower != 'voided' &&
+                    !isClosedSaleStatus(statusLower) &&
                     balanceDue > 0;
 
                 return Column(

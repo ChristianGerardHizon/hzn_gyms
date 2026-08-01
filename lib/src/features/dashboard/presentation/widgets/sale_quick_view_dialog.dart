@@ -11,6 +11,7 @@ import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/domain/sale_item.dart';
+import '../../../pos/domain/sale_payment_status.dart';
 import '../../../pos/presentation/payments_controller.dart';
 import '../../../sales/presentation/controllers/sale_items_provider.dart';
 import '../../../sales/presentation/controllers/sale_provider.dart';
@@ -507,7 +508,7 @@ class _ActionButtons extends StatelessWidget {
       data: (payments) {
         if (sale == null) return false;
         final status = sale!.status.toLowerCase();
-        if (status == 'voided') return false;
+        if (isClosedSaleStatus(status)) return false;
 
         num totalPaid = 0;
         for (final payment in payments) {

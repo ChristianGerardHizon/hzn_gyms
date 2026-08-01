@@ -38,6 +38,8 @@ class SaleStatusChip extends StatelessWidget {
         return (Colors.green, Icons.check_circle);
       case 'voided':
         return (Colors.red, Icons.cancel);
+      case 'refunded':
+        return (Colors.orange, Icons.replay);
       default:
         return (Colors.grey, Icons.help);
     }
@@ -55,6 +57,8 @@ class SaleStatusChip extends StatelessWidget {
         return 'Completed';
       case 'voided':
         return 'Voided';
+      case 'refunded':
+        return 'Refunded';
       default:
         return status;
     }

@@ -111,6 +111,17 @@ void main() {
       expect(voidedUnpaid.status, isNull);
     });
 
+    test('skips status update for legacy refunded sales', () {
+      final result = resolveSalePaymentState(
+        totalAmount: 100,
+        totalPaid: 50,
+        currentStatus: 'refunded',
+      );
+      expect(result.isPaid, isFalse);
+      expect(result.status, isNull);
+      expect(isClosedSaleStatus('Refunded'), isTrue);
+    });
+
     test('voiding all payments from paid status returns pending', () {
       // After voiding the only payment, totalPaid is 0 — sale should
       // move back to pending (mirrors deletePayment → _updateSaleIsPaid).
