@@ -34,8 +34,30 @@ void main() {
       expect(filter, "(name ~ 'doe' || email ~ 'doe')");
     });
 
+    test('searchFields ANDs whitespace tokens across fields', () {
+      final filter = PBFilter()
+          .searchFields('chloe sy', ['name', 'mobileNumber'])
+          .build();
+      expect(
+        filter,
+        "(name ~ 'chloe' || mobileNumber ~ 'chloe') && "
+        "(name ~ 'sy' || mobileNumber ~ 'sy')",
+      );
+    });
+
+    test('searchFields collapses irregular query spacing', () {
+      final filter = PBFilter()
+          .searchFields('  chloe   sy  ', ['name'])
+          .build();
+      expect(filter, "(name ~ 'chloe') && (name ~ 'sy')");
+    });
+
     test('searchFields ignores empty query', () {
       expect(PBFilter().searchFields('', ['name']).build(), isNull);
+    });
+
+    test('searchFields ignores whitespace-only query', () {
+      expect(PBFilter().searchFields('   ', ['name']).build(), isNull);
     });
 
     test('or combines condition groups', () {

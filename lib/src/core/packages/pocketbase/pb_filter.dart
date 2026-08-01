@@ -1,4 +1,5 @@
 import '../../utils/date_utils.dart';
+import '../../utils/search_tokens.dart';
 
 /// Builder class for constructing PocketBase filter strings.
 ///
@@ -78,15 +79,24 @@ class PBFilter {
     return this;
   }
 
-  /// Search multiple fields with OR: (field1 ~ 'q' || field2 ~ 'q')
+  /// Search multiple fields, tokenized on whitespace.
   ///
-  /// Useful for implementing search across multiple columns.
+  /// Each whitespace-separated token must match at least one field:
+  /// `(f1 ~ 'a' || f2 ~ 'a') && (f1 ~ 'b' || f2 ~ 'b')`
+  ///
+  /// This tolerates irregular spacing in stored values (e.g. `"CHLOE  SY"`
+  /// still matches query `"chloe sy"`) and allows out-of-order name parts.
   PBFilter searchFields(String query, List<String> fields) {
     if (query.isEmpty || fields.isEmpty) return this;
 
-    final escaped = escape(query);
-    final orConditions = fields.map((f) => "$f ~ '$escaped'").join(' || ');
-    _conditions.add('($orConditions)');
+    final tokens = splitSearchTokens(query);
+    if (tokens.isEmpty) return this;
+
+    for (final token in tokens) {
+      final escaped = escape(token);
+      final orConditions = fields.map((f) => "$f ~ '$escaped'").join(' || ');
+      _conditions.add('($orConditions)');
+    }
     return this;
   }
 

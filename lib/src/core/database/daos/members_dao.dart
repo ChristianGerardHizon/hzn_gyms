@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../../utils/search_tokens.dart';
 import '../app_database.dart';
 import '../tables/members_table.dart';
 
@@ -46,6 +47,8 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
   }
 
   /// Searches cached members with pagination.
+  ///
+  /// Query is split on whitespace; every token must match at least one field.
   Future<List<MemberRow>> searchPaginated({
     required String query,
     List<String> fields = const ['name', 'mobileNumber'],
@@ -54,12 +57,12 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
     String sort = 'name',
     String? branchId,
   }) {
-    final pattern = '%$query%';
+    final tokens = splitSearchTokens(query);
     final offset = (page - 1) * perPage;
 
     final q = select(members)
       ..where((m) {
-        final search = _searchExpression(m, fields, pattern);
+        final search = _tokenizedSearchExpression(m, fields, tokens);
         if (branchId == null) return search;
         return search & m.branch.equals(branchId);
       })
@@ -80,17 +83,19 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
   }
 
   /// Counts members matching a search query.
+  ///
+  /// Uses the same whitespace-tokenized matching as [searchPaginated].
   Future<int> countSearch(
     String query, {
     List<String> fields = const ['name', 'mobileNumber'],
     String? branchId,
   }) async {
-    final pattern = '%$query%';
+    final tokens = splitSearchTokens(query);
     final countExpr = members.id.count();
     final queryBuilder = selectOnly(members)
       ..addColumns([countExpr])
       ..where(() {
-        final search = _searchExpression(members, fields, pattern);
+        final search = _tokenizedSearchExpression(members, fields, tokens);
         if (branchId == null) return search;
         return search & members.branch.equals(branchId);
       }());
@@ -158,6 +163,22 @@ class MembersDao extends DatabaseAccessor<AppDatabase> with _$MembersDaoMixin {
       expression: column,
       mode: descending ? OrderingMode.desc : OrderingMode.asc,
     );
+  }
+
+  /// AND of per-token OR-across-fields matches. Empty [tokens] matches all.
+  Expression<bool> _tokenizedSearchExpression(
+    $MembersTable m,
+    List<String> fields,
+    List<String> tokens,
+  ) {
+    if (tokens.isEmpty) return const Constant(true);
+
+    Expression<bool>? allTokens;
+    for (final token in tokens) {
+      final tokenMatch = _searchExpression(m, fields, '%$token%');
+      allTokens = allTokens == null ? tokenMatch : allTokens & tokenMatch;
+    }
+    return allTokens ?? const Constant(false);
   }
 
   Expression<bool> _searchExpression(
