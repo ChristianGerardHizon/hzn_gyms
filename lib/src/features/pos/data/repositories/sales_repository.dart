@@ -33,7 +33,7 @@ abstract class SalesRepository {
   /// Updates a sale record.
   FutureEither<Sale> updateSale(String id, Map<String, dynamic> data);
 
-  /// Updates the sale status (completed, refunded, voided).
+  /// Updates the sale status (completed, voided).
   FutureEither<Sale> updateSaleStatus(String id, String status);
 
   /// Fetches all sales for a specific customer.

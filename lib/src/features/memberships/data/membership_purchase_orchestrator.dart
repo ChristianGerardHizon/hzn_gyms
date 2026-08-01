@@ -246,8 +246,9 @@ class MembershipPurchaseOrchestrator {
             );
       final endDate = computeMembershipEndDate(
         startDate: startDate,
-        durationDays:
-            plan.durationDays + MembershipAddOn.totalBonusDays(addOns),
+        durationValue: plan.durationValue,
+        durationUnit: plan.durationUnit,
+        bonusDays: MembershipAddOn.totalBonusDays(addOns),
       );
       final addOnTotal = addOns.fold<num>(0, (sum, a) => sum + a.price);
       final totalPrice = plan.price + addOnTotal;
@@ -258,8 +259,9 @@ class MembershipPurchaseOrchestrator {
       MemberMembership? syntheticMembership;
 
       await _db.transaction(() async {
-        final memberCreateOutboxId =
-            await _outbox.findPendingMemberCreateId(memberId);
+        final memberCreateOutboxId = await _outbox.findPendingMemberCreateId(
+          memberId,
+        );
 
         String? saleId;
         String? saleOutboxId;

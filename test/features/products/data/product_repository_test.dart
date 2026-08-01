@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
 import 'package:ebe_gym/src/features/products/data/repositories/product_repository.dart';
 import 'package:ebe_gym/src/features/products/domain/product.dart';

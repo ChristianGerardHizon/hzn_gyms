@@ -9,7 +9,6 @@ enum SaleStatus {
   awaitingPayment,
   paid,
   completed,
-  refunded,
   voided;
 
   String get displayName => switch (this) {
@@ -17,7 +16,6 @@ enum SaleStatus {
         SaleStatus.awaitingPayment => 'Awaiting Payment',
         SaleStatus.paid => 'Paid',
         SaleStatus.completed => 'Completed',
-        SaleStatus.refunded => 'Refunded',
         SaleStatus.voided => 'Voided',
       };
 }

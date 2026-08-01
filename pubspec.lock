@@ -337,14 +337,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
-  community_material_icon:
-    dependency: transitive
-    description:
-      name: community_material_icon
-      sha256: bb389689f6278158d7b9d9b0c9433e603933283104fea226594590f61503fd08
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.9.55"
   convert:
     dependency: transitive
     description:
@@ -950,14 +942,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "12.2.0"
-  form_builder_file_picker:
-    dependency: "direct main"
-    description:
-      name: form_builder_file_picker
-      sha256: fbde579be6f3719eebf96b2cbeb242a27315d50609188fec87c2250ab0903b5e
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.1.0"
   form_builder_image_picker:
     dependency: "direct main"
     description:
@@ -1302,14 +1286,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
-  material_design_icons_flutter:
-    dependency: "direct main"
-    description:
-      name: material_design_icons_flutter
-      sha256: "6f986b7a51f3ad4c00e33c5c84e8de1bdd140489bbcdc8b66fc1283dad4dea5a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "7.0.7296"
   material_table_view:
     dependency: "direct main"
     description:

@@ -171,7 +171,8 @@ class MembershipRepositoryImpl implements MembershipRepository {
       final body = <String, dynamic>{
         'name': membership.name,
         'description': membership.description,
-        'durationDays': membership.durationDays,
+        'durationValue': membership.durationValue,
+        'durationUnit': membership.durationUnit.name,
         'price': membership.price,
         'branch': membership.branchId,
         'validBranches': membership.validBranches,
@@ -192,7 +193,8 @@ class MembershipRepositoryImpl implements MembershipRepository {
       final body = <String, dynamic>{
         'name': membership.name,
         'description': membership.description,
-        'durationDays': membership.durationDays,
+        'durationValue': membership.durationValue,
+        'durationUnit': membership.durationUnit.name,
         'price': membership.price,
         'branch': membership.branchId,
         'validBranches': membership.validBranches,

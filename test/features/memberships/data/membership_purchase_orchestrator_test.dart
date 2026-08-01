@@ -80,7 +80,7 @@ void main() {
     final result = await orchestrator.purchase(
       memberId: 'member-1',
       memberName: 'Jane',
-      plan: buildMembership(price: 1000, durationDays: 30),
+      plan: buildMembership(price: 1000),
       addOns: {addOn},
       branchId: 'branch-1',
       soldBy: 'user-1',
@@ -122,7 +122,7 @@ void main() {
     final result = await orchestrator.purchase(
       memberId: 'member-1',
       memberName: 'Jane',
-      plan: buildMembership(durationDays: 30),
+      plan: buildMembership(),
       addOns: {},
       branchId: 'branch-1',
       latestActiveEndDate: activeEnd,
@@ -152,7 +152,7 @@ void main() {
     final result = await orchestrator.purchase(
       memberId: 'member-1',
       memberName: 'Jane',
-      plan: buildMembership(durationDays: 30),
+      plan: buildMembership(),
       addOns: {},
       branchId: 'branch-1',
       latestActiveEndDate: activeEnd,
@@ -168,13 +168,14 @@ void main() {
       ),
       DateTime(2026, 8, 1),
     );
+    // Default plan is 1 calendar month: Aug 1 -> Sep 1, not Aug 1 + 30 days.
     expect(
       DateTime(
         purchase.memberMembership!.endDate.year,
         purchase.memberMembership!.endDate.month,
         purchase.memberMembership!.endDate.day,
       ),
-      DateTime(2026, 8, 31),
+      DateTime(2026, 9, 1),
     );
   });
 
@@ -191,7 +192,7 @@ void main() {
     final result = await orchestrator.purchase(
       memberId: 'member-1',
       memberName: 'Jane',
-      plan: buildMembership(durationDays: 30),
+      plan: buildMembership(),
       addOns: {promo, locker},
       branchId: 'branch-1',
       customStartDate: DateTime(2026, 1, 1),
@@ -205,8 +206,9 @@ void main() {
         purchase.memberMembership!.endDate.month,
         purchase.memberMembership!.endDate.day,
       ),
-      // 30 plan days + 90 promo days from Jan 1 → May 1
-      DateTime(2026, 5, 1),
+      // Default plan is 1 calendar month: Jan 1 -> Feb 1, then +90 flat
+      // promo days: Feb 1 -> Mar 1 (28) -> Apr 1 (31) -> May 1 (30) -> May 2 (1).
+      DateTime(2026, 5, 2),
     );
   });
 
@@ -234,7 +236,10 @@ void main() {
     expect(purchase.sale, isNotNull);
     expect(purchase.sale!.customerName, 'Walk In Guest');
     expect(purchase.sale!.customerId, isNull);
-    expect(purchase.sale!.descriptor, 'Walk-in · Walk In Guest · Day Pass +1 add-on');
+    expect(
+      purchase.sale!.descriptor,
+      'Walk-in · Walk In Guest · Day Pass +1 add-on',
+    );
     expect(purchase.totalPrice, 150);
 
     final entries = await db.select(db.outboxEntries).get();

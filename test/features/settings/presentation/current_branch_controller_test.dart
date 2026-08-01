@@ -185,6 +185,34 @@ void main() {
     expect(admin.read(currentBranchControllerProvider).value?.branch?.id, 'branch-b');
   });
 
+  test('switchBranch keeps previous selection while loading', () async {
+    final admin = createContainer(admin: true, persisted: 'branch-a');
+    addTearDown(admin.dispose);
+    await admin.read(currentBranchControllerProvider.future);
+    final notifier = admin.read(currentBranchControllerProvider.notifier);
+
+    final emitted = <AsyncValue<CurrentBranchSelection>>[];
+    final sub = admin.listen(
+      currentBranchControllerProvider,
+      (_, next) => emitted.add(next),
+    );
+    addTearDown(sub.close);
+
+    await notifier.switchBranch(allBranchesSentinel);
+
+    expect(emitted.any((state) => state.isLoading), isTrue);
+    // No intermediate state may drop the value, or branch filters would flash
+    // to "unfiltered" mid-switch.
+    expect(emitted.every((state) => state.hasValue), isTrue);
+    expect(
+      emitted
+          .where((state) => state.isLoading)
+          .every((state) => state.value?.branch?.id == 'branch-a'),
+      isTrue,
+    );
+    expect(emitted.last.value?.isAll, isTrue);
+  });
+
   test('non-admin cannot switch to All or disallowed branch', () async {
     final container = createContainer(
       admin: false,

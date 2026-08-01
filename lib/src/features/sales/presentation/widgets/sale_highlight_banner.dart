@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 /// A prominent banner that highlights the most important status of a sale.
 ///
 /// Priority logic:
-/// 1. Refunded - special case, always show prominently
-/// 2. Voided - cancelled sale
-/// 3. Pending + Unpaid - payment pending
-/// 4. Pending + Paid - payment received
-/// 5. Completed + Unpaid - unusual case, awaiting payment
-/// 6. Completed + Paid - fully completed
+/// 1. Voided - cancelled sale, always show prominently
+/// 2. Pending + Unpaid - payment pending
+/// 3. Pending + Paid - payment received
+/// 4. Completed + Unpaid - unusual case, awaiting payment
+/// 5. Completed + Paid - fully completed
 class SaleHighlightBanner extends StatelessWidget {
   const SaleHighlightBanner({
     super.key,
@@ -108,17 +107,7 @@ class SaleHighlightBanner extends StatelessWidget {
   _HighlightInfo _getHighlight() {
     final status = saleStatus.toLowerCase();
 
-    // Priority 1: Refunded sale
-    if (status == 'refunded') {
-      return _HighlightInfo(
-        color: Colors.orange,
-        icon: Icons.replay,
-        title: 'Refunded',
-        description: 'This sale has been refunded to the customer.',
-      );
-    }
-
-    // Priority 2: Voided sale
+    // Priority 1: Voided sale
     if (status == 'voided') {
       return _HighlightInfo(
         color: Colors.red,
@@ -128,7 +117,17 @@ class SaleHighlightBanner extends StatelessWidget {
       );
     }
 
-    // Priority 3: Pending
+    // Priority 1b: Legacy refunded (no longer creatable in UI)
+    if (status == 'refunded') {
+      return _HighlightInfo(
+        color: Colors.orange,
+        icon: Icons.replay,
+        title: 'Refunded',
+        description: 'This sale was refunded (legacy status).',
+      );
+    }
+
+    // Priority 2: Pending
     if (status == 'pending') {
       return _HighlightInfo(
         color: Colors.grey,
@@ -138,7 +137,7 @@ class SaleHighlightBanner extends StatelessWidget {
       );
     }
 
-    // Priority 4: Awaiting Payment
+    // Priority 3: Awaiting Payment
     if (status == 'awaitingpayment') {
       return _HighlightInfo(
         color: Colors.amber.shade700,
@@ -151,7 +150,7 @@ class SaleHighlightBanner extends StatelessWidget {
       );
     }
 
-    // Priority 5: Paid
+    // Priority 4: Paid
     if (status == 'paid' || (status == 'completed' && isPaid)) {
       return _HighlightInfo(
         color: Colors.green,

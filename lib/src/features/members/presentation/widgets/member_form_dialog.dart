@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/utils/search_tokens.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
@@ -20,6 +21,7 @@ import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/step_indicator.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../memberships/data/membership_sale_helper.dart';
 import '../../../memberships/data/repositories/member_membership_add_on_repository.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
@@ -301,12 +303,11 @@ class _MemberCreateWizard extends HookConsumerWidget {
         final plan = selectedMembership.value!;
         final auth = ref.read(currentAuthProvider);
         final startDate = DateTime.now();
-        final endDate = startDate.add(
-          Duration(
-            days:
-                plan.durationDays +
-                MembershipAddOn.totalBonusDays(selectedAddOns.value),
-          ),
+        final endDate = computeMembershipEndDate(
+          startDate: startDate,
+          durationValue: plan.durationValue,
+          durationUnit: plan.durationUnit,
+          bonusDays: MembershipAddOn.totalBonusDays(selectedAddOns.value),
         );
 
         // 2a. Create a Sale record for this membership purchase
@@ -374,6 +375,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
 
       // 3. Refresh and close
       ref.read(paginatedMembersControllerProvider.notifier).refresh();
+      refreshDashboardAfterMemberChange(ref);
 
       isSaving.value = false;
 

@@ -52,7 +52,7 @@ final class TodaySalesProvider
   }
 }
 
-String _$todaySalesHash() => r'30a209153cf6d47db122e7474130adaf01d373af';
+String _$todaySalesHash() => r'463641acfebbfe000e0aaa7a232ad38f4f0c2293';
 
 /// Today's sales summary (count and total amount).
 /// Uses vw_todays_sales view for optimized query.

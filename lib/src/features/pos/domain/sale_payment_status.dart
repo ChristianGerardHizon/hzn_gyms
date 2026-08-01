@@ -13,10 +13,19 @@ num calculateNetPaidAmount(Iterable<({String type, num amount})> payments) {
   return total;
 }
 
+/// True when the sale is frozen for payments/reporting.
+///
+/// Includes legacy `refunded` rows that can still exist in PocketBase even
+/// though the app no longer offers marking sales as refunded.
+bool isClosedSaleStatus(String status) {
+  final normalized = status.toLowerCase();
+  return normalized == 'voided' || normalized == 'refunded';
+}
+
 /// Resolves [isPaid] and the next sale [status] from payment totals.
 ///
-/// When [currentStatus] is `refunded` or `voided`, [status] is `null` so
-/// callers leave the existing status unchanged.
+/// When [currentStatus] is closed (`voided` / legacy `refunded`), [status] is
+/// `null` so callers leave the existing status unchanged.
 ({bool isPaid, String? status}) resolveSalePaymentState({
   required num totalAmount,
   required num totalPaid,
@@ -24,7 +33,7 @@ num calculateNetPaidAmount(Iterable<({String type, num amount})> payments) {
 }) {
   final isPaid = totalPaid >= totalAmount;
 
-  if (currentStatus == 'refunded' || currentStatus == 'voided') {
+  if (isClosedSaleStatus(currentStatus)) {
     return (isPaid: isPaid, status: null);
   }
 

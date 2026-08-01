@@ -6,9 +6,11 @@ class MembershipPlans extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   TextColumn get description => text().nullable()();
-  IntColumn get durationDays => integer()();
+  IntColumn get durationValue => integer()();
+  TextColumn get durationUnit => text().withDefault(const Constant('days'))();
   RealColumn get price => real()();
   TextColumn get branchId => text()();
+
   /// JSON-encoded list of branch IDs. Empty list (`[]`) means all branches.
   TextColumn get validBranchesJson =>
       text().withDefault(const Constant('[]'))();

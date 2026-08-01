@@ -187,7 +187,8 @@ Membership plan templates.
 | `id` | String | Yes | PocketBase record ID |
 | `name` | String | Yes | Plan name (e.g., "Monthly", "Annual") |
 | `description` | String | No | Plan description |
-| `durationDays` | int | Yes | Duration in days (30, 90, 365, etc.) |
+| `durationValue` | int | Yes | Duration quantity, interpreted in `durationUnit` (e.g. `1` + `months`) |
+| `durationUnit` | select | Yes | Duration unit: `days`, `weeks`, `months`, `years`. Months/years use calendar arithmetic (e.g. Aug 1 + 1 month = Sep 1), not a fixed day count |
 | `price` | num | Yes | Price in PHP |
 | `branch` | String (FK) | No | Catalog/home branch FK to Branch |
 | `validBranches` | List\<String\> (FK) | No | Multi-relation to Branch — branches where this plan grants check-in access. Empty = all branches |

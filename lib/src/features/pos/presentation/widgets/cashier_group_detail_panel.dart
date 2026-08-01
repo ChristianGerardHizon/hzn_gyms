@@ -117,9 +117,8 @@ class _GroupDetailContent extends ConsumerWidget {
             )
           : ReorderableListView.builder(
               itemCount: group.items.length,
-              onReorder: (oldIndex, newIndex) {
+              onReorderItem: (oldIndex, newIndex) {
                 final items = List<PosGroupItem>.from(group.items);
-                if (newIndex > oldIndex) newIndex--;
                 final item = items.removeAt(oldIndex);
                 items.insert(newIndex, item);
                 controller.reorderItems(group.id, items);

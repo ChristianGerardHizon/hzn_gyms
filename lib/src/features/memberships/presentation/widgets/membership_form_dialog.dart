@@ -5,6 +5,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -12,6 +13,20 @@ import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/membership.dart';
 import '../controllers/memberships_controller.dart';
+
+/// Dropdown label for a [MembershipDurationUnit].
+String _durationUnitLabel(MembershipDurationUnit unit) {
+  switch (unit) {
+    case MembershipDurationUnit.days:
+      return 'Day(s)';
+    case MembershipDurationUnit.weeks:
+      return 'Week(s)';
+    case MembershipDurationUnit.months:
+      return 'Month(s)';
+    case MembershipDurationUnit.years:
+      return 'Year(s)';
+  }
+}
 
 /// Whether [selectedBranchIds] covers every id in [allBranchIds].
 ///
@@ -68,7 +83,8 @@ class MembershipFormDialog extends HookConsumerWidget {
         ? <String, dynamic>{
             'name': membership!.name,
             'description': membership!.description,
-            'durationDays': membership!.durationDays.toString(),
+            'durationValue': membership!.durationValue.toString(),
+            'durationUnit': membership!.durationUnit,
             'price': membership!.price.toString(),
             'isActive': membership!.isActive,
             'isFavorite': membership!.isFavorite,
@@ -107,8 +123,11 @@ class MembershipFormDialog extends HookConsumerWidget {
         id: membership?.id ?? '',
         name: values['name'] as String,
         description: values['description'] as String?,
-        durationDays:
-            int.tryParse(values['durationDays']?.toString() ?? '') ?? 0,
+        durationValue:
+            int.tryParse(values['durationValue']?.toString() ?? '') ?? 0,
+        durationUnit:
+            values['durationUnit'] as MembershipDurationUnit? ??
+            MembershipDurationUnit.days,
         price: num.tryParse(values['price']?.toString() ?? '') ?? 0,
         branchId: branchId,
         validBranches: all ? const [] : selected,
@@ -175,19 +194,53 @@ class MembershipFormDialog extends HookConsumerWidget {
             textCapitalization: TextCapitalization.sentences,
           ),
           const SizedBox(height: 16),
-          FormBuilderTextField(
-            name: 'durationDays',
-            initialValue: membership?.durationDays.toString() ?? '',
-            decoration: const InputDecoration(
-              labelText: 'Duration (days) *',
-              helperText: 'e.g. 30 for monthly, 365 for annual',
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: FormBuilderTextField(
+                  name: 'durationValue',
+                  initialValue: membership?.durationValue.toString() ?? '1',
+                  decoration: const InputDecoration(
+                    labelText: 'Duration *',
+                    helperText: 'e.g. 1 for monthly, 3 for a quarterly plan',
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: FormBuilderValidators.compose([
+                    FormBuilderValidators.required(),
+                    FormBuilderValidators.integer(),
+                    FormBuilderValidators.min(1),
+                  ]),
+                  textInputAction: TextInputAction.next,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FormBuilderDropdown<MembershipDurationUnit>(
+                  name: 'durationUnit',
+                  initialValue:
+                      membership?.durationUnit ?? MembershipDurationUnit.days,
+                  decoration: const InputDecoration(labelText: 'Unit *'),
+                  items: MembershipDurationUnit.values
+                      .map(
+                        (unit) => DropdownMenuItem(
+                          value: unit,
+                          child: Text(_durationUnitLabel(unit)),
+                        ),
+                      )
+                      .toList(),
+                  validator: FormBuilderValidators.required(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Month/year durations land on the same calendar day next period '
+            '(e.g. Aug 1 + 1 month ends Sep 1), not a fixed day count.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            keyboardType: TextInputType.number,
-            validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(),
-              FormBuilderValidators.numeric(),
-            ]),
-            textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
           FormBuilderTextField(

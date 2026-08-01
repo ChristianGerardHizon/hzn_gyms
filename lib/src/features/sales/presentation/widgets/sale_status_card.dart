@@ -81,19 +81,19 @@ class SaleStatusCard extends StatelessWidget {
           'Completed',
           'This sale has been successfully completed',
         );
-      case 'refunded':
-        return (
-          Colors.orange,
-          Icons.refresh,
-          'Refunded',
-          'This sale has been refunded to the customer',
-        );
       case 'voided':
         return (
           Colors.red,
           Icons.cancel,
           'Voided',
           'This sale has been voided and cancelled',
+        );
+      case 'refunded':
+        return (
+          Colors.orange,
+          Icons.replay,
+          'Refunded',
+          'This sale was refunded (legacy status)',
         );
       default:
         return (

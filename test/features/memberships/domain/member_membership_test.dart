@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ebe_gym/src/core/utils/date_utils.dart';
 import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
 import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
 
@@ -26,9 +27,7 @@ void main() {
     });
 
     test('isExpired uses inclusive end date', () {
-      final endsToday = buildMemberMembership(
-        endDate: DateTime.now(),
-      );
+      final endsToday = buildMemberMembership(endDate: DateTime.now());
       expect(endsToday.isExpired, isFalse);
 
       final endedYesterday = buildMemberMembership(
@@ -64,7 +63,8 @@ void main() {
       const open = Membership(
         id: '1',
         name: 'Open',
-        durationDays: 30,
+        durationValue: 1,
+        durationUnit: MembershipDurationUnit.months,
         price: 1,
         branchId: 'b',
       );
@@ -75,7 +75,8 @@ void main() {
       const limited = Membership(
         id: '2',
         name: 'Limited',
-        durationDays: 7,
+        durationValue: 1,
+        durationUnit: MembershipDurationUnit.weeks,
         price: 1,
         branchId: 'b',
         validBranches: ['a'],
@@ -88,7 +89,8 @@ void main() {
     test('memberNotRequired marks day-pass plans', () {
       final walkIn = buildMembership(
         name: 'Day Pass',
-        durationDays: 1,
+        durationValue: 1,
+        durationUnit: MembershipDurationUnit.days,
         memberNotRequired: true,
       );
       expect(walkIn.memberNotRequired, isTrue);
