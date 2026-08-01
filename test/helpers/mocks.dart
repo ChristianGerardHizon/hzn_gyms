@@ -3,6 +3,7 @@ import 'package:ebe_gym/src/core/database/app_database.dart';
 import 'package:ebe_gym/src/core/sync/outbox_service.dart';
 import 'package:ebe_gym/src/features/check_in/data/repositories/check_in_repository.dart';
 import 'package:ebe_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
+import 'package:ebe_gym/src/features/members/data/local/member_local_data_source.dart';
 import 'package:ebe_gym/src/features/members/data/repositories/member_repository.dart';
 import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
 import 'package:ebe_gym/src/features/pos/data/repositories/cart_repository.dart';
@@ -17,6 +18,8 @@ class MockCheckInRepository extends Mock implements CheckInRepository {}
 class MockMemberCardRepository extends Mock implements MemberCardRepository {}
 
 class MockMemberRepository extends Mock implements MemberRepository {}
+
+class MockMemberLocalDataSource extends Mock implements MemberLocalDataSource {}
 
 class MockMemberMembershipRepository extends Mock
     implements MemberMembershipRepository {}

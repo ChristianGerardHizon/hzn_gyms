@@ -52,6 +52,11 @@ class EmptySystemState extends StatelessWidget {
           'Debug',
           'Developer tools for testing RFID and other flows',
         ),
+      SystemMode.activityLog => (
+          Icons.history_outlined,
+          'Select an entry',
+          'Choose an activity log entry to view field changes',
+        ),
     };
 
     return Scaffold(

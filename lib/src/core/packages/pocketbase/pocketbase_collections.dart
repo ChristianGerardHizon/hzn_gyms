@@ -48,6 +48,7 @@ abstract class PocketBaseCollections {
   static const String posGroupItems = 'posGroupItems';
 
   // View Collections (SQL Views for optimized queries)
+  static const String activityLogs = 'activityLogs';
   static const String vwInventoryStatus = 'vw_inventory_status';
   static const String vwSalesDailySummary = 'vw_sales_daily_summary';
   static const String vwTopSellingProducts = 'vw_top_selling_products';

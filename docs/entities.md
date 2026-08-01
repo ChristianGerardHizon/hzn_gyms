@@ -28,6 +28,7 @@ This document contains all entities (domain models) in the project with their fi
 | Sales | SaleItem | `saleItems` | Product items in transactions |
 | Sales | Payment | `payments` | Payment records |
 | Sales | Cart / CartItem | `carts` / `cartItems` | Shopping cart (temporary) |
+| System | ActivityLog | `activityLogs` | System-wide change audit trail |
 
 ---
 
@@ -465,6 +466,31 @@ Transaction records.
 Cashier layout groups per branch.
 
 **Collection:** `posGroups`, `posGroupItems`
+
+---
+
+## System Domain
+
+### ActivityLog
+
+System-wide audit trail entries written by PocketBase hooks on record create/update/delete.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | String | Yes | PocketBase record ID |
+| `action` | select | Yes | `create`, `update`, or `delete` |
+| `collection` | String | Yes | Source collection name |
+| `recordId` | String | Yes | Affected record ID |
+| `summary` | String | Yes | Human-readable one-line summary |
+| `changes` | JSON | No | Field-level `{ field: { old, new } }` diffs |
+| `actor` | String (FK) | No | FK to User who performed the action |
+| `branch` | String (FK) | No | FK to Branch when derivable from the record |
+| `metadata` | JSON | No | Optional request metadata (e.g. IP) |
+| `created` | DateTime | No | Creation timestamp |
+
+**Collection:** `activityLogs`
+
+**Note:** Records are created server-side only (API create/update/delete rules are empty). View access requires `activityLog.view` or `system.admin` permission.
 
 ---
 

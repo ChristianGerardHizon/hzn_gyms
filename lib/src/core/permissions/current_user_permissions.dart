@@ -36,6 +36,8 @@ class CurrentUserPermissions {
   bool get canVoidSales => has(Permissions.salesVoid);
   bool get canEditMemberships => has(Permissions.membershipsEdit);
   bool get canManageSystem => has(Permissions.systemAdmin);
+  bool get canViewActivityLog =>
+      has(Permissions.activityLogView) || has(Permissions.systemAdmin);
 }
 
 /// Loads the current user's role permissions from PocketBase.

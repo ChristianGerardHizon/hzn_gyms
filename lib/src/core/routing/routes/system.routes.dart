@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../features/activity_log/presentation/pages/activity_log_detail_page.dart';
+import '../../../features/activity_log/presentation/pages/activity_logs_page.dart';
 import '../../../features/products/domain/product_category.dart';
 import '../../../features/settings/presentation/controllers/product_categories_controller.dart';
 import '../../../features/settings/presentation/pages/system_shell.dart';
@@ -68,6 +70,13 @@ part 'system.routes.g.dart';
         TypedGoRoute<ImportRoute>(path: 'import'),
         // Debug tools (RFID simulation, etc.)
         TypedGoRoute<SystemDebugRoute>(path: 'debug'),
+        // Activity log (audit trail)
+        TypedGoRoute<ActivityLogRoute>(
+          path: 'activity-log',
+          routes: [
+            TypedGoRoute<ActivityLogDetailRoute>(path: ':id'),
+          ],
+        ),
       ],
     ),
   ],
@@ -244,6 +253,60 @@ class SystemDebugRoute extends GoRouteData with $SystemDebugRoute {
   }
 }
 
+/// Activity log list route.
+class ActivityLogRoute extends GoRouteData with $ActivityLogRoute {
+  const ActivityLogRoute();
+
+  @override
+  String? redirect(BuildContext context, GoRouterState state) {
+    final perms = ProviderScope.containerOf(context)
+        .read(currentUserPermissionsProvider)
+        .value;
+    if (perms != null && !perms.canViewActivityLog) {
+      return const AppearanceRoute().location;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    if (Breakpoints.isTabletOrLarger(context)) {
+      return const SizedBox.shrink();
+    }
+    return const _MobileActivityLogPage();
+  }
+}
+
+/// Activity log detail route.
+class ActivityLogDetailRoute extends GoRouteData with $ActivityLogDetailRoute {
+  const ActivityLogDetailRoute({required this.id});
+
+  final String id;
+
+  @override
+  String? redirect(BuildContext context, GoRouterState state) {
+    final perms = ProviderScope.containerOf(context)
+        .read(currentUserPermissionsProvider)
+        .value;
+    if (perms != null && !perms.canViewActivityLog) {
+      return const AppearanceRoute().location;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    final content = ActivityLogDetailPage(logId: id);
+    if (Breakpoints.isTabletOrLarger(context)) {
+      return content;
+    }
+    return Scaffold(
+      appBar: AppBar(title: const Text('Activity Details')),
+      body: content,
+    );
+  }
+}
+
 /// Cashier groups management route.
 class CashierGroupsRoute extends GoRouteData with $CashierGroupsRoute {
   const CashierGroupsRoute();
@@ -287,6 +350,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
         ref.watch(currentUserPermissionsProvider).value ??
             CurrentUserPermissions.empty;
     final isAdmin = perms.canManageSystem;
+    final canViewActivityLog = perms.canViewActivityLog;
 
     return Scaffold(
       appBar: AppBar(
@@ -354,6 +418,16 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               description: 'Simulate RFID scans and other test tools',
               color: Colors.brown,
               onTap: () => const SystemDebugRoute().go(context),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (canViewActivityLog) ...[
+            _SystemOptionCard(
+              icon: Icons.history,
+              title: 'Activity Log',
+              description: 'View system-wide change history',
+              color: Colors.blueGrey,
+              onTap: () => const ActivityLogRoute().go(context),
             ),
           ],
         ],
@@ -704,6 +778,19 @@ class _MobileSystemDebugPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SystemDebugPanel();
+  }
+}
+
+/// Mobile activity log page.
+class _MobileActivityLogPage extends StatelessWidget {
+  const _MobileActivityLogPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Activity Log')),
+      body: const ActivityLogsPage(),
+    );
   }
 }
 

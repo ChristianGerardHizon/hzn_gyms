@@ -64,6 +64,16 @@ RouteBase get $systemShellRoute => ShellRouteData.$route(
           path: 'debug',
           factory: $SystemDebugRoute._fromState,
         ),
+        GoRouteData.$route(
+          path: 'activity-log',
+          factory: $ActivityLogRoute._fromState,
+          routes: [
+            GoRouteData.$route(
+              path: ':id',
+              factory: $ActivityLogDetailRoute._fromState,
+            ),
+          ],
+        ),
       ],
     ),
   ],
@@ -325,6 +335,52 @@ mixin $SystemDebugRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/system/debug');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ActivityLogRoute on GoRouteData {
+  static ActivityLogRoute _fromState(GoRouterState state) =>
+      const ActivityLogRoute();
+
+  @override
+  String get location => GoRouteData.$location('/system/activity-log');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ActivityLogDetailRoute on GoRouteData {
+  static ActivityLogDetailRoute _fromState(GoRouterState state) =>
+      ActivityLogDetailRoute(id: state.pathParameters['id']!);
+
+  ActivityLogDetailRoute get _self => this as ActivityLogDetailRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/system/activity-log/${Uri.encodeComponent(_self.id)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
