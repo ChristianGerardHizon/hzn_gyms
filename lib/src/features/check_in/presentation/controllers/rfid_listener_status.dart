@@ -2,16 +2,19 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'rfid_listener_status.g.dart';
 
-/// Whether Check-In RFID keyboard-wedge scanning is enabled.
+/// Whether Check-In RFID keyboard-wedge scanning is active.
 enum RfidListenerStatus {
-  /// Scanning is off (default). Tap the NFC icon to enable.
+  /// Check-In page not mounted (or listener disposed).
   off,
 
   /// Hardware keyboard handler is registered and accepting scans.
   listening,
+
+  /// Check-In is open but the app/window lacks OS focus — scans paused.
+  paused,
 }
 
-/// Exposes RFID listener on/off state for the Check-In app bar toggle.
+/// Exposes RFID listener state for the Check-In app bar indicator.
 @Riverpod(keepAlive: true)
 class RfidListenerStatusController extends _$RfidListenerStatusController {
   @override
@@ -19,11 +22,7 @@ class RfidListenerStatusController extends _$RfidListenerStatusController {
 
   void enable() => state = RfidListenerStatus.listening;
 
-  void disable() => state = RfidListenerStatus.off;
+  void pause() => state = RfidListenerStatus.paused;
 
-  void toggle() {
-    state = state == RfidListenerStatus.listening
-        ? RfidListenerStatus.off
-        : RfidListenerStatus.listening;
-  }
+  void disable() => state = RfidListenerStatus.off;
 }

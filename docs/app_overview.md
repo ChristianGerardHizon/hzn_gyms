@@ -36,32 +36,38 @@ Home screen with gym metrics and quick actions.
 - Expiring memberships section (memberships expiring within 7 days)
 - Inventory alerts (low stock, expiring products)
 - Pull-to-refresh invalidates all dashboard data
+- RFID keyboard-wedge listener (same as Check-In); NFC icon is green when active, red when inactive
 
 #### Check-In (`/check-in`)
 Member check-in system for tracking gym visits.
 
 - **Features**:
   - Card scan input (RFID/barcode) for quick check-in via member cards
-  - RFID keyboard-wedge on Check-In only; NFC app-bar icon toggles scanning (off by default)
+  - RFID keyboard-wedge on Check-In and Dashboard; auto-listens while the window is focused (NFC icon green = active, red = inactive)
+  - Fullscreen "Not in focus" overlay when the Check-In window/app loses OS focus (RFID paused)
+  - Today's check-ins update live across devices via PocketBase realtime subscription
   - Member search by name or mobile number
   - Active membership status display
   - Manual check-in with membership validation
   - Warning for members without active membership
   - Recent check-ins list for today
   - Success dialog with membership status
+  - Audio chimes for check-in outcomes: success, near-expiry (≤7 days), and failure
   - Backward compatibility with legacy `rfidCardId` field on members
+  - **Records** app-bar button opens nested Check-In Records (`/check-in/records`)
 - **Key Models**: `CheckIn`, `CheckInMethod`
 - **Controllers**:
-  - `checkInController` - Today's check-ins list + manual/card check-in actions
+  - `checkInController` - Today's check-ins list + realtime subscribe + manual/card check-in actions
   - `memberCheckIns` - Check-in history for a specific member
 
-#### Check-In Records (`/check-in-records`)
-Historical check-in log filtered by calendar date.
+#### Check-In Records (`/check-in/records`)
+Historical check-in log filtered by calendar date. Opened from Check-In (not a top-level nav item).
 
 - **Features**:
   - Date picker with previous/next day and Today shortcuts
   - Lists members who checked in on the selected date (branch-scoped)
   - Shows check-in time and method (Manual / RFID)
+  - Tap a record to open details (date, time, method, membership) with link to member profile
 - **Controllers**:
   - `checkInRecordsDateController` - Selected calendar day
   - `checkInRecordsController` - Check-ins for the selected date + branch
@@ -186,6 +192,7 @@ Self-service account page for staff (and any user without `users.view`). Shows o
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
 - **Appearance** (`/system/appearance`) - Theme settings (available to Staff via `settings.view`)
 - **Debug** (`/system/debug`) - Admin tools; simulate RFID check-in dialogs
+- **Activity Log** (`/system/activity-log`) - Admin-only system-wide change history with summary list and field-level diffs
 
 ---
 
@@ -272,6 +279,7 @@ Located in `/lib/src/core/`
 | `productStocks` | Stock lots with expiration |
 | `productLots` | Batch/lot numbers (FEFO tracking) |
 | `productAdjustments` | Stock change audit trail |
+| `activityLogs` | System-wide activity / change audit trail |
 
 #### POS Domain (2 collections)
 | Collection | Description |
@@ -384,7 +392,7 @@ App Root (Shell)
 └── Main Shell (with navigation)
     ├── / (Dashboard)
     ├── /check-in (Check-In)
-    ├── /check-in-records (Check-In Records)
+    │   └── /check-in/records (Check-In Records)
     ├── /cashier (POS)
     ├── /sales (Sales History)
     │   └── /sales/:id (Sale Detail)
@@ -427,17 +435,16 @@ App Root (Shell)
 | Index | Route | Label | Icon |
 |-------|-------|-------|------|
 | 0 | `/` | Dashboard | `dashboard` |
-| 1 | `/check-in` | Check-In | `how_to_reg` |
-| 2 | `/check-in-records` | Check-In Records | `history` |
-| 3 | `/cashier` | Cashier | `point_of_sale` |
-| 4 | `/sales` | Sales | `receipt_long` |
-| 5 | `/products` | Products | `inventory_2` |
-| 6 | `/members` | Members | `people` |
-| 7 | `/memberships` | Memberships | `card_membership` |
-| 8 | `/reports` | Reports | `analytics` |
-| 9 | `/organization` or `/profile` | Organization (admin) / Profile (staff) | `business` / `person` |
-| 10 | `/outbox` | Outbox | `cloud_sync` |
-| 11 | `/system` | System | `settings` |
+| 1 | `/check-in` | Check-In (Records via app-bar → `/check-in/records`) | `how_to_reg` |
+| 2 | `/cashier` | Cashier | `point_of_sale` |
+| 3 | `/sales` | Sales | `receipt_long` |
+| 4 | `/products` | Products | `inventory_2` |
+| 5 | `/members` | Members | `people` |
+| 6 | `/memberships` | Memberships | `card_membership` |
+| 7 | `/reports` | Reports | `analytics` |
+| 8 | `/organization` or `/profile` | Organization (admin) / Profile (staff) | `business` / `person` |
+| 9 | `/outbox` | Outbox | `cloud_sync` |
+| 10 | `/system` | System | `settings` |
 
 Destinations are filtered by role permissions. Staff typically see Dashboard through Memberships, Profile, and System (Appearance only).
 
@@ -546,6 +553,12 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 1 | Member name format | Member names saved as Title Case with collapsed whitespace (`Chloe Sy`); dashboard/members search tokenizes on spaces; cleanup script backfills via Admin API |
+| Aug 1 | Add Card scan-first | Member Detail Add Card waits for RFID/keyboard-wedge scan, then Label/Notes; manual Card ID entry as fallback |
+| Aug 1 | Check-In Records nested | Records moved under Check-In as app-bar button (`/check-in/records`); tap a record for details + member profile link; removed top-level nav item |
+| Aug 1 | Today's Sales KPI speed | `vw_todays_sales` uses indexable local-day UTC range (not `DATE()`); sales indexes; All-branches sums all view rows; recent transactions list capped at 50 |
+| Aug 1 | Activity log | Admin-only system-wide audit trail via PocketBase hooks; summary list + field diff detail under System → Activity Log |
+| Aug 1 | Day/Week report speed | Day/Week sales skip all-history SQL views; period-scoped sales+payments+saleItems aggregation; Day attendance uses a single checkIns range query |
 | Jul 15 | Check-In Records | New `/check-in-records` nav item lists who checked in on a selected date |
 | Jul 15 | Sales report load speed | Split view-based KPIs from lean unpaid/staff/Day list fetch; charts paint first without expand on every sale |
 | Jul 14 | Sales report print/PDF | Print Report menu (print or save PDF); sales PDF lists transactions and states it is not an invoice or BIR record |
@@ -574,6 +587,11 @@ lib/src/
 | Jul 12 | Offline outbox | Member create/update (with photo) and membership renew queue to Drift outbox; sync worker drains when online; pending count in app shell |
 | Jul 11 | Domain migration | Staging/prod moved to `*.ebegym.hznsystems.com`; GitHub deploy secrets + fallback API URLs updated |
 | Jul 11 | Member branch | Added `branch` FK on members; backfilled all to Talisay; members list + dashboard filter by selected branch |
+| Aug 1 | Membership edit/cancel | Member membership detail can edit start/end dates or soft-cancel; gated by `memberships.edit` (admins bypass) |
+| Aug 1 | Check-In audio chimes | Success, near-expiry (≤7 days), and failure sounds play on RFID/manual/card check-in outcomes |
+| Aug 1 | Dashboard RFID | Dashboard hosts the same RFID listener as Check-In; NFC icon green when active, red when inactive |
+| Aug 1 | Check-In realtime | Today's check-ins subscribe via PocketBase realtime so other devices update the list live |
+| Aug 1 | Check-In focus overlay | RFID auto-listens on Check-In while focused; fullscreen "Not in focus" pauses scanning when the window blurs |
 | Jul 15 | RFID Check-In only | Keyboard-wedge RFID listener scoped to Check-In page (not app-wide) to avoid typing lag |
 | Jul 15 | System RFID debug | System → Debug simulates RFID check-in dialogs |
 | Jul 15 | RFID all platforms | HID keyboard-wedge listener works on Android, desktop, and web while Check-In is open |

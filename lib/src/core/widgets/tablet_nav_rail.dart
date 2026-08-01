@@ -104,8 +104,6 @@ class TabletNavRail extends ConsumerWidget {
         return selected ? Icons.dashboard : Icons.dashboard_outlined;
       case AppNavId.checkIn:
         return selected ? Icons.how_to_reg : Icons.how_to_reg_outlined;
-      case AppNavId.checkInRecords:
-        return selected ? Icons.history : Icons.history_outlined;
       case AppNavId.cashier:
         return selected ? Icons.point_of_sale : Icons.point_of_sale_outlined;
       case AppNavId.sales:
@@ -137,8 +135,6 @@ class TabletNavRail extends ConsumerWidget {
         return t.navigation.dashboard;
       case AppNavId.checkIn:
         return t.navigation.checkIn;
-      case AppNavId.checkInRecords:
-        return t.navigation.checkInRecords;
       case AppNavId.cashier:
         return t.navigation.sales;
       case AppNavId.sales:

@@ -6,8 +6,13 @@ import '../../../features/check_in/presentation/pages/check_in_records_page.dart
 
 part 'check_in.routes.g.dart';
 
-/// Check-in page route.
-@TypedGoRoute<CheckInRoute>(path: CheckInRoute.path)
+/// Check-in page route, with records nested underneath.
+@TypedGoRoute<CheckInRoute>(
+  path: CheckInRoute.path,
+  routes: [
+    TypedGoRoute<CheckInRecordsRoute>(path: 'records'),
+  ],
+)
 class CheckInRoute extends GoRouteData with $CheckInRoute {
   const CheckInRoute();
 
@@ -19,12 +24,12 @@ class CheckInRoute extends GoRouteData with $CheckInRoute {
   }
 }
 
-/// Check-in records (history by date) route.
-@TypedGoRoute<CheckInRecordsRoute>(path: CheckInRecordsRoute.path)
+/// Check-in records (history by date) route — nested under [CheckInRoute].
 class CheckInRecordsRoute extends GoRouteData with $CheckInRecordsRoute {
   const CheckInRecordsRoute();
 
-  static const path = '/check-in-records';
+  /// Full path for deep links and permission checks.
+  static const path = '/check-in/records';
 
   @override
   Widget build(BuildContext context, GoRouterState state) {

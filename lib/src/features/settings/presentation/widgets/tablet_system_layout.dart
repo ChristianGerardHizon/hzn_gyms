@@ -3,6 +3,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../activity_log/presentation/pages/activity_log_detail_page.dart';
+import '../../../activity_log/presentation/pages/activity_logs_page.dart';
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
@@ -55,6 +57,8 @@ class TabletSystemLayout extends ConsumerWidget {
       currentMode = SystemMode.import;
     } else if (path.contains('/debug')) {
       currentMode = SystemMode.debug;
+    } else if (path.contains('/activity-log')) {
+      currentMode = SystemMode.activityLog;
     } else {
       currentMode = SystemMode.productCategories;
     }
@@ -80,6 +84,8 @@ class TabletSystemLayout extends ConsumerWidget {
                 const ImportRoute().go(context);
               case SystemMode.debug:
                 const SystemDebugRoute().go(context);
+              case SystemMode.activityLog:
+                const ActivityLogRoute().go(context);
             }
           },
         ),
@@ -94,6 +100,20 @@ class TabletSystemLayout extends ConsumerWidget {
           const Expanded(child: ImportLandingPanel()),
         ] else if (currentMode == SystemMode.debug) ...[
           const Expanded(child: SystemDebugPanel()),
+        ] else if (currentMode == SystemMode.activityLog) ...[
+          SizedBox(
+            width: 360,
+            child: ActivityLogsPage(
+              selectedId: selectedId,
+              onSelected: (id) => ActivityLogDetailRoute(id: id).go(context),
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: selectedId != null
+                ? ActivityLogDetailPage(logId: selectedId)
+                : const EmptySystemState(mode: SystemMode.activityLog),
+          ),
         ] else if (currentMode == SystemMode.cashierGroups) ...[
           // Cashier groups mode: List + detail split
           SizedBox(
@@ -121,6 +141,8 @@ class TabletSystemLayout extends ConsumerWidget {
               SystemMode.import =>
                 const SizedBox.shrink(), // Handled above
               SystemMode.debug =>
+                const SizedBox.shrink(), // Handled above
+              SystemMode.activityLog =>
                 const SizedBox.shrink(), // Handled above
               SystemMode.cashierGroups =>
                 const SizedBox.shrink(), // Handled above

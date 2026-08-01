@@ -8,12 +8,63 @@ part of 'sales_report_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// View-based sales KPIs and charts (fast path).
+/// Shared Day/Week/Month fetch so KPIs and extras do not download sales twice.
+
+@ProviderFor(scopedSalesReportBundle)
+final scopedSalesReportBundleProvider = ScopedSalesReportBundleProvider._();
+
+/// Shared Day/Week/Month fetch so KPIs and extras do not download sales twice.
+
+final class ScopedSalesReportBundleProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<ScopedSalesReportBundle?>,
+          ScopedSalesReportBundle?,
+          FutureOr<ScopedSalesReportBundle?>
+        >
+    with
+        $FutureModifier<ScopedSalesReportBundle?>,
+        $FutureProvider<ScopedSalesReportBundle?> {
+  /// Shared Day/Week/Month fetch so KPIs and extras do not download sales twice.
+  ScopedSalesReportBundleProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'scopedSalesReportBundleProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$scopedSalesReportBundleHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<ScopedSalesReportBundle?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<ScopedSalesReportBundle?> create(Ref ref) {
+    return scopedSalesReportBundle(ref);
+  }
+}
+
+String _$scopedSalesReportBundleHash() =>
+    r'ee65ffb8cc44dab6c53f226964f8e322ea876719';
+
+/// Sales KPIs and charts.
+///
+/// Day/Week/Month use period-scoped raw rows; Year/All Time use SQL views.
 
 @ProviderFor(salesReport)
 final salesReportProvider = SalesReportProvider._();
 
-/// View-based sales KPIs and charts (fast path).
+/// Sales KPIs and charts.
+///
+/// Day/Week/Month use period-scoped raw rows; Year/All Time use SQL views.
 
 final class SalesReportProvider
     extends
@@ -23,7 +74,9 @@ final class SalesReportProvider
           FutureOr<SalesReport>
         >
     with $FutureModifier<SalesReport>, $FutureProvider<SalesReport> {
-  /// View-based sales KPIs and charts (fast path).
+  /// Sales KPIs and charts.
+  ///
+  /// Day/Week/Month use period-scoped raw rows; Year/All Time use SQL views.
   SalesReportProvider._()
     : super(
         from: null,
@@ -50,14 +103,20 @@ final class SalesReportProvider
   }
 }
 
-String _$salesReportHash() => r'6f60843ad016bf0586d02b840eae1df248db9836';
+String _$salesReportHash() => r'c2abfd3d15d90b7e989db179ca61cde455a569df';
 
-/// Lean unpaid / staff / Day list — loads after [salesReportProvider].
+/// Unpaid / staff / Day list.
+///
+/// Day/Week/Month reuse [scopedSalesReportBundleProvider]; Year/All Time fetch
+/// unpaid rows only (full-period sales download is too expensive).
 
 @ProviderFor(salesReportExtras)
 final salesReportExtrasProvider = SalesReportExtrasProvider._();
 
-/// Lean unpaid / staff / Day list — loads after [salesReportProvider].
+/// Unpaid / staff / Day list.
+///
+/// Day/Week/Month reuse [scopedSalesReportBundleProvider]; Year/All Time fetch
+/// unpaid rows only (full-period sales download is too expensive).
 
 final class SalesReportExtrasProvider
     extends
@@ -69,7 +128,10 @@ final class SalesReportExtrasProvider
     with
         $FutureModifier<SalesReportExtras>,
         $FutureProvider<SalesReportExtras> {
-  /// Lean unpaid / staff / Day list — loads after [salesReportProvider].
+  /// Unpaid / staff / Day list.
+  ///
+  /// Day/Week/Month reuse [scopedSalesReportBundleProvider]; Year/All Time fetch
+  /// unpaid rows only (full-period sales download is too expensive).
   SalesReportExtrasProvider._()
     : super(
         from: null,
@@ -96,4 +158,4 @@ final class SalesReportExtrasProvider
   }
 }
 
-String _$salesReportExtrasHash() => r'f8e52173e962444ba3a6a5d69e05e177b50c5cd6';
+String _$salesReportExtrasHash() => r'37482ccf8377ef1dfa2a7efbc11b4b5e7753cffe';

@@ -72,8 +72,9 @@ void main() {
 
     test('withRangeStart snaps week to Monday', () {
       // 2026-07-15 is Wednesday
-      final selection = ReportPeriodSelection.current(ReportPeriod.weekly)
-          .withRangeStart(DateTime(2026, 7, 15));
+      final selection = ReportPeriodSelection.current(
+        ReportPeriod.weekly,
+      ).withRangeStart(DateTime(2026, 7, 15));
       expect(selection.rangeStart, DateTime(2026, 7, 13));
       expect(selection.rangeStart.weekday, DateTime.monday);
     });
@@ -108,8 +109,9 @@ void main() {
     });
 
     test('withDay sets a single calendar day', () {
-      final selection = ReportPeriodSelection.current(ReportPeriod.day)
-          .withDay(DateTime(2026, 7, 4, 15, 30));
+      final selection = ReportPeriodSelection.current(
+        ReportPeriod.day,
+      ).withDay(DateTime(2026, 7, 4, 15, 30));
       expect(selection.rangeStart, DateTime(2026, 7, 4));
       expect(selection.rangeEnd.day, 4);
       expect(selection.rangeEnd.hour, 23);
@@ -117,9 +119,9 @@ void main() {
     });
 
     test('day range start/end keep a single calendar day', () {
-      final selection = ReportPeriodSelection.current(ReportPeriod.day)
-          .withRangeStart(DateTime(2026, 7, 1))
-          .withRangeEnd(DateTime(2026, 7, 3));
+      final selection = ReportPeriodSelection.current(
+        ReportPeriod.day,
+      ).withRangeStart(DateTime(2026, 7, 1)).withRangeEnd(DateTime(2026, 7, 3));
       expect(startOfDay(selection.rangeStart), DateTime(2026, 7, 3));
       expect(selection.rangeEnd.day, 3);
       expect(selection.displayRangeLabel.contains('–'), isFalse);
@@ -216,23 +218,41 @@ void main() {
         parseBucketStart('2026-07', TrendGranularity.month),
         DateTime(2026, 7),
       );
-      expect(
-        parseBucketStart('2026', TrendGranularity.year),
-        DateTime(2026),
-      );
+      expect(parseBucketStart('2026', TrendGranularity.year), DateTime(2026));
     });
   });
 
   group('view selectors', () {
     test('salesSummaryViewFor maps periods', () {
-      expect(salesSummaryViewFor(ReportPeriod.day).collection,
-          'vw_sales_daily_summary');
-      expect(salesSummaryViewFor(ReportPeriod.monthly).collection,
-          'vw_sales_weekly_summary');
-      expect(salesSummaryViewFor(ReportPeriod.yearly).collection,
-          'vw_sales_monthly_summary');
-      expect(salesSummaryViewFor(ReportPeriod.allTime).collection,
-          'vw_sales_yearly_summary');
+      expect(
+        salesSummaryViewFor(ReportPeriod.day).collection,
+        'vw_sales_daily_summary',
+      );
+      expect(
+        salesSummaryViewFor(ReportPeriod.monthly).collection,
+        'vw_sales_weekly_summary',
+      );
+      expect(
+        salesSummaryViewFor(ReportPeriod.yearly).collection,
+        'vw_sales_monthly_summary',
+      );
+      expect(
+        salesSummaryViewFor(ReportPeriod.allTime).collection,
+        'vw_sales_yearly_summary',
+      );
+    });
+
+    test('yearly charts use yearly views not monthly', () {
+      expect(
+        revenueByItemTypeViewFor(ReportPeriod.yearly).collection,
+        'vw_revenue_by_item_type_yearly',
+      );
+      expect(revenueByItemTypeViewFor(ReportPeriod.yearly).asYear, isTrue);
+      expect(
+        topSellingViewFor(ReportPeriod.yearly).collection,
+        'vw_top_selling_products_yearly',
+      );
+      expect(topSellingViewFor(ReportPeriod.yearly).asYear, isTrue);
     });
   });
 
@@ -257,6 +277,109 @@ void main() {
       expect(itemTypeLabel('membership'), 'Membership');
       expect(itemTypeLabel('addon'), 'Add-on');
       expect(itemTypeLabel('walkIn'), 'Walk-in');
+    });
+  });
+
+  group('usesPeriodScopedSalesFetch', () {
+    test('is true for day, week, and month', () {
+      expect(usesPeriodScopedSalesFetch(ReportPeriod.day), isTrue);
+      expect(usesPeriodScopedSalesFetch(ReportPeriod.weekly), isTrue);
+      expect(usesPeriodScopedSalesFetch(ReportPeriod.monthly), isTrue);
+      expect(usesPeriodScopedSalesFetch(ReportPeriod.yearly), isFalse);
+      expect(usesPeriodScopedSalesFetch(ReportPeriod.allTime), isFalse);
+    });
+  });
+
+  group('netPaymentAmount', () {
+    test('subtracts refunds', () {
+      expect(netPaymentAmount(type: 'payment', amount: 100), 100);
+      expect(netPaymentAmount(type: 'deposit', amount: 50), 50);
+      expect(netPaymentAmount(type: 'refund', amount: 25), -25);
+      expect(netPaymentAmount(type: 'Refund', amount: 10), -10);
+    });
+  });
+
+  group('isReportableSaleStatus', () {
+    test('includes completed and paid only', () {
+      expect(isReportableSaleStatus('completed'), isTrue);
+      expect(isReportableSaleStatus('paid'), isTrue);
+      expect(isReportableSaleStatus('pending'), isFalse);
+      expect(isReportableSaleStatus('awaitingPayment'), isFalse);
+      expect(isReportableSaleStatus('voided'), isFalse);
+    });
+  });
+
+  group('aggregateScopedSalesPayments', () {
+    test('sums payments for completed sales and buckets by day', () {
+      final day = DateTime(2026, 8, 1, 10);
+      final result = aggregateScopedSalesPayments(
+        sales: [
+          (saleId: 's1', status: 'completed', created: day),
+          (saleId: 's2', status: 'completed', created: day),
+          (saleId: 's3', status: 'pending', created: day),
+          (saleId: 's4', status: 'completed', created: null),
+        ],
+        payments: [
+          (saleId: 's1', paymentMethod: 'cash', type: 'payment', amount: 100),
+          (saleId: 's1', paymentMethod: 'card', type: 'payment', amount: 50),
+          (saleId: 's2', paymentMethod: 'cash', type: 'refund', amount: 20),
+          (saleId: 's3', paymentMethod: 'cash', type: 'payment', amount: 999),
+        ],
+        grain: TrendGranularity.day,
+      );
+
+      expect(result.transactionCount, 2); // s1 + s2 (s4 missing created)
+      expect(result.totalRevenue, 130); // 100+50-20
+      expect(result.revenueByPaymentMethod['cash'], 80);
+      expect(result.revenueByPaymentMethod['card'], 50);
+      expect(result.revenueByBucket[DateTime(2026, 8, 1)], 130);
+    });
+
+    test('includes paid status sales from checkout', () {
+      final day = DateTime(2026, 8, 1, 3, 56);
+      final result = aggregateScopedSalesPayments(
+        sales: [
+          (saleId: 's1', status: 'paid', created: day),
+          (saleId: 's2', status: 'awaitingPayment', created: day),
+        ],
+        payments: [
+          (saleId: 's1', paymentMethod: 'cash', type: 'payment', amount: 800),
+          (saleId: 's2', paymentMethod: 'cash', type: 'payment', amount: 100),
+        ],
+        grain: TrendGranularity.day,
+      );
+
+      expect(result.transactionCount, 1);
+      expect(result.totalRevenue, 800);
+      expect(result.revenueByPaymentMethod['cash'], 800);
+    });
+
+    test('counts completed sales with no payments', () {
+      final result = aggregateScopedSalesPayments(
+        sales: [
+          (saleId: 's1', status: 'completed', created: DateTime(2026, 8, 1)),
+        ],
+        payments: const [],
+        grain: TrendGranularity.day,
+      );
+      expect(result.transactionCount, 1);
+      expect(result.totalRevenue, 0);
+    });
+  });
+
+  group('aggregateScopedRevenueByItemType', () {
+    test('only includes completed sale lines', () {
+      final result = aggregateScopedRevenueByItemType(
+        [
+          (saleId: 's1', itemType: 'product', subtotal: 100),
+          (saleId: 's2', itemType: 'membership', subtotal: 500),
+          (saleId: 's3', itemType: 'product', subtotal: 50),
+        ],
+        {'s1', 's2'},
+      );
+      expect(result['product'], 100);
+      expect(result['membership'], 500);
+      expect(result['product'], isNot(150));
     });
   });
 
@@ -328,36 +451,16 @@ void main() {
   group('aggregateTopSellingItems', () {
     test('includes every item type ranked by revenue', () {
       final result = aggregateTopSellingItems([
-        (
-          name: 'Protein Shake',
-          itemType: 'product',
-          quantity: 3,
-          revenue: 300,
-        ),
+        (name: 'Protein Shake', itemType: 'product', quantity: 3, revenue: 300),
         (
           name: 'Monthly Plan',
           itemType: 'membership',
           quantity: 2,
           revenue: 2000,
         ),
-        (
-          name: 'Day Pass',
-          itemType: 'walkIn',
-          quantity: 5,
-          revenue: 500,
-        ),
-        (
-          name: 'Locker',
-          itemType: 'addon',
-          quantity: 1,
-          revenue: 50,
-        ),
-        (
-          name: 'Custom Line',
-          itemType: 'other',
-          quantity: 10,
-          revenue: 900,
-        ),
+        (name: 'Day Pass', itemType: 'walkIn', quantity: 5, revenue: 500),
+        (name: 'Locker', itemType: 'addon', quantity: 1, revenue: 50),
+        (name: 'Custom Line', itemType: 'other', quantity: 10, revenue: 900),
       ]);
 
       expect(result.map((e) => e.name).toList(), [
@@ -378,14 +481,8 @@ void main() {
       ]);
 
       expect(result.length, 2);
-      expect(
-        result.firstWhere((e) => e.itemType == 'membership').revenue,
-        200,
-      );
-      expect(
-        result.firstWhere((e) => e.itemType == 'product').revenue,
-        150,
-      );
+      expect(result.firstWhere((e) => e.itemType == 'membership').revenue, 200);
+      expect(result.firstWhere((e) => e.itemType == 'product').revenue, 150);
     });
   });
 
@@ -412,10 +509,7 @@ void main() {
 
   group('includeInMembershipReport', () {
     test('excludes walk-in sales and memberNotRequired plans', () {
-      expect(
-        includeInMembershipReport(saleHasLinkedMember: false),
-        isFalse,
-      );
+      expect(includeInMembershipReport(saleHasLinkedMember: false), isFalse);
       expect(
         includeInMembershipReport(
           saleHasLinkedMember: true,
@@ -423,10 +517,7 @@ void main() {
         ),
         isFalse,
       );
-      expect(
-        includeInMembershipReport(saleHasLinkedMember: true),
-        isTrue,
-      );
+      expect(includeInMembershipReport(saleHasLinkedMember: true), isTrue);
     });
   });
 

@@ -21,14 +21,20 @@ part 'reports_repository.g.dart';
 
 /// Repository for fetching and aggregating report data.
 abstract class ReportsRepository {
-  /// View-based sales KPIs and charts (fast path — no raw `sales` download).
+  /// View-based sales KPIs and charts (Month / Year / All Time).
   FutureEither<SalesReport> getSalesReport({
     required ReportPeriodSelection period,
     String? branchId,
   });
 
-  /// Lean unpaid / staff / Day transaction list (loads after [getSalesReport]).
+  /// Lean unpaid / staff / Day transaction list (Month / Year / All Time).
   FutureEither<SalesReportExtras> getSalesReportExtras({
+    required ReportPeriodSelection period,
+    String? branchId,
+  });
+
+  /// Period-scoped Day/Week sales (one fetch for KPIs + extras).
+  FutureEither<ScopedSalesReportBundle> getScopedSalesReportBundle({
     required ReportPeriodSelection period,
     String? branchId,
   });
@@ -64,6 +70,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
   RecordService get _saleItems =>
       _pb.collection(PocketBaseCollections.saleItems);
   RecordService get _sales => _pb.collection(PocketBaseCollections.sales);
+  RecordService get _payments => _pb.collection(PocketBaseCollections.payments);
   RecordService get _checkIns => _pb.collection(PocketBaseCollections.checkIns);
 
   String? _viewFilter(
@@ -90,6 +97,212 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
   /// Minimal fields for unpaid + staff aggregation on longer periods.
   static const _leanSaleAggFields = 'id,cashier,totalAmount,status,isPaid';
+
+  /// Week scoped path needs `created` for day trend buckets.
+  static const _scopedWeekSaleFields =
+      'id,cashier,totalAmount,status,isPaid,created';
+
+  static const _paymentAggFields = 'id,sale,amount,paymentMethod,type';
+
+  static const _saleItemAggFields =
+      'id,sale,productName,quantity,subtotal,itemType';
+
+  @override
+  FutureEither<ScopedSalesReportBundle> getScopedSalesReportBundle({
+    required ReportPeriodSelection period,
+    String? branchId,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final includeSalesList = period.period == ReportPeriod.day;
+      final grain = period.trendGranularity;
+
+      final salePeriodFilter = PBFilter()
+          .between('created', period.startDate, period.endDate)
+          .raw(
+            "(status = 'completed' || status = 'paid' || "
+            "status = 'awaitingPayment' || status = 'pending')",
+          );
+      if (branchId != null) {
+        salePeriodFilter.relation('branch', branchId);
+      }
+
+      final saleRecords = await _sales.getFullList(
+        filter: salePeriodFilter.build(),
+        fields: includeSalesList ? _daySaleListFields : _scopedWeekSaleFields,
+        sort: includeSalesList ? '-created' : null,
+      );
+
+      if (saleRecords.isEmpty) {
+        return ScopedSalesReportBundle.empty;
+      }
+
+      final saleIds = saleRecords.map((r) => r.id).toList(growable: false);
+      final paymentFilters = buildIdOrFilters('sale', saleIds);
+      final itemFilters = buildIdOrFilters('sale', saleIds);
+
+      final leanRows = saleRecords
+          .map(
+            (sale) => (
+              status: sale.getStringValue('status'),
+              isPaid: sale.getBoolValue('isPaid'),
+              totalAmount: sale.getDoubleValue('totalAmount'),
+              cashierId: sale.getStringValue('cashier'),
+              created: DateTime.tryParse(
+                sale.getStringValue('created'),
+              )?.toLocal(),
+              saleId: sale.id,
+            ),
+          )
+          .toList(growable: false);
+
+      final cashierIds = leanRows
+          .map((r) => r.cashierId)
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+
+      final paymentChunksFuture = Future.wait(
+        paymentFilters.map(
+          (f) => _payments.getFullList(filter: f, fields: _paymentAggFields),
+        ),
+      );
+      final itemChunksFuture = Future.wait(
+        itemFilters.map(
+          (f) => _saleItems.getFullList(filter: f, fields: _saleItemAggFields),
+        ),
+      );
+      final staffNamesFuture = _fetchUserDisplayNames(cashierIds);
+      final paymentChunks = await paymentChunksFuture;
+      final itemChunks = await itemChunksFuture;
+      final staffNames = await staffNamesFuture;
+      final paymentRecords = paymentChunks.expand((e) => e).toList();
+      final itemRecords = itemChunks.expand((e) => e).toList();
+
+      final paymentRows = paymentRecords.map(
+        (p) => (
+          saleId: p.getStringValue('sale'),
+          paymentMethod: p.getStringValue('paymentMethod'),
+          type: p.getStringValue('type'),
+          amount: p.getDoubleValue('amount'),
+        ),
+      );
+
+      final kpis = aggregateScopedSalesPayments(
+        sales: leanRows.map(
+          (r) => (saleId: r.saleId, status: r.status, created: r.created),
+        ),
+        payments: paymentRows,
+        grain: grain,
+      );
+
+      final reportableSaleIds = leanRows
+          .where((r) => isReportableSaleStatus(r.status))
+          .map((r) => r.saleId)
+          .toSet();
+
+      final itemRows = itemRecords.map(
+        (item) => (
+          saleId: item.getStringValue('sale'),
+          name: item.getStringValue('productName'),
+          itemType: item.getStringValue('itemType'),
+          quantity: item.getDoubleValue('quantity'),
+          subtotal: item.getDoubleValue('subtotal'),
+        ),
+      );
+
+      final topProducts =
+          aggregateTopSellingItems(
+                itemRows
+                    .where((i) => reportableSaleIds.contains(i.saleId))
+                    .map(
+                      (i) => (
+                        name: i.name,
+                        itemType: i.itemType,
+                        quantity: i.quantity,
+                        revenue: i.subtotal,
+                      ),
+                    ),
+              )
+              .map(
+                (e) => ProductSalesSummary(
+                  productName: e.name,
+                  quantity: e.quantity,
+                  revenue: e.revenue,
+                  itemType: e.itemType,
+                ),
+              )
+              .take(10)
+              .toList();
+
+      final revenueByItemType = aggregateScopedRevenueByItemType(
+        itemRows.map(
+          (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: i.subtotal),
+        ),
+        reportableSaleIds,
+      );
+
+      final avgValue = kpis.transactionCount > 0
+          ? kpis.totalRevenue / kpis.transactionCount
+          : 0;
+
+      final report = SalesReport(
+        totalRevenue: kpis.totalRevenue,
+        transactionCount: kpis.transactionCount,
+        averageTransactionValue: avgValue,
+        revenueTrend: zeroFillBuckets(
+          values: kpis.revenueByBucket,
+          rangeStart: period.startDate,
+          rangeEnd: period.chartEndDate,
+          grain: grain,
+        ),
+        revenueByPaymentMethod: kpis.revenueByPaymentMethod,
+        topSellingProducts: topProducts,
+        revenueByItemType: revenueByItemType,
+      );
+
+      final unpaid = aggregateUnpaidSales(
+        leanRows.map(
+          (r) =>
+              (status: r.status, isPaid: r.isPaid, totalAmount: r.totalAmount),
+        ),
+      );
+
+      final staff = aggregateStaffPerformance(
+        leanRows.map(
+          (r) => (
+            status: r.status,
+            cashierId: r.cashierId,
+            totalAmount: r.totalAmount,
+          ),
+        ),
+        staffNames: staffNames,
+      );
+
+      final periodSales = includeSalesList
+          ? saleRecords
+                .map((record) => SaleDto.fromRecord(record).toEntity())
+                .toList()
+          : const <Sale>[];
+
+      final extras = SalesReportExtras(
+        unpaidSalesCount: unpaid.unpaidCount,
+        unpaidBalance: unpaid.unpaidBalance,
+        staffPerformance: staff
+            .map(
+              (e) => StaffSalesSummary(
+                staffId: e.staffId,
+                staffName: e.staffName,
+                transactionCount: e.transactionCount,
+                revenue: e.revenue,
+              ),
+            )
+            .toList(),
+        sales: periodSales,
+      );
+
+      return ScopedSalesReportBundle(report: report, extras: extras);
+    }, Failure.handle).run();
+  }
 
   @override
   FutureEither<SalesReport> getSalesReport({
@@ -227,98 +440,41 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? branchId,
   }) async {
     return TaskEither.tryCatch(() async {
-      final includeSalesList = period.period == ReportPeriod.day;
-      final salePeriodFilter = PBFilter()
+      // Year / All Time only reach here (Day/Week/Month use the scoped bundle).
+      // Never getFullList every sale in the range — that pages 10k–100k rows and
+      // saturates the API while the summary views are also running.
+      final unpaidFilter = PBFilter()
           .between('created', period.startDate, period.endDate)
+          .isFalse('isPaid')
           .raw(
             "(status = 'completed' || status = 'paid' || "
             "status = 'awaitingPayment' || status = 'pending')",
           );
       if (branchId != null) {
-        salePeriodFilter.relation('branch', branchId);
+        unpaidFilter.relation('branch', branchId);
       }
 
-      final saleRecords = await _sales.getFullList(
-        filter: salePeriodFilter.build(),
-        fields: includeSalesList ? _daySaleListFields : _leanSaleAggFields,
-        sort: includeSalesList ? '-created' : null,
-      );
-
-      if (saleRecords.isEmpty) {
-        return SalesReportExtras.empty;
-      }
-
-      final leanRows = saleRecords.map(
-        (sale) => (
-          status: sale.getStringValue('status'),
-          isPaid: sale.getBoolValue('isPaid'),
-          totalAmount: sale.getDoubleValue('totalAmount'),
-          cashierId: sale.getStringValue('cashier'),
-        ),
+      final unpaidRecords = await _sales.getFullList(
+        filter: unpaidFilter.build(),
+        fields: _leanSaleAggFields,
       );
 
       final unpaid = aggregateUnpaidSales(
-        leanRows.map(
-          (r) =>
-              (status: r.status, isPaid: r.isPaid, totalAmount: r.totalAmount),
-        ),
-      );
-
-      final cashierIds = leanRows
-          .map((r) => r.cashierId)
-          .where((id) => id.isNotEmpty)
-          .toSet()
-          .toList();
-      final staffNames = await _fetchUserDisplayNames(cashierIds);
-
-      final staff = aggregateStaffPerformance(
-        leanRows.map(
-          (r) => (
-            status: r.status,
-            cashierId: r.cashierId,
-            totalAmount: r.totalAmount,
+        unpaidRecords.map(
+          (sale) => (
+            status: sale.getStringValue('status'),
+            isPaid: sale.getBoolValue('isPaid'),
+            totalAmount: sale.getDoubleValue('totalAmount'),
           ),
         ),
-        staffNames: staffNames,
       );
-
-      final periodSales = includeSalesList
-          ? saleRecords
-                .map((record) => SaleDto.fromRecord(record).toEntity())
-                .toList()
-          : const <Sale>[];
-
-      ({num totalRevenue, int transactionCount})? dayKpiOverride;
-      if (includeSalesList) {
-        final dayKpis = daySalesKpisFromSales(
-          leanRows.map(
-            (r) => (
-              status: r.status,
-              isPaid: r.isPaid,
-              totalAmount: r.totalAmount,
-            ),
-          ),
-        );
-        if (dayKpis.transactionCount > 0) {
-          dayKpiOverride = dayKpis;
-        }
-      }
 
       return SalesReportExtras(
         unpaidSalesCount: unpaid.unpaidCount,
         unpaidBalance: unpaid.unpaidBalance,
-        staffPerformance: staff
-            .map(
-              (e) => StaffSalesSummary(
-                staffId: e.staffId,
-                staffName: e.staffName,
-                transactionCount: e.transactionCount,
-                revenue: e.revenue,
-              ),
-            )
-            .toList(),
-        sales: periodSales,
-        dayKpiOverride: dayKpiOverride,
+        // Staff needs every sale in range; skip on Year/All Time for speed.
+        // Day/Week/Month staff comes from [getScopedSalesReportBundle].
+        staffPerformance: const [],
       );
     }, Failure.handle).run();
   }
@@ -769,6 +925,11 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? branchId,
   }) async {
     return TaskEither.tryCatch(() async {
+      // Day: single raw checkIns range query (avoids all-history daily view).
+      if (period.period == ReportPeriod.day) {
+        return _attendanceFromRawCheckIns(period: period, branchId: branchId);
+      }
+
       final grain = period.trendGranularity;
       final view = checkinsViewFor(period.period);
       final filter = _viewFilter(
@@ -783,7 +944,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
           .collection(view.collection)
           .getFullList(filter: filter);
 
-      if (records.isEmpty && period.period != ReportPeriod.day) {
+      if (records.isEmpty) {
         return AttendanceReport.empty;
       }
 
@@ -817,43 +978,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
         grain: grain,
       );
 
-      // Peak hours: Day only — fetch today's raw check-ins.
-      var checkInsByHour = <String, num>{};
-      var withoutMembership = 0;
-      var uniqueMembers = uniqueEstimate.fold<int>(0, (a, b) => a + b);
+      final uniqueMembers = uniqueEstimate.fold<int>(0, (a, b) => a + b);
 
-      if (period.period == ReportPeriod.day) {
-        final dayFilter = PBFilter().between(
-          'checkInTime',
-          period.startDate,
-          period.endDate,
-        );
-        if (branchId != null) {
-          dayFilter.relation('branch', branchId);
-        }
-        final raw = await _checkIns.getFullList(filter: dayFilter.build());
-        final times = <DateTime>[];
-        final memberIds = <String>{};
-        withoutMembership = 0;
-        for (final record in raw) {
-          final time = DateTime.tryParse(
-            record.getStringValue('checkInTime'),
-          )?.toLocal();
-          if (time != null) times.add(time);
-          final memberId = record.getStringValue('member');
-          if (memberId.isNotEmpty) memberIds.add(memberId);
-          if (record.getStringValue('memberMembership').isEmpty) {
-            withoutMembership++;
-          }
-        }
-        checkInsByHour = aggregateCheckInsByHour(times);
-        uniqueMembers = memberIds.length;
-        if (raw.isNotEmpty) {
-          totalCheckIns = raw.length;
-        }
-      }
-
-      if (totalCheckIns == 0 && records.isEmpty) {
+      if (totalCheckIns == 0) {
         return AttendanceReport.empty;
       }
 
@@ -862,9 +989,75 @@ class ReportsRepositoryImpl implements ReportsRepository {
         uniqueMembers: uniqueMembers,
         checkInsTrend: checkInsTrend,
         checkInsByMethod: byMethod,
-        checkInsByHour: checkInsByHour,
-        withoutActiveMembershipCount: withoutMembership,
+        checkInsByHour: const {},
+        withoutActiveMembershipCount: 0,
       );
     }, Failure.handle).run();
+  }
+
+  Future<AttendanceReport> _attendanceFromRawCheckIns({
+    required ReportPeriodSelection period,
+    String? branchId,
+  }) async {
+    final dayFilter = PBFilter().between(
+      'checkInTime',
+      period.startDate,
+      period.endDate,
+    );
+    if (branchId != null) {
+      dayFilter.relation('branch', branchId);
+    }
+
+    final raw = await _checkIns.getFullList(
+      filter: dayFilter.build(),
+      fields: 'id,member,memberMembership,method,checkInTime,branch',
+    );
+
+    if (raw.isEmpty) {
+      return AttendanceReport.empty;
+    }
+
+    final times = <DateTime>[];
+    final memberIds = <String>{};
+    final byMethod = <String, num>{};
+    var withoutMembership = 0;
+
+    for (final record in raw) {
+      final time = DateTime.tryParse(
+        record.getStringValue('checkInTime'),
+      )?.toLocal();
+      if (time != null) times.add(time);
+
+      final memberId = record.getStringValue('member');
+      if (memberId.isNotEmpty) memberIds.add(memberId);
+
+      if (record.getStringValue('memberMembership').isEmpty) {
+        withoutMembership++;
+      }
+
+      final method = record.getStringValue('method');
+      final methodLabel = method.isEmpty ? 'unknown' : method;
+      byMethod[methodLabel] = (byMethod[methodLabel] ?? 0) + 1;
+    }
+
+    final byBucket = <DateTime, num>{};
+    for (final time in times) {
+      final bucket = startOfDay(time);
+      byBucket[bucket] = (byBucket[bucket] ?? 0) + 1;
+    }
+
+    return AttendanceReport(
+      totalCheckIns: raw.length,
+      uniqueMembers: memberIds.length,
+      checkInsTrend: zeroFillBuckets(
+        values: byBucket,
+        rangeStart: period.startDate,
+        rangeEnd: period.chartEndDate,
+        grain: TrendGranularity.day,
+      ),
+      checkInsByMethod: byMethod,
+      checkInsByHour: aggregateCheckInsByHour(times),
+      withoutActiveMembershipCount: withoutMembership,
+    );
   }
 }

@@ -102,6 +102,24 @@ void main() {
     expect(search.items.map((m) => m.name), ['Alice']);
   });
 
+  test('searchPaginated matches tokenized names with irregular spacing',
+      () async {
+    await local.upsertFromDtos([
+      dto(id: '1', name: 'CHLOE  SY'),
+      dto(id: '2', name: 'Chloe Smith'),
+      dto(id: '3', name: 'Sybil Jones'),
+    ]);
+
+    final byFullName = await local.searchPaginated('chloe sy');
+    expect(byFullName.items.map((m) => m.id), ['1']);
+
+    final byReversed = await local.searchPaginated('sy chloe');
+    expect(byReversed.items.map((m) => m.id), ['1']);
+
+    final byFirstOnly = await local.searchPaginated('chloe');
+    expect(byFirstOnly.items.map((m) => m.id).toSet(), {'1', '2'});
+  });
+
   test('clearSynced keeps pending; clearAll empties', () async {
     await local.upsertFromDtos([dto(id: 'synced', name: 'S')]);
     await local.upsertMembers(

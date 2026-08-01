@@ -9,7 +9,7 @@ part 'report_period_controller.g.dart';
 class ReportPeriodController extends _$ReportPeriodController {
   @override
   ReportPeriodSelection build() =>
-      ReportPeriodSelection.current(ReportPeriod.monthly);
+      ReportPeriodSelection.current(ReportPeriod.day);
 
   void setPeriod(ReportPeriod period) {
     state = state.withPeriod(period);

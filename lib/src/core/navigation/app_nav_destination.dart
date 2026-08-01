@@ -17,7 +17,6 @@ import '../permissions/current_user_permissions.dart';
 enum AppNavId {
   dashboard,
   checkIn,
-  checkInRecords,
   cashier,
   sales,
   products,
@@ -42,10 +41,6 @@ class AppNavDestination {
 const List<AppNavDestination> allAppNavDestinations = [
   AppNavDestination(id: AppNavId.dashboard, path: DashboardRoute.path),
   AppNavDestination(id: AppNavId.checkIn, path: CheckInRoute.path),
-  AppNavDestination(
-    id: AppNavId.checkInRecords,
-    path: CheckInRecordsRoute.path,
-  ),
   AppNavDestination(id: AppNavId.cashier, path: SalesRoute.path),
   AppNavDestination(id: AppNavId.sales, path: SalesHistoryRoute.path),
   AppNavDestination(id: AppNavId.products, path: ProductsRoute.path),
@@ -71,8 +66,6 @@ List<AppNavDestination> visibleAppNavDestinations(
           case AppNavId.dashboard:
             return true;
           case AppNavId.checkIn:
-            return permissions.has(Permissions.checkInsView);
-          case AppNavId.checkInRecords:
             return permissions.has(Permissions.checkInsView);
           case AppNavId.cashier:
             return permissions.has(Permissions.salesCreate);
@@ -134,9 +127,6 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   if (matchesRoutePath(location, CheckInRoute.path)) {
     return permissions.has(Permissions.checkInsView);
   }
-  if (matchesRoutePath(location, CheckInRecordsRoute.path)) {
-    return permissions.has(Permissions.checkInsView);
-  }
   if (matchesRoutePath(location, SalesRoute.path)) {
     return permissions.has(Permissions.salesCreate);
   }
@@ -163,10 +153,13 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   }
   if (matchesRoutePath(location, SystemRoute.path)) {
     if (!permissions.canViewSettings) return false;
-    // Appearance is allowed with settings.view; other system tabs need admin.
+    // Appearance is allowed with settings.view; activity log is admin-only.
     if (location == SystemRoute.path ||
         location.startsWith('${SystemRoute.path}/appearance')) {
       return true;
+    }
+    if (location.startsWith('${SystemRoute.path}/activity-log')) {
+      return permissions.canViewActivityLog;
     }
     return permissions.canManageSystem;
   }

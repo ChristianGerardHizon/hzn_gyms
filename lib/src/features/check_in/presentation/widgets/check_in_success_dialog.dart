@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../../domain/check_in_chime.dart';
 import '../../domain/membership_expiry_label.dart';
+import '../utils/check_in_sound_player.dart';
 
 /// Shows a success dialog after a check-in that auto-closes after a few seconds.
 Future<void> showCheckInSuccessDialog(
@@ -14,6 +16,11 @@ Future<void> showCheckInSuccessDialog(
   DateTime? membershipEndDate,
   int? membershipDaysRemaining,
 }) {
+  CheckInSoundPlayer.play(
+    hasActiveMembership
+        ? resolveCheckInSuccessChime(membershipDaysRemaining)
+        : CheckInChime.failure,
+  );
   return showDialog(
     context: context,
     barrierDismissible: false,

@@ -60,8 +60,6 @@ class _AppRootState extends ConsumerState<AppRoot> {
         const DashboardRoute().go(context);
       case AppNavId.checkIn:
         const CheckInRoute().go(context);
-      case AppNavId.checkInRecords:
-        const CheckInRecordsRoute().go(context);
       case AppNavId.cashier:
         const SalesRoute().go(context);
       case AppNavId.sales:

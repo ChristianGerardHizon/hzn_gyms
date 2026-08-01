@@ -9,14 +9,23 @@ part of 'check_in_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Controller for performing check-ins and managing today's check-in list.
+///
+/// After first open, stays alive for the session and keeps a PocketBase
+/// realtime subscription so other devices' check-ins appear automatically.
 
 @ProviderFor(CheckInController)
 final checkInControllerProvider = CheckInControllerProvider._();
 
 /// Controller for performing check-ins and managing today's check-in list.
+///
+/// After first open, stays alive for the session and keeps a PocketBase
+/// realtime subscription so other devices' check-ins appear automatically.
 final class CheckInControllerProvider
     extends $AsyncNotifierProvider<CheckInController, List<CheckIn>> {
   /// Controller for performing check-ins and managing today's check-in list.
+  ///
+  /// After first open, stays alive for the session and keeps a PocketBase
+  /// realtime subscription so other devices' check-ins appear automatically.
   CheckInControllerProvider._()
     : super(
         from: null,
@@ -36,9 +45,12 @@ final class CheckInControllerProvider
   CheckInController create() => CheckInController();
 }
 
-String _$checkInControllerHash() => r'95c79518e8c270ec4feaf29d88212d76fc5e7732';
+String _$checkInControllerHash() => r'e09469636e4232d814d7ad71d6aadbbb45cf8e71';
 
 /// Controller for performing check-ins and managing today's check-in list.
+///
+/// After first open, stays alive for the session and keeps a PocketBase
+/// realtime subscription so other devices' check-ins appear automatically.
 
 abstract class _$CheckInController extends $AsyncNotifier<List<CheckIn>> {
   FutureOr<List<CheckIn>> build();

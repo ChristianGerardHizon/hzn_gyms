@@ -12,6 +12,7 @@ enum SystemMode {
   appearance,
   import,
   debug,
+  activityLog,
 }
 
 /// Vertical navigation panel for selecting system mode.
@@ -37,6 +38,7 @@ class SystemNavPanel extends ConsumerWidget {
         ref.watch(currentUserPermissionsProvider).value ??
             CurrentUserPermissions.empty;
     final isAdmin = perms.canManageSystem;
+    final canViewActivityLog = perms.canViewActivityLog;
 
     final modes = <(SystemMode, IconData, IconData, String)>[
       if (isAdmin) ...[
@@ -86,6 +88,13 @@ class SystemNavPanel extends ConsumerWidget {
           'Debug',
         ),
       ],
+      if (canViewActivityLog)
+        (
+          SystemMode.activityLog,
+          Icons.history_outlined,
+          Icons.history,
+          'Activity Log',
+        ),
     ];
 
     return SizedBox(

@@ -11,6 +11,7 @@ import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/sync/sync_status.dart';
+import '../../../../core/utils/search_tokens.dart';
 import '../../domain/member.dart';
 import '../dto/member_dto.dart';
 
@@ -273,7 +274,7 @@ class MemberLocalDataSource {
   }) {
     return MembersCompanion(
       id: Value(member.id),
-      name: Value(member.name),
+      name: Value(formatPersonName(member.name)),
       photoFile: const Value.absent(),
       mobileNumber: Value(member.mobileNumber),
       dateOfBirth: Value(member.dateOfBirth),

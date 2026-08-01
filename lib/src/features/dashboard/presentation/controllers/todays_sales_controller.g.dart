@@ -52,7 +52,7 @@ final class TodaySalesProvider
   }
 }
 
-String _$todaySalesHash() => r'25356457bd9c2f927f6f64e4199b9346e78a3912';
+String _$todaySalesHash() => r'30a209153cf6d47db122e7474130adaf01d373af';
 
 /// Today's sales summary (count and total amount).
 /// Uses vw_todays_sales view for optimized query.
@@ -104,4 +104,4 @@ final class TodaySalesSummaryProvider
   }
 }
 
-String _$todaySalesSummaryHash() => r'093ac4a116b2f9e8b8af16aa9ab7e071a85a6e97';
+String _$todaySalesSummaryHash() => r'3e2af7c0b88e85603879f867702fab3085ca34cd';

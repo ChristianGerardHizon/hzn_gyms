@@ -95,6 +95,19 @@ class SalesReport with SalesReportMappable {
   }
 }
 
+/// Combined Day/Week sales payload from one period-scoped fetch.
+class ScopedSalesReportBundle {
+  const ScopedSalesReportBundle({required this.report, required this.extras});
+
+  final SalesReport report;
+  final SalesReportExtras extras;
+
+  static const empty = ScopedSalesReportBundle(
+    report: SalesReport.empty,
+    extras: SalesReportExtras.empty,
+  );
+}
+
 /// Secondary sales-report payload loaded after view-based KPIs/charts.
 ///
 /// Built from lean `sales` rows (no `expand`) so unpaid / staff / Day list can

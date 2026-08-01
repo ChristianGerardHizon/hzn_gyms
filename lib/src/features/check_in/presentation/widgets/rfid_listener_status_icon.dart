@@ -3,37 +3,31 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../controllers/rfid_listener_status.dart';
 
-/// Toggles RFID keyboard-wedge listening on the Check-In app bar.
+/// Shows RFID keyboard-wedge listening status (Check-In / Dashboard).
 ///
-/// Off by default (grey). Tap to enable (green); tap again to disable.
+/// Green while listening; red when paused or off. Tap unfocuses any text
+/// field so the next scan reaches the listener.
 class RfidListenerStatusIcon extends ConsumerWidget {
   const RfidListenerStatusIcon({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(rfidListenerStatusControllerProvider);
-    final isListening = status == RfidListenerStatus.listening;
-    final color = isListening
-        ? Colors.green
-        : Theme.of(context).colorScheme.onSurfaceVariant;
+    final isActive = status == RfidListenerStatus.listening;
+
+    final tooltip = switch (status) {
+      RfidListenerStatus.listening => 'RFID scanning on',
+      RfidListenerStatus.paused => 'RFID paused — window not in focus',
+      RfidListenerStatus.off => 'RFID scanning off',
+    };
 
     return IconButton(
-      tooltip: isListening
-          ? 'RFID scanning on — tap to turn off'
-          : 'Tap to enable RFID scanning',
+      tooltip: tooltip,
       onPressed: () {
-        final notifier = ref.read(
-          rfidListenerStatusControllerProvider.notifier,
-        );
-        if (isListening) {
-          notifier.disable();
-        } else {
-          // Unfocus search field so wedge keystrokes reach the listener.
-          FocusManager.instance.primaryFocus?.unfocus();
-          notifier.enable();
-        }
+        // Unfocus search field so wedge keystrokes reach the listener.
+        FocusManager.instance.primaryFocus?.unfocus();
       },
-      icon: Icon(Icons.nfc, color: color),
+      icon: Icon(Icons.nfc, color: isActive ? Colors.green : Colors.red),
     );
   }
 }

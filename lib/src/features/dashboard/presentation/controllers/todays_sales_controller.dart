@@ -5,19 +5,15 @@ import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../domain/todays_sales_summary.dart';
+
+export '../../domain/todays_sales_summary.dart';
 
 part 'todays_sales_controller.g.dart';
 
-/// Record class for today's sales summary.
-class TodaySalesSummary {
-  const TodaySalesSummary({
-    required this.count,
-    required this.total,
-  });
-
-  final int count;
-  final num total;
-}
+/// Max sales fetched for dashboard recent transactions / breakdown lists.
+/// KPI totals still come from [todaySalesSummary] (server aggregate view).
+const int todaysSalesListLimit = 50;
 
 /// Today's sales data.
 /// Filtered by the current branch.
@@ -26,9 +22,12 @@ Future<List<Sale>> todaySales(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
   // Use local time to determine "today" for the user's timezone
   final today = DateTime.now().toLocal();
+  // Match vw_todays_sales: completed/paid only (excludes voided/pending).
   final result = await ref.read(salesRepositoryProvider).getSales(
     branchId: branchId,
     date: today,
+    limit: todaysSalesListLimit,
+    statuses: const ['completed', 'paid'],
   );
   return result.fold(
     (failure) => [],
@@ -49,13 +48,11 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
         filter: branchId != null ? 'branch = "$branchId"' : null,
       );
 
-  if (records.isEmpty) {
-    return const TodaySalesSummary(count: 0, total: 0);
-  }
-
-  final record = records.first;
-  return TodaySalesSummary(
-    count: record.getIntValue('transaction_count'),
-    total: record.getDoubleValue('total_revenue'),
+  final rows = records.map(
+    (record) => TodaysSalesBranchRow(
+      transactionCount: record.getIntValue('transaction_count'),
+      totalRevenue: record.getDoubleValue('total_revenue'),
+    ),
   );
+  return aggregateTodaysSalesSummary(rows);
 }

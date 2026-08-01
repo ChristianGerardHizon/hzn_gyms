@@ -29,10 +29,31 @@ class $AssetsIconsGen {
   List<AssetGenImage> get values => [appIcon, appIconMac, appIconTransparent];
 }
 
+class $AssetsSoundsGen {
+  const $AssetsSoundsGen();
+
+  /// File path: assets/sounds/check_in_failure.wav
+  String get checkInFailure => 'assets/sounds/check_in_failure.wav';
+
+  /// File path: assets/sounds/check_in_near_expiry.wav
+  String get checkInNearExpiry => 'assets/sounds/check_in_near_expiry.wav';
+
+  /// File path: assets/sounds/check_in_success.wav
+  String get checkInSuccess => 'assets/sounds/check_in_success.wav';
+
+  /// List of all assets
+  List<String> get values => [
+    checkInFailure,
+    checkInNearExpiry,
+    checkInSuccess,
+  ];
+}
+
 class Assets {
   const Assets._();
 
   static const $AssetsIconsGen icons = $AssetsIconsGen();
+  static const $AssetsSoundsGen sounds = $AssetsSoundsGen();
 }
 
 class AssetGenImage {
