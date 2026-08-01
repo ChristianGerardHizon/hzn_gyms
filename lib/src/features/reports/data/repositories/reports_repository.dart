@@ -195,8 +195,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
         grain: grain,
       );
 
-      final completedSaleIds = leanRows
-          .where((r) => r.status == 'completed')
+      final reportableSaleIds = leanRows
+          .where((r) => isReportableSaleStatus(r.status))
           .map((r) => r.saleId)
           .toSet();
 
@@ -213,7 +213,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final topProducts =
           aggregateTopSellingItems(
                 itemRows
-                    .where((i) => completedSaleIds.contains(i.saleId))
+                    .where((i) => reportableSaleIds.contains(i.saleId))
                     .map(
                       (i) => (
                         name: i.name,
@@ -238,7 +238,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         itemRows.map(
           (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: i.subtotal),
         ),
-        completedSaleIds,
+        reportableSaleIds,
       );
 
       final avgValue = kpis.transactionCount > 0
@@ -440,98 +440,41 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? branchId,
   }) async {
     return TaskEither.tryCatch(() async {
-      final includeSalesList = period.period == ReportPeriod.day;
-      final salePeriodFilter = PBFilter()
+      // Year / All Time only reach here (Day/Week/Month use the scoped bundle).
+      // Never getFullList every sale in the range — that pages 10k–100k rows and
+      // saturates the API while the summary views are also running.
+      final unpaidFilter = PBFilter()
           .between('created', period.startDate, period.endDate)
+          .isFalse('isPaid')
           .raw(
             "(status = 'completed' || status = 'paid' || "
             "status = 'awaitingPayment' || status = 'pending')",
           );
       if (branchId != null) {
-        salePeriodFilter.relation('branch', branchId);
+        unpaidFilter.relation('branch', branchId);
       }
 
-      final saleRecords = await _sales.getFullList(
-        filter: salePeriodFilter.build(),
-        fields: includeSalesList ? _daySaleListFields : _leanSaleAggFields,
-        sort: includeSalesList ? '-created' : null,
-      );
-
-      if (saleRecords.isEmpty) {
-        return SalesReportExtras.empty;
-      }
-
-      final leanRows = saleRecords.map(
-        (sale) => (
-          status: sale.getStringValue('status'),
-          isPaid: sale.getBoolValue('isPaid'),
-          totalAmount: sale.getDoubleValue('totalAmount'),
-          cashierId: sale.getStringValue('cashier'),
-        ),
+      final unpaidRecords = await _sales.getFullList(
+        filter: unpaidFilter.build(),
+        fields: _leanSaleAggFields,
       );
 
       final unpaid = aggregateUnpaidSales(
-        leanRows.map(
-          (r) =>
-              (status: r.status, isPaid: r.isPaid, totalAmount: r.totalAmount),
-        ),
-      );
-
-      final cashierIds = leanRows
-          .map((r) => r.cashierId)
-          .where((id) => id.isNotEmpty)
-          .toSet()
-          .toList();
-      final staffNames = await _fetchUserDisplayNames(cashierIds);
-
-      final staff = aggregateStaffPerformance(
-        leanRows.map(
-          (r) => (
-            status: r.status,
-            cashierId: r.cashierId,
-            totalAmount: r.totalAmount,
+        unpaidRecords.map(
+          (sale) => (
+            status: sale.getStringValue('status'),
+            isPaid: sale.getBoolValue('isPaid'),
+            totalAmount: sale.getDoubleValue('totalAmount'),
           ),
         ),
-        staffNames: staffNames,
       );
-
-      final periodSales = includeSalesList
-          ? saleRecords
-                .map((record) => SaleDto.fromRecord(record).toEntity())
-                .toList()
-          : const <Sale>[];
-
-      ({num totalRevenue, int transactionCount})? dayKpiOverride;
-      if (includeSalesList) {
-        final dayKpis = daySalesKpisFromSales(
-          leanRows.map(
-            (r) => (
-              status: r.status,
-              isPaid: r.isPaid,
-              totalAmount: r.totalAmount,
-            ),
-          ),
-        );
-        if (dayKpis.transactionCount > 0) {
-          dayKpiOverride = dayKpis;
-        }
-      }
 
       return SalesReportExtras(
         unpaidSalesCount: unpaid.unpaidCount,
         unpaidBalance: unpaid.unpaidBalance,
-        staffPerformance: staff
-            .map(
-              (e) => StaffSalesSummary(
-                staffId: e.staffId,
-                staffName: e.staffName,
-                transactionCount: e.transactionCount,
-                revenue: e.revenue,
-              ),
-            )
-            .toList(),
-        sales: periodSales,
-        dayKpiOverride: dayKpiOverride,
+        // Staff needs every sale in range; skip on Year/All Time for speed.
+        // Day/Week/Month staff comes from [getScopedSalesReportBundle].
+        staffPerformance: const [],
       );
     }, Failure.handle).run();
   }

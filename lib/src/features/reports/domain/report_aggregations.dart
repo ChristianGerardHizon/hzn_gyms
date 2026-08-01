@@ -236,10 +236,16 @@ String normalizeSalesItemType(String? itemType) {
   return itemType;
 }
 
-/// Whether Day/Week should fetch period-scoped raw rows instead of all-history
-/// SQL views (views re-aggregate the full sales table on every request).
+/// Whether Day/Week/Month should fetch period-scoped raw rows instead of
+/// all-history SQL views.
+///
+/// PocketBase views re-aggregate the full sales table (~100k+ rows) on every
+/// request, then filter — Month is fast when scoped to that month's sales.
+/// Year/All Time stay on views (scoped fetch of 10k–100k rows is slower).
 bool usesPeriodScopedSalesFetch(ReportPeriod period) =>
-    period == ReportPeriod.day || period == ReportPeriod.weekly;
+    period == ReportPeriod.day ||
+    period == ReportPeriod.weekly ||
+    period == ReportPeriod.monthly;
 
 /// Derives Day-period revenue KPIs from raw sales when the summary view is empty.
 ///
@@ -252,7 +258,7 @@ bool usesPeriodScopedSalesFetch(ReportPeriod period) =>
   var transactionCount = 0;
   for (final sale in sales) {
     if (sale.status == 'voided' || sale.status == 'refunded') continue;
-    if (sale.status != 'completed' && sale.status != 'paid') continue;
+    if (!isReportableSaleStatus(sale.status)) continue;
     transactionCount++;
     if (sale.isPaid) totalRevenue += sale.totalAmount.toDouble();
   }
@@ -265,10 +271,17 @@ num netPaymentAmount({required String type, required num amount}) {
   return amount;
 }
 
-/// Builds Day/Week KPIs from period-scoped sales + payments (completed only).
+/// Whether a sale status counts toward Day/Week revenue KPIs and charts.
+///
+/// Checkout marks fully paid sales as `paid`; older rows may still be
+/// `completed`. Both are included so reports match the sales list.
+bool isReportableSaleStatus(String status) =>
+    status == 'completed' || status == 'paid';
+
+/// Builds Day/Week KPIs from period-scoped sales + payments.
 ///
 /// Revenue and payment-method totals come from payment rows linked to
-/// `completed` sales. Transaction count is distinct completed sale IDs.
+/// `completed`/`paid` sales. Transaction count is distinct reportable sale IDs.
 /// Trend buckets use each sale's local [created] date.
 ({
   num totalRevenue,
@@ -286,7 +299,7 @@ aggregateScopedSalesPayments({
 }) {
   final completedCreated = <String, DateTime>{};
   for (final sale in sales) {
-    if (sale.status != 'completed') continue;
+    if (!isReportableSaleStatus(sale.status)) continue;
     final created = sale.created;
     if (created == null) continue;
     completedCreated[sale.saleId] = created;
@@ -326,7 +339,7 @@ aggregateScopedSalesPayments({
     }
   }
 
-  // Match view semantics: count every completed sale, even with no payments.
+  // Match view semantics: count every reportable sale, even with no payments.
   return (
     totalRevenue: totalRevenue,
     transactionCount: completedCreated.length,
@@ -335,14 +348,14 @@ aggregateScopedSalesPayments({
   );
 }
 
-/// Item-type revenue from period-scoped sale lines on completed sales.
+/// Item-type revenue from period-scoped sale lines on reportable sales.
 Map<String, num> aggregateScopedRevenueByItemType(
   Iterable<({String saleId, String? itemType, num subtotal})> items,
-  Set<String> completedSaleIds,
+  Set<String> reportableSaleIds,
 ) {
   return aggregateRevenueByItemType(
     items
-        .where((i) => completedSaleIds.contains(i.saleId))
+        .where((i) => reportableSaleIds.contains(i.saleId))
         .map((i) => (itemType: i.itemType, subtotal: i.subtotal)),
   );
 }
@@ -649,10 +662,10 @@ revenueByItemTypeViewFor(ReportPeriod period) {
       );
     case ReportPeriod.yearly:
       return (
-        collection: 'vw_revenue_by_item_type_monthly',
-        dateField: 'sale_month',
-        asMonth: true,
-        asYear: false,
+        collection: 'vw_revenue_by_item_type_yearly',
+        dateField: 'sale_year',
+        asMonth: false,
+        asYear: true,
       );
     case ReportPeriod.allTime:
       return (
@@ -676,13 +689,13 @@ topSellingViewFor(ReportPeriod period) {
         asYear: false,
       );
     case ReportPeriod.monthly:
-    case ReportPeriod.yearly:
       return (
         collection: 'vw_top_selling_products_monthly',
         dateField: 'sale_month',
         asMonth: true,
         asYear: false,
       );
+    case ReportPeriod.yearly:
     case ReportPeriod.allTime:
       return (
         collection: 'vw_top_selling_products_yearly',

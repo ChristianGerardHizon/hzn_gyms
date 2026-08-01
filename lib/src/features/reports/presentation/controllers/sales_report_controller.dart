@@ -8,7 +8,7 @@ import 'report_period_controller.dart';
 
 part 'sales_report_controller.g.dart';
 
-/// Shared Day/Week fetch so KPIs and extras do not download sales twice.
+/// Shared Day/Week/Month fetch so KPIs and extras do not download sales twice.
 @Riverpod(keepAlive: true)
 Future<ScopedSalesReportBundle?> scopedSalesReportBundle(Ref ref) async {
   final period = ref.watch(reportPeriodControllerProvider);
@@ -25,7 +25,7 @@ Future<ScopedSalesReportBundle?> scopedSalesReportBundle(Ref ref) async {
 
 /// Sales KPIs and charts.
 ///
-/// Day/Week use period-scoped raw rows; longer periods use SQL views.
+/// Day/Week/Month use period-scoped raw rows; Year/All Time use SQL views.
 @Riverpod(keepAlive: true)
 Future<SalesReport> salesReport(Ref ref) async {
   final period = ref.watch(reportPeriodControllerProvider);
@@ -45,8 +45,8 @@ Future<SalesReport> salesReport(Ref ref) async {
 
 /// Unpaid / staff / Day list.
 ///
-/// Day/Week reuse [scopedSalesReportBundleProvider]; longer periods fetch lean
-/// sales separately after the view-based KPIs.
+/// Day/Week/Month reuse [scopedSalesReportBundleProvider]; Year/All Time fetch
+/// unpaid rows only (full-period sales download is too expensive).
 @Riverpod(keepAlive: true)
 Future<SalesReportExtras> salesReportExtras(Ref ref) async {
   final period = ref.watch(reportPeriodControllerProvider);

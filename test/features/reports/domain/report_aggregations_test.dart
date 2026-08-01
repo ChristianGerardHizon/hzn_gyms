@@ -241,6 +241,19 @@ void main() {
         'vw_sales_yearly_summary',
       );
     });
+
+    test('yearly charts use yearly views not monthly', () {
+      expect(
+        revenueByItemTypeViewFor(ReportPeriod.yearly).collection,
+        'vw_revenue_by_item_type_yearly',
+      );
+      expect(revenueByItemTypeViewFor(ReportPeriod.yearly).asYear, isTrue);
+      expect(
+        topSellingViewFor(ReportPeriod.yearly).collection,
+        'vw_top_selling_products_yearly',
+      );
+      expect(topSellingViewFor(ReportPeriod.yearly).asYear, isTrue);
+    });
   });
 
   group('aggregateRevenueByItemType', () {
@@ -268,10 +281,10 @@ void main() {
   });
 
   group('usesPeriodScopedSalesFetch', () {
-    test('is true for day and week only', () {
+    test('is true for day, week, and month', () {
       expect(usesPeriodScopedSalesFetch(ReportPeriod.day), isTrue);
       expect(usesPeriodScopedSalesFetch(ReportPeriod.weekly), isTrue);
-      expect(usesPeriodScopedSalesFetch(ReportPeriod.monthly), isFalse);
+      expect(usesPeriodScopedSalesFetch(ReportPeriod.monthly), isTrue);
       expect(usesPeriodScopedSalesFetch(ReportPeriod.yearly), isFalse);
       expect(usesPeriodScopedSalesFetch(ReportPeriod.allTime), isFalse);
     });
@@ -283,6 +296,16 @@ void main() {
       expect(netPaymentAmount(type: 'deposit', amount: 50), 50);
       expect(netPaymentAmount(type: 'refund', amount: 25), -25);
       expect(netPaymentAmount(type: 'Refund', amount: 10), -10);
+    });
+  });
+
+  group('isReportableSaleStatus', () {
+    test('includes completed and paid only', () {
+      expect(isReportableSaleStatus('completed'), isTrue);
+      expect(isReportableSaleStatus('paid'), isTrue);
+      expect(isReportableSaleStatus('pending'), isFalse);
+      expect(isReportableSaleStatus('awaitingPayment'), isFalse);
+      expect(isReportableSaleStatus('voided'), isFalse);
     });
   });
 
@@ -310,6 +333,25 @@ void main() {
       expect(result.revenueByPaymentMethod['cash'], 80);
       expect(result.revenueByPaymentMethod['card'], 50);
       expect(result.revenueByBucket[DateTime(2026, 8, 1)], 130);
+    });
+
+    test('includes paid status sales from checkout', () {
+      final day = DateTime(2026, 8, 1, 3, 56);
+      final result = aggregateScopedSalesPayments(
+        sales: [
+          (saleId: 's1', status: 'paid', created: day),
+          (saleId: 's2', status: 'awaitingPayment', created: day),
+        ],
+        payments: [
+          (saleId: 's1', paymentMethod: 'cash', type: 'payment', amount: 800),
+          (saleId: 's2', paymentMethod: 'cash', type: 'payment', amount: 100),
+        ],
+        grain: TrendGranularity.day,
+      );
+
+      expect(result.transactionCount, 1);
+      expect(result.totalRevenue, 800);
+      expect(result.revenueByPaymentMethod['cash'], 800);
     });
 
     test('counts completed sales with no payments', () {
