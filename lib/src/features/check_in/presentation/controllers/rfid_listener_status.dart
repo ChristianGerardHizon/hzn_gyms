@@ -2,22 +2,27 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'rfid_listener_status.g.dart';
 
-/// Whether the global RFID keyboard-wedge listener is active.
+/// Whether Check-In RFID keyboard-wedge scanning is active.
 enum RfidListenerStatus {
+  /// Check-In page not mounted (or listener disposed).
+  off,
+
   /// Hardware keyboard handler is registered and accepting scans.
   listening,
 
-  /// Listener is inactive (web, not mounted, or failed to attach).
-  unavailable,
+  /// Check-In is open but the app/window lacks OS focus — scans paused.
+  paused,
 }
 
-/// Exposes RFID listener availability for the nav status icon.
+/// Exposes RFID listener state for the Check-In app bar indicator.
 @Riverpod(keepAlive: true)
 class RfidListenerStatusController extends _$RfidListenerStatusController {
   @override
-  RfidListenerStatus build() => RfidListenerStatus.unavailable;
+  RfidListenerStatus build() => RfidListenerStatus.off;
 
-  void setListening() => state = RfidListenerStatus.listening;
+  void enable() => state = RfidListenerStatus.listening;
 
-  void setUnavailable() => state = RfidListenerStatus.unavailable;
+  void pause() => state = RfidListenerStatus.paused;
+
+  void disable() => state = RfidListenerStatus.off;
 }

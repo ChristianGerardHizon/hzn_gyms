@@ -42,6 +42,7 @@ class FormDialogScaffold extends StatelessWidget {
     required this.child,
     this.initialValue,
     this.isSaving = false,
+    this.saveEnabled = true,
     this.saveLabel,
     this.cancelLabel,
     this.showCancelButton = true,
@@ -77,6 +78,9 @@ class FormDialogScaffold extends StatelessWidget {
   /// Whether a save operation is in progress.
   final bool isSaving;
 
+  /// Whether the save button is enabled (when not saving).
+  final bool saveEnabled;
+
   /// Custom label for the save button.
   final String? saveLabel;
 
@@ -110,6 +114,7 @@ class FormDialogScaffold extends StatelessWidget {
     final header = FormDialogHeader(
       title: title,
       isSaving: isSaving,
+      saveEnabled: saveEnabled,
       onClose: () async {
         if (await dirtyGuard.confirmDiscard(context)) {
           if (context.mounted) Navigator.of(context).pop();

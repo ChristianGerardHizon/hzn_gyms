@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
-import '../../features/check_in/presentation/controllers/rfid_listener_status.dart';
-import '../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
@@ -46,15 +44,9 @@ class MobileDrawer extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Assets.icons.appIconTransparent.image(
-                    width: 48,
-                    height: 48,
-                  ),
+                  Assets.icons.appIconTransparent.image(width: 48, height: 48),
                   const SizedBox(height: 8),
-                  Text(
-                    'Ebe Gym',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('Ebe Gym', style: theme.textTheme.titleLarge),
                   Text(
                     'Gym Management System',
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -91,17 +83,6 @@ class MobileDrawer extends ConsumerWidget {
               ),
             ],
             const Divider(),
-            ListTile(
-              leading: const RfidListenerStatusIcon(),
-              title: const Text('RFID scanner'),
-              subtitle: Text(
-                ref.watch(rfidListenerStatusControllerProvider) ==
-                        RfidListenerStatus.listening
-                    ? 'Listening'
-                    : 'Unavailable',
-              ),
-              dense: true,
-            ),
             _DrawerItem(
               icon: Icons.logout,
               label: t.auth.logoutButton,

@@ -14,6 +14,7 @@ import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/sync/outbox_service.dart';
 import '../../../../core/sync/sync_status.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/search_tokens.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/member.dart';
 import '../dto/member_dto.dart';
@@ -119,7 +120,7 @@ class MemberRepositoryImpl implements MemberRepository {
     bool includeAddedBy = true,
   }) {
     return {
-      'name': member.name,
+      'name': formatPersonName(member.name),
       'mobileNumber': member.mobileNumber,
       'dateOfBirth': member.dateOfBirth?.toUtcIso8601(),
       'address': member.address,

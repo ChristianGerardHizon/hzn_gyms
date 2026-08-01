@@ -4656,7 +4656,7 @@
         ],
         "indexes": [],
         "system": false,
-        "viewQuery": "SELECT\n  (ROW_NUMBER() OVER()) AS id,\n  s.branch,\n  COUNT(*) AS transaction_count,\n  COALESCE(SUM(s.totalAmount), 0) AS total_revenue\nFROM sales s\nWHERE DATE(s.created) = DATE('now')\n  AND s.status = 'completed'\n  AND (s.isDeleted = false OR s.isDeleted IS NULL)\nGROUP BY s.branch"
+        "viewQuery": "SELECT\n  (ROW_NUMBER() OVER()) AS id,\n  s.branch,\n  COUNT(*) AS transaction_count,\n  COALESCE(SUM(s.totalAmount), 0) AS total_revenue\nFROM sales s\nWHERE s.created >= datetime('now', 'localtime', 'start of day', 'utc')\n  AND s.created < datetime('now', 'localtime', 'start of day', '+1 day', 'utc')\n  AND s.status IN ('completed', 'paid')\n  AND (s.isDeleted = false OR s.isDeleted IS NULL)\nGROUP BY s.branch"
     },
     {
         "id": "pbc_3971230533",

@@ -5,6 +5,16 @@ on:
     types: [ closed ]
     branches: [ "staging", "main" ]
   workflow_dispatch:
+    inputs:
+      version_bump:
+        description: "Version bump (same as PR labels version:patch|minor|major)"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -28,8 +38,9 @@ jobs:
         id: bump_type
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            BUMP="patch"
-            echo "::notice::Manual dispatch — defaulting to patch bump"
+            BUMP="${{ github.event.inputs.version_bump }}"
+            BUMP="${BUMP:-patch}"
+            echo "::notice::Manual dispatch — version bump: $BUMP"
           else
             LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
 
@@ -204,28 +215,13 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy web build to staging server
+      - name: Deploy to staging server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          rsync -avz --delete \
-            build/web/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/pocketbase/ebegym-staging/pb_public/
-
-      - name: Deploy migrations to staging server
-        run: |
-          rsync -avz --delete \
-            server/pb_migrations/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/pocketbase/ebegym-staging/pb_migrations/
-
-      - name: Deploy hooks to staging server
-        run: |
-          rsync -avz --delete \
-            server/pb_hooks/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/pocketbase/ebegym-staging/pb_hooks/
-
-      - name: Restart PocketBase staging service
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            'sudo systemctl restart pocketbase_ebegym-staging.service'
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh staging
       # --- SSH DEPLOY END ---
 
       # RELEASE
@@ -253,6 +249,7 @@ jobs:
       major: ${{ steps.calc_prod.outputs.major }}
       minor: ${{ steps.calc_prod.outputs.minor }}
       commit_sha: ${{ steps.get_sha.outputs.sha }}
+      is_minimum_version: ${{ steps.check_min_ver.outputs.is_minimum_version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -303,6 +300,17 @@ jobs:
 
           echo "bump=$BUMP" >> $GITHUB_OUTPUT
           echo "::notice::Version bump type: $BUMP"
+
+      - name: Check minimum version label
+        id: check_min_ver
+        run: |
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          if echo "$LABELS" | grep -q '"minimum version"'; then
+            echo "is_minimum_version=true" >> $GITHUB_OUTPUT
+            echo "::notice::This release will also update the minimum required version"
+          else
+            echo "is_minimum_version=false" >> $GITHUB_OUTPUT
+          fi
 
       # ROBUST VERSION CALCULATION
       - name: Calculate Prod Version
@@ -408,28 +416,13 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy web build to production server
+      - name: Deploy to production server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          rsync -avz --delete \
-            build/web/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/pocketbase/ebegym/pb_public/
-
-      - name: Deploy migrations to production server
-        run: |
-          rsync -avz --delete \
-            server/pb_migrations/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/pocketbase/ebegym/pb_migrations/
-
-      - name: Deploy hooks to production server
-        run: |
-          rsync -avz --delete \
-            server/pb_hooks/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/pocketbase/ebegym/pb_hooks/
-
-      - name: Restart PocketBase production service
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            'sudo systemctl restart pocketbase_ebegym.service'
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh prod
       # --- SSH DEPLOY END ---
 
       # UPLOAD & DEPLOY
@@ -468,12 +461,19 @@ jobs:
           NEW_PATCH: ${{ needs.deploy-production.outputs.new_patch }}
           MAJOR: ${{ needs.deploy-production.outputs.major }}
           MINOR: ${{ needs.deploy-production.outputs.minor }}
+          IS_MIN_VER: ${{ needs.deploy-production.outputs.is_minimum_version }}
           URL: ${{ secrets.VERSION_MANAGER_URL }}
           ID: ${{ secrets.VERSION_COLLECTION_ID }}
           TOKEN: ${{ secrets.PB_TOKEN }}
         run: |
-           PAYLOAD=$(jq -n --argjson major "$MAJOR" --argjson minor "$MINOR" --argjson patch "$NEW_PATCH" \
-             '{major: $major, minor: $minor, patch: $patch}')
+           if [ "$IS_MIN_VER" == "true" ]; then
+             echo "::notice::Updating minimum version to $MAJOR.$MINOR.$NEW_PATCH"
+             PAYLOAD=$(jq -n --argjson major "$MAJOR" --argjson minor "$MINOR" --argjson patch "$NEW_PATCH" \
+               '{major: $major, minor: $minor, patch: $patch, minimumMajor: $major, minimumMinor: $minor, minimumPatch: $patch}')
+           else
+             PAYLOAD=$(jq -n --argjson major "$MAJOR" --argjson minor "$MINOR" --argjson patch "$NEW_PATCH" \
+               '{major: $major, minor: $minor, patch: $patch}')
+           fi
 
            if [ -z "$TOKEN" ]; then
               curl -s -X PATCH "$URL/$ID" -H "Content-Type: application/json" -d "$PAYLOAD"

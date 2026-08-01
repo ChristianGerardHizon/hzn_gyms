@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/utils/search_tokens.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
@@ -120,7 +121,7 @@ class _MemberEditForm extends HookConsumerWidget {
 
       final memberData = Member(
         id: member.id,
-        name: values['name'] as String,
+        name: formatPersonName(values['name'] as String),
         mobileNumber: values['mobileNumber'] as String?,
         email: values['email'] as String?,
         dateOfBirth: values['dateOfBirth'] as DateTime?,
@@ -257,7 +258,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
       final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
       final memberData = Member(
         id: '',
-        name: values['name'] as String,
+        name: formatPersonName(values['name'] as String),
         mobileNumber: values['mobileNumber'] as String?,
         email: values['email'] as String?,
         dateOfBirth: values['dateOfBirth'] as DateTime?,
@@ -807,7 +808,7 @@ class _ReviewStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final values = formKey.currentState?.value ?? {};
-    final name = values['name'] as String? ?? '';
+    final name = formatPersonName(values['name'] as String? ?? '');
     final mobile = values['mobileNumber'] as String?;
     final email = values['email'] as String?;
     final dob = values['dateOfBirth'] as DateTime?;

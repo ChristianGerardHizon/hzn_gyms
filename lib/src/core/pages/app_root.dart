@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../features/check_in/presentation/widgets/global_rfid_listener.dart';
 import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../permissions/current_user_permissions.dart';
@@ -121,44 +120,42 @@ class _AppRootState extends ConsumerState<AppRoot> {
     final location = GoRouterState.of(context).uri.path;
     final selectedIndex = selectedNavIndexForPath(location, destinations);
 
-    return GlobalRfidListener(
-      child: PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, _) async {
-          if (didPop) return;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
 
-          // Check if the router can pop (i.e. we're on a nested page)
-          if (GoRouter.of(context).canPop()) {
-            GoRouter.of(context).pop();
-            return;
-          }
+        // Check if the router can pop (i.e. we're on a nested page)
+        if (GoRouter.of(context).canPop()) {
+          GoRouter.of(context).pop();
+          return;
+        }
 
-          // We're at a root page — confirm exit
-          final shouldExit = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Exit App'),
-              content: const Text('Are you sure you want to close the app?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Exit'),
-                ),
-              ],
-            ),
-          );
-          if (shouldExit ?? false) {
-            SystemNavigator.pop();
-          }
-        },
-        child: isMobile
-            ? _buildMobileLayout(context, destinations, selectedIndex)
-            : _buildTabletLayout(context, destinations, selectedIndex),
-      ),
+        // We're at a root page — confirm exit
+        final shouldExit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Exit App'),
+            content: const Text('Are you sure you want to close the app?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Exit'),
+              ),
+            ],
+          ),
+        );
+        if (shouldExit ?? false) {
+          SystemNavigator.pop();
+        }
+      },
+      child: isMobile
+          ? _buildMobileLayout(context, destinations, selectedIndex)
+          : _buildTabletLayout(context, destinations, selectedIndex),
     );
   }
 

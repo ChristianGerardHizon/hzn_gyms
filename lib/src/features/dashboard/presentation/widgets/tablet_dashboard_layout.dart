@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/scroll_to_top_button.dart';
+import '../../../check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_refresh.dart';
 import 'dashboard_footer.dart';
@@ -88,6 +89,7 @@ class TabletDashboardLayout extends HookConsumerWidget {
                                 ),
                               ),
                               const Spacer(),
+                              const RfidListenerStatusIcon(),
                               IconButton(
                                 icon: const Icon(Icons.refresh),
                                 tooltip: 'Refresh',

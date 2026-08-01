@@ -3,22 +3,31 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../controllers/rfid_listener_status.dart';
 
-/// Compact NFC/RFID status indicator for nav chrome (above logout).
+/// Shows RFID keyboard-wedge listening status (Check-In / Dashboard).
+///
+/// Green while listening; red when paused or off. Tap unfocuses any text
+/// field so the next scan reaches the listener.
 class RfidListenerStatusIcon extends ConsumerWidget {
   const RfidListenerStatusIcon({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(rfidListenerStatusControllerProvider);
-    final isListening = status == RfidListenerStatus.listening;
-    final color = isListening ? Colors.green : Colors.red;
-    final tooltip = isListening
-        ? 'RFID scanner listening'
-        : 'RFID scanner unavailable';
+    final isActive = status == RfidListenerStatus.listening;
 
-    return Tooltip(
-      message: tooltip,
-      child: Icon(Icons.nfc, color: color, size: 22),
+    final tooltip = switch (status) {
+      RfidListenerStatus.listening => 'RFID scanning on',
+      RfidListenerStatus.paused => 'RFID paused — window not in focus',
+      RfidListenerStatus.off => 'RFID scanning off',
+    };
+
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: () {
+        // Unfocus search field so wedge keystrokes reach the listener.
+        FocusManager.instance.primaryFocus?.unfocus();
+      },
+      icon: Icon(Icons.nfc, color: isActive ? Colors.green : Colors.red),
     );
   }
 }

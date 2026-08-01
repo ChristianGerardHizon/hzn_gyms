@@ -53,6 +53,9 @@ class SalesReport with SalesReportMappable {
   final List<StaffSalesSummary> staffPerformance;
 
   /// Individual sales in the selected range (newest first).
+  ///
+  /// Populated for Day period only (list UI / PDF). Longer periods keep this
+  /// empty so report load does not download every transaction.
   final List<Sale> sales;
 
   /// Empty report for initial/error states.
@@ -64,6 +67,71 @@ class SalesReport with SalesReportMappable {
     revenueByPaymentMethod: {},
     topSellingProducts: [],
   );
+
+  /// Merges view-based [core] KPIs/charts with lean [extras] (unpaid, staff, day list).
+  ///
+  /// When core has no transactions and [SalesReportExtras.dayKpiOverride] is set
+  /// (Day fallback), KPI totals come from the override.
+  SalesReport mergeExtras(SalesReportExtras extras) {
+    var totalRevenue = this.totalRevenue;
+    var transactionCount = this.transactionCount;
+    final override = extras.dayKpiOverride;
+    if (transactionCount == 0 &&
+        override != null &&
+        override.transactionCount > 0) {
+      totalRevenue = override.totalRevenue;
+      transactionCount = override.transactionCount;
+    }
+    final avgValue = transactionCount > 0 ? totalRevenue / transactionCount : 0;
+    return copyWith(
+      totalRevenue: totalRevenue,
+      transactionCount: transactionCount,
+      averageTransactionValue: avgValue,
+      unpaidSalesCount: extras.unpaidSalesCount,
+      unpaidBalance: extras.unpaidBalance,
+      staffPerformance: extras.staffPerformance,
+      sales: extras.sales,
+    );
+  }
+}
+
+/// Combined Day/Week sales payload from one period-scoped fetch.
+class ScopedSalesReportBundle {
+  const ScopedSalesReportBundle({required this.report, required this.extras});
+
+  final SalesReport report;
+  final SalesReportExtras extras;
+
+  static const empty = ScopedSalesReportBundle(
+    report: SalesReport.empty,
+    extras: SalesReportExtras.empty,
+  );
+}
+
+/// Secondary sales-report payload loaded after view-based KPIs/charts.
+///
+/// Built from lean `sales` rows (no `expand`) so unpaid / staff / Day list can
+/// progress without blocking the first paint.
+class SalesReportExtras {
+  const SalesReportExtras({
+    this.unpaidSalesCount = 0,
+    this.unpaidBalance = 0,
+    this.staffPerformance = const [],
+    this.sales = const [],
+    this.dayKpiOverride,
+  });
+
+  final int unpaidSalesCount;
+  final num unpaidBalance;
+  final List<StaffSalesSummary> staffPerformance;
+
+  /// Day-period transaction list only; empty for longer periods.
+  final List<Sale> sales;
+
+  /// Optional Day KPI fallback when the summary view returned no rows.
+  final ({num totalRevenue, int transactionCount})? dayKpiOverride;
+
+  static const empty = SalesReportExtras();
 }
 
 /// Summary of a top-selling sale line (product, membership, walk-in, add-on).

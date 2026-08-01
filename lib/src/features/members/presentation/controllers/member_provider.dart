@@ -15,10 +15,17 @@ Future<Member?> member(Ref ref, String id) async {
   final cached = await localDataSource.getMemberById(id);
   if (cached != null) {
     // Revalidate in the background without blocking the cached result.
+    // Rebuild only when the refreshed cache differs, otherwise every rebuild
+    // would schedule another fetch and invalidate itself in an endless loop.
     Future(() async {
-      final result = await repository.fetchOne(id);
+      await repository.fetchOne(id);
       if (!ref.mounted) return;
-      result.fold((_) => null, (_) => ref.invalidateSelf());
+
+      final refreshed = await localDataSource.getMemberById(id);
+      if (!ref.mounted) return;
+      if (refreshed != null && refreshed != cached) {
+        ref.invalidateSelf();
+      }
     });
     return cached;
   }

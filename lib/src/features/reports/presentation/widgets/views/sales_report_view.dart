@@ -28,15 +28,30 @@ class SalesReportView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(salesReportProvider);
+    final extrasAsync = ref.watch(salesReportExtrasProvider);
     final period = ref.watch(reportPeriodControllerProvider);
 
     return reportAsync.when(
-      data: (report) => _buildContent(context, report, period),
+      data: (core) {
+        final extras = extrasAsync.value ?? SalesReportExtras.empty;
+        final report = core.mergeExtras(extras);
+        final extrasLoading = extrasAsync.isLoading;
+        return _buildContent(
+          context,
+          report,
+          period,
+          extrasLoading: extrasLoading,
+        );
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => ErrorState.fromError(
         error,
         compact: true,
-        onRetry: () => ref.invalidate(salesReportProvider),
+        onRetry: () {
+          ref.invalidate(scopedSalesReportBundleProvider);
+          ref.invalidate(salesReportProvider);
+          ref.invalidate(salesReportExtrasProvider);
+        },
       ),
     );
   }
@@ -44,8 +59,9 @@ class SalesReportView extends ConsumerWidget {
   Widget _buildContent(
     BuildContext context,
     SalesReport report,
-    ReportPeriodSelection period,
-  ) {
+    ReportPeriodSelection period, {
+    required bool extrasLoading,
+  }) {
     final itemTypeData = Map.fromEntries(
       report.revenueByItemType.entries.map(
         (e) => MapEntry(itemTypeLabel(e.key), e.value),
@@ -59,7 +75,7 @@ class SalesReportView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildKpiSection(context, report),
+          _buildKpiSection(context, report, extrasLoading: extrasLoading),
           if (showTrend) ...[
             const SizedBox(height: 24),
             Card(
@@ -155,20 +171,24 @@ class SalesReportView extends ConsumerWidget {
           ),
           if (showSalesList) ...[
             const SizedBox(height: 24),
-            _buildSalesList(context, report.sales),
+            _buildSalesList(context, report.sales, loading: extrasLoading),
           ],
           const SizedBox(height: 24),
           _buildTopProductsTable(context, report),
-          if (report.staffPerformance.isNotEmpty) ...[
+          if (extrasLoading || report.staffPerformance.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _buildStaffTable(context, report),
+            _buildStaffTable(context, report, loading: extrasLoading),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildKpiSection(BuildContext context, SalesReport report) {
+  Widget _buildKpiSection(
+    BuildContext context,
+    SalesReport report, {
+    required bool extrasLoading,
+  }) {
     return ReportKpiGrid(
       crossAxisCount: 3,
       children: [
@@ -196,14 +216,16 @@ class SalesReportView extends ConsumerWidget {
         ),
         ReportKpiCard(
           title: 'Unpaid Sales',
-          value: report.unpaidSalesCount.toString(),
+          value: extrasLoading ? '…' : report.unpaidSalesCount.toString(),
           icon: Icons.money_off_outlined,
           color: Colors.red,
           subtitle: 'Accounts receivable',
         ),
         ReportKpiCard(
           title: 'Unpaid Balance',
-          value: _currencyFormat.format(report.unpaidBalance),
+          value: extrasLoading
+              ? '…'
+              : _currencyFormat.format(report.unpaidBalance),
           icon: Icons.account_balance_wallet_outlined,
           color: Colors.deepOrange,
           subtitle: 'Outstanding total',
@@ -212,7 +234,11 @@ class SalesReportView extends ConsumerWidget {
     );
   }
 
-  Widget _buildSalesList(BuildContext context, List<Sale> sales) {
+  Widget _buildSalesList(
+    BuildContext context,
+    List<Sale> sales, {
+    required bool loading,
+  }) {
     final theme = Theme.of(context);
     const title = 'Sales';
 
@@ -225,16 +251,28 @@ class SalesReportView extends ConsumerWidget {
             Row(
               children: [
                 Expanded(child: Text(title, style: theme.textTheme.titleSmall)),
-                Text(
-                  '${sales.length}',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                if (loading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  Text(
+                    '${sales.length}',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: 8),
-            if (sales.isEmpty)
+            if (loading && sales.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (sales.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Center(
@@ -308,7 +346,11 @@ class SalesReportView extends ConsumerWidget {
     );
   }
 
-  Widget _buildStaffTable(BuildContext context, SalesReport report) {
+  Widget _buildStaffTable(
+    BuildContext context,
+    SalesReport report, {
+    required bool loading,
+  }) {
     final theme = Theme.of(context);
 
     return Card(
@@ -317,27 +359,48 @@ class SalesReportView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Staff Performance', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 16),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('Staff')),
-                  DataColumn(label: Text('Transactions'), numeric: true),
-                  DataColumn(label: Text('Revenue'), numeric: true),
-                ],
-                rows: report.staffPerformance.map((staff) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(staff.staffName)),
-                      DataCell(Text(staff.transactionCount.toString())),
-                      DataCell(Text(_currencyFormat.format(staff.revenue))),
-                    ],
-                  );
-                }).toList(),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Staff Performance',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                ),
+                if (loading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
             ),
+            const SizedBox(height: 16),
+            if (loading && report.staffPerformance.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: const [
+                    DataColumn(label: Text('Staff')),
+                    DataColumn(label: Text('Transactions'), numeric: true),
+                    DataColumn(label: Text('Revenue'), numeric: true),
+                  ],
+                  rows: report.staffPerformance.map((staff) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(staff.staffName)),
+                        DataCell(Text(staff.transactionCount.toString())),
+                        DataCell(Text(_currencyFormat.format(staff.revenue))),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
           ],
         ),
       ),

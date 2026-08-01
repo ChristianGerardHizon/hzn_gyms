@@ -45,7 +45,7 @@ final class ReportPeriodControllerProvider
 }
 
 String _$reportPeriodControllerHash() =>
-    r'2315e3ce95f4cc24c3054be8ff0ad0efb7e02c12';
+    r'eb777be755ad216e6a8be060088264655fcc5be5';
 
 /// Manages the selected report period grain and start/end range.
 

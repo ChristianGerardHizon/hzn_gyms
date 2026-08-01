@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../features/check_in/presentation/pages/check_in_page.dart';
+import '../../../features/check_in/presentation/pages/check_in_records_page.dart';
 
 part 'check_in.routes.g.dart';
 
-/// Check-in page route.
-@TypedGoRoute<CheckInRoute>(path: CheckInRoute.path)
+/// Check-in page route, with records nested underneath.
+@TypedGoRoute<CheckInRoute>(
+  path: CheckInRoute.path,
+  routes: [
+    TypedGoRoute<CheckInRecordsRoute>(path: 'records'),
+  ],
+)
 class CheckInRoute extends GoRouteData with $CheckInRoute {
   const CheckInRoute();
 
@@ -15,5 +21,18 @@ class CheckInRoute extends GoRouteData with $CheckInRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const CheckInPage();
+  }
+}
+
+/// Check-in records (history by date) route — nested under [CheckInRoute].
+class CheckInRecordsRoute extends GoRouteData with $CheckInRecordsRoute {
+  const CheckInRecordsRoute();
+
+  /// Full path for deep links and permission checks.
+  static const path = '/check-in/records';
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CheckInRecordsPage();
   }
 }

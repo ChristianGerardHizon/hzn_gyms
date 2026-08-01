@@ -28,8 +28,23 @@ abstract class CheckInRepository {
   /// Fetches today's check-ins for a branch, or all branches when [branchId] is null.
   FutureEither<List<CheckIn>> fetchTodaysCheckIns(String? branchId);
 
+  /// Fetches check-ins for a local calendar [date], optionally scoped to [branchId].
+  FutureEither<List<CheckIn>> fetchByDate({
+    required DateTime date,
+    String? branchId,
+  });
+
   /// Fetches check-ins for a specific member.
   FutureEither<List<CheckIn>> fetchByMember(String memberId);
+
+  /// Subscribes to check-in create/update/delete events.
+  ///
+  /// When [branchId] is set, only that branch's records are streamed.
+  /// Call the returned [UnsubscribeFunc] to tear down the listener.
+  Future<UnsubscribeFunc> subscribeCheckIns({
+    String? branchId,
+    required void Function(RecordSubscriptionEvent event) onEvent,
+  });
 
   /// Invalidates the cache.
   void invalidateCache();
@@ -107,9 +122,28 @@ class CheckInRepositoryImpl implements CheckInRepository {
       return Right(_cachedTodaysCheckIns!);
     }
 
+    final result = await fetchByDate(date: DateTime.now(), branchId: branchId);
+
+    return result.map((checkIns) {
+      _cachedTodaysCheckIns = checkIns;
+      _cacheTimestamp = DateTime.now();
+      _cachedBranchId = cacheKey;
+      return checkIns;
+    });
+  }
+
+  @override
+  FutureEither<List<CheckIn>> fetchByDate({
+    required DateTime date,
+    String? branchId,
+  }) async {
     return TaskEither.tryCatch(() async {
-      final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day);
+      final localDate = toLocalDateOnly(date);
+      final startOfDay = DateTime(
+        localDate.year,
+        localDate.month,
+        localDate.day,
+      );
       final endOfDay = startOfDay.add(const Duration(days: 1));
 
       var filter = PBFilter()
@@ -125,13 +159,7 @@ class CheckInRepositoryImpl implements CheckInRepository {
         expand: 'member',
       );
 
-      final checkIns = records.map(_toEntity).toList();
-
-      _cachedTodaysCheckIns = checkIns;
-      _cacheTimestamp = DateTime.now();
-      _cachedBranchId = cacheKey;
-
-      return checkIns;
+      return records.map(_toEntity).toList();
     }, Failure.handle).run();
   }
 
@@ -148,5 +176,21 @@ class CheckInRepositoryImpl implements CheckInRepository {
 
       return records.map(_toEntity).toList();
     }, Failure.handle).run();
+  }
+
+  @override
+  Future<UnsubscribeFunc> subscribeCheckIns({
+    String? branchId,
+    required void Function(RecordSubscriptionEvent event) onEvent,
+  }) {
+    final filter = branchId != null && branchId.isNotEmpty
+        ? PBFilter().relation('branch', branchId).build()
+        : null;
+
+    return _collection.subscribe(
+      '*',
+      onEvent,
+      filter: filter,
+    );
   }
 }

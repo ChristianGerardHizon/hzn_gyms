@@ -3,6 +3,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../features/check_in/presentation/widgets/check_in_rfid_listener.dart';
+import '../../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../../features/dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../features/dashboard/presentation/widgets/dashboard_members_section.dart';
 import '../../../features/dashboard/presentation/widgets/inventory_alerts_section.dart';
@@ -37,6 +39,9 @@ class DashboardRoute extends GoRouteData with $DashboardRoute {
 ///
 /// On tablet: Shows single-pane overview layout
 /// On mobile: Shows single-column list
+///
+/// Also hosts the HID RFID keyboard-wedge listener so desk scans work from
+/// the home screen (same as Check-In).
 class DashboardPage extends HookConsumerWidget {
   const DashboardPage({super.key});
 
@@ -49,97 +54,103 @@ class DashboardPage extends HookConsumerWidget {
 
     // Hide stale KPIs / members while switching branch (not on first resolve).
     if (branchAsync.isLoading && branchAsync.hasValue) {
-      return const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Switching branch...'),
-            ],
+      return const CheckInRfidListener(
+        child: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Switching branch...'),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (isTablet) {
-      return const Scaffold(
-        body: TabletDashboardLayout(),
+      return const CheckInRfidListener(
+        child: Scaffold(
+          body: TabletDashboardLayout(),
+        ),
       );
     }
 
     // Mobile: CustomScrollView so the members grid is virtualized
-    return Scaffold(
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: () => refreshDashboard(ref),
-            child: CustomScrollView(
-              controller: scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // Header + KPI + Quick Actions + Recent Transactions
-                // Keyed so scroll-to-top shows after this block scrolls away.
-                SliverToBoxAdapter(
-                  child: NotificationListener<SizeChangedLayoutNotification>(
-                    onNotification: (_) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (scrollController.hasClients) {
-                          scrollController.position.notifyListeners();
-                        }
-                      });
-                      return true;
-                    },
-                    child: SizeChangedLayoutNotifier(
-                      child: Padding(
-                        key: overviewKey,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _MobileDashboardHeader(),
-                            SizedBox(height: 16),
-                            KpiSummarySection(),
-                            SizedBox(height: 20),
-                            QuickActionsSection(),
-                            SizedBox(height: 24),
-                            RecentTransactionsSection(),
-                            SizedBox(height: 24),
-                          ],
+    return CheckInRfidListener(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () => refreshDashboard(ref),
+              child: CustomScrollView(
+                controller: scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // Header + KPI + Quick Actions + Recent Transactions
+                  // Keyed so scroll-to-top shows after this block scrolls away.
+                  SliverToBoxAdapter(
+                    child: NotificationListener<SizeChangedLayoutNotification>(
+                      onNotification: (_) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (scrollController.hasClients) {
+                            scrollController.position.notifyListeners();
+                          }
+                        });
+                        return true;
+                      },
+                      child: SizeChangedLayoutNotifier(
+                        child: Padding(
+                          key: overviewKey,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _MobileDashboardHeader(),
+                              SizedBox(height: 16),
+                              KpiSummarySection(),
+                              SizedBox(height: 20),
+                              QuickActionsSection(),
+                              SizedBox(height: 24),
+                              RecentTransactionsSection(),
+                              SizedBox(height: 24),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                // Members Section (virtualized slivers)
-                const DashboardMembersSection(),
+                  // Members Section (virtualized slivers)
+                  const DashboardMembersSection(),
 
-                // Inventory Alerts + Footer
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        SizedBox(height: 24),
-                        InventoryAlertsSection(),
-                        SizedBox(height: 24),
-                        DashboardFooter(),
-                        SizedBox(height: 16),
-                      ],
+                  // Inventory Alerts + Footer
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          SizedBox(height: 24),
+                          InventoryAlertsSection(),
+                          SizedBox(height: 24),
+                          DashboardFooter(),
+                          SizedBox(height: 16),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          ScrollToTopButton(
-            scrollController: scrollController,
-            anchorKey: overviewKey,
-          ),
-        ],
+            ScrollToTopButton(
+              scrollController: scrollController,
+              anchorKey: overviewKey,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -178,6 +189,7 @@ class _MobileDashboardHeader extends ConsumerWidget {
                 ),
               ),
               const Spacer(),
+              const RfidListenerStatusIcon(),
               IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh',

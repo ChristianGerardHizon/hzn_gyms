@@ -52,6 +52,9 @@ DateTime endOfYear(DateTime date) =>
     DateTime(date.year, 12, 31, 23, 59, 59, 999);
 
 /// Builds a PocketBase filter for a date-like view field.
+///
+/// Year fields (`sale_year`, `checkin_year`) are JSON numbers from
+/// `strftime('%Y', …)` — compare without quotes. Month/day keys are strings.
 String? buildViewDateRangeFilter({
   required String field,
   required DateTime startDate,
@@ -60,19 +63,21 @@ String? buildViewDateRangeFilter({
   bool asMonth = false,
   bool asYear = false,
 }) {
-  final String start;
-  final String end;
+  final List<String> parts;
   if (asYear) {
-    start = formatViewYear(startDate);
-    end = formatViewYear(endDate);
+    // Numeric JSON year — quoted strings match nothing in PocketBase.
+    final start = formatViewYear(startDate);
+    final end = formatViewYear(endDate);
+    parts = <String>['$field >= $start', '$field <= $end'];
   } else if (asMonth) {
-    start = formatViewMonth(startDate);
-    end = formatViewMonth(endDate);
+    final start = formatViewMonth(startDate);
+    final end = formatViewMonth(endDate);
+    parts = <String>["$field >= '$start'", "$field <= '$end'"];
   } else {
-    start = formatViewDate(startDate);
-    end = formatViewDate(endDate);
+    final start = formatViewDate(startDate);
+    final end = formatViewDate(endDate);
+    parts = <String>["$field >= '$start'", "$field <= '$end'"];
   }
-  final parts = <String>["$field >= '$start'", "$field <= '$end'"];
   if (branchId != null && branchId.isNotEmpty) {
     parts.add('branch = "$branchId"');
   }
@@ -231,6 +236,17 @@ String normalizeSalesItemType(String? itemType) {
   return itemType;
 }
 
+/// Whether Day/Week/Month should fetch period-scoped raw rows instead of
+/// all-history SQL views.
+///
+/// PocketBase views re-aggregate the full sales table (~100k+ rows) on every
+/// request, then filter — Month is fast when scoped to that month's sales.
+/// Year/All Time stay on views (scoped fetch of 10k–100k rows is slower).
+bool usesPeriodScopedSalesFetch(ReportPeriod period) =>
+    period == ReportPeriod.day ||
+    period == ReportPeriod.weekly ||
+    period == ReportPeriod.monthly;
+
 /// Derives Day-period revenue KPIs from raw sales when the summary view is empty.
 ///
 /// Counts `completed`/`paid` sales; revenue sums only paid sales so unpaid AR
@@ -242,11 +258,161 @@ String normalizeSalesItemType(String? itemType) {
   var transactionCount = 0;
   for (final sale in sales) {
     if (sale.status == 'voided' || sale.status == 'refunded') continue;
-    if (sale.status != 'completed' && sale.status != 'paid') continue;
+    if (!isReportableSaleStatus(sale.status)) continue;
     transactionCount++;
     if (sale.isPaid) totalRevenue += sale.totalAmount.toDouble();
   }
   return (totalRevenue: totalRevenue, transactionCount: transactionCount);
+}
+
+/// Net payment contribution (refunds subtract), matching POS paid totals.
+num netPaymentAmount({required String type, required num amount}) {
+  if (type.toLowerCase() == 'refund') return -amount;
+  return amount;
+}
+
+/// Whether a sale status counts toward Day/Week revenue KPIs and charts.
+///
+/// Checkout marks fully paid sales as `paid`; older rows may still be
+/// `completed`. Both are included so reports match the sales list.
+bool isReportableSaleStatus(String status) =>
+    status == 'completed' || status == 'paid';
+
+/// Builds Day/Week KPIs from period-scoped sales + payments.
+///
+/// Revenue and payment-method totals come from payment rows linked to
+/// `completed`/`paid` sales. Transaction count is distinct reportable sale IDs.
+/// Trend buckets use each sale's local [created] date.
+({
+  num totalRevenue,
+  int transactionCount,
+  Map<DateTime, num> revenueByBucket,
+  Map<String, num> revenueByPaymentMethod,
+})
+aggregateScopedSalesPayments({
+  required Iterable<({String saleId, String status, DateTime? created})> sales,
+  required Iterable<
+    ({String saleId, String paymentMethod, String type, num amount})
+  >
+  payments,
+  required TrendGranularity grain,
+}) {
+  final completedCreated = <String, DateTime>{};
+  for (final sale in sales) {
+    if (!isReportableSaleStatus(sale.status)) continue;
+    final created = sale.created;
+    if (created == null) continue;
+    completedCreated[sale.saleId] = created;
+  }
+
+  var totalRevenue = 0.0;
+  final revenueByBucket = <DateTime, num>{};
+  final revenueByPaymentMethod = <String, num>{};
+
+  for (final payment in payments) {
+    final created = completedCreated[payment.saleId];
+    if (created == null) continue;
+
+    final net = netPaymentAmount(
+      type: payment.type,
+      amount: payment.amount,
+    ).toDouble();
+    totalRevenue += net;
+
+    final DateTime bucket;
+    switch (grain) {
+      case TrendGranularity.day:
+        bucket = startOfDay(created);
+      case TrendGranularity.week:
+        bucket = startOfWeekMonday(created);
+      case TrendGranularity.month:
+        bucket = startOfMonth(created);
+      case TrendGranularity.year:
+        bucket = DateTime(created.year);
+    }
+    revenueByBucket[bucket] = (revenueByBucket[bucket] ?? 0) + net;
+
+    final method = payment.paymentMethod;
+    if (method.isNotEmpty) {
+      revenueByPaymentMethod[method] =
+          (revenueByPaymentMethod[method] ?? 0) + net;
+    }
+  }
+
+  // Match view semantics: count every reportable sale, even with no payments.
+  return (
+    totalRevenue: totalRevenue,
+    transactionCount: completedCreated.length,
+    revenueByBucket: revenueByBucket,
+    revenueByPaymentMethod: revenueByPaymentMethod,
+  );
+}
+
+/// Item-type revenue from period-scoped sale lines on reportable sales.
+Map<String, num> aggregateScopedRevenueByItemType(
+  Iterable<({String saleId, String? itemType, num subtotal})> items,
+  Set<String> reportableSaleIds,
+) {
+  return aggregateRevenueByItemType(
+    items
+        .where((i) => reportableSaleIds.contains(i.saleId))
+        .map((i) => (itemType: i.itemType, subtotal: i.subtotal)),
+  );
+}
+
+/// Counts unpaid / AR sales (excludes voided and refunded).
+({int unpaidCount, num unpaidBalance}) aggregateUnpaidSales(
+  Iterable<({String status, bool isPaid, num totalAmount})> sales,
+) {
+  var unpaidCount = 0;
+  num unpaidBalance = 0;
+  for (final sale in sales) {
+    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    if (!sale.isPaid && sale.totalAmount > 0) {
+      unpaidCount++;
+      unpaidBalance += sale.totalAmount;
+    }
+  }
+  return (unpaidCount: unpaidCount, unpaidBalance: unpaidBalance);
+}
+
+/// Aggregates cashier performance from lean sale rows.
+///
+/// [staffNames] maps cashier id → display name. Missing names become `Unknown`.
+List<({String staffId, String staffName, int transactionCount, num revenue})>
+aggregateStaffPerformance(
+  Iterable<({String status, String cashierId, num totalAmount})> sales, {
+  Map<String, String> staffNames = const {},
+}) {
+  final staffMap = <String, ({String name, int count, num revenue})>{};
+  for (final sale in sales) {
+    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    final cashierId = sale.cashierId;
+    if (cashierId.isEmpty) continue;
+    final name = staffNames[cashierId] ?? 'Unknown';
+    final amount = sale.totalAmount;
+    final existing = staffMap[cashierId];
+    if (existing != null) {
+      staffMap[cashierId] = (
+        name: existing.name,
+        count: existing.count + 1,
+        revenue: existing.revenue + amount,
+      );
+    } else {
+      staffMap[cashierId] = (name: name, count: 1, revenue: amount);
+    }
+  }
+  return staffMap.entries
+      .map(
+        (e) => (
+          staffId: e.key,
+          staffName: e.value.name,
+          transactionCount: e.value.count,
+          revenue: e.value.revenue,
+        ),
+      )
+      .toList()
+    ..sort((a, b) => b.revenue.compareTo(a.revenue));
 }
 
 /// Aggregates view rows into ranked top-selling items (all sale line types).
@@ -496,10 +662,10 @@ revenueByItemTypeViewFor(ReportPeriod period) {
       );
     case ReportPeriod.yearly:
       return (
-        collection: 'vw_revenue_by_item_type_monthly',
-        dateField: 'sale_month',
-        asMonth: true,
-        asYear: false,
+        collection: 'vw_revenue_by_item_type_yearly',
+        dateField: 'sale_year',
+        asMonth: false,
+        asYear: true,
       );
     case ReportPeriod.allTime:
       return (
@@ -523,13 +689,13 @@ topSellingViewFor(ReportPeriod period) {
         asYear: false,
       );
     case ReportPeriod.monthly:
-    case ReportPeriod.yearly:
       return (
         collection: 'vw_top_selling_products_monthly',
         dateField: 'sale_month',
         asMonth: true,
         asYear: false,
       );
+    case ReportPeriod.yearly:
     case ReportPeriod.allTime:
       return (
         collection: 'vw_top_selling_products_yearly',

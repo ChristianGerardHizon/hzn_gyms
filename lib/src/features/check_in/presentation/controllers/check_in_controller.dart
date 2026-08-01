@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../member_cards/data/repositories/member_card_repository.dart';
@@ -9,24 +12,69 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../data/repositories/check_in_repository.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in.dart';
+import '../../domain/check_in_realtime.dart';
 
 part 'check_in_controller.g.dart';
 
 /// Controller for performing check-ins and managing today's check-in list.
+///
+/// After first open, stays alive for the session and keeps a PocketBase
+/// realtime subscription so other devices' check-ins appear automatically.
 @Riverpod(keepAlive: true)
 class CheckInController extends _$CheckInController {
+  static const _realtimeDebounce = Duration(milliseconds: 250);
+
   CheckInRepository get _repository => ref.read(checkInRepositoryProvider);
 
   @override
   Future<List<CheckIn>> build() async {
     // null branchId = "All branches" (no filter)
     final branchId = ref.watch(currentBranchIdProvider);
+
+    var disposed = false;
+    Timer? debounce;
+    UnsubscribeFunc? unsubscribe;
+
+    ref.onDispose(() {
+      disposed = true;
+      debounce?.cancel();
+      final unsub = unsubscribe;
+      if (unsub != null) {
+        unawaited(unsub());
+      }
+    });
+
+    unawaited(
+      _repository
+          .subscribeCheckIns(
+            branchId: branchId,
+            onEvent: (event) {
+              if (disposed) return;
+              if (!isTodaysCheckInSubscriptionEvent(event)) return;
+
+              debounce?.cancel();
+              debounce = Timer(_realtimeDebounce, () {
+                if (!disposed) {
+                  unawaited(_softRefresh());
+                }
+              });
+            },
+          )
+          .then((unsub) {
+            if (disposed) {
+              unawaited(unsub());
+            } else {
+              unsubscribe = unsub;
+            }
+          }),
+    );
+
     final result = await _repository.fetchTodaysCheckIns(branchId);
 
     return result.fold((failure) => throw failure, (checkIns) => checkIns);
   }
 
-  /// Refreshes today's check-in list.
+  /// Refreshes today's check-in list (shows loading state).
   Future<void> refresh() async {
     _repository.invalidateCache();
     state = const AsyncLoading();
@@ -37,6 +85,18 @@ class CheckInController extends _$CheckInController {
     state = result.fold(
       (failure) => AsyncError(failure, StackTrace.current),
       (checkIns) => AsyncData(checkIns),
+    );
+  }
+
+  /// Soft refresh for realtime events — keeps prior data visible on failure.
+  Future<void> _softRefresh() async {
+    _repository.invalidateCache();
+    final branchId = ref.read(currentBranchIdProvider);
+    final result = await _repository.fetchTodaysCheckIns(branchId);
+
+    result.fold(
+      (_) {},
+      (checkIns) => state = AsyncData(checkIns),
     );
   }
 
@@ -72,9 +132,7 @@ class CheckInController extends _$CheckInController {
   /// Looks up the card in `memberCards` collection first, then falls back
   /// to searching the legacy `rfidCardId` field on members for backward
   /// compatibility.
-  Future<CardCheckInResult> cardCheckIn({
-    required String cardValue,
-  }) async {
+  Future<CardCheckInResult> cardCheckIn({required String cardValue}) async {
     if (ref.read(viewingAllBranchesProvider)) {
       return const CardCheckInNoBranch();
     }
@@ -101,10 +159,7 @@ class CheckInController extends _$CheckInController {
         cardValue,
         fields: ['rfidCardId'],
       );
-      final members = searchResult.fold(
-        (_) => <Member>[],
-        (m) => m,
-      );
+      final members = searchResult.fold((_) => <Member>[], (m) => m);
       if (members.isNotEmpty) {
         final member = members.first;
         memberId = member.id;
@@ -145,15 +200,15 @@ class CheckInController extends _$CheckInController {
       memberMembershipId: activeMembership.id,
     );
 
-    return result.fold(
-      (failure) => const CardCheckInFailed(),
-      (checkIn) {
-        refresh();
-        return CardCheckInSuccess(
-          checkIn: checkIn,
-          memberName: resolvedName,
-        );
-      },
-    );
+    return result.fold((failure) => const CardCheckInFailed(), (checkIn) {
+      refresh();
+      return CardCheckInSuccess(
+        checkIn: checkIn,
+        memberName: resolvedName,
+        membershipName: activeMembership.membershipName,
+        membershipEndDate: activeMembership.endDate,
+        membershipDaysRemaining: activeMembership.daysRemaining,
+      );
+    });
   }
 }

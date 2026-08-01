@@ -47,6 +47,16 @@ class EmptySystemState extends StatelessWidget {
           'Import Products',
           'Import products and categories from a CSV file',
         ),
+      SystemMode.debug => (
+          Icons.bug_report_outlined,
+          'Debug',
+          'Developer tools for testing RFID and other flows',
+        ),
+      SystemMode.activityLog => (
+          Icons.history_outlined,
+          'Select an entry',
+          'Choose an activity log entry to view field changes',
+        ),
     };
 
     return Scaffold(

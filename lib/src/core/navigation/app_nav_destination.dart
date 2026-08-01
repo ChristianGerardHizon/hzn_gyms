@@ -31,10 +31,7 @@ enum AppNavId {
 
 /// A top-level navigation destination with its route path.
 class AppNavDestination {
-  const AppNavDestination({
-    required this.id,
-    required this.path,
-  });
+  const AppNavDestination({required this.id, required this.path});
 
   final AppNavId id;
   final String path;
@@ -63,34 +60,36 @@ const List<AppNavDestination> allAppNavDestinations = [
 List<AppNavDestination> visibleAppNavDestinations(
   CurrentUserPermissions permissions,
 ) {
-  return allAppNavDestinations.where((dest) {
-    switch (dest.id) {
-      case AppNavId.dashboard:
-        return true;
-      case AppNavId.checkIn:
-        return permissions.has(Permissions.checkInsView);
-      case AppNavId.cashier:
-        return permissions.has(Permissions.salesCreate);
-      case AppNavId.sales:
-        return permissions.has(Permissions.salesView);
-      case AppNavId.products:
-        return permissions.has(Permissions.productsView);
-      case AppNavId.members:
-        return permissions.has(Permissions.membersView);
-      case AppNavId.memberships:
-        return permissions.has(Permissions.membershipsView);
-      case AppNavId.reports:
-        return permissions.has(Permissions.reportsView);
-      case AppNavId.organization:
-        return permissions.canManageUsers;
-      case AppNavId.profile:
-        return !permissions.canManageUsers;
-      case AppNavId.outbox:
-        return permissions.canManageSystem;
-      case AppNavId.system:
-        return permissions.canViewSettings;
-    }
-  }).toList(growable: false);
+  return allAppNavDestinations
+      .where((dest) {
+        switch (dest.id) {
+          case AppNavId.dashboard:
+            return true;
+          case AppNavId.checkIn:
+            return permissions.has(Permissions.checkInsView);
+          case AppNavId.cashier:
+            return permissions.has(Permissions.salesCreate);
+          case AppNavId.sales:
+            return permissions.has(Permissions.salesView);
+          case AppNavId.products:
+            return permissions.has(Permissions.productsView);
+          case AppNavId.members:
+            return permissions.has(Permissions.membersView);
+          case AppNavId.memberships:
+            return permissions.has(Permissions.membershipsView);
+          case AppNavId.reports:
+            return permissions.has(Permissions.reportsView);
+          case AppNavId.organization:
+            return permissions.canManageUsers;
+          case AppNavId.profile:
+            return !permissions.canManageUsers;
+          case AppNavId.outbox:
+            return permissions.canManageSystem;
+          case AppNavId.system:
+            return permissions.canViewSettings;
+        }
+      })
+      .toList(growable: false);
 }
 
 /// Maps a location path to an index in [destinations], or 0 (dashboard).
@@ -154,10 +153,13 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   }
   if (matchesRoutePath(location, SystemRoute.path)) {
     if (!permissions.canViewSettings) return false;
-    // Appearance is allowed with settings.view; other system tabs need admin.
+    // Appearance is allowed with settings.view; activity log is admin-only.
     if (location == SystemRoute.path ||
         location.startsWith('${SystemRoute.path}/appearance')) {
       return true;
+    }
+    if (location.startsWith('${SystemRoute.path}/activity-log')) {
+      return permissions.canViewActivityLog;
     }
     return permissions.canManageSystem;
   }

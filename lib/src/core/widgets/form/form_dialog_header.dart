@@ -30,6 +30,7 @@ class FormDialogHeader extends StatelessWidget {
     required this.onClose,
     required this.onSave,
     this.isSaving = false,
+    this.saveEnabled = true,
     this.saveLabel,
     this.cancelLabel,
     this.showCancelButton = true,
@@ -51,6 +52,11 @@ class FormDialogHeader extends StatelessWidget {
   /// Whether a save operation is in progress.
   /// Disables buttons and shows a loading indicator on the save button.
   final bool isSaving;
+
+  /// Whether the save button is enabled (when not saving).
+  ///
+  /// Use `false` while a prerequisite is incomplete (e.g. waiting for a scan).
+  final bool saveEnabled;
 
   /// Custom label for the save button. Defaults to localized "Save".
   final String? saveLabel;
@@ -90,7 +96,9 @@ class FormDialogHeader extends StatelessWidget {
             ),
           ],
           FilledButton(
-            onPressed: isSaving ? null : () => onSave(context),
+            onPressed: isSaving || !saveEnabled
+                ? null
+                : () => onSave(context),
             child: isSaving
                 ? const SizedBox(
                     height: 20,

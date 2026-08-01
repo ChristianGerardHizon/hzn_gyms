@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -12,16 +13,22 @@ import '../../../memberships/data/repositories/member_membership_repository.dart
 import '../../../memberships/domain/member_membership.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
+import '../../domain/check_in_chime.dart';
 import '../controllers/check_in_controller.dart';
+import '../utils/check_in_sound_player.dart';
 import '../widgets/check_in_error_dialog.dart';
+import '../widgets/check_in_rfid_listener.dart';
 import '../widgets/check_in_success_dialog.dart';
 import '../widgets/last_check_in_panel.dart';
 import '../widgets/recent_check_ins_list.dart';
+import '../widgets/rfid_listener_status_icon.dart';
 
 /// Main check-in page.
 ///
 /// Provides:
 /// - Single input for card ID (exact, on submit) or name/mobile search
+/// - HID keyboard-wedge RFID listening while this page is focused (field unfocused)
+/// - Live today's check-ins via PocketBase realtime (multi-device)
 /// - Member card showing name and active membership status
 /// - Check-in button
 /// - Today's recent check-ins list
@@ -41,13 +48,9 @@ class CheckInPage extends HookConsumerWidget {
     final isCheckingIn = useState(false);
     final isCardCheckingIn = useState(false);
 
-    // Keep focus on the input for card scanners.
-    useEffect(() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        inputFocusNode.requestFocus();
-      });
-      return null;
-    }, const []);
+    void readyForNextScan() {
+      inputFocusNode.unfocus();
+    }
 
     Future<void> searchMembers(String query) async {
       if (query.trim().isEmpty) {
@@ -90,7 +93,8 @@ class CheckInPage extends HookConsumerWidget {
       activeMembership.value = null;
       inputController.clear();
       searchResults.value = [];
-      inputFocusNode.requestFocus();
+      // Keep field unfocused so USB RFID wedge keeps auto-listening.
+      inputFocusNode.unfocus();
     }
 
     Future<void> handleCheckIn() async {
@@ -100,6 +104,7 @@ class CheckInPage extends HookConsumerWidget {
       // Block check-in if member has no membership valid at this branch
       if (activeMembership.value == null) {
         if (context.mounted) {
+          CheckInSoundPlayer.play(CheckInChime.failure);
           showErrorSnackBar(
             context,
             message:
@@ -124,19 +129,25 @@ class CheckInPage extends HookConsumerWidget {
 
       if (checkIn != null && context.mounted) {
         // Capture before resetting
-        final hadActiveMembership = activeMembership.value != null;
+        final membership = activeMembership.value;
+        final hadActiveMembership = membership != null;
+        final checkedInMemberName = member.name;
 
         clearSelection();
 
         await showCheckInSuccessDialog(
           context,
-          memberName: member.name,
+          memberName: checkedInMemberName,
           hasActiveMembership: hadActiveMembership,
+          membershipName: membership?.membershipName,
+          membershipEndDate: membership?.endDate,
+          membershipDaysRemaining: membership?.daysRemaining,
         );
         if (context.mounted) {
-          inputFocusNode.requestFocus();
+          readyForNextScan();
         }
       } else if (context.mounted) {
+        CheckInSoundPlayer.play(CheckInChime.failure);
         showErrorSnackBar(context, message: 'Failed to check in');
       }
     }
@@ -164,15 +175,23 @@ class CheckInPage extends HookConsumerWidget {
       if (!context.mounted) return;
 
       switch (result) {
-        case CardCheckInSuccess(:final memberName):
+        case CardCheckInSuccess(
+          :final memberName,
+          :final membershipName,
+          :final membershipEndDate,
+          :final membershipDaysRemaining,
+        ):
           clearSelection();
           await showCheckInSuccessDialog(
             context,
             memberName: memberName,
             hasActiveMembership: true,
+            membershipName: membershipName,
+            membershipEndDate: membershipEndDate,
+            membershipDaysRemaining: membershipDaysRemaining,
           );
           if (context.mounted) {
-            inputFocusNode.requestFocus();
+            readyForNextScan();
           }
           return;
         case CardCheckInNoActiveMembership(:final memberName):
@@ -183,7 +202,7 @@ class CheckInPage extends HookConsumerWidget {
                 '$memberName has no active membership and cannot check in.',
           );
           inputController.clear();
-          inputFocusNode.requestFocus();
+          readyForNextScan();
           return;
         case CardCheckInMembershipNotValidAtBranch(:final memberName):
           await showCheckInErrorDialog(
@@ -194,7 +213,7 @@ class CheckInPage extends HookConsumerWidget {
                 'at this branch.',
           );
           inputController.clear();
-          inputFocusNode.requestFocus();
+          readyForNextScan();
           return;
         case CardCheckInNoBranch():
           await showCheckInErrorDialog(
@@ -204,11 +223,12 @@ class CheckInPage extends HookConsumerWidget {
                 'Choose a specific branch before checking in. '
                 '"All branches" cannot be used for check-in.',
           );
-          inputFocusNode.requestFocus();
+          readyForNextScan();
           return;
         case CardCheckInFailed():
+          CheckInSoundPlayer.play(CheckInChime.failure);
           showErrorSnackBar(context, message: 'Failed to check in');
-          inputFocusNode.requestFocus();
+          readyForNextScan();
           return;
         case CardCheckInCardNotFound():
           break;
@@ -216,18 +236,18 @@ class CheckInPage extends HookConsumerWidget {
 
       // Not an exact card match — keep name search results if any.
       if (searchResults.value.isNotEmpty) {
-        inputFocusNode.requestFocus();
         return;
       }
 
       if (context.mounted) {
+        CheckInSoundPlayer.play(CheckInChime.failure);
         showErrorSnackBar(
           context,
           message:
               'No matching card or member found. Enter a card ID exactly, or search by name.',
         );
         inputController.clear();
-        inputFocusNode.requestFocus();
+        readyForNextScan();
       }
     }
 
@@ -244,6 +264,9 @@ class CheckInPage extends HookConsumerWidget {
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.badge_outlined),
               hintText: 'Scan card, enter card ID, or search by name...',
+              helperText:
+                  'USB RFID scans automatically while this page is focused. '
+                  'Tap the field to search by name.',
               border: const OutlineInputBorder(),
               isDense: true,
               suffixIcon: isCardCheckingIn.value
@@ -452,52 +475,60 @@ class CheckInPage extends HookConsumerWidget {
       return LastCheckInPanel(checkIn: latestCheckIn);
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Check-In'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () =>
-                ref.read(checkInControllerProvider.notifier).refresh(),
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      body: isMobile
-          // Mobile: stacked vertical layout
-          ? Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: buildCheckInForm(),
-                ),
-                const Divider(height: 1),
-                Expanded(child: buildRecentCheckIns()),
-              ],
-            )
-          // Tablet/Desktop: side-by-side layout with last check-in sidebar
-          : Row(
-              children: [
-                // Left: form + today's check-ins
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: buildCheckInForm(),
-                      ),
-                      const Divider(height: 1),
-                      Expanded(child: buildRecentCheckIns()),
-                    ],
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                // Right: last check-in details sidebar
-                Expanded(flex: 2, child: buildSidebar()),
-              ],
+    return CheckInRfidListener(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Check-In'),
+          actions: [
+            const RfidListenerStatusIcon(),
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: () => const CheckInRecordsRoute().push(context),
+              tooltip: 'Check-In Records',
             ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () =>
+                  ref.read(checkInControllerProvider.notifier).refresh(),
+              tooltip: 'Refresh',
+            ),
+          ],
+        ),
+        body: isMobile
+            // Mobile: stacked vertical layout
+            ? Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: buildCheckInForm(),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(child: buildRecentCheckIns()),
+                ],
+              )
+            // Tablet/Desktop: side-by-side layout with last check-in sidebar
+            : Row(
+                children: [
+                  // Left: form + today's check-ins
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: buildCheckInForm(),
+                        ),
+                        const Divider(height: 1),
+                        Expanded(child: buildRecentCheckIns()),
+                      ],
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                  // Right: last check-in details sidebar
+                  Expanded(flex: 2, child: buildSidebar()),
+                ],
+              ),
+      ),
     );
   }
 }

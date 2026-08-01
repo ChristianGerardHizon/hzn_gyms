@@ -11,6 +11,8 @@ enum SystemMode {
   cashierGroups,
   appearance,
   import,
+  debug,
+  activityLog,
 }
 
 /// Vertical navigation panel for selecting system mode.
@@ -36,6 +38,7 @@ class SystemNavPanel extends ConsumerWidget {
         ref.watch(currentUserPermissionsProvider).value ??
             CurrentUserPermissions.empty;
     final isAdmin = perms.canManageSystem;
+    final canViewActivityLog = perms.canViewActivityLog;
 
     final modes = <(SystemMode, IconData, IconData, String)>[
       if (isAdmin) ...[
@@ -71,12 +74,26 @@ class SystemNavPanel extends ConsumerWidget {
           Icons.palette,
           'Appearance',
         ),
-      if (isAdmin)
+      if (isAdmin) ...[
         (
           SystemMode.import,
           Icons.file_upload_outlined,
           Icons.file_upload,
           'Import',
+        ),
+        (
+          SystemMode.debug,
+          Icons.bug_report_outlined,
+          Icons.bug_report,
+          'Debug',
+        ),
+      ],
+      if (canViewActivityLog)
+        (
+          SystemMode.activityLog,
+          Icons.history_outlined,
+          Icons.history,
+          'Activity Log',
         ),
     ];
 

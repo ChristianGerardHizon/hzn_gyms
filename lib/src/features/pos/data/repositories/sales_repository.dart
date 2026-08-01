@@ -22,7 +22,12 @@ abstract class SalesRepository {
     List<SaleItem> items,
   );
   FutureEither<Sale> getSale(String id);
-  FutureEither<List<Sale>> getSales({String? branchId, DateTime? date});
+  FutureEither<List<Sale>> getSales({
+    String? branchId,
+    DateTime? date,
+    int? limit,
+    List<String>? statuses,
+  });
   FutureEither<List<SaleItem>> getSaleItems(String saleId);
 
   /// Updates a sale record.
@@ -180,7 +185,12 @@ class SalesRepositoryImpl implements SalesRepository {
   }
 
   @override
-  FutureEither<List<Sale>> getSales({String? branchId, DateTime? date}) async {
+  FutureEither<List<Sale>> getSales({
+    String? branchId,
+    DateTime? date,
+    int? limit,
+    List<String>? statuses,
+  }) async {
     return TaskEither.tryCatch(
       () async {
         var filter = '';
@@ -202,8 +212,28 @@ class SalesRepositoryImpl implements SalesRepository {
           }
         }
 
+        if (statuses != null && statuses.isNotEmpty) {
+          final statusFilter = statuses.length == 1
+              ? 'status = "${statuses.first}"'
+              : '(${statuses.map((s) => 'status = "$s"').join(' || ')})';
+          filter = filter.isEmpty ? statusFilter : '$filter && $statusFilter';
+        }
+
+        final filterOrNull = filter.isEmpty ? null : filter;
+
+        if (limit != null) {
+          final page = await _sales.getList(
+            page: 1,
+            perPage: limit,
+            filter: filterOrNull,
+            sort: '-created',
+            fields: _listFields,
+          );
+          return page.items.map(_toSaleEntity).toList();
+        }
+
         final records = await _sales.getFullList(
-          filter: filter.isEmpty ? null : filter,
+          filter: filterOrNull,
           sort: '-created',
           fields: _listFields,
         );
