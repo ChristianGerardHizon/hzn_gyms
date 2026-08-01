@@ -179,6 +179,29 @@ void main() {
       );
       expect(withoutVoid.canVoidSales, isFalse);
     });
+
+    test('canEditMemberships follows memberships.edit', () {
+      final withEdit = CurrentUserPermissions.fromRole(
+        const UserRole(
+          id: '1',
+          name: 'Manager',
+          permissions: [Permissions.membershipsEdit],
+        ),
+      );
+      expect(withEdit.canEditMemberships, isTrue);
+
+      final withoutEdit = CurrentUserPermissions.fromRole(
+        const UserRole(
+          id: '2',
+          name: 'Staff',
+          permissions: [Permissions.membershipsView],
+        ),
+      );
+      expect(withoutEdit.canEditMemberships, isFalse);
+
+      const admin = CurrentUserPermissions(isAdmin: true);
+      expect(admin.canEditMemberships, isTrue);
+    });
   });
 
   group('selectedNavIndexForPath', () {

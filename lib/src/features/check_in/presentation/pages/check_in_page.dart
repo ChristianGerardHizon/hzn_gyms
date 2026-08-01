@@ -12,7 +12,9 @@ import '../../../memberships/data/repositories/member_membership_repository.dart
 import '../../../memberships/domain/member_membership.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
+import '../../domain/check_in_chime.dart';
 import '../controllers/check_in_controller.dart';
+import '../utils/check_in_sound_player.dart';
 import '../widgets/check_in_error_dialog.dart';
 import '../widgets/check_in_rfid_listener.dart';
 import '../widgets/check_in_success_dialog.dart';
@@ -24,7 +26,8 @@ import '../widgets/rfid_listener_status_icon.dart';
 ///
 /// Provides:
 /// - Single input for card ID (exact, on submit) or name/mobile search
-/// - HID keyboard-wedge RFID listening while this page is open (field unfocused)
+/// - HID keyboard-wedge RFID listening while this page is focused (field unfocused)
+/// - Live today's check-ins via PocketBase realtime (multi-device)
 /// - Member card showing name and active membership status
 /// - Check-in button
 /// - Today's recent check-ins list
@@ -89,7 +92,8 @@ class CheckInPage extends HookConsumerWidget {
       activeMembership.value = null;
       inputController.clear();
       searchResults.value = [];
-      inputFocusNode.requestFocus();
+      // Keep field unfocused so USB RFID wedge keeps auto-listening.
+      inputFocusNode.unfocus();
     }
 
     Future<void> handleCheckIn() async {
@@ -99,6 +103,7 @@ class CheckInPage extends HookConsumerWidget {
       // Block check-in if member has no membership valid at this branch
       if (activeMembership.value == null) {
         if (context.mounted) {
+          CheckInSoundPlayer.play(CheckInChime.failure);
           showErrorSnackBar(
             context,
             message:
@@ -141,6 +146,7 @@ class CheckInPage extends HookConsumerWidget {
           readyForNextScan();
         }
       } else if (context.mounted) {
+        CheckInSoundPlayer.play(CheckInChime.failure);
         showErrorSnackBar(context, message: 'Failed to check in');
       }
     }
@@ -219,6 +225,7 @@ class CheckInPage extends HookConsumerWidget {
           readyForNextScan();
           return;
         case CardCheckInFailed():
+          CheckInSoundPlayer.play(CheckInChime.failure);
           showErrorSnackBar(context, message: 'Failed to check in');
           readyForNextScan();
           return;
@@ -228,18 +235,18 @@ class CheckInPage extends HookConsumerWidget {
 
       // Not an exact card match — keep name search results if any.
       if (searchResults.value.isNotEmpty) {
-        inputFocusNode.requestFocus();
         return;
       }
 
       if (context.mounted) {
+        CheckInSoundPlayer.play(CheckInChime.failure);
         showErrorSnackBar(
           context,
           message:
               'No matching card or member found. Enter a card ID exactly, or search by name.',
         );
         inputController.clear();
-        inputFocusNode.requestFocus();
+        readyForNextScan();
       }
     }
 
@@ -257,7 +264,7 @@ class CheckInPage extends HookConsumerWidget {
               prefixIcon: const Icon(Icons.badge_outlined),
               hintText: 'Scan card, enter card ID, or search by name...',
               helperText:
-                  'Tap the NFC icon in the app bar to enable USB RFID. '
+                  'USB RFID scans automatically while this page is focused. '
                   'Tap the field to search by name.',
               border: const OutlineInputBorder(),
               isDense: true,

@@ -48,6 +48,7 @@ class SalesReportView extends ConsumerWidget {
         error,
         compact: true,
         onRetry: () {
+          ref.invalidate(scopedSalesReportBundleProvider);
           ref.invalidate(salesReportProvider);
           ref.invalidate(salesReportExtrasProvider);
         },

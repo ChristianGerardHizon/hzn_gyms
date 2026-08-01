@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../../domain/card_check_in_result.dart';
 import '../../domain/rfid_keyboard_wedge_decoder.dart';
@@ -10,10 +12,11 @@ import '../controllers/rfid_listener_status.dart';
 import 'check_in_error_dialog.dart';
 import 'check_in_success_dialog.dart';
 
-/// Optionally listens for HID keyboard-wedge RFID/barcode scans on Check-In.
+/// Listens for HID keyboard-wedge RFID/barcode scans on Check-In.
 ///
-/// Scanning starts **off**. Enable it via [RfidListenerStatusController]
-/// (NFC icon in the Check-In app bar). Keystrokes are not stolen from a
+/// Scanning starts **on** while this page is mounted and the app/window has
+/// OS focus. When focus is lost, a fullscreen "Not in focus" overlay is shown
+/// and the keyboard handler is detached. Keystrokes are not stolen from a
 /// focused search field.
 class CheckInRfidListener extends ConsumerStatefulWidget {
   const CheckInRfidListener({super.key, required this.child});
@@ -25,35 +28,86 @@ class CheckInRfidListener extends ConsumerStatefulWidget {
       _CheckInRfidListenerState();
 }
 
-class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener> {
+class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
+    with WindowListener, WidgetsBindingObserver {
   final _decoder = RfidKeyboardWedgeDecoder();
   bool _isProcessing = false;
   bool _dialogOpen = false;
   bool _handlerAttached = false;
+  bool _windowFocused = true;
+  bool _desktopWindowListener = false;
 
   /// Cached EditableText focus — updated via [FocusManager], not per keystroke.
   bool _editableFocused = false;
+
+  static bool get _isDesktop {
+    if (kIsWeb) return false;
+    return {
+      TargetPlatform.linux,
+      TargetPlatform.macOS,
+      TargetPlatform.windows,
+    }.contains(defaultTargetPlatform);
+  }
 
   @override
   void initState() {
     super.initState();
     FocusManager.instance.addListener(_onFocusChange);
+    WidgetsBinding.instance.addObserver(this);
+    if (_isDesktop) {
+      windowManager.addListener(this);
+      _desktopWindowListener = true;
+    }
+    // Attach as soon as the first frame settles so the page is scan-ready.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _onFocusChange();
-      // Always start disabled when opening Check-In.
-      ref.read(rfidListenerStatusControllerProvider.notifier).disable();
+      _syncListeningState();
+      // Prefer unfocused search field so wedge keys never hit the TextField.
+      FocusManager.instance.primaryFocus?.unfocus();
     });
   }
 
   @override
   void dispose() {
     FocusManager.instance.removeListener(_onFocusChange);
+    WidgetsBinding.instance.removeObserver(this);
+    if (_desktopWindowListener) {
+      windowManager.removeListener(this);
+      _desktopWindowListener = false;
+    }
     _detachHandler();
     try {
       ref.read(rfidListenerStatusControllerProvider.notifier).disable();
     } catch (_) {}
     super.dispose();
+  }
+
+  @override
+  void onWindowFocus() {
+    _setWindowFocused(true);
+  }
+
+  @override
+  void onWindowBlur() {
+    _setWindowFocused(false);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Desktop uses WindowListener; lifecycle covers mobile/web tab blur.
+    if (_isDesktop) return;
+    _setWindowFocused(state == AppLifecycleState.resumed);
+  }
+
+  void _setWindowFocused(bool focused) {
+    if (_windowFocused == focused) return;
+    _windowFocused = focused;
+    if (!_windowFocused) {
+      _decoder.reset();
+    }
+    _syncListeningState();
+    if (mounted) setState(() {});
   }
 
   void _onFocusChange() {
@@ -73,10 +127,25 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener> {
         context.findAncestorStateOfType<EditableTextState>() != null;
   }
 
-  void _syncHandler(RfidListenerStatus status) {
-    if (status == RfidListenerStatus.listening) {
+  /// Clears partial wedge characters that reached a focused text field.
+  void _clearFocusedEditableInput() {
+    final focus = FocusManager.instance.primaryFocus;
+    final context = focus?.context;
+    if (context != null) {
+      final editable = context.findAncestorStateOfType<EditableTextState>();
+      editable?.widget.controller.clear();
+    }
+    focus?.unfocus();
+  }
+
+  void _syncListeningState() {
+    if (!mounted) return;
+    final notifier = ref.read(rfidListenerStatusControllerProvider.notifier);
+    if (_windowFocused) {
+      notifier.enable();
       _attachHandler();
     } else {
+      notifier.pause();
       _detachHandler();
     }
   }
@@ -96,7 +165,8 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener> {
 
   bool _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
-    if (_isProcessing || _dialogOpen || _editableFocused) return false;
+    if (!_windowFocused) return false;
+    if (_isProcessing || _dialogOpen) return false;
 
     if (!isRfidWedgeCandidateKey(
       logicalKey: event.logicalKey,
@@ -105,14 +175,28 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener> {
       return false;
     }
 
+    // Still decode while a text field is focused so USB wedge scans work
+    // without requiring the NFC icon or an empty focus. Human typing stays
+    // slow enough that scan-mode (≤60ms gaps) does not engage.
     return _decoder.handleKeyDown(
       logicalKey: event.logicalKey,
       character: event.character,
       now: DateTime.now(),
       onScan: (cardId) {
+        // Drop leftover first chars that may have reached the search field.
+        _clearFocusedEditableInput();
         Future<void>(() => _processScan(cardId));
       },
     );
+  }
+
+  Future<void> _requestFocus() async {
+    if (_isDesktop) {
+      try {
+        await windowManager.focus();
+      } catch (_) {}
+    }
+    _setWindowFocused(true);
   }
 
   Future<void> _processScan(String cardValue) async {
@@ -188,9 +272,65 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(rfidListenerStatusControllerProvider, (previous, next) {
-      _syncHandler(next);
-    });
-    return widget.child;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        widget.child,
+        if (!_windowFocused)
+          Positioned.fill(
+            child: _NotInFocusOverlay(onResume: _requestFocus),
+          ),
+      ],
+    );
+  }
+}
+
+class _NotInFocusOverlay extends StatelessWidget {
+  const _NotInFocusOverlay({required this.onResume});
+
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: colorScheme.surface.withValues(alpha: 0.92),
+      child: InkWell(
+        onTap: onResume,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.desktop_access_disabled_outlined,
+                  size: 72,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Not in focus',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Click or tap here to resume RFID scanning',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -59,6 +59,7 @@ class MemberMembershipsController extends _$MemberMembershipsController {
     state = const AsyncLoading();
 
     final result = await _repository.fetchByMember(memberId);
+    if (!ref.mounted) return;
 
     state = await result.fold(
       (failure) async {
@@ -73,12 +74,35 @@ class MemberMembershipsController extends _$MemberMembershipsController {
     );
   }
 
-  /// Cancels a member's membership.
-  Future<bool> cancelMembership(String memberMembershipId) async {
+  /// Updates start/end dates for a member's membership.
+  ///
+  /// Returns `null` on success, or a failure message string.
+  Future<String?> updateMembershipDates(
+    String memberMembershipId, {
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final result = await _repository.update(
+      memberMembershipId,
+      startDate: startDate,
+      endDate: endDate,
+    );
+    final error = result.fold((failure) => failure.messageString, (_) => null);
+    if (error != null) return error;
+    if (!ref.mounted) return null;
+    await refresh();
+    return null;
+  }
+
+  /// Cancels a member's membership (soft cancel).
+  ///
+  /// Returns `null` on success, or a failure message string.
+  Future<String?> cancelMembership(String memberMembershipId) async {
     final result = await _repository.cancel(memberMembershipId);
-    return result.fold((failure) => false, (_) {
-      refresh();
-      return true;
-    });
+    final error = result.fold((failure) => failure.messageString, (_) => null);
+    if (error != null) return error;
+    if (!ref.mounted) return null;
+    await refresh();
+    return null;
   }
 }

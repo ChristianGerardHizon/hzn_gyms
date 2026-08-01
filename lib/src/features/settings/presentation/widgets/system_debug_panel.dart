@@ -23,6 +23,7 @@ class SystemDebugPanel extends HookConsumerWidget {
     final isSimulating = useState(false);
     final listenerStatus = ref.watch(rfidListenerStatusControllerProvider);
     final isListening = listenerStatus == RfidListenerStatus.listening;
+    final isPaused = listenerStatus == RfidListenerStatus.paused;
     final isTablet = Breakpoints.isTabletOrLarger(context);
 
     Future<void> handleSimulate() async {
@@ -33,8 +34,8 @@ class SystemDebugPanel extends HookConsumerWidget {
 
       isSimulating.value = true;
       try {
-        // RFID HardwareKeyboard listener only mounts on Check-In, so debug
-        // runs the same check-in + dialog path directly.
+        // RFID HardwareKeyboard listener mounts on Check-In / Dashboard;
+        // debug runs the same check-in + dialog path directly.
         final result = await ref
             .read(checkInControllerProvider.notifier)
             .cardCheckIn(cardValue: cardId);
@@ -128,17 +129,23 @@ class SystemDebugPanel extends HookConsumerWidget {
             child: ListTile(
               leading: Icon(
                 Icons.nfc,
-                color: isListening ? Colors.green : Colors.orange,
+                color: isListening
+                    ? Colors.green
+                    : Colors.red,
               ),
               title: Text(
                 isListening
                     ? 'Hardware listener active (on Check-In)'
+                    : isPaused
+                    ? 'Hardware listener paused (Check-In not in focus)'
                     : 'Hardware listener inactive',
               ),
               subtitle: Text(
                 isListening
-                    ? 'USB reader is enabled on Check-In (NFC icon green).'
-                    : 'On Check-In, tap the NFC icon to enable USB scanning. '
+                    ? 'USB reader is listening on Check-In while the window is focused.'
+                    : isPaused
+                    ? 'Open Check-In and focus the window to resume USB scanning.'
+                    : 'Open Check-In to enable USB scanning automatically. '
                         'This debug button still works here.',
               ),
               trailing: TextButton(
@@ -199,7 +206,7 @@ class SystemDebugPanel extends HookConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '• On Check-In, tap the NFC icon to enable USB RFID (off by default).\n'
+            '• On Check-In, USB RFID listens automatically while the window is focused.\n'
             '• Pick a specific branch before check-in; "All branches" is blocked.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,

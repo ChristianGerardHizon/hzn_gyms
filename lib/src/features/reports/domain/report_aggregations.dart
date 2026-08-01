@@ -236,6 +236,11 @@ String normalizeSalesItemType(String? itemType) {
   return itemType;
 }
 
+/// Whether Day/Week should fetch period-scoped raw rows instead of all-history
+/// SQL views (views re-aggregate the full sales table on every request).
+bool usesPeriodScopedSalesFetch(ReportPeriod period) =>
+    period == ReportPeriod.day || period == ReportPeriod.weekly;
+
 /// Derives Day-period revenue KPIs from raw sales when the summary view is empty.
 ///
 /// Counts `completed`/`paid` sales; revenue sums only paid sales so unpaid AR
@@ -252,6 +257,94 @@ String normalizeSalesItemType(String? itemType) {
     if (sale.isPaid) totalRevenue += sale.totalAmount.toDouble();
   }
   return (totalRevenue: totalRevenue, transactionCount: transactionCount);
+}
+
+/// Net payment contribution (refunds subtract), matching POS paid totals.
+num netPaymentAmount({required String type, required num amount}) {
+  if (type.toLowerCase() == 'refund') return -amount;
+  return amount;
+}
+
+/// Builds Day/Week KPIs from period-scoped sales + payments (completed only).
+///
+/// Revenue and payment-method totals come from payment rows linked to
+/// `completed` sales. Transaction count is distinct completed sale IDs.
+/// Trend buckets use each sale's local [created] date.
+({
+  num totalRevenue,
+  int transactionCount,
+  Map<DateTime, num> revenueByBucket,
+  Map<String, num> revenueByPaymentMethod,
+})
+aggregateScopedSalesPayments({
+  required Iterable<({String saleId, String status, DateTime? created})> sales,
+  required Iterable<
+    ({String saleId, String paymentMethod, String type, num amount})
+  >
+  payments,
+  required TrendGranularity grain,
+}) {
+  final completedCreated = <String, DateTime>{};
+  for (final sale in sales) {
+    if (sale.status != 'completed') continue;
+    final created = sale.created;
+    if (created == null) continue;
+    completedCreated[sale.saleId] = created;
+  }
+
+  var totalRevenue = 0.0;
+  final revenueByBucket = <DateTime, num>{};
+  final revenueByPaymentMethod = <String, num>{};
+
+  for (final payment in payments) {
+    final created = completedCreated[payment.saleId];
+    if (created == null) continue;
+
+    final net = netPaymentAmount(
+      type: payment.type,
+      amount: payment.amount,
+    ).toDouble();
+    totalRevenue += net;
+
+    final DateTime bucket;
+    switch (grain) {
+      case TrendGranularity.day:
+        bucket = startOfDay(created);
+      case TrendGranularity.week:
+        bucket = startOfWeekMonday(created);
+      case TrendGranularity.month:
+        bucket = startOfMonth(created);
+      case TrendGranularity.year:
+        bucket = DateTime(created.year);
+    }
+    revenueByBucket[bucket] = (revenueByBucket[bucket] ?? 0) + net;
+
+    final method = payment.paymentMethod;
+    if (method.isNotEmpty) {
+      revenueByPaymentMethod[method] =
+          (revenueByPaymentMethod[method] ?? 0) + net;
+    }
+  }
+
+  // Match view semantics: count every completed sale, even with no payments.
+  return (
+    totalRevenue: totalRevenue,
+    transactionCount: completedCreated.length,
+    revenueByBucket: revenueByBucket,
+    revenueByPaymentMethod: revenueByPaymentMethod,
+  );
+}
+
+/// Item-type revenue from period-scoped sale lines on completed sales.
+Map<String, num> aggregateScopedRevenueByItemType(
+  Iterable<({String saleId, String? itemType, num subtotal})> items,
+  Set<String> completedSaleIds,
+) {
+  return aggregateRevenueByItemType(
+    items
+        .where((i) => completedSaleIds.contains(i.saleId))
+        .map((i) => (itemType: i.itemType, subtotal: i.subtotal)),
+  );
 }
 
 /// Counts unpaid / AR sales (excludes voided and refunded).

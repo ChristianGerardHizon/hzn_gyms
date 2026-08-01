@@ -34,6 +34,7 @@ class CurrentUserPermissions {
   bool get canViewReports => has(Permissions.reportsView);
   bool get canViewSettings => has(Permissions.settingsView);
   bool get canVoidSales => has(Permissions.salesVoid);
+  bool get canEditMemberships => has(Permissions.membershipsEdit);
   bool get canManageSystem => has(Permissions.systemAdmin);
 }
 

@@ -36,23 +36,27 @@ Home screen with gym metrics and quick actions.
 - Expiring memberships section (memberships expiring within 7 days)
 - Inventory alerts (low stock, expiring products)
 - Pull-to-refresh invalidates all dashboard data
+- RFID keyboard-wedge listener (same as Check-In); NFC icon is green when active, red when inactive
 
 #### Check-In (`/check-in`)
 Member check-in system for tracking gym visits.
 
 - **Features**:
   - Card scan input (RFID/barcode) for quick check-in via member cards
-  - RFID keyboard-wedge on Check-In only; NFC app-bar icon toggles scanning (off by default)
+  - RFID keyboard-wedge on Check-In and Dashboard; auto-listens while the window is focused (NFC icon green = active, red = inactive)
+  - Fullscreen "Not in focus" overlay when the Check-In window/app loses OS focus (RFID paused)
+  - Today's check-ins update live across devices via PocketBase realtime subscription
   - Member search by name or mobile number
   - Active membership status display
   - Manual check-in with membership validation
   - Warning for members without active membership
   - Recent check-ins list for today
   - Success dialog with membership status
+  - Audio chimes for check-in outcomes: success, near-expiry (≤7 days), and failure
   - Backward compatibility with legacy `rfidCardId` field on members
 - **Key Models**: `CheckIn`, `CheckInMethod`
 - **Controllers**:
-  - `checkInController` - Today's check-ins list + manual/card check-in actions
+  - `checkInController` - Today's check-ins list + realtime subscribe + manual/card check-in actions
   - `memberCheckIns` - Check-in history for a specific member
 
 #### Check-In Records (`/check-in-records`)
@@ -546,6 +550,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 1 | Day/Week report speed | Day/Week sales skip all-history SQL views; period-scoped sales+payments+saleItems aggregation; Day attendance uses a single checkIns range query |
 | Jul 15 | Check-In Records | New `/check-in-records` nav item lists who checked in on a selected date |
 | Jul 15 | Sales report load speed | Split view-based KPIs from lean unpaid/staff/Day list fetch; charts paint first without expand on every sale |
 | Jul 14 | Sales report print/PDF | Print Report menu (print or save PDF); sales PDF lists transactions and states it is not an invoice or BIR record |
@@ -574,6 +579,11 @@ lib/src/
 | Jul 12 | Offline outbox | Member create/update (with photo) and membership renew queue to Drift outbox; sync worker drains when online; pending count in app shell |
 | Jul 11 | Domain migration | Staging/prod moved to `*.ebegym.hznsystems.com`; GitHub deploy secrets + fallback API URLs updated |
 | Jul 11 | Member branch | Added `branch` FK on members; backfilled all to Talisay; members list + dashboard filter by selected branch |
+| Aug 1 | Membership edit/cancel | Member membership detail can edit start/end dates or soft-cancel; gated by `memberships.edit` (admins bypass) |
+| Aug 1 | Check-In audio chimes | Success, near-expiry (≤7 days), and failure sounds play on RFID/manual/card check-in outcomes |
+| Aug 1 | Dashboard RFID | Dashboard hosts the same RFID listener as Check-In; NFC icon green when active, red when inactive |
+| Aug 1 | Check-In realtime | Today's check-ins subscribe via PocketBase realtime so other devices update the list live |
+| Aug 1 | Check-In focus overlay | RFID auto-listens on Check-In while focused; fullscreen "Not in focus" pauses scanning when the window blurs |
 | Jul 15 | RFID Check-In only | Keyboard-wedge RFID listener scoped to Check-In page (not app-wide) to avoid typing lag |
 | Jul 15 | System RFID debug | System → Debug simulates RFID check-in dialogs |
 | Jul 15 | RFID all platforms | HID keyboard-wedge listener works on Android, desktop, and web while Check-In is open |

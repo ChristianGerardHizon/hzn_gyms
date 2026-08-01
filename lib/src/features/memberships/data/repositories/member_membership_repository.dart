@@ -38,6 +38,8 @@ abstract class MemberMembershipRepository {
     String id, {
     MemberMembershipStatus? status,
     String? notes,
+    DateTime? startDate,
+    DateTime? endDate,
   });
 
   /// Cancels a member membership.
@@ -173,11 +175,15 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     String id, {
     MemberMembershipStatus? status,
     String? notes,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     return TaskEither.tryCatch(() async {
       final body = <String, dynamic>{};
       if (status != null) body['status'] = status.name;
       if (notes != null) body['notes'] = notes;
+      if (startDate != null) body['startDate'] = startDate.toUtcIso8601();
+      if (endDate != null) body['endDate'] = endDate.toUtcIso8601();
 
       final record = await _collection.update(id, body: body);
       invalidateCache();

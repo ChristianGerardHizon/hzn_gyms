@@ -37,6 +37,15 @@ abstract class CheckInRepository {
   /// Fetches check-ins for a specific member.
   FutureEither<List<CheckIn>> fetchByMember(String memberId);
 
+  /// Subscribes to check-in create/update/delete events.
+  ///
+  /// When [branchId] is set, only that branch's records are streamed.
+  /// Call the returned [UnsubscribeFunc] to tear down the listener.
+  Future<UnsubscribeFunc> subscribeCheckIns({
+    String? branchId,
+    required void Function(RecordSubscriptionEvent event) onEvent,
+  });
+
   /// Invalidates the cache.
   void invalidateCache();
 }
@@ -167,5 +176,21 @@ class CheckInRepositoryImpl implements CheckInRepository {
 
       return records.map(_toEntity).toList();
     }, Failure.handle).run();
+  }
+
+  @override
+  Future<UnsubscribeFunc> subscribeCheckIns({
+    String? branchId,
+    required void Function(RecordSubscriptionEvent event) onEvent,
+  }) {
+    final filter = branchId != null && branchId.isNotEmpty
+        ? PBFilter().relation('branch', branchId).build()
+        : null;
+
+    return _collection.subscribe(
+      '*',
+      onEvent,
+      filter: filter,
+    );
   }
 }
