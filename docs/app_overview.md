@@ -553,6 +553,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 1 | Calendar-correct membership duration | Plan duration is now `durationValue` + `durationUnit` (day/week/month/year) instead of a raw day count; end dates use calendar arithmetic (Aug 1 + 1 month = Sep 1) instead of a fixed day offset; existing plans backfilled |
 | Aug 1 | Member name format | Member names saved as Title Case with collapsed whitespace (`Chloe Sy`); dashboard/members search tokenizes on spaces; cleanup script backfills via Admin API |
 | Aug 1 | Add Card scan-first | Member Detail Add Card waits for RFID/keyboard-wedge scan, then Label/Notes; manual Card ID entry as fallback |
 | Aug 1 | Check-In Records nested | Records moved under Check-In as app-bar button (`/check-in/records`); tap a record for details + member profile link; removed top-level nav item |

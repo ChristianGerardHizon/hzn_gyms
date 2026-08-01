@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_provider.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../domain/membership.dart';
 import '../../domain/membership_add_on.dart';
 
@@ -24,7 +25,8 @@ class MembershipCacheLocalDataSource {
             id: p.id,
             name: p.name,
             description: Value(p.description),
-            durationDays: p.durationDays,
+            durationValue: p.durationValue,
+            durationUnit: Value(p.durationUnit.name),
             price: p.price.toDouble(),
             branchId: p.branchId,
             validBranchesJson: Value(jsonEncode(p.validBranches)),
@@ -99,7 +101,8 @@ class MembershipCacheLocalDataSource {
       id: row.id,
       name: row.name,
       description: row.description,
-      durationDays: row.durationDays,
+      durationValue: row.durationValue,
+      durationUnit: MembershipDurationUnit.fromName(row.durationUnit),
       price: row.price,
       branchId: row.branchId,
       validBranches: _decodeValidBranches(row.validBranchesJson),
@@ -113,7 +116,10 @@ class MembershipCacheLocalDataSource {
     try {
       final decoded = jsonDecode(json);
       if (decoded is! List) return const [];
-      return decoded.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+      return decoded
+          .map((e) => e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
     } catch (_) {
       return const [];
     }

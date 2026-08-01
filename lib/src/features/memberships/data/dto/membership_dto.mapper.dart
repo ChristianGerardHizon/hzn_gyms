@@ -42,10 +42,17 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     _$description,
     opt: true,
   );
-  static int _$durationDays(MembershipDto v) => v.durationDays;
-  static const Field<MembershipDto, int> _f$durationDays = Field(
-    'durationDays',
-    _$durationDays,
+  static int _$durationValue(MembershipDto v) => v.durationValue;
+  static const Field<MembershipDto, int> _f$durationValue = Field(
+    'durationValue',
+    _$durationValue,
+  );
+  static String _$durationUnit(MembershipDto v) => v.durationUnit;
+  static const Field<MembershipDto, String> _f$durationUnit = Field(
+    'durationUnit',
+    _$durationUnit,
+    opt: true,
+    def: 'days',
   );
   static num _$price(MembershipDto v) => v.price;
   static const Field<MembershipDto, num> _f$price = Field('price', _$price);
@@ -102,7 +109,8 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
     #collectionName: _f$collectionName,
     #name: _f$name,
     #description: _f$description,
-    #durationDays: _f$durationDays,
+    #durationValue: _f$durationValue,
+    #durationUnit: _f$durationUnit,
     #price: _f$price,
     #branch: _f$branch,
     #validBranches: _f$validBranches,
@@ -120,7 +128,8 @@ class MembershipDtoMapper extends ClassMapperBase<MembershipDto> {
       collectionName: data.dec(_f$collectionName),
       name: data.dec(_f$name),
       description: data.dec(_f$description),
-      durationDays: data.dec(_f$durationDays),
+      durationValue: data.dec(_f$durationValue),
+      durationUnit: data.dec(_f$durationUnit),
       price: data.dec(_f$price),
       branch: data.dec(_f$branch),
       validBranches: data.dec(_f$validBranches),
@@ -202,7 +211,8 @@ abstract class MembershipDtoCopyWith<$R, $In extends MembershipDto, $Out>
     String? collectionName,
     String? name,
     String? description,
-    int? durationDays,
+    int? durationValue,
+    String? durationUnit,
     num? price,
     String? branch,
     List<String>? validBranches,
@@ -237,7 +247,8 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     String? collectionName,
     String? name,
     Object? description = $none,
-    int? durationDays,
+    int? durationValue,
+    String? durationUnit,
     num? price,
     String? branch,
     List<String>? validBranches,
@@ -253,7 +264,8 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
       if (collectionName != null) #collectionName: collectionName,
       if (name != null) #name: name,
       if (description != $none) #description: description,
-      if (durationDays != null) #durationDays: durationDays,
+      if (durationValue != null) #durationValue: durationValue,
+      if (durationUnit != null) #durationUnit: durationUnit,
       if (price != null) #price: price,
       if (branch != null) #branch: branch,
       if (validBranches != null) #validBranches: validBranches,
@@ -271,7 +283,8 @@ class _MembershipDtoCopyWithImpl<$R, $Out>
     collectionName: data.get(#collectionName, or: $value.collectionName),
     name: data.get(#name, or: $value.name),
     description: data.get(#description, or: $value.description),
-    durationDays: data.get(#durationDays, or: $value.durationDays),
+    durationValue: data.get(#durationValue, or: $value.durationValue),
+    durationUnit: data.get(#durationUnit, or: $value.durationUnit),
     price: data.get(#price, or: $value.price),
     branch: data.get(#branch, or: $value.branch),
     validBranches: data.get(#validBranches, or: $value.validBranches),

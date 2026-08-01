@@ -102,9 +102,90 @@ DateTime computeMembershipStartDate({
   return toLocalDateOnly(latestActiveEndDate).add(const Duration(days: 1));
 }
 
-/// End date for a membership period of [durationDays] starting at [startDate].
+/// Unit for a membership plan's duration (day/week/month/year).
+enum MembershipDurationUnit {
+  days,
+  weeks,
+  months,
+  years;
+
+  /// Parses a PocketBase select value; defaults to [days] for unknown input.
+  static MembershipDurationUnit fromName(String? name) {
+    return MembershipDurationUnit.values.firstWhere(
+      (unit) => unit.name == name,
+      orElse: () => MembershipDurationUnit.days,
+    );
+  }
+
+  /// Singular/plural label for [value], e.g. `"1 month"` / `"3 months"`.
+  String label(int value) {
+    final unitName = switch (this) {
+      MembershipDurationUnit.days => 'day',
+      MembershipDurationUnit.weeks => 'week',
+      MembershipDurationUnit.months => 'month',
+      MembershipDurationUnit.years => 'year',
+    };
+    return value == 1 ? '1 $unitName' : '$value ${unitName}s';
+  }
+}
+
+/// Adds [value] calendar [unit]s to [date].
+///
+/// Days and weeks are exact day-count additions. Months and years use
+/// calendar arithmetic instead of a fixed day count — e.g. starting Aug 1
+/// and adding 1 month lands on Sep 1 regardless of how many days are in
+/// August. When the target month is shorter than the start day, the day is
+/// clamped to the last day of that month (e.g. Jan 31 + 1 month = Feb 28).
+DateTime addCalendarDuration(
+  DateTime date, {
+  required MembershipDurationUnit unit,
+  required int value,
+}) {
+  switch (unit) {
+    case MembershipDurationUnit.days:
+      return date.add(Duration(days: value));
+    case MembershipDurationUnit.weeks:
+      return date.add(Duration(days: value * 7));
+    case MembershipDurationUnit.months:
+      return _addMonths(date, value);
+    case MembershipDurationUnit.years:
+      return _addMonths(date, value * 12);
+  }
+}
+
+DateTime _addMonths(DateTime date, int months) {
+  final totalMonths = date.year * 12 + (date.month - 1) + months;
+  final year = totalMonths ~/ 12;
+  final month = totalMonths % 12 + 1;
+  final daysInTargetMonth = DateTime(year, month + 1, 0).day;
+  final day = date.day > daysInTargetMonth ? daysInTargetMonth : date.day;
+  return DateTime(
+    year,
+    month,
+    day,
+    date.hour,
+    date.minute,
+    date.second,
+    date.millisecond,
+    date.microsecond,
+  );
+}
+
+/// End date for a membership period starting at [startDate].
+///
+/// [durationValue]/[durationUnit] use calendar-correct arithmetic (see
+/// [addCalendarDuration]). [bonusDays] (e.g. from add-on promos) is added on
+/// top as a flat day offset.
 DateTime computeMembershipEndDate({
   required DateTime startDate,
-  required int durationDays,
-}) =>
-    startDate.add(Duration(days: durationDays));
+  required int durationValue,
+  required MembershipDurationUnit durationUnit,
+  int bonusDays = 0,
+}) {
+  final base = addCalendarDuration(
+    startDate,
+    unit: durationUnit,
+    value: durationValue,
+  );
+  return bonusDays == 0 ? base : base.add(Duration(days: bonusDays));
+}

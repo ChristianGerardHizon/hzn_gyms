@@ -1,5 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
+import '../../../core/utils/date_utils.dart';
+
 part 'membership.mapper.dart';
 
 /// Membership plan template.
@@ -11,7 +13,8 @@ class Membership with MembershipMappable {
   const Membership({
     required this.id,
     required this.name,
-    required this.durationDays,
+    required this.durationValue,
+    this.durationUnit = MembershipDurationUnit.days,
     required this.price,
     required this.branchId,
     this.validBranches = const [],
@@ -32,8 +35,11 @@ class Membership with MembershipMappable {
   /// Plan description (optional).
   final String? description;
 
-  /// Duration of the membership in days.
-  final int durationDays;
+  /// Duration quantity, interpreted in [durationUnit] (e.g. `1` + `months`).
+  final int durationValue;
+
+  /// Unit [durationValue] is measured in (day/week/month/year).
+  final MembershipDurationUnit durationUnit;
 
   /// Price in PHP.
   final num price;
@@ -68,16 +74,8 @@ class Membership with MembershipMappable {
   bool isValidAtBranch(String branchId) =>
       validBranches.isEmpty || validBranches.contains(branchId);
 
-  /// Display string for duration.
-  String get durationDisplay {
-    if (durationDays == 1) return '1 day';
-    if (durationDays == 7) return '1 week';
-    if (durationDays == 30) return '1 month';
-    if (durationDays == 90) return '3 months';
-    if (durationDays == 180) return '6 months';
-    if (durationDays == 365) return '1 year';
-    return '$durationDays days';
-  }
+  /// Display string for duration, e.g. `"1 month"` / `"3 weeks"`.
+  String get durationDisplay => durationUnit.label(durationValue);
 
   /// Short badge label for walk-in / day-pass plans; null for standard plans.
   String? get walkInBadgeLabel => memberNotRequired ? 'Walk-in' : null;

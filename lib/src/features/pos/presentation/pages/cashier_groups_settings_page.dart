@@ -78,9 +78,8 @@ class CashierGroupsSettingsPage extends ConsumerWidget {
             onRefresh: () => controller.refresh(),
             child: ReorderableListView.builder(
               itemCount: groups.length,
-              onReorder: (oldIndex, newIndex) {
+              onReorderItem: (oldIndex, newIndex) {
                 final reordered = List<PosGroup>.from(groups);
-                if (newIndex > oldIndex) newIndex--;
                 final item = reordered.removeAt(oldIndex);
                 reordered.insert(newIndex, item);
                 controller.reorderGroups(reordered);

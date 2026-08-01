@@ -35,8 +35,6 @@ class SaleStatusMapper extends EnumMapper<SaleStatus> {
         return SaleStatus.paid;
       case r'completed':
         return SaleStatus.completed;
-      case r'refunded':
-        return SaleStatus.refunded;
       case r'voided':
         return SaleStatus.voided;
       default:
@@ -55,8 +53,6 @@ class SaleStatusMapper extends EnumMapper<SaleStatus> {
         return r'paid';
       case SaleStatus.completed:
         return r'completed';
-      case SaleStatus.refunded:
-        return r'refunded';
       case SaleStatus.voided:
         return r'voided';
     }

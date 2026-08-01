@@ -404,13 +404,13 @@ void main() {
   });
 
   group('aggregateUnpaidSales', () {
-    test('sums unpaid balance and skips voided/refunded', () {
+    test('sums unpaid balance and skips voided', () {
       final result = aggregateUnpaidSales([
         (status: 'completed', isPaid: false, totalAmount: 100),
         (status: 'pending', isPaid: false, totalAmount: 50),
         (status: 'paid', isPaid: true, totalAmount: 200),
         (status: 'voided', isPaid: false, totalAmount: 999),
-        (status: 'refunded', isPaid: false, totalAmount: 80),
+        (status: 'refunded', isPaid: false, totalAmount: 888),
         (status: 'completed', isPaid: false, totalAmount: 0),
       ]);
       expect(result.unpaidCount, 2);
@@ -426,6 +426,7 @@ void main() {
           (status: 'paid', cashierId: 'c1', totalAmount: 50),
           (status: 'completed', cashierId: 'c2', totalAmount: 300),
           (status: 'voided', cashierId: 'c2', totalAmount: 999),
+          (status: 'refunded', cashierId: 'c2', totalAmount: 888),
           (status: 'completed', cashierId: '', totalAmount: 40),
         ],
         staffNames: {'c1': 'Alice', 'c2': 'Bob'},

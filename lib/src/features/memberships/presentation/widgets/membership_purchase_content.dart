@@ -120,13 +120,11 @@ class MembershipPurchaseContent extends HookConsumerWidget {
             .read(memberMembershipRepositoryProvider)
             .fetchActive(memberId, validAtBranchId: branchId);
         if (cancelled) return;
-        result.fold(
-          (_) => latestActiveEndDate.value = null,
-          (memberships) {
-            latestActiveEndDate.value =
-                memberships.isNotEmpty ? memberships.first.endDate : null;
-          },
-        );
+        result.fold((_) => latestActiveEndDate.value = null, (memberships) {
+          latestActiveEndDate.value = memberships.isNotEmpty
+              ? memberships.first.endDate
+              : null;
+        });
       }
 
       loadActive();
@@ -158,11 +156,15 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         ? null
         : computeMembershipEndDate(
             startDate: previewStart,
-            durationDays: selectedPlan.durationDays + bonusDays,
+            durationValue: selectedPlan.durationValue,
+            durationUnit: selectedPlan.durationUnit,
+            bonusDays: bonusDays,
           );
-    final isStacking = latestActiveEndDate.value != null &&
+    final isStacking =
+        latestActiveEndDate.value != null &&
         !isBeforeToday(latestActiveEndDate.value!);
-    final isUsingStackedDefault = previewStart != null &&
+    final isUsingStackedDefault =
+        previewStart != null &&
         toLocalDateOnly(previewStart) == toLocalDateOnly(defaultStart) &&
         isStacking;
     final dateFormat = useMemoized(() => DateFormat.yMMMd());
@@ -355,9 +357,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
       );
       final endDate = computeMembershipEndDate(
         startDate: startDate,
-        durationDays:
-            plan.durationDays +
-            MembershipAddOn.totalBonusDays(addOnsState.value),
+        durationValue: plan.durationValue,
+        durationUnit: plan.durationUnit,
+        bonusDays: MembershipAddOn.totalBonusDays(addOnsState.value),
       );
 
       // Create MemberMembership record (optionally linked to the sale)
@@ -444,18 +446,19 @@ class MembershipPurchaseContent extends HookConsumerWidget {
 
               final catalogPlans = memberships
                   .where(
-                    (m) => guestMode
-                        ? m.memberNotRequired
-                        : !m.memberNotRequired,
+                    (m) =>
+                        guestMode ? m.memberNotRequired : !m.memberNotRequired,
                   )
                   .toList();
 
-              final activePlans =
-                  catalogPlans.where((m) => m.isActive).toList();
+              final activePlans = catalogPlans
+                  .where((m) => m.isActive)
+                  .toList();
               sortPlans(activePlans);
 
-              final inactivePlans =
-                  catalogPlans.where((m) => !m.isActive).toList();
+              final inactivePlans = catalogPlans
+                  .where((m) => !m.isActive)
+                  .toList();
               sortPlans(inactivePlans);
 
               final visiblePlans = showInactive.value
@@ -469,8 +472,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                     child: Text(
                       guestMode
                           ? 'No walk-in / day pass plans yet.\n'
-                              'Create a membership plan and enable '
-                              '"Membership not required".'
+                                'Create a membership plan and enable '
+                                '"Membership not required".'
                           : 'No membership plans available.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -766,16 +769,17 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                         'Start date',
                                         style: theme.textTheme.bodySmall
                                             ?.copyWith(
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant,
-                                        ),
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
                                       ),
                                       Text(
                                         dateFormat.format(previewStart),
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -967,7 +971,9 @@ class AddOnSelectionSection extends ConsumerWidget {
                 title: Text(addOn.name),
                 subtitle: Text(subtitle),
                 secondary: Icon(
-                  addOn.extendsDuration ? Icons.event_available : Icons.extension,
+                  addOn.extendsDuration
+                      ? Icons.event_available
+                      : Icons.extension,
                   color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,

@@ -44,10 +44,7 @@ void main() {
     final now = DateTime.now();
 
     test('returns now when latestActiveEndDate is null', () {
-      expect(
-        computeMembershipStartDate(now: now),
-        now,
-      );
+      expect(computeMembershipStartDate(now: now), now);
     });
 
     test('returns now when latest end date is before today', () {
@@ -77,12 +74,144 @@ void main() {
     });
   });
 
-  group('computeMembershipEndDate', () {
-    test('adds durationDays to start', () {
+  group('MembershipDurationUnit', () {
+    test('fromName parses each PocketBase select value', () {
+      expect(MembershipDurationUnit.fromName('days'), MembershipDurationUnit.days);
+      expect(
+        MembershipDurationUnit.fromName('weeks'),
+        MembershipDurationUnit.weeks,
+      );
+      expect(
+        MembershipDurationUnit.fromName('months'),
+        MembershipDurationUnit.months,
+      );
+      expect(
+        MembershipDurationUnit.fromName('years'),
+        MembershipDurationUnit.years,
+      );
+    });
+
+    test('fromName defaults to days for null or unknown input', () {
+      expect(MembershipDurationUnit.fromName(null), MembershipDurationUnit.days);
+      expect(
+        MembershipDurationUnit.fromName(''),
+        MembershipDurationUnit.days,
+      );
+      expect(
+        MembershipDurationUnit.fromName('fortnights'),
+        MembershipDurationUnit.days,
+      );
+    });
+
+    test('label pluralizes only when value != 1', () {
+      expect(MembershipDurationUnit.days.label(1), '1 day');
+      expect(MembershipDurationUnit.days.label(5), '5 days');
+      expect(MembershipDurationUnit.weeks.label(1), '1 week');
+      expect(MembershipDurationUnit.weeks.label(2), '2 weeks');
+      expect(MembershipDurationUnit.months.label(1), '1 month');
+      expect(MembershipDurationUnit.months.label(3), '3 months');
+      expect(MembershipDurationUnit.years.label(1), '1 year');
+      expect(MembershipDurationUnit.years.label(2), '2 years');
+    });
+  });
+
+  group('addCalendarDuration', () {
+    test('days adds exact day count', () {
       final start = DateTime(2024, 1, 1);
       expect(
-        computeMembershipEndDate(startDate: start, durationDays: 30),
+        addCalendarDuration(
+          start,
+          unit: MembershipDurationUnit.days,
+          value: 30,
+        ),
         DateTime(2024, 1, 31),
+      );
+    });
+
+    test('weeks adds exact 7-day multiples', () {
+      final start = DateTime(2024, 1, 1);
+      expect(
+        addCalendarDuration(
+          start,
+          unit: MembershipDurationUnit.weeks,
+          value: 2,
+        ),
+        DateTime(2024, 1, 15),
+      );
+    });
+
+    test('months lands on the same calendar day next month', () {
+      final start = DateTime(2026, 8, 1);
+      expect(
+        addCalendarDuration(
+          start,
+          unit: MembershipDurationUnit.months,
+          value: 1,
+        ),
+        DateTime(2026, 9, 1),
+      );
+    });
+
+    test('months clamps to the last day when target month is shorter', () {
+      final start = DateTime(2024, 1, 31);
+      expect(
+        addCalendarDuration(
+          start,
+          unit: MembershipDurationUnit.months,
+          value: 1,
+        ),
+        DateTime(2024, 2, 29), // 2024 is a leap year
+      );
+    });
+
+    test('months rolls over the year boundary', () {
+      final start = DateTime(2026, 11, 15);
+      expect(
+        addCalendarDuration(
+          start,
+          unit: MembershipDurationUnit.months,
+          value: 3,
+        ),
+        DateTime(2027, 2, 15),
+      );
+    });
+
+    test('years adds calendar years, clamping Feb 29 on non-leap years', () {
+      final start = DateTime(2024, 2, 29);
+      expect(
+        addCalendarDuration(
+          start,
+          unit: MembershipDurationUnit.years,
+          value: 1,
+        ),
+        DateTime(2025, 2, 28),
+      );
+    });
+  });
+
+  group('computeMembershipEndDate', () {
+    test('adds calendar duration to start', () {
+      final start = DateTime(2026, 8, 1);
+      expect(
+        computeMembershipEndDate(
+          startDate: start,
+          durationValue: 1,
+          durationUnit: MembershipDurationUnit.months,
+        ),
+        DateTime(2026, 9, 1),
+      );
+    });
+
+    test('adds bonusDays as a flat offset on top of the calendar duration', () {
+      final start = DateTime(2026, 8, 1);
+      expect(
+        computeMembershipEndDate(
+          startDate: start,
+          durationValue: 1,
+          durationUnit: MembershipDurationUnit.months,
+          bonusDays: 3,
+        ),
+        DateTime(2026, 9, 4),
       );
     });
   });

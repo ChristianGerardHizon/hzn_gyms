@@ -14,7 +14,8 @@ class MembershipDto with MembershipDtoMappable {
   final String collectionName;
   final String name;
   final String? description;
-  final int durationDays;
+  final int durationValue;
+  final String durationUnit;
   final num price;
   final String branch;
   final List<String> validBranches;
@@ -30,7 +31,8 @@ class MembershipDto with MembershipDtoMappable {
     required this.collectionName,
     required this.name,
     this.description,
-    required this.durationDays,
+    required this.durationValue,
+    this.durationUnit = 'days',
     required this.price,
     required this.branch,
     this.validBranches = const [],
@@ -50,7 +52,8 @@ class MembershipDto with MembershipDtoMappable {
       collectionName: record.collectionName,
       name: record.getStringValue('name'),
       description: record.getStringValue('description'),
-      durationDays: record.get<int>('durationDays'),
+      durationValue: record.get<int>('durationValue'),
+      durationUnit: record.getStringValue('durationUnit', 'days'),
       price: record.getDoubleValue('price'),
       branch: record.getStringValue('branch'),
       validBranches: _parseIdList(json['validBranches']),
@@ -75,7 +78,8 @@ class MembershipDto with MembershipDtoMappable {
       description: description != null && description!.isNotEmpty
           ? description
           : null,
-      durationDays: durationDays,
+      durationValue: durationValue,
+      durationUnit: MembershipDurationUnit.fromName(durationUnit),
       price: price,
       branchId: branch,
       validBranches: validBranches,

@@ -76,6 +76,7 @@ Future<void> purchaseMembershipAndRecordPayment(
   if (result == null) return;
 
   ref.invalidate(memberMembershipsControllerProvider(memberId));
+  refreshDashboardAfterMemberChange(ref);
 
   if (result.excludedFromSales) {
     return;
@@ -91,15 +92,13 @@ Future<void> purchaseMembershipAndRecordPayment(
     return;
   }
 
-  refreshTodaysSales(ref);
-
   if (context.mounted) {
     await showRecordPaymentDialog(
       context,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
-    if (context.mounted) refreshTodaysSales(ref);
+    if (context.mounted) refreshDashboardAfterMemberChange(ref);
   }
 }
 

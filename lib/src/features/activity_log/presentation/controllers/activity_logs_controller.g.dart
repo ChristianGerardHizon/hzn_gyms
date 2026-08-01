@@ -41,7 +41,7 @@ final class ActivityLogsControllerProvider
 }
 
 String _$activityLogsControllerHash() =>
-    r'09d4358db74ebd9c91b5cf80478463321779f411';
+    r'a37389447e59e57ce69f83e045ff3f8b84b0e12e';
 
 /// Paginated activity log list controller.
 

@@ -50,6 +50,9 @@ class BranchSwitcher extends HookConsumerWidget {
     final switchableIdsSnapshot = useFuture(switchableIdsFuture);
 
     return currentBranchAsync.when(
+      // Keep showing the current branch while switching instead of collapsing
+      // the switcher into a spinner.
+      skipLoadingOnReload: true,
       data: (selection) {
         final currentBranch = selection.branch;
         final canSwitch = canSwitchSnapshot.data ?? false;

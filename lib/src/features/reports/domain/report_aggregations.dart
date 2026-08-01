@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../../pos/domain/sale_payment_status.dart';
 import 'period_bucket.dart';
 import 'report_period.dart';
 
@@ -257,7 +258,6 @@ bool usesPeriodScopedSalesFetch(ReportPeriod period) =>
   var totalRevenue = 0.0;
   var transactionCount = 0;
   for (final sale in sales) {
-    if (sale.status == 'voided' || sale.status == 'refunded') continue;
     if (!isReportableSaleStatus(sale.status)) continue;
     transactionCount++;
     if (sale.isPaid) totalRevenue += sale.totalAmount.toDouble();
@@ -360,14 +360,14 @@ Map<String, num> aggregateScopedRevenueByItemType(
   );
 }
 
-/// Counts unpaid / AR sales (excludes voided and refunded).
+/// Counts unpaid / AR sales (excludes voided and legacy refunded).
 ({int unpaidCount, num unpaidBalance}) aggregateUnpaidSales(
   Iterable<({String status, bool isPaid, num totalAmount})> sales,
 ) {
   var unpaidCount = 0;
   num unpaidBalance = 0;
   for (final sale in sales) {
-    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    if (isClosedSaleStatus(sale.status)) continue;
     if (!sale.isPaid && sale.totalAmount > 0) {
       unpaidCount++;
       unpaidBalance += sale.totalAmount;
@@ -386,7 +386,7 @@ aggregateStaffPerformance(
 }) {
   final staffMap = <String, ({String name, int count, num revenue})>{};
   for (final sale in sales) {
-    if (sale.status == 'voided' || sale.status == 'refunded') continue;
+    if (isClosedSaleStatus(sale.status)) continue;
     final cashierId = sale.cashierId;
     if (cashierId.isEmpty) continue;
     final name = staffNames[cashierId] ?? 'Unknown';

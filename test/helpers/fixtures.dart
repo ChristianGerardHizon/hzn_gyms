@@ -1,3 +1,4 @@
+import 'package:ebe_gym/src/core/utils/date_utils.dart';
 import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
 import 'package:ebe_gym/src/features/auth/domain/user.dart';
 import 'package:ebe_gym/src/features/check_in/domain/check_in.dart';
@@ -15,10 +16,7 @@ import 'package:ebe_gym/src/features/products/domain/product.dart';
 import 'package:ebe_gym/src/features/products/domain/product_lot.dart';
 
 /// Shared fixture builders for unit tests.
-AuthState buildAuthState({
-  String userId = 'user-1',
-  String token = 'token',
-}) {
+AuthState buildAuthState({String userId = 'user-1', String token = 'token'}) {
   return AuthState(
     token: token,
     user: User(
@@ -88,7 +86,8 @@ CartItem buildCartItem({
 Membership buildMembership({
   String id = 'plan-1',
   String name = 'Monthly',
-  int durationDays = 30,
+  int durationValue = 1,
+  MembershipDurationUnit durationUnit = MembershipDurationUnit.months,
   num price = 1000,
   String branchId = 'branch-1',
   List<String> validBranches = const [],
@@ -99,7 +98,8 @@ Membership buildMembership({
   return Membership(
     id: id,
     name: name,
-    durationDays: durationDays,
+    durationValue: durationValue,
+    durationUnit: durationUnit,
     price: price,
     branchId: branchId,
     validBranches: validBranches,
@@ -158,11 +158,7 @@ Member buildMember({
   String name = 'Jane Doe',
   String? rfidCardId,
 }) {
-  return Member(
-    id: id,
-    name: name,
-    rfidCardId: rfidCardId,
-  );
+  return Member(id: id, name: name, rfidCardId: rfidCardId);
 }
 
 MemberCard buildMemberCard({
