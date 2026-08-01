@@ -50,52 +50,55 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (migrator) async {
-          await migrator.createAll();
-        },
-        onUpgrade: (migrator, from, to) async {
-          if (from < 2) {
-            await _addColumnIfMissing(
-              migrator,
-              table: members,
-              column: members.branch,
-            );
-          }
-          if (from < 3) {
-            await _migrateToV3(migrator);
-          }
-          if (from < 4) {
-            await _addColumnIfMissing(
-              migrator,
-              table: membershipPlans,
-              column: membershipPlans.validBranchesJson,
-            );
-          }
-          if (from < 5) {
-            if (!await _tableExists(migrator, appPreferences.actualTableName)) {
-              await migrator.createTable(appPreferences);
-            }
-          }
-          if (from < 6) {
-            await _addColumnIfMissing(
-              migrator,
-              table: membershipPlans,
-              column: membershipPlans.memberNotRequired,
-            );
-          }
-          if (from < 7) {
-            await _addColumnIfMissing(
-              migrator,
-              table: membershipAddOnsCache,
-              column: membershipAddOnsCache.durationDays,
-            );
-          }
-        },
-      );
+    onCreate: (migrator) async {
+      await migrator.createAll();
+    },
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await _addColumnIfMissing(
+          migrator,
+          table: members,
+          column: members.branch,
+        );
+      }
+      if (from < 3) {
+        await _migrateToV3(migrator);
+      }
+      if (from < 4) {
+        await _addColumnIfMissing(
+          migrator,
+          table: membershipPlans,
+          column: membershipPlans.validBranchesJson,
+        );
+      }
+      if (from < 5) {
+        if (!await _tableExists(migrator, appPreferences.actualTableName)) {
+          await migrator.createTable(appPreferences);
+        }
+      }
+      if (from < 6) {
+        await _addColumnIfMissing(
+          migrator,
+          table: membershipPlans,
+          column: membershipPlans.memberNotRequired,
+        );
+      }
+      if (from < 7) {
+        await _addColumnIfMissing(
+          migrator,
+          table: membershipAddOnsCache,
+          column: membershipAddOnsCache.durationDays,
+        );
+      }
+      if (from < 8) {
+        await _migrateToV8(migrator);
+      }
+    },
+  );
 }
 
 /// Adds a column only when a prior partial migration did not already create it.
@@ -104,11 +107,7 @@ Future<void> _addColumnIfMissing(
   required TableInfo<Table, Object?> table,
   required GeneratedColumn column,
 }) async {
-  if (await _columnExists(
-    migrator,
-    table.actualTableName,
-    column.$name,
-  )) {
+  if (await _columnExists(migrator, table.actualTableName, column.$name)) {
     return;
   }
   await migrator.addColumn(table, column);
@@ -142,6 +141,36 @@ Future<void> _migrateToV3(Migrator migrator) async {
       await migrator.createTable(table);
     }
   }
+}
+
+/// Renames the local `membershipPlans` day-count cache column to
+/// `duration_value` and adds `duration_unit`, mirroring the PocketBase
+/// `memberships` collection's move to calendar-based durations.
+Future<void> _migrateToV8(Migrator migrator) async {
+  final db = migrator.database as AppDatabase;
+  final tableName = db.membershipPlans.actualTableName;
+
+  final hasOldColumn = await _columnExists(
+    migrator,
+    tableName,
+    'duration_days',
+  );
+  final hasNewColumn = await _columnExists(
+    migrator,
+    tableName,
+    'duration_value',
+  );
+  if (hasOldColumn && !hasNewColumn) {
+    await migrator.database.customStatement(
+      'ALTER TABLE $tableName RENAME COLUMN duration_days TO duration_value',
+    );
+  }
+
+  await _addColumnIfMissing(
+    migrator,
+    table: db.membershipPlans,
+    column: db.membershipPlans.durationUnit,
+  );
 }
 
 Future<bool> _columnExists(

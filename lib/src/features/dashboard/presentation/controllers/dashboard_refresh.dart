@@ -15,6 +15,17 @@ void refreshTodaysSales(WidgetRef ref) {
   ref.invalidate(todaySalesProvider);
 }
 
+/// Invalidates membership/sales dashboard cards after create or renew.
+void refreshDashboardAfterMemberChange(WidgetRef ref) {
+  refreshTodaysSales(ref);
+  ref.invalidate(activeMembersCountProvider);
+  ref.invalidate(activeMembersListProvider);
+  ref.invalidate(todaysNewMembersCountProvider);
+  ref.invalidate(todaysNewMembersListProvider);
+  ref.invalidate(expiringMembershipsProvider);
+  ref.invalidate(dashboardMembersPageProvider);
+}
+
 /// Invalidates all dashboard data providers so KPI, members, sales, and alerts
 /// reload from the server.
 Future<void> refreshDashboard(WidgetRef ref) async {

@@ -507,7 +507,7 @@ class _ActionButtons extends StatelessWidget {
       data: (payments) {
         if (sale == null) return false;
         final status = sale!.status.toLowerCase();
-        if (status == 'voided' || status == 'refunded') return false;
+        if (status == 'voided') return false;
 
         num totalPaid = 0;
         for (final payment in payments) {

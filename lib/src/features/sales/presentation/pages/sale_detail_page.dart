@@ -203,7 +203,7 @@ class _SaleDetailContent extends HookConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Sale Status Actions (Refund/Unrefund)
+              // Sale Status Actions (Void)
               _buildSaleStatusActions(context, ref),
               const SizedBox(height: 16),
 
@@ -289,10 +289,7 @@ class _SaleDetailContent extends HookConsumerWidget {
     final theme = Theme.of(context);
     final isUpdating = useState(false);
     final statusLower = sale.status.toLowerCase();
-    final isRefunded = statusLower == 'refunded';
     final isVoided = statusLower == 'voided';
-    final isPending = statusLower == 'pending';
-    final isAwaitingPayment = statusLower == 'awaitingpayment';
     final canVoidSale =
         ref.watch(currentUserPermissionsProvider).value?.canVoidSales ?? false;
 
@@ -301,33 +298,14 @@ class _SaleDetailContent extends HookConsumerWidget {
       return _buildVoidedInfoCard(context, ref, theme);
     }
 
-    Future<void> updateSaleStatus(String newStatus) async {
-      final (title, content, confirmLabel, confirmColor) = switch (newStatus) {
-        'refunded' => (
-            'Refund Sale?',
-            'Are you sure you want to mark this sale as refunded?',
-            'Refund',
-            Colors.orange,
-          ),
-        'voided' => (
-            'Void Sale?',
-            'Are you sure you want to void this sale? This action cannot be undone.',
-            'Void',
-            Colors.red,
-          ),
-        _ => (
-            'Update Status?',
-            'Are you sure you want to update this sale status?',
-            'Update',
-            Colors.green,
-          ),
-      };
-
+    Future<void> voidSale() async {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(content),
+          title: const Text('Void Sale?'),
+          content: const Text(
+            'Are you sure you want to void this sale? This action cannot be undone.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -335,8 +313,8 @@ class _SaleDetailContent extends HookConsumerWidget {
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(backgroundColor: confirmColor),
-              child: Text(confirmLabel),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Void'),
             ),
           ],
         ),
@@ -347,13 +325,10 @@ class _SaleDetailContent extends HookConsumerWidget {
       isUpdating.value = true;
       final repo = ref.read(salesRepositoryProvider);
 
-      // When voiding, also set voidedBy to the current user
-      final result = newStatus == 'voided'
-          ? await repo.updateSale(sale.id, {
-              'status': 'voided',
-              'voidedBy': ref.read(currentAuthProvider)?.user.id,
-            })
-          : await repo.updateSaleStatus(sale.id, newStatus);
+      final result = await repo.updateSale(sale.id, {
+        'status': 'voided',
+        'voidedBy': ref.read(currentAuthProvider)?.user.id,
+      });
       isUpdating.value = false;
 
       if (!context.mounted) return;
@@ -363,7 +338,7 @@ class _SaleDetailContent extends HookConsumerWidget {
           showErrorSnackBar(context, message: failure.messageString);
         },
         (_) {
-          showSuccessSnackBar(context, message: 'Sale status updated');
+          showSuccessSnackBar(context, message: 'Sale voided');
           ref.invalidate(saleProvider(sale.id));
         },
       );
@@ -375,7 +350,6 @@ class _SaleDetailContent extends HookConsumerWidget {
       'awaitingpayment' => (Colors.amber, 'Awaiting Payment'),
       'paid' => (Colors.green, 'Paid'),
       'completed' => (Colors.green, 'Completed'),
-      'refunded' => (Colors.orange, 'Refunded'),
       _ => (Colors.grey, sale.status),
     };
 
@@ -415,54 +389,32 @@ class _SaleDetailContent extends HookConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            // Popup menu for actions
-            PopupMenuButton<String>(
-              icon: isUpdating.value
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.more_vert),
-              enabled: !isUpdating.value,
-              onSelected: (value) => updateSaleStatus(value),
-              itemBuilder: (context) => [
-                if (isRefunded)
+            if (canVoidSale) ...[
+              const SizedBox(width: 8),
+              // Popup menu for actions
+              PopupMenuButton<String>(
+                icon: isUpdating.value
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.more_vert),
+                enabled: !isUpdating.value,
+                onSelected: (_) => voidSale(),
+                itemBuilder: (context) => [
                   const PopupMenuItem<String>(
-                    value: 'pending',
+                    value: 'voided',
                     child: ListTile(
-                      leading: Icon(Icons.undo, color: Colors.green),
-                      title: Text('Remove Refund'),
+                      leading: Icon(Icons.cancel, color: Colors.red),
+                      title: Text('Void Sale'),
                       contentPadding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
                     ),
-                  )
-                else ...[
-                  if (!isRefunded)
-                    const PopupMenuItem<String>(
-                      value: 'refunded',
-                      child: ListTile(
-                        leading: Icon(Icons.replay, color: Colors.orange),
-                        title: Text('Mark as Refunded'),
-                        contentPadding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ),
-                  if (isPending || isAwaitingPayment)
-                    if (canVoidSale)
-                      const PopupMenuItem<String>(
-                        value: 'voided',
-                        child: ListTile(
-                          leading: Icon(Icons.cancel, color: Colors.red),
-                          title: Text('Void Sale'),
-                          contentPadding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                        ),
-                      ),
+                  ),
                 ],
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
@@ -607,11 +559,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                             .value
                             ?.canVoidSales ??
                         false) &&
-                    statusLower != 'voided' &&
-                    statusLower != 'refunded';
+                    statusLower != 'voided';
                 final canRecordPayment =
                     statusLower != 'voided' &&
-                    statusLower != 'refunded' &&
                     balanceDue > 0;
 
                 return Column(

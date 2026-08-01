@@ -2564,16 +2564,28 @@ class $MembershipPlansTable extends MembershipPlans
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _durationDaysMeta = const VerificationMeta(
-    'durationDays',
+  static const VerificationMeta _durationValueMeta = const VerificationMeta(
+    'durationValue',
   );
   @override
-  late final GeneratedColumn<int> durationDays = GeneratedColumn<int>(
-    'duration_days',
+  late final GeneratedColumn<int> durationValue = GeneratedColumn<int>(
+    'duration_value',
     aliasedName,
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _durationUnitMeta = const VerificationMeta(
+    'durationUnit',
+  );
+  @override
+  late final GeneratedColumn<String> durationUnit = GeneratedColumn<String>(
+    'duration_unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('days'),
   );
   static const VerificationMeta _priceMeta = const VerificationMeta('price');
   @override
@@ -2669,7 +2681,8 @@ class $MembershipPlansTable extends MembershipPlans
     id,
     name,
     description,
-    durationDays,
+    durationValue,
+    durationUnit,
     price,
     branchId,
     validBranchesJson,
@@ -2712,16 +2725,25 @@ class $MembershipPlansTable extends MembershipPlans
         ),
       );
     }
-    if (data.containsKey('duration_days')) {
+    if (data.containsKey('duration_value')) {
       context.handle(
-        _durationDaysMeta,
-        durationDays.isAcceptableOrUnknown(
-          data['duration_days']!,
-          _durationDaysMeta,
+        _durationValueMeta,
+        durationValue.isAcceptableOrUnknown(
+          data['duration_value']!,
+          _durationValueMeta,
         ),
       );
     } else if (isInserting) {
-      context.missing(_durationDaysMeta);
+      context.missing(_durationValueMeta);
+    }
+    if (data.containsKey('duration_unit')) {
+      context.handle(
+        _durationUnitMeta,
+        durationUnit.isAcceptableOrUnknown(
+          data['duration_unit']!,
+          _durationUnitMeta,
+        ),
+      );
     }
     if (data.containsKey('price')) {
       context.handle(
@@ -2798,9 +2820,13 @@ class $MembershipPlansTable extends MembershipPlans
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
-      durationDays: attachedDatabase.typeMapping.read(
+      durationValue: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}duration_days'],
+        data['${effectivePrefix}duration_value'],
+      )!,
+      durationUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}duration_unit'],
       )!,
       price: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -2844,7 +2870,8 @@ class MembershipPlanRow extends DataClass
   final String id;
   final String name;
   final String? description;
-  final int durationDays;
+  final int durationValue;
+  final String durationUnit;
   final double price;
   final String branchId;
 
@@ -2858,7 +2885,8 @@ class MembershipPlanRow extends DataClass
     required this.id,
     required this.name,
     this.description,
-    required this.durationDays,
+    required this.durationValue,
+    required this.durationUnit,
     required this.price,
     required this.branchId,
     required this.validBranchesJson,
@@ -2875,7 +2903,8 @@ class MembershipPlanRow extends DataClass
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
-    map['duration_days'] = Variable<int>(durationDays);
+    map['duration_value'] = Variable<int>(durationValue);
+    map['duration_unit'] = Variable<String>(durationUnit);
     map['price'] = Variable<double>(price);
     map['branch_id'] = Variable<String>(branchId);
     map['valid_branches_json'] = Variable<String>(validBranchesJson);
@@ -2893,7 +2922,8 @@ class MembershipPlanRow extends DataClass
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
-      durationDays: Value(durationDays),
+      durationValue: Value(durationValue),
+      durationUnit: Value(durationUnit),
       price: Value(price),
       branchId: Value(branchId),
       validBranchesJson: Value(validBranchesJson),
@@ -2913,7 +2943,8 @@ class MembershipPlanRow extends DataClass
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
-      durationDays: serializer.fromJson<int>(json['durationDays']),
+      durationValue: serializer.fromJson<int>(json['durationValue']),
+      durationUnit: serializer.fromJson<String>(json['durationUnit']),
       price: serializer.fromJson<double>(json['price']),
       branchId: serializer.fromJson<String>(json['branchId']),
       validBranchesJson: serializer.fromJson<String>(json['validBranchesJson']),
@@ -2930,7 +2961,8 @@ class MembershipPlanRow extends DataClass
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
-      'durationDays': serializer.toJson<int>(durationDays),
+      'durationValue': serializer.toJson<int>(durationValue),
+      'durationUnit': serializer.toJson<String>(durationUnit),
       'price': serializer.toJson<double>(price),
       'branchId': serializer.toJson<String>(branchId),
       'validBranchesJson': serializer.toJson<String>(validBranchesJson),
@@ -2945,7 +2977,8 @@ class MembershipPlanRow extends DataClass
     String? id,
     String? name,
     Value<String?> description = const Value.absent(),
-    int? durationDays,
+    int? durationValue,
+    String? durationUnit,
     double? price,
     String? branchId,
     String? validBranchesJson,
@@ -2957,7 +2990,8 @@ class MembershipPlanRow extends DataClass
     id: id ?? this.id,
     name: name ?? this.name,
     description: description.present ? description.value : this.description,
-    durationDays: durationDays ?? this.durationDays,
+    durationValue: durationValue ?? this.durationValue,
+    durationUnit: durationUnit ?? this.durationUnit,
     price: price ?? this.price,
     branchId: branchId ?? this.branchId,
     validBranchesJson: validBranchesJson ?? this.validBranchesJson,
@@ -2973,9 +3007,12 @@ class MembershipPlanRow extends DataClass
       description: data.description.present
           ? data.description.value
           : this.description,
-      durationDays: data.durationDays.present
-          ? data.durationDays.value
-          : this.durationDays,
+      durationValue: data.durationValue.present
+          ? data.durationValue.value
+          : this.durationValue,
+      durationUnit: data.durationUnit.present
+          ? data.durationUnit.value
+          : this.durationUnit,
       price: data.price.present ? data.price.value : this.price,
       branchId: data.branchId.present ? data.branchId.value : this.branchId,
       validBranchesJson: data.validBranchesJson.present
@@ -2998,7 +3035,8 @@ class MembershipPlanRow extends DataClass
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('description: $description, ')
-          ..write('durationDays: $durationDays, ')
+          ..write('durationValue: $durationValue, ')
+          ..write('durationUnit: $durationUnit, ')
           ..write('price: $price, ')
           ..write('branchId: $branchId, ')
           ..write('validBranchesJson: $validBranchesJson, ')
@@ -3015,7 +3053,8 @@ class MembershipPlanRow extends DataClass
     id,
     name,
     description,
-    durationDays,
+    durationValue,
+    durationUnit,
     price,
     branchId,
     validBranchesJson,
@@ -3031,7 +3070,8 @@ class MembershipPlanRow extends DataClass
           other.id == this.id &&
           other.name == this.name &&
           other.description == this.description &&
-          other.durationDays == this.durationDays &&
+          other.durationValue == this.durationValue &&
+          other.durationUnit == this.durationUnit &&
           other.price == this.price &&
           other.branchId == this.branchId &&
           other.validBranchesJson == this.validBranchesJson &&
@@ -3045,7 +3085,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> description;
-  final Value<int> durationDays;
+  final Value<int> durationValue;
+  final Value<String> durationUnit;
   final Value<double> price;
   final Value<String> branchId;
   final Value<String> validBranchesJson;
@@ -3058,7 +3099,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.description = const Value.absent(),
-    this.durationDays = const Value.absent(),
+    this.durationValue = const Value.absent(),
+    this.durationUnit = const Value.absent(),
     this.price = const Value.absent(),
     this.branchId = const Value.absent(),
     this.validBranchesJson = const Value.absent(),
@@ -3072,7 +3114,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     required String id,
     required String name,
     this.description = const Value.absent(),
-    required int durationDays,
+    required int durationValue,
+    this.durationUnit = const Value.absent(),
     required double price,
     required String branchId,
     this.validBranchesJson = const Value.absent(),
@@ -3083,7 +3126,7 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
-       durationDays = Value(durationDays),
+       durationValue = Value(durationValue),
        price = Value(price),
        branchId = Value(branchId),
        syncedAt = Value(syncedAt);
@@ -3091,7 +3134,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? description,
-    Expression<int>? durationDays,
+    Expression<int>? durationValue,
+    Expression<String>? durationUnit,
     Expression<double>? price,
     Expression<String>? branchId,
     Expression<String>? validBranchesJson,
@@ -3105,7 +3149,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (description != null) 'description': description,
-      if (durationDays != null) 'duration_days': durationDays,
+      if (durationValue != null) 'duration_value': durationValue,
+      if (durationUnit != null) 'duration_unit': durationUnit,
       if (price != null) 'price': price,
       if (branchId != null) 'branch_id': branchId,
       if (validBranchesJson != null) 'valid_branches_json': validBranchesJson,
@@ -3121,7 +3166,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     Value<String>? id,
     Value<String>? name,
     Value<String?>? description,
-    Value<int>? durationDays,
+    Value<int>? durationValue,
+    Value<String>? durationUnit,
     Value<double>? price,
     Value<String>? branchId,
     Value<String>? validBranchesJson,
@@ -3135,7 +3181,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
-      durationDays: durationDays ?? this.durationDays,
+      durationValue: durationValue ?? this.durationValue,
+      durationUnit: durationUnit ?? this.durationUnit,
       price: price ?? this.price,
       branchId: branchId ?? this.branchId,
       validBranchesJson: validBranchesJson ?? this.validBranchesJson,
@@ -3159,8 +3206,11 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
-    if (durationDays.present) {
-      map['duration_days'] = Variable<int>(durationDays.value);
+    if (durationValue.present) {
+      map['duration_value'] = Variable<int>(durationValue.value);
+    }
+    if (durationUnit.present) {
+      map['duration_unit'] = Variable<String>(durationUnit.value);
     }
     if (price.present) {
       map['price'] = Variable<double>(price.value);
@@ -3195,7 +3245,8 @@ class MembershipPlansCompanion extends UpdateCompanion<MembershipPlanRow> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('description: $description, ')
-          ..write('durationDays: $durationDays, ')
+          ..write('durationValue: $durationValue, ')
+          ..write('durationUnit: $durationUnit, ')
           ..write('price: $price, ')
           ..write('branchId: $branchId, ')
           ..write('validBranchesJson: $validBranchesJson, ')
@@ -5235,7 +5286,8 @@ typedef $$MembershipPlansTableCreateCompanionBuilder =
       required String id,
       required String name,
       Value<String?> description,
-      required int durationDays,
+      required int durationValue,
+      Value<String> durationUnit,
       required double price,
       required String branchId,
       Value<String> validBranchesJson,
@@ -5250,7 +5302,8 @@ typedef $$MembershipPlansTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String?> description,
-      Value<int> durationDays,
+      Value<int> durationValue,
+      Value<String> durationUnit,
       Value<double> price,
       Value<String> branchId,
       Value<String> validBranchesJson,
@@ -5285,8 +5338,13 @@ class $$MembershipPlansTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get durationDays => $composableBuilder(
-    column: $table.durationDays,
+  ColumnFilters<int> get durationValue => $composableBuilder(
+    column: $table.durationValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get durationUnit => $composableBuilder(
+    column: $table.durationUnit,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5350,8 +5408,13 @@ class $$MembershipPlansTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get durationDays => $composableBuilder(
-    column: $table.durationDays,
+  ColumnOrderings<int> get durationValue => $composableBuilder(
+    column: $table.durationValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get durationUnit => $composableBuilder(
+    column: $table.durationUnit,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5411,8 +5474,13 @@ class $$MembershipPlansTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get durationDays => $composableBuilder(
-    column: $table.durationDays,
+  GeneratedColumn<int> get durationValue => $composableBuilder(
+    column: $table.durationValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get durationUnit => $composableBuilder(
+    column: $table.durationUnit,
     builder: (column) => column,
   );
 
@@ -5484,7 +5552,8 @@ class $$MembershipPlansTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> description = const Value.absent(),
-                Value<int> durationDays = const Value.absent(),
+                Value<int> durationValue = const Value.absent(),
+                Value<String> durationUnit = const Value.absent(),
                 Value<double> price = const Value.absent(),
                 Value<String> branchId = const Value.absent(),
                 Value<String> validBranchesJson = const Value.absent(),
@@ -5497,7 +5566,8 @@ class $$MembershipPlansTableTableManager
                 id: id,
                 name: name,
                 description: description,
-                durationDays: durationDays,
+                durationValue: durationValue,
+                durationUnit: durationUnit,
                 price: price,
                 branchId: branchId,
                 validBranchesJson: validBranchesJson,
@@ -5512,7 +5582,8 @@ class $$MembershipPlansTableTableManager
                 required String id,
                 required String name,
                 Value<String?> description = const Value.absent(),
-                required int durationDays,
+                required int durationValue,
+                Value<String> durationUnit = const Value.absent(),
                 required double price,
                 required String branchId,
                 Value<String> validBranchesJson = const Value.absent(),
@@ -5525,7 +5596,8 @@ class $$MembershipPlansTableTableManager
                 id: id,
                 name: name,
                 description: description,
-                durationDays: durationDays,
+                durationValue: durationValue,
+                durationUnit: durationUnit,
                 price: price,
                 branchId: branchId,
                 validBranchesJson: validBranchesJson,

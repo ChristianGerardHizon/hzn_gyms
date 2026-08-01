@@ -15,8 +15,8 @@ num calculateNetPaidAmount(Iterable<({String type, num amount})> payments) {
 
 /// Resolves [isPaid] and the next sale [status] from payment totals.
 ///
-/// When [currentStatus] is `refunded` or `voided`, [status] is `null` so
-/// callers leave the existing status unchanged.
+/// When [currentStatus] is `voided`, [status] is `null` so callers leave
+/// the existing status unchanged.
 ({bool isPaid, String? status}) resolveSalePaymentState({
   required num totalAmount,
   required num totalPaid,
@@ -24,7 +24,7 @@ num calculateNetPaidAmount(Iterable<({String type, num amount})> payments) {
 }) {
   final isPaid = totalPaid >= totalAmount;
 
-  if (currentStatus == 'refunded' || currentStatus == 'voided') {
+  if (currentStatus == 'voided') {
     return (isPaid: isPaid, status: null);
   }
 

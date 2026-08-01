@@ -26,11 +26,19 @@ class MembershipMapper extends ClassMapperBase<Membership> {
   static const Field<Membership, String> _f$id = Field('id', _$id);
   static String _$name(Membership v) => v.name;
   static const Field<Membership, String> _f$name = Field('name', _$name);
-  static int _$durationDays(Membership v) => v.durationDays;
-  static const Field<Membership, int> _f$durationDays = Field(
-    'durationDays',
-    _$durationDays,
+  static int _$durationValue(Membership v) => v.durationValue;
+  static const Field<Membership, int> _f$durationValue = Field(
+    'durationValue',
+    _$durationValue,
   );
+  static MembershipDurationUnit _$durationUnit(Membership v) => v.durationUnit;
+  static const Field<Membership, MembershipDurationUnit> _f$durationUnit =
+      Field(
+        'durationUnit',
+        _$durationUnit,
+        opt: true,
+        def: MembershipDurationUnit.days,
+      );
   static num _$price(Membership v) => v.price;
   static const Field<Membership, num> _f$price = Field('price', _$price);
   static String _$branchId(Membership v) => v.branchId;
@@ -89,7 +97,8 @@ class MembershipMapper extends ClassMapperBase<Membership> {
   final MappableFields<Membership> fields = const {
     #id: _f$id,
     #name: _f$name,
-    #durationDays: _f$durationDays,
+    #durationValue: _f$durationValue,
+    #durationUnit: _f$durationUnit,
     #price: _f$price,
     #branchId: _f$branchId,
     #validBranches: _f$validBranches,
@@ -105,7 +114,8 @@ class MembershipMapper extends ClassMapperBase<Membership> {
     return Membership(
       id: data.dec(_f$id),
       name: data.dec(_f$name),
-      durationDays: data.dec(_f$durationDays),
+      durationValue: data.dec(_f$durationValue),
+      durationUnit: data.dec(_f$durationUnit),
       price: data.dec(_f$price),
       branchId: data.dec(_f$branchId),
       validBranches: data.dec(_f$validBranches),
@@ -183,7 +193,8 @@ abstract class MembershipCopyWith<$R, $In extends Membership, $Out>
   $R call({
     String? id,
     String? name,
-    int? durationDays,
+    int? durationValue,
+    MembershipDurationUnit? durationUnit,
     num? price,
     String? branchId,
     List<String>? validBranches,
@@ -216,7 +227,8 @@ class _MembershipCopyWithImpl<$R, $Out>
   $R call({
     String? id,
     String? name,
-    int? durationDays,
+    int? durationValue,
+    MembershipDurationUnit? durationUnit,
     num? price,
     String? branchId,
     List<String>? validBranches,
@@ -230,7 +242,8 @@ class _MembershipCopyWithImpl<$R, $Out>
     FieldCopyWithData({
       if (id != null) #id: id,
       if (name != null) #name: name,
-      if (durationDays != null) #durationDays: durationDays,
+      if (durationValue != null) #durationValue: durationValue,
+      if (durationUnit != null) #durationUnit: durationUnit,
       if (price != null) #price: price,
       if (branchId != null) #branchId: branchId,
       if (validBranches != null) #validBranches: validBranches,
@@ -246,7 +259,8 @@ class _MembershipCopyWithImpl<$R, $Out>
   Membership $make(CopyWithData data) => Membership(
     id: data.get(#id, or: $value.id),
     name: data.get(#name, or: $value.name),
-    durationDays: data.get(#durationDays, or: $value.durationDays),
+    durationValue: data.get(#durationValue, or: $value.durationValue),
+    durationUnit: data.get(#durationUnit, or: $value.durationUnit),
     price: data.get(#price, or: $value.price),
     branchId: data.get(#branchId, or: $value.branchId),
     validBranches: data.get(#validBranches, or: $value.validBranches),

@@ -6,18 +6,7 @@ This file provides guidance to Claude Code (claude.ai/claude-code) when working 
 
 This is **ebe_gym** - a Flutter multi-platform gym management system. The application supports Android, iOS, macOS, Linux, Windows, and Web platforms.
 
-## Tech Stack
-
-- **Language:** Dart
-- **Framework:** Flutter
-- **State Management:** Hooks Riverpod
-- **Navigation:** GoRouter with go_router_builder
-- **Backend:** PocketBase (BaaS)
-- **Serialization:** dart_mappable
-- **Forms:** flutter_form_builder
-- **Localization:** slang/slang_flutter
-
-### PocketBase Schema Changes
+## PocketBase Schema Changes
 
 **IMPORTANT RULE: NEVER create, edit, delete, rename, or rewrite any file under `server/pb_migrations/`.**
 
@@ -29,71 +18,17 @@ Apply all PocketBase schema changes (collections, fields, indexes, views, API ru
 
 If a migration fails: diagnose the query/schema issue, fix it via the Admin API (e.g. PATCH the collection), and let PocketBase regenerate migrations. Never patch the broken `.js` file yourself.
 
-Credentials are in `.env`:
-- Local: `PB_LOCAL_URL`, `PB_LOCAL_EMAIL`, `PB_LOCAL_PASSWORD`
-- Staging: `PB_STAGING_URL`, `PB_STAGING_EMAIL`, `PB_STAGING_PASSWORD`
-
-```bash
-# 1. Authenticate as superuser
-TOKEN=$(curl -s -X POST "$PB_LOCAL_URL/api/collections/_superusers/auth-with-password" \
-  -H "Content-Type: application/json" \
-  -d "{\"identity\":\"$PB_LOCAL_EMAIL\",\"password\":\"$PB_LOCAL_PASSWORD\"}" \
-  | jq -r '.token')
-
-# 2. Read current collection (check existing indexes first)
-curl -s "$PB_LOCAL_URL/api/collections/{collectionName}" -H "Authorization: $TOKEN"
-
-# 3. Patch collection (merge with existing indexes — do not overwrite unrelated ones)
-curl -s -X PATCH "$PB_LOCAL_URL/api/collections/{collectionName}" \
-  -H "Authorization: $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"indexes":["CREATE INDEX idx_name ON collectionName (field1, field2)"]}'
-```
-
-## Architecture
-
-The project follows a **feature-based clean architecture**:
-
-```
-lib/src/
-├── core/           # Shared functionality (routing, widgets, utils, models)
-└── features/       # Feature modules (members, products, memberships, etc.)
-    └── [feature]/
-        ├── data/           # Repositories, data sources
-        ├── domain/         # Models, entities
-        └── presentation/
-            ├── controllers/  # Riverpod providers/notifiers
-            ├── pages/        # Full-screen UI
-            └── widgets/      # Feature-specific widgets
-```
+See the `pocketbase-schema-change` skill for the Admin API authentication/patch workflow (credentials, curl commands).
 
 ## Common Commands
 
 ```bash
-# Install dependencies
-dart pub get
-
 # Run code generation (mappers, serializers, routes)
 # IMPORTANT: Always use --low-resources-mode to prevent memory issues
 dart run build_runner build --delete-conflicting-outputs --low-resources-mode
 
 # Or use watch mode for continuous rebuilds
 dart run build_runner watch -d --low-resources-mode
-
-# Generate localization files
-dart run slang
-
-# Run the app
-flutter run
-
-# Run tests
-flutter test
-
-# Analyze code
-dart analyze
-
-# Format code
-dart format lib/
 ```
 
 ## Key Patterns
@@ -186,51 +121,6 @@ dart format lib/
 - Access field values via `_formKey.currentState?.fields['fieldName']?.value`
 - Validate with `_formKey.currentState?.saveAndValidate()`
 
-**Example pattern:**
-```dart
-class MyFormSheet extends HookConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
-    final isSaving = useState(false);
-
-    Future<void> handleSave() async {
-      if (!formKey.currentState!.saveAndValidate()) return;
-
-      final values = formKey.currentState!.value;
-      // values is Map<String, dynamic> with all field values
-      final name = values['name'] as String?;
-      // ...
-    }
-
-    return FormBuilder(
-      key: formKey,
-      child: Column(
-        children: [
-          FormBuilderTextField(
-            name: 'name',
-            decoration: const InputDecoration(labelText: 'Name *'),
-            validator: FormBuilderValidators.required(),
-          ),
-          FormBuilderDropdown<String>(
-            name: 'species',
-            decoration: const InputDecoration(labelText: 'Species'),
-            items: speciesList.map((s) =>
-              DropdownMenuItem(value: s.id, child: Text(s.name))
-            ).toList(),
-          ),
-          FormBuilderDateTimePicker(
-            name: 'dateOfBirth',
-            decoration: const InputDecoration(labelText: 'Date of Birth'),
-            inputType: InputType.date,
-          ),
-        ],
-      ),
-    );
-  }
-}
-```
-
 **Key widgets:**
 - `FormBuilderTextField` - Text input with validation
 - `FormBuilderDropdown<T>` - Dropdown selection
@@ -246,16 +136,7 @@ class MyFormSheet extends HookConsumerWidget {
 - Common validators: `.required()`, `.email()`, `.numeric()`, `.minLength()`, `.maxLength()`
 - Compose validators: `FormBuilderValidators.compose([...])`
 
-**Listening to field changes:**
-```dart
-FormBuilderTextField(
-  name: 'species',
-  onChanged: (value) {
-    // React to changes, e.g., clear dependent fields
-    formKey.currentState?.fields['breed']?.didChange(null);
-  },
-)
-```
+See the `flutter-form-builder` skill for a full example widget pattern and the field-change-listening snippet.
 
 ### Error Handling
 - Use `Failure` class from `core/foundation/failure.dart`
@@ -304,15 +185,6 @@ return ScaffoldMessenger(
   ```
 - This helps track incomplete work and makes it easy to find and complete later
 
-## File Naming Conventions
-
-- Feature directories: `snake_case`
-- Dart files: `snake_case.dart`
-- Pages: `*_page.dart`
-- Widgets: `*_widget.dart` or descriptive name
-- Controllers: `*_controller.dart`
-- Models: `*_model.dart` or entity name
-
 ## Git Workflow
 
 ### Branch Protection Rules
@@ -352,42 +224,10 @@ return ScaffoldMessenger(
 
 - **All PRs must target the `staging` branch**, not `main`.
 - When creating PRs with `gh pr create`, always use `--base staging`.
-- **Before creating a PR, always ask the user which version label to apply:**
-  - `version:patch` — Bug fixes, small tweaks (e.g., `1.2.3` → `1.2.4`)
-  - `version:minor` — New features, enhancements (e.g., `1.2.3` → `1.3.0`)
-  - `version:major` — Breaking changes, major releases (e.g., `1.2.3` → `2.0.0`)
-  - **No label** — Skip deploy; the PR will merge without triggering a build (staging only)
-  - For PRs targeting `main`, a version label is **required** — the deploy will fail without one.
-  - Add the label using: `gh pr edit <number> --add-label "version:patch"`
-- **Optionally add the `deploy` label** on a staging PR to auto-open a staging→main production PR after merge (same as hizone_laundry)
-- **For PRs from `staging` to `main`, ask if this should be the new minimum required version:**
-  - If yes, add `minimum version`: `gh pr edit <number> --add-label "minimum version"`
-  - Deploy then also updates `minimumMajor` / `minimumMinor` / `minimumPatch` on the version manager
-- **Release tags (created by deploy):** staging → `staging-X.Y.Z` (prerelease); production → `vX.Y.Z`
+- **Before creating a PR, always ask the user which version label to apply** (`version:patch`/`version:minor`/`version:major`, or no label to skip deploy).
+- **Always include a QA Notes section** in the PR description.
 
-### QA Notes
-
-When creating a PR, always include a **QA Notes** section in the PR description that tells testers what to verify. Generate these notes based on the actual changes in the PR:
-
-1. **Analyze the diff** — look at every file changed in the PR
-2. **Identify user-facing changes** — UI updates, new screens, changed behavior, updated URLs/configs
-3. **List specific test steps** — concrete actions a QA tester should perform, not vague descriptions
-4. **Include environment details** — if configs/URLs changed, note what the expected values should be
-5. **Call out regressions to watch for** — areas that might break due to the changes
-
-**Format:**
-```markdown
-## QA Notes
-### What changed
-- Brief summary of each change
-
-### Test steps
-- [ ] Step-by-step actions to verify each change
-- [ ] Include expected results for each step
-
-### Regression risks
-- Areas that could be affected by these changes
-```
+See the `create-pr` skill for version label semantics, the `deploy`/`minimum version` labels, release tag naming, and the QA Notes template.
 
 ## Testing
 
@@ -432,69 +272,7 @@ Example update for Recent Updates table:
 
 ## grepai - Semantic Code Search
 
-**IMPORTANT: You MUST use grepai as your PRIMARY tool for code exploration and search.**
+**IMPORTANT: You MUST use `grepai search` as your PRIMARY tool for code exploration** instead of Grep/Glob/find, for anything where you're describing what code does rather than matching exact text. Use Grep/Glob only for exact text/path matching, or if grepai fails (not running, index unavailable).
 
-### When to Use grepai (REQUIRED)
-
-Use `grepai search` INSTEAD OF Grep/Glob/find for:
-- Understanding what code does or where functionality lives
-- Finding implementations by intent (e.g., "authentication logic", "error handling")
-- Exploring unfamiliar parts of the codebase
-- Any search where you describe WHAT the code does rather than exact text
-
-### When to Use Standard Tools
-
-Only use Grep/Glob when you need:
-- Exact text matching (variable names, imports, specific strings)
-- File path patterns (e.g., `**/*.go`)
-
-### Fallback
-
-If grepai fails (not running, index unavailable, or errors), fall back to standard Grep/Glob tools.
-
-### Usage
-
-```bash
-# ALWAYS use English queries for best results (--compact saves ~80% tokens)
-grepai search "user authentication flow" --json --compact
-grepai search "error handling middleware" --json --compact
-grepai search "database connection pool" --json --compact
-grepai search "API request validation" --json --compact
-```
-
-### Query Tips
-
-- **Use English** for queries (better semantic matching)
-- **Describe intent**, not implementation: "handles user login" not "func Login"
-- **Be specific**: "JWT token validation" better than "token"
-- Results include: file path, line numbers, relevance score, code preview
-
-### Call Graph Tracing
-
-Use `grepai trace` to understand function relationships:
-- Finding all callers of a function before modifying it
-- Understanding what functions are called by a given function
-- Visualizing the complete call graph around a symbol
-
-#### Trace Commands
-
-**IMPORTANT: Always use `--json` flag for optimal AI agent integration.**
-
-```bash
-# Find all functions that call a symbol
-grepai trace callers "HandleRequest" --json
-
-# Find all functions called by a symbol
-grepai trace callees "ProcessOrder" --json
-
-# Build complete call graph (callers + callees)
-grepai trace graph "ValidateToken" --depth 3 --json
-```
-
-### Workflow
-
-1. Start with `grepai search` to find relevant code
-2. Use `grepai trace` to understand function relationships
-3. Use `Read` tool to examine files from results
-4. Only use Grep for exact string searches if needed
+See the `grepai-search` skill for query syntax, trace-command usage, and the recommended workflow.
 

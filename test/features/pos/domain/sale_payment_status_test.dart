@@ -93,16 +93,7 @@ void main() {
       expect(result.status, 'paid');
     });
 
-    test('skips status update for refunded/voided but still reports isPaid',
-        () {
-      final refunded = resolveSalePaymentState(
-        totalAmount: 100,
-        totalPaid: 100,
-        currentStatus: 'refunded',
-      );
-      expect(refunded.isPaid, isTrue);
-      expect(refunded.status, isNull);
-
+    test('skips status update for voided but still reports isPaid', () {
       final voidedPaid = resolveSalePaymentState(
         totalAmount: 100,
         totalPaid: 80,

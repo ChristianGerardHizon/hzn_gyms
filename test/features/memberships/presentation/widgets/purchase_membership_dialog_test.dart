@@ -1,3 +1,4 @@
+import 'package:ebe_gym/src/core/utils/date_utils.dart';
 import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/widgets/purchase_membership_dialog.dart';
@@ -22,7 +23,8 @@ void main() {
               () => _FakeMembershipsController([
                 buildMembership(
                   name: 'NEW RATE WALK-IN REGULAR',
-                  durationDays: 1,
+                  durationValue: 1,
+                  durationUnit: MembershipDurationUnit.days,
                   price: 100,
                   memberNotRequired: true,
                 ),
@@ -30,9 +32,7 @@ void main() {
             ),
           ],
           child: const MaterialApp(
-            home: Scaffold(
-              body: PurchaseMembershipDialog(guestMode: true),
-            ),
+            home: Scaffold(body: PurchaseMembershipDialog(guestMode: true)),
           ),
         ),
       );

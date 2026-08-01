@@ -110,10 +110,9 @@ class CurrentBranchController extends _$CurrentBranchController {
 
     if (branchId == allBranchesSentinel) {
       if (!isAdmin) return;
-      // Keep previous selection while loading so branch filters don't flash to
-      // "unfiltered / all" mid-switch.
-      state = const AsyncLoading<CurrentBranchSelection>()
-          .copyWithPrevious(state);
+      // Riverpod carries the previous value into this loading state, so branch
+      // filters don't flash to "unfiltered / all" mid-switch.
+      state = const AsyncLoading<CurrentBranchSelection>();
       await _persistBranch(allBranchesSentinel);
       state = const AsyncData(CurrentBranchSelection(isAll: true));
       return;
@@ -129,7 +128,7 @@ class CurrentBranchController extends _$CurrentBranchController {
       if (!allowed.contains(branchId)) return;
     }
 
-    state = const AsyncLoading<CurrentBranchSelection>().copyWithPrevious(state);
+    state = const AsyncLoading<CurrentBranchSelection>();
     await _persistBranch(branchId);
 
     final branch = await _fetchBranch(branchId);

@@ -32,12 +32,11 @@ void main() {
   });
 
   group('SaleStatus.displayName', () {
-    test('maps each status including voided and refunded', () {
+    test('maps each status including voided', () {
       expect(SaleStatus.pending.displayName, 'Pending');
       expect(SaleStatus.awaitingPayment.displayName, 'Awaiting Payment');
       expect(SaleStatus.paid.displayName, 'Paid');
       expect(SaleStatus.completed.displayName, 'Completed');
-      expect(SaleStatus.refunded.displayName, 'Refunded');
       expect(SaleStatus.voided.displayName, 'Voided');
     });
   });

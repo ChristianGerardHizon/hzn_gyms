@@ -41,7 +41,7 @@ class Sale with SaleMappable {
   /// Total amount charged.
   final num totalAmount;
 
-  /// Transaction status (completed, refunded, voided).
+  /// Transaction status (completed, voided).
   final String status;
 
   /// Whether the customer has fully paid (auto-calculated from payments).
