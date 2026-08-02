@@ -1,4 +1,8 @@
+import '../../memberships/domain/membership_status_colors.dart';
 import 'card_check_in_result.dart';
+
+export '../../memberships/domain/membership_status_colors.dart'
+    show nearExpiryThresholdDays;
 
 /// Audible feedback for a check-in outcome.
 enum CheckInChime {
@@ -11,10 +15,6 @@ enum CheckInChime {
   /// Denied or failed check-in.
   failure,
 }
-
-/// Days remaining at or below this value play [CheckInChime.nearExpiry].
-/// Matches reports/dashboard "Expiring Soon (7d)".
-const int nearExpiryThresholdDays = 7;
 
 /// Resolves the chime for a successful check-in with optional days remaining.
 ///

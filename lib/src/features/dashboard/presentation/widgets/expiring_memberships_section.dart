@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../memberships/domain/membership_status_colors.dart';
 import '../controllers/expiring_memberships_controller.dart';
 
 /// Section displaying memberships expiring within the next 7 days.
@@ -75,14 +76,9 @@ class _ExpiringMembershipTile extends StatelessWidget {
     final days = membership.daysRemaining;
     final dateFormat = DateFormat.MMMd();
 
-    final Color urgencyColor;
-    if (days <= 1) {
-      urgencyColor = Colors.red;
-    } else if (days <= 3) {
-      urgencyColor = Colors.orange;
-    } else {
-      urgencyColor = Colors.amber.shade700;
-    }
+    final Color urgencyColor = membershipExpiringUrgencyColor(
+      daysRemaining: days,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
