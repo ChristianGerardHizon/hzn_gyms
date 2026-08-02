@@ -80,8 +80,9 @@ class MemberSearchFieldsDialog extends ConsumerWidget {
                       final isLastSelected =
                           isSelected && selectedFields.length == 1;
 
-                      return CheckboxListTile(
-                        value: isSelected,
+                    return CheckboxListTile(
+                      key: ValueKey('$field-$isSelected'),
+                      value: isSelected,
                         onChanged: isLastSelected
                             ? null
                             : (_) => ref

@@ -56,8 +56,23 @@ Future<MembershipPurchaseResult?> showWalkInSaleDialog(BuildContext context) {
   );
 }
 
+/// Success message shown after a membership renewal completes.
+String membershipRenewalSuccessMessage({
+  required bool queuedOffline,
+  required bool excludedFromSales,
+}) {
+  if (queuedOffline) {
+    return excludedFromSales
+        ? 'Membership renewal queued (excluded from sales) — will sync when online'
+        : 'Membership renewal queued — will sync when online';
+  }
+  return 'Membership renewed successfully';
+}
+
 /// Opens the purchase (or renew) flow and records payment when complete.
-Future<void> purchaseMembershipAndRecordPayment(
+///
+/// Returns `true` when a membership was saved (including renewals).
+Future<bool> purchaseMembershipAndRecordPayment(
   BuildContext context,
   WidgetRef ref, {
   required String memberId,
@@ -73,13 +88,26 @@ Future<void> purchaseMembershipAndRecordPayment(
     isRenewal: isRenewal,
   );
 
-  if (result == null) return;
+  if (result == null) return false;
 
   ref.invalidate(memberMembershipsControllerProvider(memberId));
   refreshDashboardAfterMemberChange(ref);
 
+  if (isRenewal) {
+    if (context.mounted) {
+      showSuccessSnackBar(
+        context,
+        message: membershipRenewalSuccessMessage(
+          queuedOffline: result.queuedOffline,
+          excludedFromSales: result.excludedFromSales,
+        ),
+      );
+    }
+    return true;
+  }
+
   if (result.excludedFromSales) {
-    return;
+    return true;
   }
 
   if (result.queuedOffline) {
@@ -89,7 +117,7 @@ Future<void> purchaseMembershipAndRecordPayment(
         message: 'Membership queued — record payment once synced and online.',
       );
     }
-    return;
+    return true;
   }
 
   if (context.mounted) {
@@ -100,6 +128,7 @@ Future<void> purchaseMembershipAndRecordPayment(
     );
     if (context.mounted) refreshDashboardAfterMemberChange(ref);
   }
+  return true;
 }
 
 /// Opens walk-in sale flow and records payment when complete.

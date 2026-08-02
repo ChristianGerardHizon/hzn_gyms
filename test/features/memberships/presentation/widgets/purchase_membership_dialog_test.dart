@@ -9,6 +9,38 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../../helpers/fixtures.dart';
 
 void main() {
+  group('membershipRenewalSuccessMessage', () {
+    test('returns renewed message when online and included in sales', () {
+      expect(
+        membershipRenewalSuccessMessage(
+          queuedOffline: false,
+          excludedFromSales: false,
+        ),
+        'Membership renewed successfully',
+      );
+    });
+
+    test('returns queued message when offline', () {
+      expect(
+        membershipRenewalSuccessMessage(
+          queuedOffline: true,
+          excludedFromSales: false,
+        ),
+        'Membership renewal queued — will sync when online',
+      );
+    });
+
+    test('returns queued excluded message when offline and excluded', () {
+      expect(
+        membershipRenewalSuccessMessage(
+          queuedOffline: true,
+          excludedFromSales: true,
+        ),
+        'Membership renewal queued (excluded from sales) — will sync when online',
+      );
+    });
+  });
+
   group('PurchaseMembershipDialog', () {
     testWidgets('guest mode shows Walk-in title not Cashier', (tester) async {
       tester.view.physicalSize = const Size(800, 1000);

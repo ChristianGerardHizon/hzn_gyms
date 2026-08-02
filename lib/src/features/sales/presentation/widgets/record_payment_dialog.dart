@@ -18,6 +18,7 @@ import '../../../pos/domain/payment_method.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/presentation/payments_controller.dart';
+import '../../domain/payment_amount_validation.dart';
 import '../controllers/sale_provider.dart';
 
 /// Shows the record payment dialog and returns true if a payment was recorded.
@@ -193,19 +194,17 @@ class RecordPaymentDialog extends HookConsumerWidget {
               FormBuilderTextField(
                 name: 'amount',
                 initialValue: balanceDue.toString(),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Amount *',
                   prefixText: '\u20B1 ',
-                  border: OutlineInputBorder(),
+                  helperText:
+                      'Enter an amount between \u20B10 and '
+                      '${currencyFormat.format(balanceDue)}',
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.numeric(),
-                  FormBuilderValidators.min(0.01,
-                      errorText: 'Amount must be greater than 0'),
-                ]),
+                validator: (value) => validatePaymentAmount(value, balanceDue),
               ),
               const SizedBox(height: 16),
 

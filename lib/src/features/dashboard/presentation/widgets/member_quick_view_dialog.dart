@@ -514,7 +514,7 @@ class _ActionButtons extends ConsumerWidget {
           onPressed: !membershipsLoaded
               ? null
               : () async {
-                  await purchaseMembershipAndRecordPayment(
+                  final success = await purchaseMembershipAndRecordPayment(
                     context,
                     ref,
                     memberId: memberId,
@@ -523,6 +523,9 @@ class _ActionButtons extends ConsumerWidget {
                         renewableMembership?.membershipId,
                     isRenewal: hasRenewable,
                   );
+                  if (success && hasRenewable && context.mounted) {
+                    Navigator.of(context).pop();
+                  }
                 },
           icon: Icon(hasRenewable ? Icons.autorenew : Icons.add),
           label: Text(renewLabel),
