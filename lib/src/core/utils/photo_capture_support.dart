@@ -21,6 +21,19 @@ bool isLiveCameraSupported() {
 /// Web browsers require a user gesture before [getUserMedia] can open the camera.
 bool requiresCameraUserGesture() => kIsWeb;
 
+/// Whether the live camera session should be held open.
+///
+/// Returns false when the panel is inactive (e.g. another wizard step is
+/// showing via [IndexedStack]) or a photo has already been captured, so the
+/// underlying [CameraController] can be released.
+bool shouldHoldLiveCamera({
+  required bool canUseLiveCamera,
+  required bool isActive,
+  required bool hasCapturedPhoto,
+}) {
+  return canUseLiveCamera && isActive && !hasCapturedPhoto;
+}
+
 /// Whether [ImagePicker] with [ImageSource.camera] opens a real camera UI.
 ///
 /// On web (especially desktop browsers) it falls back to a file picker, so callers

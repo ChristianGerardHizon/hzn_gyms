@@ -18,6 +18,52 @@ void main() {
     });
   });
 
+  group('shouldHoldLiveCamera', () {
+    test('holds only when live camera is supported, active, and no photo', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: true,
+          isActive: true,
+          hasCapturedPhoto: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('releases when panel is inactive (e.g. another wizard step)', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: true,
+          isActive: false,
+          hasCapturedPhoto: false,
+        ),
+        isFalse,
+      );
+    });
+
+    test('releases after a photo has been captured', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: true,
+          isActive: true,
+          hasCapturedPhoto: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('releases when live camera is unsupported', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: false,
+          isActive: true,
+          hasCapturedPhoto: false,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('isImagePickerCameraSupported', () {
     test('returns false in test VM', () {
       expect(isImagePickerCameraSupported(), isFalse);

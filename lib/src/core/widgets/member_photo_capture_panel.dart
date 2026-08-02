@@ -20,6 +20,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     this.previewSize = 280,
     this.avatarRadius = 64,
     this.existingPhotoUrl,
+    this.isActive = true,
   });
 
   final ValueNotifier<Uint8List?> photoBytes;
@@ -27,6 +28,9 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
   final double previewSize;
   final double avatarRadius;
   final String? existingPhotoUrl;
+
+  /// When false (e.g. another wizard step is visible), the camera is released.
+  final bool isActive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,10 +47,28 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     final cameraStarted = useState(false);
     final availableCameraList = useState<List<CameraDescription>>([]);
     final selectedCameraName = useState<String?>(null);
+    final panelDisposed = useRef(false);
+    final isActiveRef = useRef(isActive);
+    isActiveRef.value = isActive;
 
     final hasCapturedPhoto = photoBytes.value != null;
     final canUseLiveCamera = isLiveCameraSupported();
     final needsUserGesture = requiresCameraUserGesture();
+    final holdLiveCamera = shouldHoldLiveCamera(
+      canUseLiveCamera: canUseLiveCamera,
+      isActive: isActive,
+      hasCapturedPhoto: hasCapturedPhoto,
+    );
+
+    bool isSessionCancelled() =>
+        panelDisposed.value || !isActiveRef.value;
+
+    void releaseCamera() {
+      final controller = cameraController.value;
+      cameraController.value = null;
+      cameraStarted.value = false;
+      controller?.dispose();
+    }
 
     Future<void> initCamera({
       bool Function()? isDisposed,
@@ -106,16 +128,27 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       }
     }
 
+    // Always release the camera when this panel is removed from the tree
+    // (including web, where start is gesture-driven and auto-init is skipped).
+    useEffect(() {
+      return () {
+        panelDisposed.value = true;
+        releaseCamera();
+      };
+    }, const []);
+
     // Enumerate cameras early so the switcher can appear before preview starts.
     useEffect(() {
-      if (!canUseLiveCamera || hasCapturedPhoto) return null;
+      if (!holdLiveCamera) return null;
 
       var disposed = false;
 
       Future<void> loadCameras() async {
         try {
           final cameras = await availableCameras();
-          if (!disposed) availableCameraList.value = cameras;
+          if (!disposed && !isSessionCancelled()) {
+            availableCameraList.value = cameras;
+          }
         } catch (_) {
           // Listing can fail before permission; initCamera will surface errors.
         }
@@ -123,39 +156,51 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
 
       loadCameras();
       return () => disposed = true;
-    }, [canUseLiveCamera, hasCapturedPhoto, cameraSessionKey.value]);
+    }, [holdLiveCamera, cameraSessionKey.value]);
 
+    // Auto-init on platforms that allow camera without a user gesture.
+    // Always register cleanup so inactive / photo-captured / unmount release
+    // the stream (IndexedStack keeps steps mounted across wizard navigation).
     useEffect(() {
-      if (!canUseLiveCamera || hasCapturedPhoto || needsUserGesture) {
+      if (!holdLiveCamera) {
+        releaseCamera();
         return null;
       }
 
-      var disposed = false;
+      if (needsUserGesture) {
+        // Web: wait for Start camera; still release when becoming inactive.
+        return () => releaseCamera();
+      }
+
+      var cancelled = false;
 
       Future<void> autoInit() async {
-        await initCamera(isDisposed: () => disposed);
+        await initCamera(
+          isDisposed: () => cancelled || isSessionCancelled(),
+        );
       }
 
       autoInit();
 
       return () {
-        disposed = true;
-        final controller = cameraController.value;
-        cameraController.value = null;
-        controller?.dispose();
+        cancelled = true;
+        releaseCamera();
       };
-    }, [canUseLiveCamera, hasCapturedPhoto, cameraSessionKey.value]);
+    }, [holdLiveCamera, needsUserGesture, cameraSessionKey.value]);
 
     Future<void> startCamera() async {
+      if (isSessionCancelled()) return;
+
       final existing = cameraController.value;
       cameraController.value = null;
       await existing?.dispose();
 
       cameraStarted.value = false;
-      await initCamera();
+      await initCamera(isDisposed: isSessionCancelled);
     }
 
     Future<void> switchCamera(String cameraName) async {
+      if (isSessionCancelled()) return;
       if (cameraName == selectedCameraName.value &&
           cameraController.value?.value.isInitialized == true) {
         return;
@@ -166,7 +211,10 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       await existing?.dispose();
 
       cameraStarted.value = false;
-      await initCamera(forceCameraName: cameraName);
+      await initCamera(
+        isDisposed: isSessionCancelled,
+        forceCameraName: cameraName,
+      );
     }
 
     Future<void> applyCaptured(CapturedPhoto captured) async {
@@ -243,16 +291,15 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       cameraSessionKey.value++;
     }
 
-    final showStartCamera = canUseLiveCamera &&
+    final showStartCamera = holdLiveCamera &&
         needsUserGesture &&
         !cameraStarted.value &&
         cameraController.value?.value.isInitialized != true &&
         !isInitializing.value &&
         cameraError.value == null;
 
-    final showCameraSwitcher = canUseLiveCamera &&
-        availableCameraList.value.length > 1 &&
-        !hasCapturedPhoto;
+    final showCameraSwitcher = holdLiveCamera &&
+        availableCameraList.value.length > 1;
 
     if (hasCapturedPhoto) {
       return Column(
