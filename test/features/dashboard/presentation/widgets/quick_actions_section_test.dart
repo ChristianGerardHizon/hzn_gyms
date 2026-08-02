@@ -22,6 +22,7 @@ void main() {
       expect(find.text('Walk-in'), findsOneWidget);
       expect(find.text('Check-In'), findsOneWidget);
       expect(find.text('Renew'), findsOneWidget);
+      expect(find.text('Search Member'), findsOneWidget);
       expect(find.text('New Member'), findsOneWidget);
     });
   });

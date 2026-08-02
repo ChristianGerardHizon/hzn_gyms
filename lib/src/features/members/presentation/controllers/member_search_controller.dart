@@ -11,11 +11,14 @@ const memberSearchableFields = [
   'rfidCardId',
 ];
 
+/// Default fields selected for member search.
+const defaultMemberSearchFields = {'name'};
+
 /// Provider for managing which fields are included in member search.
 @riverpod
 class MemberSearchFields extends _$MemberSearchFields {
   @override
-  Set<String> build() => {'name'}; // Default: only name
+  Set<String> build() => Set<String>.from(defaultMemberSearchFields);
 
   void toggleField(String field) {
     if (state.contains(field)) {
@@ -28,14 +31,14 @@ class MemberSearchFields extends _$MemberSearchFields {
   }
 
   void reset() {
-    state = {'name'};
+    state = Set<String>.from(defaultMemberSearchFields);
   }
 
   void setFields(Set<String> fields) {
     if (fields.isEmpty) {
-      state = {'name'};
+      state = Set<String>.from(defaultMemberSearchFields);
     } else {
-      state = fields;
+      state = Set<String>.from(fields);
     }
   }
 }

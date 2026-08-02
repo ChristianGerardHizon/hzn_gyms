@@ -5,6 +5,9 @@ part 'user_search_controller.g.dart';
 /// Available search fields for users.
 const userSearchableFields = ['name', 'username'];
 
+/// Default fields selected for user search.
+const defaultUserSearchFields = {'name', 'username'};
+
 /// Provider for user search query state.
 @riverpod
 class UserSearchQuery extends _$UserSearchQuery {
@@ -24,7 +27,7 @@ class UserSearchQuery extends _$UserSearchQuery {
 @riverpod
 class UserSearchFields extends _$UserSearchFields {
   @override
-  Set<String> build() => {'name', 'username'}; // Default: name and email
+  Set<String> build() => Set<String>.from(defaultUserSearchFields);
 
   void toggleField(String field) {
     if (state.contains(field)) {
@@ -37,15 +40,15 @@ class UserSearchFields extends _$UserSearchFields {
   }
 
   void reset() {
-    state = {'name', 'username'};
+    state = Set<String>.from(defaultUserSearchFields);
   }
 
   void setFields(Set<String> fields) {
     // Ensure at least one field is selected
     if (fields.isEmpty) {
-      state = {'name'}; // fallback to name
+      state = Set<String>.from(defaultUserSearchFields);
     } else {
-      state = fields;
+      state = Set<String>.from(fields);
     }
   }
 }

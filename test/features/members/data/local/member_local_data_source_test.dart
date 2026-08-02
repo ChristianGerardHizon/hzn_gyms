@@ -102,6 +102,18 @@ void main() {
     expect(search.items.map((m) => m.name), ['Alice']);
   });
 
+  test('searchQuick returns matches without counting total rows', () async {
+    await local.upsertFromDtos([
+      dto(id: 'a', name: 'Alice'),
+      dto(id: 'b', name: 'Alicia'),
+      dto(id: 'c', name: 'Alex'),
+    ]);
+
+    final matches = await local.searchQuick('Ali', limit: 2);
+    expect(matches, hasLength(2));
+    expect(matches.map((m) => m.name), ['Alice', 'Alicia']);
+  });
+
   test('searchPaginated matches tokenized names with irregular spacing',
       () async {
     await local.upsertFromDtos([

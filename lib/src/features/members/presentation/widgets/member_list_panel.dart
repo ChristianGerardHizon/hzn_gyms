@@ -11,11 +11,14 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../domain/member.dart';
+import '../controllers/member_branch_activity_controller.dart';
 import '../controllers/member_search_controller.dart';
 import '../controllers/member_sort_controller.dart';
-import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../controllers/paginated_members_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import 'dialogs/member_search_fields_dialog.dart';
+import 'member_branch_activity_chips.dart';
 import 'member_form_dialog.dart';
 
 /// List panel for displaying members with search, sort, filter, and infinite scroll.
@@ -47,6 +50,8 @@ class MemberListPanel extends HookConsumerWidget {
     final paginatedController =
         ref.read(paginatedMembersControllerProvider.notifier);
     final sortConfig = ref.watch(memberSortControllerProvider);
+    final branchActivityAsync = ref.watch(memberBranchActivityMapProvider);
+    final currentBranchId = ref.watch(currentBranchIdProvider);
 
     // Get selected member ID from current route
     final routerState = GoRouterState.of(context);
@@ -78,6 +83,13 @@ class MemberListPanel extends HookConsumerWidget {
       }
       debouncedSearch.call(text);
     }
+
+    ref.listen(memberSearchFieldsProvider, (previous, next) {
+      if (previous == next || !paginatedController.isSearchActive) return;
+      final query = searchController.text.trim();
+      if (query.isEmpty) return;
+      paginatedController.search(query, fields: next.toList());
+    });
 
     // Infinite scroll hook
     final scrollController = useInfiniteScroll(
@@ -142,6 +154,7 @@ class MemberListPanel extends HookConsumerWidget {
 
                   final member = members[index];
                   final isSelected = member.id == selectedMemberId;
+                  final branchActivityState = branchActivityAsync.value;
 
                   return ListTile(
                     leading: CachedAvatar(
@@ -156,15 +169,30 @@ class MemberListPanel extends HookConsumerWidget {
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
-                    subtitle: member.mobileNumber != null &&
-                            member.mobileNumber!.isNotEmpty
-                        ? Text(
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (member.mobileNumber != null &&
+                            member.mobileNumber!.isNotEmpty)
+                          Text(
                             member.mobileNumber!,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
-                          )
-                        : null,
+                          ),
+                        if (member.mobileNumber != null &&
+                            member.mobileNumber!.isNotEmpty)
+                          const SizedBox(height: 4),
+                        MemberBranchActivityChips(
+                          activity:
+                              branchActivityState?.activityByMemberId[member.id],
+                          branchNameById:
+                              branchActivityState?.branchNameById ?? const {},
+                          currentBranchId: currentBranchId,
+                          isLoading: branchActivityAsync.isLoading,
+                        ),
+                      ],
+                    ),
                     trailing: member.isPendingSync
                         ? Tooltip(
                             message: 'Pending sync',

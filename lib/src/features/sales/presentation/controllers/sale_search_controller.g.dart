@@ -102,7 +102,7 @@ final class SaleSearchFieldsProvider
   }
 }
 
-String _$saleSearchFieldsHash() => r'18100386bf9670486f69e42a4a1f1f592fedefed';
+String _$saleSearchFieldsHash() => r'59827197e8210e382d6fed9a0e2dfb9001b339f1';
 
 /// Provider for managing which fields are included in sale search.
 

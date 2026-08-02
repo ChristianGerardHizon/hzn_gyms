@@ -45,7 +45,7 @@ final class MemberSearchFieldsProvider
 }
 
 String _$memberSearchFieldsHash() =>
-    r'8397ebdc559451d1b2d57314dc1bf5a79aae2952';
+    r'e6ae16fae16d50864f4ae8b47e7c53c99c2e35b4';
 
 /// Provider for managing which fields are included in member search.
 

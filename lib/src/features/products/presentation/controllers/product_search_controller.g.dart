@@ -104,7 +104,7 @@ final class ProductSearchFieldsProvider
 }
 
 String _$productSearchFieldsHash() =>
-    r'1e9af978e039c4e54c6c43c78485ea49b43e3fb2';
+    r'7e35fc100cf99099ebb3e69ac88d0f658f8fc9f3';
 
 /// Provider for managing which fields are included in product search.
 

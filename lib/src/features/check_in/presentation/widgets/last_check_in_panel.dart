@@ -4,10 +4,13 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
+import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
+import '../../../memberships/domain/member_membership.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/check_in.dart';
+import '../../domain/check_in_membership_highlight.dart';
 import '../controllers/member_check_ins_controller.dart';
 
 /// Sidebar panel showing details about the most recent check-in.
@@ -60,53 +63,12 @@ class LastCheckInPanel extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Avatar
-                memberAsync.when(
-                  loading: () => CachedAvatar(radius: 40),
-                  error: (_, __) => CachedAvatar(radius: 40),
-                  data: (member) =>
-                      CachedAvatar(imageUrl: member?.photo, radius: 40),
-                ),
-                const SizedBox(height: 12),
-
-                // Name
-                Text(
-                  checkIn.memberName ?? 'Unknown Member',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-
-                // Membership info
-                membershipsAsync.when(
-                  loading: () => Text(
-                    'Loading membership...',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  error: (_, __) => const SizedBox.shrink(),
-                  data: (membership) => Text(
-                    membership != null
-                        ? 'Membership: ${membership.membershipName ?? 'Active'}'
-                        : 'No Active Membership',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: membership != null
-                          ? theme.colorScheme.onSurfaceVariant
-                          : Colors.orange,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                // Check-in time
-                Text(
-                  'Checked in at ${timeFormat.format(checkIn.checkInTime)} Today',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                  ),
+                _MembershipStatusProfileBlock(
+                  theme: theme,
+                  checkIn: checkIn,
+                  memberAsync: memberAsync,
+                  membershipsAsync: membershipsAsync,
+                  timeFormat: timeFormat,
                 ),
 
                 const SizedBox(height: 20),
@@ -202,6 +164,103 @@ class LastCheckInPanel extends ConsumerWidget {
         date.month == now.month &&
         date.day == now.day;
   }
+}
+
+/// Profile block with membership-status background tint.
+class _MembershipStatusProfileBlock extends StatelessWidget {
+  const _MembershipStatusProfileBlock({
+    required this.theme,
+    required this.checkIn,
+    required this.memberAsync,
+    required this.membershipsAsync,
+    required this.timeFormat,
+  });
+
+  final ThemeData theme;
+  final CheckIn checkIn;
+  final AsyncValue<Member?> memberAsync;
+  final AsyncValue<MemberMembership?> membershipsAsync;
+  final DateFormat timeFormat;
+
+  @override
+  Widget build(BuildContext context) {
+    final highlight = membershipsAsync.whenOrNull(
+      data: resolveCheckInMembershipHighlight,
+    );
+    final statusColor = highlight != null
+        ? _highlightColor(highlight)
+        : null;
+
+    final content = Column(
+      children: [
+        memberAsync.when(
+          loading: () => CachedAvatar(radius: 40),
+          error: (_, __) => CachedAvatar(radius: 40),
+          data: (member) =>
+              CachedAvatar(imageUrl: member?.photo, radius: 40),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          checkIn.memberName ?? 'Unknown Member',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        membershipsAsync.when(
+          loading: () => Text(
+            'Loading membership...',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (membership) => Text(
+            membership != null
+                ? 'Membership: ${membership.membershipName ?? 'Active'}'
+                : 'No Active Membership',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: membership != null
+                  ? theme.colorScheme.onSurfaceVariant
+                  : Colors.red,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Checked in at ${timeFormat.format(checkIn.checkInTime)} Today',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: statusColor ?? theme.colorScheme.primary,
+            fontWeight: statusColor != null ? FontWeight.w600 : null,
+          ),
+        ),
+      ],
+    );
+
+    if (statusColor == null) {
+      return content;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+      ),
+      child: content,
+    );
+  }
+}
+
+Color _highlightColor(CheckInMembershipHighlight highlight) {
+  return switch (highlight) {
+    CheckInMembershipHighlight.active => Colors.green,
+    CheckInMembershipHighlight.nearExpiry => Colors.orange,
+    CheckInMembershipHighlight.expired => Colors.red,
+  };
 }
 
 /// A single check-in history entry with timeline-style indicator.

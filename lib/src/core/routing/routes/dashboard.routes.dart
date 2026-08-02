@@ -15,6 +15,7 @@ import '../../../features/dashboard/presentation/widgets/tablet_dashboard_layout
 import '../../../features/dashboard/presentation/widgets/dashboard_footer.dart';
 import '../../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../../utils/breakpoints.dart';
+import '../../widgets/branch_switcher.dart';
 import '../../widgets/scroll_to_top_button.dart';
 
 part 'dashboard.routes.g.dart';
@@ -164,11 +165,6 @@ class _MobileDashboardHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final selection = ref.watch(currentBranchControllerProvider).value;
-    final branchLabel = selection == null
-        ? null
-        : selection.isAll
-            ? 'All Branches'
-            : selection.branch?.name;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -197,26 +193,27 @@ class _MobileDashboardHeader extends ConsumerWidget {
               ),
             ],
           ),
-          // Show current branch if available
-          if (branchLabel != null)
+          if (selection != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.store,
-                    size: 16,
-                    color: theme.colorScheme.outline,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    branchLabel,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.outline,
+              child: selection.isAll
+                  ? const BranchSwitcher(compact: true)
+                  : Row(
+                      children: [
+                        Icon(
+                          Icons.store,
+                          size: 16,
+                          color: theme.colorScheme.outline,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          selection.branch?.name ?? '',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
         ],
       ),

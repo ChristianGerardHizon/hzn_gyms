@@ -11,6 +11,13 @@ const saleSearchableFields = [
   'notes',
 ];
 
+/// Default fields selected for sale search.
+const defaultSaleSearchFields = {
+  'receiptNumber',
+  'descriptor',
+  'customerName',
+};
+
 /// Provider for sale search query state.
 @riverpod
 class SaleSearchQuery extends _$SaleSearchQuery {
@@ -30,11 +37,7 @@ class SaleSearchQuery extends _$SaleSearchQuery {
 @riverpod
 class SaleSearchFields extends _$SaleSearchFields {
   @override
-  Set<String> build() => {
-        'receiptNumber',
-        'descriptor',
-        'customerName',
-      };
+  Set<String> build() => Set<String>.from(defaultSaleSearchFields);
 
   void toggleField(String field) {
     if (state.contains(field)) {
@@ -47,23 +50,15 @@ class SaleSearchFields extends _$SaleSearchFields {
   }
 
   void reset() {
-    state = {
-      'receiptNumber',
-      'descriptor',
-      'customerName',
-    };
+    state = Set<String>.from(defaultSaleSearchFields);
   }
 
   void setFields(Set<String> fields) {
     // Ensure at least one field is selected
     if (fields.isEmpty) {
-      state = {
-        'receiptNumber',
-        'descriptor',
-        'customerName',
-      };
+      state = Set<String>.from(defaultSaleSearchFields);
     } else {
-      state = fields;
+      state = Set<String>.from(fields);
     }
   }
 }

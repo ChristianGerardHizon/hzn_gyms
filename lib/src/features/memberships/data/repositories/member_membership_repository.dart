@@ -54,6 +54,11 @@ abstract class MemberMembershipRepository {
     String? validAtBranchId,
   });
 
+  /// Fetches active memberships for multiple members, grouped by member ID.
+  FutureEither<Map<String, List<MemberMembership>>> fetchActiveByMemberIds(
+    List<String> memberIds,
+  );
+
   /// Invalidates the cache.
   void invalidateCache();
 }
@@ -99,6 +104,16 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
   MemberMembership _toEntity(RecordModel record) {
     return MemberMembershipDto.fromRecord(record).toEntity();
   }
+
+  PBFilter _activeMembershipsFilter() {
+    final now = DateTime.now();
+    return PBFilter()
+        .equals('status', 'active')
+        .before('startDate', now)
+        .after('endDate', now);
+  }
+
+  static const _memberIdChunkSize = 50;
 
   @override
   FutureEither<List<MemberMembership>> fetchByMember(String memberId) async {
@@ -202,12 +217,7 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     String? validAtBranchId,
   }) async {
     return TaskEither.tryCatch(() async {
-      final now = DateTime.now();
-      final filter = PBFilter()
-          .relation('member', memberId)
-          .equals('status', 'active')
-          .before('startDate', now)
-          .after('endDate', now);
+      final filter = _activeMembershipsFilter().relation('member', memberId);
 
       final records = await _collection.getFullList(
         filter: filter.build(),
@@ -222,6 +232,40 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
             .toList();
       }
       return memberships;
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<Map<String, List<MemberMembership>>> fetchActiveByMemberIds(
+    List<String> memberIds,
+  ) async {
+    if (memberIds.isEmpty) {
+      return const Right({});
+    }
+
+    return TaskEither.tryCatch(() async {
+      final uniqueIds = memberIds.toSet().toList();
+      final allRecords = <RecordModel>[];
+
+      for (var i = 0; i < uniqueIds.length; i += _memberIdChunkSize) {
+        final chunk = uniqueIds.skip(i).take(_memberIdChunkSize);
+        final filter = _activeMembershipsFilter().relationAny('member', chunk);
+
+        final records = await _collection.getFullList(
+          filter: filter.build(),
+          sort: '-endDate',
+          expand: 'membership',
+        );
+        allRecords.addAll(records);
+      }
+
+      final grouped = <String, List<MemberMembership>>{};
+      for (final record in allRecords) {
+        final membership = _toEntity(record);
+        grouped.putIfAbsent(membership.memberId, () => []).add(membership);
+      }
+
+      return grouped;
     }, Failure.handle).run();
   }
 }

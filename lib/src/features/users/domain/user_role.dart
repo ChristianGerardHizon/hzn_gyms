@@ -386,7 +386,7 @@ abstract class Permissions {
         key: salesVoid,
         name: 'Void Sales',
         category: 'Sales',
-        description: 'Void sales and payments (admin only)',
+        description: 'Void sales and individual payments',
         icon: Icons.cancel,
       ),
       // Users

@@ -42,6 +42,13 @@ abstract class MemberRepository {
   /// Searches members by name or mobile number.
   FutureEither<List<Member>> search(String query, {List<String>? fields});
 
+  /// Fast capped search for pickers: local cache first, then a limited server page.
+  FutureEither<List<Member>> searchQuick(
+    String query, {
+    List<String>? fields,
+    int limit = Pagination.memberPickerSearchLimit,
+  });
+
   /// Creates a new member with an optional photo.
   FutureEither<Member> createWithPhoto(
     Member member, {
@@ -356,6 +363,39 @@ class MemberRepositoryImpl implements MemberRepository {
 
       await _upsertRecords(records);
       return records.map(_toEntity).toList();
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<List<Member>> searchQuick(
+    String query, {
+    List<String>? fields,
+    int limit = Pagination.memberPickerSearchLimit,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final searchFields = fields ?? ['name', 'mobileNumber'];
+      final cached = await _localDataSource.searchQuick(
+        query,
+        fields: searchFields,
+        limit: limit,
+      );
+
+      if (!_isOnline()) {
+        return cached;
+      }
+
+      final searchFilter = PBFilter().searchFields(query, searchFields).build();
+      final result = await _collection.getList(
+        page: 1,
+        perPage: limit,
+        filter: searchFilter,
+        sort: 'name',
+      );
+
+      await _upsertRecords(result.items);
+
+      final serverItems = result.items.map(_toEntity).toList();
+      return serverItems.isNotEmpty ? serverItems : cached;
     }, Failure.handle).run();
   }
 

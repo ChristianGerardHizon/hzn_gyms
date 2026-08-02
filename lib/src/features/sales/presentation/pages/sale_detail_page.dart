@@ -19,6 +19,7 @@ import '../../../pos/presentation/payments_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 import '../controllers/sale_items_provider.dart';
 import '../controllers/sale_provider.dart';
+import '../controllers/sale_refresh.dart';
 import '../widgets/record_payment_dialog.dart';
 import '../widgets/sale_status_chip.dart';
 
@@ -344,7 +345,7 @@ class _SaleDetailContent extends HookConsumerWidget {
         },
         (_) {
           showSuccessSnackBar(context, message: 'Sale voided');
-          ref.invalidate(saleProvider(sale.id));
+          refreshAfterSaleVoided(ref, sale.id);
         },
       );
     }
