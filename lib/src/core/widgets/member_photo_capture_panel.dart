@@ -377,9 +377,13 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
               );
               final value = resolved ?? _automaticCameraValue;
 
+              // Keep the switcher readable even when the square preview is compact.
+              final switcherWidth =
+                  previewSize < 280 ? 280.0 : previewSize;
+
               return Align(
                 child: SizedBox(
-                  width: previewSize,
+                  width: switcherWidth,
                   child: DropdownButtonFormField<String>(
                     key: ValueKey(value),
                     initialValue: value,
