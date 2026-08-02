@@ -105,6 +105,58 @@ void main() {
     });
   });
 
+  group('resolvedCameraPreferenceName', () {
+    const cameras = [
+      CameraDescription(
+        name: 'front',
+        lensDirection: CameraLensDirection.front,
+        sensorOrientation: 270,
+      ),
+      CameraDescription(
+        name: 'back',
+        lensDirection: CameraLensDirection.back,
+        sensorOrientation: 90,
+      ),
+    ];
+
+    test('returns preferred name when it matches', () {
+      expect(
+        resolvedCameraPreferenceName(
+          preferredCameraName: 'back',
+          cameras: cameras,
+        ),
+        'back',
+      );
+    });
+
+    test('returns null for automatic when preferred is null or empty', () {
+      expect(
+        resolvedCameraPreferenceName(
+          preferredCameraName: null,
+          cameras: cameras,
+        ),
+        isNull,
+      );
+      expect(
+        resolvedCameraPreferenceName(
+          preferredCameraName: '',
+          cameras: cameras,
+        ),
+        isNull,
+      );
+    });
+
+    test('returns null when preferred camera is unavailable', () {
+      expect(
+        resolvedCameraPreferenceName(
+          preferredCameraName: 'missing',
+          cameras: cameras,
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('selectPreferredCamera', () {
     test('prefers front camera for profile photos when available', () {
       final cameras = [

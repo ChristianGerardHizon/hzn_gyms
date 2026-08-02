@@ -17,7 +17,7 @@ enum SystemMode {
 
 /// Vertical navigation panel for selecting system mode.
 ///
-/// Admin sees all modes; roles with only settings access see Appearance.
+/// Admin sees all modes; every signed-in user sees Appearance.
 class SystemNavPanel extends ConsumerWidget {
   const SystemNavPanel({
     super.key,
@@ -67,13 +67,12 @@ class SystemNavPanel extends ConsumerWidget {
           'Cashier',
         ),
       ],
-      if (perms.canViewSettings)
-        (
-          SystemMode.appearance,
-          Icons.palette_outlined,
-          Icons.palette,
-          'Appearance',
-        ),
+      (
+        SystemMode.appearance,
+        Icons.palette_outlined,
+        Icons.palette,
+        'Appearance',
+      ),
       if (isAdmin) ...[
         (
           SystemMode.import,
