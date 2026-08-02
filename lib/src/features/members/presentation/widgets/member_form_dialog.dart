@@ -29,6 +29,8 @@ import '../../../memberships/data/repositories/member_membership_repository.dart
 import '../../../pos/domain/sale.dart';
 import '../../../memberships/domain/membership.dart';
 import '../../../memberships/domain/membership_add_on.dart';
+import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
+import '../../../member_cards/presentation/widgets/member_card_entry_form.dart';
 import '../../../memberships/presentation/widgets/membership_purchase_content.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
@@ -66,8 +68,8 @@ Future<void> handleMemberFormPaymentResult(
 
 /// Shows a dialog form for creating or editing a member.
 ///
-/// - **Create mode** (`member == null`): 3-step wizard
-///   (Details → Photo → Membership). All data saved at the end.
+/// - **Create mode** (`member == null`): 5-step wizard
+///   (Details → Photo → Card → Membership → Review). All data saved at the end.
 /// - **Edit mode** (`member != null`): Single-step form (unchanged).
 ///
 /// Returns a [MemberFormResult] if the member was saved successfully,
@@ -80,7 +82,7 @@ Future<MemberFormResult?> showMemberFormDialog(
   return showConstrainedDialog<MemberFormResult>(
     context: context,
     // The edit form is a plain form that shrink-wraps on desktop/tablet, while
-    // the create flow is a full-screen 3-step wizard.
+    // the create flow is a full-screen 5-step wizard.
     fullScreen: member == null,
     builder: (context) => MemberFormDialog(
       member: member,
@@ -221,7 +223,7 @@ class _MemberEditForm extends HookConsumerWidget {
 }
 
 // =============================================================================
-// Create Wizard (3 steps)
+// Create Wizard (5 steps)
 // =============================================================================
 
 class _MemberCreateWizard extends HookConsumerWidget {
@@ -243,7 +245,12 @@ class _MemberCreateWizard extends HookConsumerWidget {
     final selectedPhoto = useState<XFile?>(null);
     final photoBytes = useState<Uint8List?>(null);
 
-    // Step 3: Membership state
+    // Step 3: Card state
+    final pendingCardValue = useState<String?>(null);
+    final pendingCardLabel = useState<String?>(null);
+    final pendingCardNotes = useState<String?>(null);
+
+    // Step 4: Membership state
     final selectedMembership = useState<Membership?>(null);
     final selectedAddOns = useState<Set<MembershipAddOn>>({});
 
@@ -299,7 +306,27 @@ class _MemberCreateWizard extends HookConsumerWidget {
         return;
       }
 
-      // 2. Purchase membership if selected
+      // 2. Add card if provided
+      if (pendingCardValue.value?.trim().isNotEmpty == true) {
+        final cardOk = await ref
+            .read(memberCardsControllerProvider(created.id).notifier)
+            .addCard(
+              cardValue: pendingCardValue.value!.trim(),
+              label: pendingCardLabel.value,
+              notes: pendingCardNotes.value,
+            );
+        if (!cardOk && context.mounted) {
+          showErrorSnackBar(
+            context,
+            message:
+                'Member created but failed to add card. '
+                'The card value may already be in use.',
+            useRootMessenger: false,
+          );
+        }
+      }
+
+      // 3. Purchase membership if selected
       Sale? createdSale;
       if (selectedMembership.value != null) {
         final plan = selectedMembership.value!;
@@ -375,7 +402,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
         }
       }
 
-      // 3. Refresh and close
+      // 4. Refresh and close
       ref.read(paginatedMembersControllerProvider.notifier).refresh();
       refreshDashboardAfterMemberChange(ref);
 
@@ -411,8 +438,9 @@ class _MemberCreateWizard extends HookConsumerWidget {
             if (currentStep.value == 0) {
               return dirtyGuard.confirmDiscard(ctx);
             }
-            // On steps 1-3, check if user has made selections
+            // On steps 1-4, check if user has made selections
             if (selectedPhoto.value != null ||
+                pendingCardValue.value != null ||
                 selectedMembership.value != null) {
               return await showDialog<bool>(
                     context: ctx,
@@ -498,6 +526,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
                         steps: const [
                           'Details',
                           'Photo',
+                          'Card',
                           'Membership',
                           'Review',
                         ],
@@ -525,24 +554,36 @@ class _MemberCreateWizard extends HookConsumerWidget {
                             onBack: () => currentStep.value = 0,
                           ),
 
-                          // Step 2: Membership
-                          _MembershipStep(
-                            selectedMembership: selectedMembership,
-                            selectedAddOns: selectedAddOns,
+                          // Step 2: Card
+                          _CardStep(
+                            pendingCardValue: pendingCardValue,
+                            pendingCardLabel: pendingCardLabel,
+                            pendingCardNotes: pendingCardNotes,
                             onNext: () => currentStep.value = 3,
                             onSkip: () => currentStep.value = 3,
                             onBack: () => currentStep.value = 1,
                           ),
 
-                          // Step 3: Review
+                          // Step 3: Membership
+                          _MembershipStep(
+                            selectedMembership: selectedMembership,
+                            selectedAddOns: selectedAddOns,
+                            onNext: () => currentStep.value = 4,
+                            onSkip: () => currentStep.value = 4,
+                            onBack: () => currentStep.value = 2,
+                          ),
+
+                          // Step 4: Review
                           _ReviewStep(
                             formKey: formKey,
                             photoBytes: photoBytes,
+                            pendingCardValue: pendingCardValue,
+                            pendingCardLabel: pendingCardLabel,
                             selectedMembership: selectedMembership,
                             selectedAddOns: selectedAddOns,
                             isSaving: isSaving.value,
                             onSave: handleFinish,
-                            onBack: () => currentStep.value = 2,
+                            onBack: () => currentStep.value = 3,
                           ),
                         ],
                       ),
@@ -685,7 +726,133 @@ class _PhotoStep extends HookWidget {
 }
 
 // =============================================================================
-// Step 2: Membership
+// Step 2: Card
+// =============================================================================
+
+class _CardStep extends HookWidget {
+  const _CardStep({
+    required this.pendingCardValue,
+    required this.pendingCardLabel,
+    required this.pendingCardNotes,
+    required this.onNext,
+    required this.onSkip,
+    required this.onBack,
+  });
+
+  final ValueNotifier<String?> pendingCardValue;
+  final ValueNotifier<String?> pendingCardLabel;
+  final ValueNotifier<String?> pendingCardNotes;
+  final VoidCallback onNext;
+  final VoidCallback onSkip;
+  final VoidCallback onBack;
+
+  Future<void> _confirmSkip(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('No card added'),
+        content: const Text(
+          'This member will be created without an ID card. '
+          'You can always add one later from the member profile.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Go Back'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      pendingCardValue.value = null;
+      pendingCardLabel.value = null;
+      pendingCardNotes.value = null;
+      onSkip();
+    }
+  }
+
+  void _handleNext(GlobalKey<FormBuilderState> formKey) {
+    if (!formKey.currentState!.saveAndValidate()) return;
+
+    final values = formKey.currentState!.value;
+    pendingCardValue.value = (values['cardValue'] as String).trim();
+    pendingCardLabel.value = values['label'] as String?;
+    pendingCardNotes.value = values['notes'] as String?;
+    onNext();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
+    final entryMode = useState(MemberCardEntryMode.waitingForScan);
+    useListenable(entryMode);
+
+    final hasCard = memberCardEntryCanSubmit(entryMode.value);
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 32),
+                Text(
+                  'Add a Card',
+                  style: theme.textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This step is optional. Scan or enter an ID card for check-in.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                FormBuilder(
+                  key: formKey,
+                  child: MemberCardEntryForm(
+                    formKey: formKey,
+                    entryMode: entryMode,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              OutlinedButton(onPressed: onBack, child: const Text('Back')),
+              const Spacer(),
+              if (!hasCard)
+                TextButton(
+                  onPressed: () => _confirmSkip(context),
+                  child: const Text('Skip'),
+                )
+              else
+                FilledButton(
+                  onPressed: () => _handleNext(formKey),
+                  child: const Text('Next'),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// Step 3: Membership
 // =============================================================================
 
 class _MembershipStep extends StatelessWidget {
@@ -765,13 +932,15 @@ class _MembershipStep extends StatelessWidget {
 }
 
 // =============================================================================
-// Step 3: Review
+// Step 4: Review
 // =============================================================================
 
 class _ReviewStep extends StatelessWidget {
   const _ReviewStep({
     required this.formKey,
     required this.photoBytes,
+    required this.pendingCardValue,
+    required this.pendingCardLabel,
     required this.selectedMembership,
     required this.selectedAddOns,
     required this.isSaving,
@@ -781,6 +950,8 @@ class _ReviewStep extends StatelessWidget {
 
   final GlobalKey<FormBuilderState> formKey;
   final ValueNotifier<Uint8List?> photoBytes;
+  final ValueNotifier<String?> pendingCardValue;
+  final ValueNotifier<String?> pendingCardLabel;
   final ValueNotifier<Membership?> selectedMembership;
   final ValueNotifier<Set<MembershipAddOn>> selectedAddOns;
   final bool isSaving;
@@ -801,6 +972,8 @@ class _ReviewStep extends StatelessWidget {
     final remarks = values['remarks'] as String?;
     final plan = selectedMembership.value;
     final addOns = selectedAddOns.value;
+    final cardValue = pendingCardValue.value;
+    final cardLabel = pendingCardLabel.value;
 
     final dateFormat = DateFormat.yMMMd();
 
@@ -880,6 +1053,41 @@ class _ReviewStep extends StatelessWidget {
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+
+                // ID Card
+                Text(
+                  'ID Card',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const Divider(),
+                if (cardValue != null && cardValue.isNotEmpty) ...[
+                  _ReviewRow(label: 'Card ID', value: cardValue),
+                  if (cardLabel != null && cardLabel.isNotEmpty)
+                    _ReviewRow(label: 'Label', value: cardLabel),
+                ] else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'No card added',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
