@@ -257,6 +257,45 @@ void main() {
     });
   });
 
+  group('fittedMemberPhotoPreviewSize', () {
+    test('caps to maxSize when space is large', () {
+      expect(
+        fittedMemberPhotoPreviewSize(maxWidth: 800, maxHeight: 900),
+        480,
+      );
+    });
+
+    test('shrinks to fit width', () {
+      expect(
+        fittedMemberPhotoPreviewSize(maxWidth: 200, maxHeight: 900),
+        200,
+      );
+    });
+
+    test('shrinks to fit height minus chrome', () {
+      expect(
+        fittedMemberPhotoPreviewSize(
+          maxWidth: 800,
+          maxHeight: 300,
+          chromeHeight: 140,
+        ),
+        160,
+      );
+    });
+
+    test('floors at minSize when space is tiny', () {
+      expect(
+        fittedMemberPhotoPreviewSize(
+          maxWidth: 50,
+          maxHeight: 80,
+          chromeHeight: 140,
+          minSize: 120,
+        ),
+        120,
+      );
+    });
+  });
+
   group('processPickedOrCapturedImage', () {
     test('returns null for empty bytes', () async {
       final file = XFile.fromData(Uint8List(0), name: 'empty.jpg');
