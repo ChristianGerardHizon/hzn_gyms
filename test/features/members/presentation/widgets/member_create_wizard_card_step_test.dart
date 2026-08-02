@@ -33,9 +33,7 @@ void main() {
       await tester.tap(find.text('Skip'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Continue'));
-      await tester.pumpAndSettle();
-
+      expect(find.text('No card added'), findsNothing);
       expect(find.text('No membership selected'), findsNothing);
       expect(find.text('Skip'), findsOneWidget);
     });
