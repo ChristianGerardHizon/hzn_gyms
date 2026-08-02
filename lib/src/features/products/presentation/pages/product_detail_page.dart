@@ -10,9 +10,11 @@ import '../../domain/product_tab.dart';
 import '../controllers/paginated_products_controller.dart';
 import '../controllers/product_provider.dart';
 import '../widgets/dialogs/edit_product_dialog.dart';
+import '../controllers/product_sales_provider.dart';
 import '../widgets/tabs/product_adjustments_tab.dart';
 import '../widgets/tabs/product_details_tab.dart';
 import '../widgets/tabs/product_overview_tab.dart';
+import '../widgets/tabs/product_sales_tab.dart';
 import '../widgets/tabs/product_stock_tab.dart';
 
 /// Product detail page with tabs.
@@ -33,7 +35,7 @@ class ProductDetailPage extends HookConsumerWidget {
 
     // Tab controller
     final tabController = useTabController(
-      initialLength: 4,
+      initialLength: ProductTab.values.length,
       initialIndex: initialTab.index,
     );
 
@@ -60,6 +62,7 @@ class ProductDetailPage extends HookConsumerWidget {
                 icon: const Icon(Icons.refresh),
                 onPressed: () {
                   ref.invalidate(productProvider(productId));
+                  ref.invalidate(productSalesProvider(productId));
                   showInfoSnackBar(
                     context,
                     message: 'Refreshing...',
@@ -94,6 +97,7 @@ class ProductDetailPage extends HookConsumerWidget {
                 Tab(text: 'Details'),
                 Tab(text: 'Stock'),
                 Tab(text: 'Adjustments'),
+                Tab(text: 'Sales'),
               ],
             ),
           ),
@@ -104,6 +108,7 @@ class ProductDetailPage extends HookConsumerWidget {
               ProductDetailsTab(product: product),
               ProductStockTab(product: product),
               ProductAdjustmentsTab(product: product),
+              ProductSalesTab(product: product),
             ],
           ),
         );

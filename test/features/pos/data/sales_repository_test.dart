@@ -273,4 +273,93 @@ void main() {
     final result = await repo.getSaleItems('sale-1');
     expect(result.getOrElse((_) => []).single.productName, 'WATER');
   });
+
+  test('getSaleItemsByProduct filters by product and expands sale', () async {
+    final saleRecord = buildSaleRecord(
+      id: 'sale-9',
+      receiptNumber: 'S-250802-XYZ',
+      status: 'completed',
+      isPaid: true,
+      customerName: 'Juan',
+    );
+
+    when(
+      () => saleItems.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((invocation) async {
+      expect(invocation.namedArguments[#page], 1);
+      expect(invocation.namedArguments[#perPage], 50);
+      expect(invocation.namedArguments[#filter], 'product = "prod-1"');
+      expect(invocation.namedArguments[#sort], '-created');
+      expect(invocation.namedArguments[#expand], 'sale');
+      return ResultList<RecordModel>(
+        page: 1,
+        perPage: 50,
+        totalItems: 1,
+        totalPages: 1,
+        items: [
+          buildRecord(
+            id: 'si-9',
+            collectionName: 'saleItems',
+            data: {
+              'sale': 'sale-9',
+              'product': 'prod-1',
+              'productName': 'WATER',
+              'quantity': 2,
+              'unitPrice': 25,
+              'subtotal': 50,
+              'lotNumber': 'LOT-A',
+              'created': '2025-08-02 10:00:00.000Z',
+              'expand': {
+                'sale': saleRecord.toJson(),
+              },
+            },
+          ),
+        ],
+      );
+    });
+
+    final result = await repo.getSaleItemsByProduct('prod-1');
+    final line = result.getOrElse((_) => throw StateError('expected right')).single;
+    expect(line.saleItemId, 'si-9');
+    expect(line.saleId, 'sale-9');
+    expect(line.receiptNumber, 'S-250802-XYZ');
+    expect(line.quantity, 2);
+    expect(line.unitPrice, 25);
+    expect(line.subtotal, 50);
+    expect(line.isPaid, isTrue);
+    expect(line.status, 'completed');
+    expect(line.customerName, 'Juan');
+    expect(line.lotNumber, 'LOT-A');
+  });
+
+  test('getSaleItemsByProduct respects custom limit', () async {
+    when(
+      () => saleItems.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((invocation) async {
+      expect(invocation.namedArguments[#perPage], 10);
+      return ResultList<RecordModel>(
+        page: 1,
+        perPage: 10,
+        totalItems: 0,
+        totalPages: 0,
+        items: const [],
+      );
+    });
+
+    final result = await repo.getSaleItemsByProduct('prod-1', limit: 10);
+    expect(result.isRight(), isTrue);
+    expect(result.getOrElse((_) => throw StateError('l')), isEmpty);
+  });
 }

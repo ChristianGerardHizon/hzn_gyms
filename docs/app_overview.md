@@ -110,6 +110,7 @@ Inventory and product management with lot tracking.
   - Products list with categories
   - Stock lots with FEFO (First-Expire-First-Out) tracking
   - Stock adjustments with audit trail
+  - Product detail Sales tab with recent purchase history
   - Hierarchical category organization
 - **Key Models**: `Product`, `ProductCategory`, `ProductLot`, `ProductAdjustment`
 
@@ -319,7 +320,7 @@ Located in `/lib/src/core/`
 - **Sales List**: Transaction history
 - **Sale Detail**: Receipt view with refund/void sale actions and void individual payment from payment history
 - **Products List**: Browse products with categories
-- **Product Detail**: Stock and adjustments
+- **Product Detail**: Stock, adjustments, and sales history
 - **Members List**: Browse all members
 - **Member Detail**: 4-tab interface (Overview, Memberships, Check-ins, Sales)
 - **Memberships List**: Browse membership plans
@@ -556,6 +557,9 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 2 | Camera source preference | System → Appearance and member photo capture can select a camera device; last used camera is remembered on device |
+| Aug 2 | Per-user Appearance theme | Light/dark/system preference is stored per signed-in user on device so shared tablets keep each user's theme |
+| Aug 2 | Product sales history | Product detail has a Sales tab listing recent purchases (qty, price, receipt) with links to sale detail |
 | Aug 2 | New Member card step | New Member wizard includes an optional Card step (scan or manual entry) between Photo and Membership; card is saved after member creation |
 | Aug 2 | Member photo live capture | New Member wizard and Edit Member form support live camera preview with Capture button on web/mobile; upload from file remains available as fallback |
 | Aug 2 | Dashboard Search Member | Quick action searches all branches, shows branch activity chips, routes to renew/purchase at current branch or new-member wizard when not found |

@@ -30,10 +30,34 @@ bool isImagePickerCameraSupported() {
   return Platform.isAndroid || Platform.isIOS;
 }
 
+/// User-facing label for a [CameraDescription] (name + lens direction).
+String cameraDisplayLabel(CameraDescription camera) {
+  final direction = switch (camera.lensDirection) {
+    CameraLensDirection.front => 'Front',
+    CameraLensDirection.back => 'Back',
+    CameraLensDirection.external => 'External',
+  };
+  final name = camera.name.trim();
+  if (name.isEmpty) return direction;
+  return '$name ($direction)';
+}
+
 /// Picks the best available camera for member profile photos.
-CameraDescription selectPreferredCamera(List<CameraDescription> cameras) {
+///
+/// When [preferredName] matches a camera in [cameras], that device is used.
+/// Otherwise falls back to front → external → back → first available.
+CameraDescription selectPreferredCamera(
+  List<CameraDescription> cameras, {
+  String? preferredName,
+}) {
   if (cameras.isEmpty) {
     throw ArgumentError.value(cameras, 'cameras', 'must not be empty');
+  }
+
+  if (preferredName != null && preferredName.isNotEmpty) {
+    for (final camera in cameras) {
+      if (camera.name == preferredName) return camera;
+    }
   }
 
   for (final direction in [

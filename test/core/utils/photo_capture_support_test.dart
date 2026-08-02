@@ -31,6 +31,34 @@ void main() {
     });
   });
 
+  group('cameraDisplayLabel', () {
+    test('includes name and lens direction', () {
+      expect(
+        cameraDisplayLabel(
+          const CameraDescription(
+            name: 'FaceTime HD',
+            lensDirection: CameraLensDirection.front,
+            sensorOrientation: 0,
+          ),
+        ),
+        'FaceTime HD (Front)',
+      );
+    });
+
+    test('uses direction only when name is blank', () {
+      expect(
+        cameraDisplayLabel(
+          const CameraDescription(
+            name: '  ',
+            lensDirection: CameraLensDirection.back,
+            sensorOrientation: 90,
+          ),
+        ),
+        'Back',
+      );
+    });
+  });
+
   group('selectPreferredCamera', () {
     test('prefers front camera for profile photos when available', () {
       final cameras = [
@@ -52,6 +80,46 @@ void main() {
       ];
 
       expect(selectPreferredCamera(cameras).name, 'front');
+    });
+
+    test('uses preferredName when it matches an available camera', () {
+      final cameras = [
+        const CameraDescription(
+          name: 'front',
+          lensDirection: CameraLensDirection.front,
+          sensorOrientation: 270,
+        ),
+        const CameraDescription(
+          name: 'usb-cam',
+          lensDirection: CameraLensDirection.external,
+          sensorOrientation: 0,
+        ),
+      ];
+
+      expect(
+        selectPreferredCamera(cameras, preferredName: 'usb-cam').name,
+        'usb-cam',
+      );
+    });
+
+    test('falls back when preferredName is missing from the list', () {
+      final cameras = [
+        const CameraDescription(
+          name: 'back',
+          lensDirection: CameraLensDirection.back,
+          sensorOrientation: 90,
+        ),
+        const CameraDescription(
+          name: 'front',
+          lensDirection: CameraLensDirection.front,
+          sensorOrientation: 270,
+        ),
+      ];
+
+      expect(
+        selectPreferredCamera(cameras, preferredName: 'gone').name,
+        'front',
+      );
     });
 
     test('falls back to external then back camera', () {

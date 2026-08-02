@@ -3,7 +3,8 @@ enum ProductTab {
   overview,
   details,
   stock,
-  adjustments;
+  adjustments,
+  sales;
 
   /// Parse a tab name string to ProductTab, defaults to overview.
   static ProductTab fromString(String? name) {
