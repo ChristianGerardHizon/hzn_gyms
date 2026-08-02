@@ -1,6 +1,7 @@
 import 'package:ebe_gym/src/core/packages/app_info/app_info_provider.dart';
 import 'package:ebe_gym/src/core/packages/pocketbase/pb_connectivity_provider.dart';
 import 'package:ebe_gym/src/core/routing/pending_redirect_provider.dart';
+import 'package:ebe_gym/src/core/routing/router_utils.dart';
 import 'package:ebe_gym/src/core/sync/outbox_sync_worker.dart';
 import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
 import 'package:ebe_gym/src/features/auth/domain/user.dart';
@@ -66,10 +67,7 @@ GoRouter _testRouter(ProviderContainer container) {
     initialLocation: '/login',
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const Text('DASHBOARD'),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const Text('DASHBOARD')),
       GoRoute(
         path: '/deep/link',
         builder: (context, state) => const Text('DEEP_LINK'),
@@ -84,12 +82,14 @@ GoRouter _testRouter(ProviderContainer container) {
 
     if (wasAuthenticated != isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final location = router.state.matchedLocation;
+        final location = RouterUtils.currentLocation(router);
+        if (location.isEmpty) return;
 
         if (isAuthenticated &&
             (location == '/login' || location == '/splash')) {
-          final pendingUrl =
-              container.read(pendingRedirectProvider.notifier).consume();
+          final pendingUrl = container
+              .read(pendingRedirectProvider.notifier)
+              .consume();
           router.go(pendingUrl ?? '/');
         } else if (!isAuthenticated &&
             !_ignoredAuthRoutes.any((route) => location.startsWith(route))) {
@@ -105,17 +105,17 @@ GoRouter _testRouter(ProviderContainer container) {
 }
 
 _baseOverrides() => [
-      pbConnectivityProvider.overrideWith(_FakePbConnectivity.new),
-      appInfoProvider.overrideWith(
-        (ref) async => PackageInfo(
-          appName: 'ebe_gym',
-          packageName: 'com.test.ebe_gym',
-          version: '1.0.0',
-          buildNumber: '1',
-        ),
-      ),
-      outboxPendingCountProvider.overrideWith((ref) => Stream.value(0)),
-    ];
+  pbConnectivityProvider.overrideWith(_FakePbConnectivity.new),
+  appInfoProvider.overrideWith(
+    (ref) async => PackageInfo(
+      appName: 'ebe_gym',
+      packageName: 'com.test.ebe_gym',
+      version: '1.0.0',
+      buildNumber: '1',
+    ),
+  ),
+  outboxPendingCountProvider.overrideWith((ref) => Stream.value(0)),
+];
 
 Future<void> _fillAndSubmit(WidgetTester tester) async {
   await tester.enterText(find.byType(TextField).at(0), 'cashier');
@@ -126,98 +126,85 @@ Future<void> _fillAndSubmit(WidgetTester tester) async {
 
 void main() {
   group('LoginPage', () {
-    testWidgets(
-      'navigates straight to dashboard on successful login '
-      '(no manual refresh required)',
-      (tester) async {
-        final container = ProviderContainer(
-          overrides: [
-            ..._baseOverrides(),
-            authControllerProvider.overrideWith(_FakeAuthController.new),
-          ],
-        );
-        addTearDown(container.dispose);
+    testWidgets('navigates straight to dashboard on successful login '
+        '(no manual refresh required)', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          ..._baseOverrides(),
+          authControllerProvider.overrideWith(_FakeAuthController.new),
+        ],
+      );
+      addTearDown(container.dispose);
 
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: MaterialApp.router(
-              routerConfig: _testRouter(container),
-            ),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: _testRouter(container)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(LoginPage), findsOneWidget);
+
+      await _fillAndSubmit(tester);
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.byType(LoginPage), findsNothing);
+    });
+
+    testWidgets('navigates to the pending deep link instead of dashboard, '
+        'and clears the pending redirect afterwards', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          ..._baseOverrides(),
+          authControllerProvider.overrideWith(_FakeAuthController.new),
+          pendingRedirectProvider.overrideWith(
+            () => _FakePendingRedirect('/deep/link'),
           ),
-        );
-        await tester.pumpAndSettle();
-        expect(find.byType(LoginPage), findsOneWidget);
+        ],
+      );
+      addTearDown(container.dispose);
 
-        await _fillAndSubmit(tester);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: _testRouter(container)),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('DASHBOARD'), findsOneWidget);
-        expect(find.byType(LoginPage), findsNothing);
-      },
-    );
+      await _fillAndSubmit(tester);
 
-    testWidgets(
-      'navigates to the pending deep link instead of dashboard, '
-      'and clears the pending redirect afterwards',
-      (tester) async {
-        final container = ProviderContainer(
-          overrides: [
-            ..._baseOverrides(),
-            authControllerProvider.overrideWith(_FakeAuthController.new),
-            pendingRedirectProvider.overrideWith(
-              () => _FakePendingRedirect('/deep/link'),
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
+      expect(find.text('DEEP_LINK'), findsOneWidget);
+      expect(find.text('DASHBOARD'), findsNothing);
+      expect(container.read(pendingRedirectProvider), isNull);
+    });
 
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: MaterialApp.router(
-              routerConfig: _testRouter(container),
-            ),
+    testWidgets('stays on the login page and shows an error on failed login', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          ..._baseOverrides(),
+          authControllerProvider.overrideWith(
+            () => _FakeAuthController(shouldFail: true),
           ),
-        );
-        await tester.pumpAndSettle();
+        ],
+      );
+      addTearDown(container.dispose);
 
-        await _fillAndSubmit(tester);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: _testRouter(container)),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('DEEP_LINK'), findsOneWidget);
-        expect(find.text('DASHBOARD'), findsNothing);
-        expect(container.read(pendingRedirectProvider), isNull);
-      },
-    );
+      await _fillAndSubmit(tester);
 
-    testWidgets(
-      'stays on the login page and shows an error on failed login',
-      (tester) async {
-        final container = ProviderContainer(
-          overrides: [
-            ..._baseOverrides(),
-            authControllerProvider.overrideWith(
-              () => _FakeAuthController(shouldFail: true),
-            ),
-          ],
-        );
-        addTearDown(container.dispose);
-
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: MaterialApp.router(
-              routerConfig: _testRouter(container),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        await _fillAndSubmit(tester);
-
-        expect(find.text('Invalid username or password.'), findsOneWidget);
-        expect(find.byType(LoginPage), findsOneWidget);
-        expect(find.text('DASHBOARD'), findsNothing);
-      },
-    );
+      expect(find.text('Invalid username or password.'), findsOneWidget);
+      expect(find.byType(LoginPage), findsOneWidget);
+      expect(find.text('DASHBOARD'), findsNothing);
+    });
   });
 }
