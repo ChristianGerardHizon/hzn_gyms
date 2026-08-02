@@ -1,5 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
 import 'active_members_count_controller.dart';
 import 'dashboard_kpi_provider.dart';
 import 'dashboard_members_controller.dart';
@@ -15,9 +16,15 @@ void refreshTodaysSales(WidgetRef ref) {
   ref.invalidate(todaySalesProvider);
 }
 
+/// Refreshes dashboard sales KPIs and the paginated sales list.
+void refreshSalesData(WidgetRef ref) {
+  refreshTodaysSales(ref);
+  ref.read(paginatedSalesControllerProvider.notifier).refresh();
+}
+
 /// Invalidates membership/sales dashboard cards after create or renew.
 void refreshDashboardAfterMemberChange(WidgetRef ref) {
-  refreshTodaysSales(ref);
+  refreshSalesData(ref);
   ref.invalidate(activeMembersCountProvider);
   ref.invalidate(activeMembersListProvider);
   ref.invalidate(todaysNewMembersCountProvider);
