@@ -1,11 +1,28 @@
+import 'package:ebe_gym/src/core/foundation/paginated_state.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/controllers/active_members_count_controller.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/controllers/dashboard_members_controller.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/controllers/dashboard_refresh.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/controllers/new_members_controller.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/controllers/todays_sales_controller.dart';
+import 'package:ebe_gym/src/features/pos/domain/sale.dart';
+import 'package:ebe_gym/src/features/sales/presentation/controllers/paginated_sales_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class _TrackingPaginatedSalesController extends PaginatedSalesController {
+  var refreshCount = 0;
+
+  @override
+  Future<PaginatedState<Sale>> build() async {
+    return const PaginatedState(items: [], hasReachedEnd: true);
+  }
+
+  @override
+  Future<void> refresh() async {
+    refreshCount++;
+  }
+}
 
 void main() {
   testWidgets('refreshTodaysSales invalidates today sales providers', (
@@ -53,6 +70,56 @@ void main() {
     expect(summaryBuilds, 2);
   });
 
+  testWidgets('refreshSalesData invalidates today sales and paginated list', (
+    tester,
+  ) async {
+    var salesBuilds = 0;
+    var summaryBuilds = 0;
+    final paginated = _TrackingPaginatedSalesController();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todaySalesProvider.overrideWith((ref) async {
+            salesBuilds++;
+            return const [];
+          }),
+          todaySalesSummaryProvider.overrideWith((ref) async {
+            summaryBuilds++;
+            return const TodaySalesSummary(count: 0, total: 0);
+          }),
+          paginatedSalesControllerProvider.overrideWith(() => paginated),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) {
+            ref.watch(todaySalesProvider);
+            ref.watch(todaySalesSummaryProvider);
+            ref.watch(paginatedSalesControllerProvider);
+            return MaterialApp(
+              home: Scaffold(
+                body: TextButton(
+                  onPressed: () => refreshSalesData(ref),
+                  child: const Text('Refresh'),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(salesBuilds, 1);
+    expect(summaryBuilds, 1);
+    expect(paginated.refreshCount, 0);
+
+    await tester.tap(find.text('Refresh'));
+    await tester.pumpAndSettle();
+
+    expect(salesBuilds, 2);
+    expect(summaryBuilds, 2);
+    expect(paginated.refreshCount, 1);
+  });
+
   testWidgets(
     'refreshDashboardAfterMemberChange invalidates membership and sales cards',
     (tester) async {
@@ -61,6 +128,7 @@ void main() {
       var activeBuilds = 0;
       var newMembersBuilds = 0;
       var membersPageBuilds = 0;
+      final paginated = _TrackingPaginatedSalesController();
 
       await tester.pumpWidget(
         ProviderScope(
@@ -73,6 +141,7 @@ void main() {
               summaryBuilds++;
               return const TodaySalesSummary(count: 0, total: 0);
             }),
+            paginatedSalesControllerProvider.overrideWith(() => paginated),
             activeMembersCountProvider.overrideWith((ref) async {
               activeBuilds++;
               return 0;
@@ -98,6 +167,7 @@ void main() {
               ref.watch(activeMembersCountProvider);
               ref.watch(todaysNewMembersCountProvider);
               ref.watch(dashboardMembersPageProvider());
+              ref.watch(paginatedSalesControllerProvider);
               return MaterialApp(
                 home: Scaffold(
                   body: TextButton(
@@ -125,6 +195,7 @@ void main() {
       expect(activeBuilds, 2);
       expect(newMembersBuilds, 2);
       expect(membersPageBuilds, 2);
+      expect(paginated.refreshCount, 1);
     },
   );
 }
