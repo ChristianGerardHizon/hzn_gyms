@@ -23,6 +23,18 @@ enum MemberCardEntryMode {
 bool memberCardEntryCanSubmit(MemberCardEntryMode mode) =>
     mode != MemberCardEntryMode.waitingForScan;
 
+/// Whether the card step has unsaved draft input (for discard guards).
+bool memberCardEntryHasDraftInput(MemberCardEntryMode mode, String? cardValue) {
+  switch (mode) {
+    case MemberCardEntryMode.waitingForScan:
+      return false;
+    case MemberCardEntryMode.scanned:
+      return true;
+    case MemberCardEntryMode.manual:
+      return cardValue?.trim().isNotEmpty == true;
+  }
+}
+
 /// Shared scan-first card entry fields used by [AddCardDialog] and the new-member wizard.
 ///
 /// Must be placed inside an existing [FormBuilder] (via [FormDialogScaffold] or a
@@ -32,10 +44,27 @@ class MemberCardEntryForm extends HookWidget {
     super.key,
     required this.formKey,
     required this.entryMode,
+    this.scanEnabled = true,
+    this.onDraftChanged,
   });
 
   final GlobalKey<FormBuilderState> formKey;
   final ValueNotifier<MemberCardEntryMode> entryMode;
+
+  /// When false, the global RFID keyboard listener is not registered.
+  final bool scanEnabled;
+
+  /// Called when scan/manual draft state may have changed.
+  final ValueChanged<bool>? onDraftChanged;
+
+  void _notifyDraftChanged() {
+    if (onDraftChanged == null) return;
+    final cardValue =
+        formKey.currentState?.fields['cardValue']?.value as String?;
+    onDraftChanged!(
+      memberCardEntryHasDraftInput(entryMode.value, cardValue),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +82,12 @@ class MemberCardEntryForm extends HookWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setCardValue(null);
         FocusManager.instance.primaryFocus?.unfocus();
+        _notifyDraftChanged();
       });
     }
 
     useEffect(() {
-      if (entryMode.value != MemberCardEntryMode.waitingForScan) {
+      if (!scanEnabled || entryMode.value != MemberCardEntryMode.waitingForScan) {
         return null;
       }
 
@@ -82,6 +112,7 @@ class MemberCardEntryForm extends HookWidget {
             entryMode.value = MemberCardEntryMode.scanned;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               setCardValue(cardId);
+              _notifyDraftChanged();
             });
           },
         );
@@ -92,7 +123,12 @@ class MemberCardEntryForm extends HookWidget {
         HardwareKeyboard.instance.removeHandler(handleKeyEvent);
         decoder.reset();
       };
-    }, [entryMode.value]);
+    }, [scanEnabled, entryMode.value]);
+
+    useEffect(() {
+      _notifyDraftChanged();
+      return null;
+    }, [entryMode.value, scanEnabled]);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,6 +155,7 @@ class MemberCardEntryForm extends HookWidget {
                       entryMode.value = MemberCardEntryMode.manual;
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         setCardValue(null);
+                        _notifyDraftChanged();
                       });
                     },
                   );
@@ -163,7 +200,10 @@ class MemberCardEntryForm extends HookWidget {
                         ),
                         autofocus: true,
                         textInputAction: TextInputAction.next,
-                        onChanged: field.didChange,
+                        onChanged: (value) {
+                          field.didChange(value);
+                          _notifyDraftChanged();
+                        },
                       ),
                       Align(
                         alignment: Alignment.centerLeft,

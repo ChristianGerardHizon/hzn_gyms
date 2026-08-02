@@ -63,6 +63,45 @@ void main() {
       expect(memberCardEntryCanSubmit(MemberCardEntryMode.scanned), isTrue);
       expect(memberCardEntryCanSubmit(MemberCardEntryMode.manual), isTrue);
     });
+
+    test('memberCardEntryHasDraftInput reflects scan/manual state', () {
+      expect(
+        memberCardEntryHasDraftInput(
+          MemberCardEntryMode.waitingForScan,
+          null,
+        ),
+        isFalse,
+      );
+      expect(
+        memberCardEntryHasDraftInput(
+          MemberCardEntryMode.scanned,
+          'ABCD1234',
+        ),
+        isTrue,
+      );
+      expect(
+        memberCardEntryHasDraftInput(MemberCardEntryMode.manual, ''),
+        isFalse,
+      );
+      expect(
+        memberCardEntryHasDraftInput(
+          MemberCardEntryMode.manual,
+          'ABCD1234',
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgets('does not capture scan when scanEnabled is false', (
+      tester,
+    ) async {
+      await _pumpForm(tester, scanEnabled: false);
+
+      await _pumpRfidWedgeScan(tester, 'ABCD1234');
+
+      expect(find.text('ABCD1234'), findsNothing);
+      expect(find.text('Scan card'), findsOneWidget);
+    });
   });
 }
 
@@ -87,7 +126,10 @@ Future<void> _pumpRfidWedgeScan(WidgetTester tester, String cardId) async {
   await tester.pump();
 }
 
-Future<void> _pumpForm(WidgetTester tester) async {
+Future<void> _pumpForm(
+  WidgetTester tester, {
+  bool scanEnabled = true,
+}) async {
   tester.view.physicalSize = const Size(1280, 800);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
@@ -97,7 +139,7 @@ Future<void> _pumpForm(WidgetTester tester) async {
     TranslationProvider(
       child: MaterialApp(
         home: Scaffold(
-          body: _MemberCardEntryFormHarness(),
+          body: _MemberCardEntryFormHarness(scanEnabled: scanEnabled),
         ),
       ),
     ),
@@ -106,6 +148,10 @@ Future<void> _pumpForm(WidgetTester tester) async {
 }
 
 class _MemberCardEntryFormHarness extends StatefulWidget {
+  const _MemberCardEntryFormHarness({this.scanEnabled = true});
+
+  final bool scanEnabled;
+
   @override
   State<_MemberCardEntryFormHarness> createState() =>
       _MemberCardEntryFormHarnessState();
@@ -129,6 +175,7 @@ class _MemberCardEntryFormHarnessState
       child: MemberCardEntryForm(
         formKey: formKey,
         entryMode: entryMode,
+        scanEnabled: widget.scanEnabled,
       ),
     );
   }

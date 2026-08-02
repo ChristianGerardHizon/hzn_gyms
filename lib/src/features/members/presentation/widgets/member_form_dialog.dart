@@ -249,6 +249,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
     final pendingCardValue = useState<String?>(null);
     final pendingCardLabel = useState<String?>(null);
     final pendingCardNotes = useState<String?>(null);
+    final cardStepHasDraftInput = useState(false);
 
     // Step 4: Membership state
     final selectedMembership = useState<Membership?>(null);
@@ -441,6 +442,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
             // On steps 1-4, check if user has made selections
             if (selectedPhoto.value != null ||
                 pendingCardValue.value != null ||
+                cardStepHasDraftInput.value ||
                 selectedMembership.value != null) {
               return await showDialog<bool>(
                     context: ctx,
@@ -556,9 +558,11 @@ class _MemberCreateWizard extends HookConsumerWidget {
 
                           // Step 2: Card
                           _CardStep(
+                            isActive: currentStep.value == 2,
                             pendingCardValue: pendingCardValue,
                             pendingCardLabel: pendingCardLabel,
                             pendingCardNotes: pendingCardNotes,
+                            cardStepHasDraftInput: cardStepHasDraftInput,
                             onNext: () => currentStep.value = 3,
                             onSkip: () => currentStep.value = 3,
                             onBack: () => currentStep.value = 1,
@@ -731,17 +735,21 @@ class _PhotoStep extends HookWidget {
 
 class _CardStep extends HookWidget {
   const _CardStep({
+    required this.isActive,
     required this.pendingCardValue,
     required this.pendingCardLabel,
     required this.pendingCardNotes,
+    required this.cardStepHasDraftInput,
     required this.onNext,
     required this.onSkip,
     required this.onBack,
   });
 
+  final bool isActive;
   final ValueNotifier<String?> pendingCardValue;
   final ValueNotifier<String?> pendingCardLabel;
   final ValueNotifier<String?> pendingCardNotes;
+  final ValueNotifier<bool> cardStepHasDraftInput;
   final VoidCallback onNext;
   final VoidCallback onSkip;
   final VoidCallback onBack;
@@ -771,6 +779,7 @@ class _CardStep extends HookWidget {
       pendingCardValue.value = null;
       pendingCardLabel.value = null;
       pendingCardNotes.value = null;
+      cardStepHasDraftInput.value = false;
       onSkip();
     }
   }
@@ -782,6 +791,7 @@ class _CardStep extends HookWidget {
     pendingCardValue.value = (values['cardValue'] as String).trim();
     pendingCardLabel.value = values['label'] as String?;
     pendingCardNotes.value = values['notes'] as String?;
+    cardStepHasDraftInput.value = false;
     onNext();
   }
 
@@ -791,6 +801,13 @@ class _CardStep extends HookWidget {
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final entryMode = useState(MemberCardEntryMode.waitingForScan);
     useListenable(entryMode);
+
+    useEffect(() {
+      if (!isActive) {
+        cardStepHasDraftInput.value = false;
+      }
+      return null;
+    }, [isActive]);
 
     final hasCard = memberCardEntryCanSubmit(entryMode.value);
 
@@ -821,6 +838,10 @@ class _CardStep extends HookWidget {
                   child: MemberCardEntryForm(
                     formKey: formKey,
                     entryMode: entryMode,
+                    scanEnabled: isActive,
+                    onDraftChanged: isActive
+                        ? (hasDraft) => cardStepHasDraftInput.value = hasDraft
+                        : null,
                   ),
                 ),
               ],
