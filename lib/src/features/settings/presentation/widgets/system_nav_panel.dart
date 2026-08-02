@@ -10,6 +10,7 @@ enum SystemMode {
   printers,
   cashierGroups,
   appearance,
+  camera,
   import,
   debug,
   activityLog,
@@ -17,7 +18,7 @@ enum SystemMode {
 
 /// Vertical navigation panel for selecting system mode.
 ///
-/// Admin sees all modes; every signed-in user sees Appearance.
+/// Admin sees all modes; every signed-in user sees Appearance and Camera.
 class SystemNavPanel extends ConsumerWidget {
   const SystemNavPanel({
     super.key,
@@ -72,6 +73,12 @@ class SystemNavPanel extends ConsumerWidget {
         Icons.palette_outlined,
         Icons.palette,
         'Appearance',
+      ),
+      (
+        SystemMode.camera,
+        Icons.photo_camera_outlined,
+        Icons.photo_camera,
+        'Camera',
       ),
       if (isAdmin) ...[
         (

@@ -11,6 +11,7 @@ import '../../../features/settings/presentation/widgets/dialogs/product_category
 import '../../../features/settings/presentation/widgets/product_category_detail_panel.dart';
 import '../../../features/settings/presentation/widgets/printer_config_detail_panel.dart';
 import '../../../features/settings/presentation/widgets/theme_settings_panel.dart';
+import '../../../features/settings/presentation/widgets/camera_settings_panel.dart';
 import '../../../features/settings/presentation/controllers/printer_configs_controller.dart';
 import '../../../features/settings/presentation/widgets/dialogs/printer_config_form_dialog.dart';
 import '../../../features/pos/presentation/pages/cashier_groups_settings_page.dart';
@@ -58,6 +59,8 @@ part 'system.routes.g.dart';
         ),
         // Appearance/theme settings
         TypedGoRoute<AppearanceRoute>(path: 'appearance'),
+        // Camera settings (default capture device)
+        TypedGoRoute<CameraRoute>(path: 'camera'),
         // Import products from CSV
         TypedGoRoute<ImportRoute>(path: 'import'),
         // Debug tools (RFID simulation, etc.)
@@ -83,7 +86,7 @@ class SystemShellRoute extends ShellRouteData {
 /// System root route.
 ///
 /// On tablet: Redirects to /system/product-categories (3-panel layout)
-/// On mobile: Shows landing page with Categories/Printers/Appearance/Import options
+/// On mobile: Shows landing page with Categories/Printers/Appearance/Camera/Import options
 class SystemRoute extends GoRouteData with $SystemRoute {
   const SystemRoute();
 
@@ -98,14 +101,18 @@ class SystemRoute extends GoRouteData with $SystemRoute {
     // the tablet admin tab (product-categories) before permissions are known.
     if (perms == null) return null;
 
-    // Non-admin: Appearance only (plus activity log when permitted).
+    // Non-admin: Appearance + Camera (plus activity log when permitted).
     if (!perms.canManageSystem) {
       final current = state.uri.path;
       final isAppearance = current.startsWith('$path/appearance');
+      final isCamera = current.startsWith('$path/camera');
       final isActivityLog =
           current.startsWith('$path/activity-log') && perms.canViewActivityLog;
       if (current == path ||
-          (!isAppearance && !isActivityLog && current.startsWith(path))) {
+          (!isAppearance &&
+              !isCamera &&
+              !isActivityLog &&
+              current.startsWith(path))) {
         return '$path/appearance';
       }
       return null;
@@ -215,6 +222,16 @@ class AppearanceRoute extends GoRouteData with $AppearanceRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const ThemeSettingsPanel();
+  }
+}
+
+/// Camera settings route.
+class CameraRoute extends GoRouteData with $CameraRoute {
+  const CameraRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const CameraSettingsPanel();
   }
 }
 
@@ -387,9 +404,17 @@ class _MobileSystemLandingPage extends ConsumerWidget {
           _SystemOptionCard(
             icon: Icons.palette,
             title: 'Appearance',
-            description: 'Theme and default camera for photo capture',
+            description: 'Choose light, dark, or system theme',
             color: Colors.purple,
             onTap: () => const AppearanceRoute().go(context),
+          ),
+          const SizedBox(height: 16),
+          _SystemOptionCard(
+            icon: Icons.photo_camera,
+            title: 'Camera',
+            description: 'Default camera for member photo capture',
+            color: Colors.blue,
+            onTap: () => const CameraRoute().go(context),
           ),
           const SizedBox(height: 16),
 

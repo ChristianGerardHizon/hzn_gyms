@@ -7,6 +7,7 @@ import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../domain/member_membership.dart';
+import '../../domain/membership_status_colors.dart';
 import '../controllers/member_membership_add_ons_provider.dart';
 import '../controllers/member_memberships_controller.dart';
 import '../controllers/membership_provider.dart';
@@ -61,9 +62,10 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
     final effectiveExpired =
         memberMembership.isExpired &&
         memberMembership.status == MemberMembershipStatus.active;
-    final statusColor = effectiveExpired
-        ? Colors.orange
-        : _statusColor(memberMembership.status);
+    final statusColor = membershipStatusColor(
+      memberMembership.status,
+      effectiveExpired: effectiveExpired,
+    );
 
     final canRenew = planAsync.maybeWhen(
       data: (plan) =>
@@ -142,6 +144,9 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                     _InfoRow(
                       label: 'Days Remaining',
                       value: '${memberMembership.daysRemaining}',
+                      valueColor: membershipLifecycleColor(
+                        daysRemaining: memberMembership.daysRemaining,
+                      ),
                     ),
                   planAsync.when(
                     data: (plan) {
@@ -329,19 +334,6 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
 
     Navigator.of(context).pop();
     showSuccessSnackBar(context, message: 'Membership cancelled');
-  }
-
-  Color _statusColor(MemberMembershipStatus status) {
-    switch (status) {
-      case MemberMembershipStatus.active:
-        return Colors.green;
-      case MemberMembershipStatus.expired:
-        return Colors.orange;
-      case MemberMembershipStatus.cancelled:
-        return Colors.red;
-      case MemberMembershipStatus.voided:
-        return Colors.grey;
-    }
   }
 }
 

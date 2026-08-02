@@ -6,6 +6,7 @@ import '../../../../core/foundation/paginated_state.dart';
 import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/utils/list_search_field.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../domain/user.dart';
 import '../controllers/paginated_users_controller.dart';
@@ -37,16 +38,18 @@ class UserListPanel extends HookConsumerWidget {
     final theme = Theme.of(context);
     final t = Translations.of(context);
 
-    // Local state using hooks
-    final searchController = useTextEditingController();
-    final searchText = useState('');
-
     // Watch providers
     final searchFields = ref.watch(userSearchFieldsProvider);
     final activeFieldCount = searchFields.length;
     final paginatedController = ref.read(
       paginatedUsersControllerProvider.notifier,
     );
+
+    // Seed from keepAlive controller so tab remount restores input + clear.
+    final initialQuery =
+        initialSearchFieldText(paginatedController.currentSearchQuery);
+    final searchController = useTextEditingController(text: initialQuery);
+    final searchText = useState(initialQuery);
 
     void performSearch() {
       final query = searchController.text.trim();
@@ -110,7 +113,10 @@ class UserListPanel extends HookConsumerWidget {
             fieldCount: activeFieldCount,
             onSearch: performSearch,
             onTextChanged: onSearchTextChanged,
-            searchText: searchText.value,
+            showClear: shouldShowSearchClear(
+              searchText: searchText.value,
+              isSearchActive: paginatedController.isSearchActive,
+            ),
           ),
         ),
 
@@ -166,14 +172,14 @@ class _SearchInput extends StatelessWidget {
     required this.fieldCount,
     required this.onSearch,
     required this.onTextChanged,
-    required this.searchText,
+    required this.showClear,
   });
 
   final TextEditingController controller;
   final int fieldCount;
   final VoidCallback onSearch;
   final ValueChanged<String> onTextChanged;
-  final String searchText;
+  final bool showClear;
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +196,7 @@ class _SearchInput extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '${t.common.search}...',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: searchText.isNotEmpty
+              suffixIcon: showClear
                   ? IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: () {

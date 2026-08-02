@@ -42,6 +42,11 @@ class EmptySystemState extends StatelessWidget {
           'Appearance',
           'Customize app theme and colors',
         ),
+      SystemMode.camera => (
+          Icons.photo_camera_outlined,
+          'Camera',
+          'Choose the default camera for member photo capture',
+        ),
       SystemMode.import => (
           Icons.file_upload_outlined,
           'Import Products',

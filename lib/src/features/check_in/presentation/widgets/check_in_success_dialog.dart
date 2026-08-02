@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 
 import '../../domain/check_in_chime.dart';
 import '../../domain/membership_expiry_label.dart';
+import '../../../memberships/domain/membership_status_colors.dart';
 import '../utils/check_in_sound_player.dart';
 
 /// Shows a success dialog after a check-in that auto-closes after a few seconds.
@@ -77,8 +78,18 @@ class _CheckInSuccessDialog extends HookWidget {
             daysRemaining: membershipDaysRemaining,
           );
 
+    final lifecycleColor = hasActiveMembership && membershipDaysRemaining != null
+        ? membershipLifecycleColor(daysRemaining: membershipDaysRemaining!)
+        : hasActiveMembership
+            ? Colors.green
+            : Colors.red;
+
     return AlertDialog(
-      icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+      icon: Icon(
+        hasActiveMembership ? Icons.check_circle : Icons.warning_amber_rounded,
+        color: hasActiveMembership ? Colors.green : Colors.red,
+        size: 48,
+      ),
       title: const Text('Check-In Successful'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -96,7 +107,7 @@ class _CheckInSuccessDialog extends HookWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
+                color: lifecycleColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -104,13 +115,13 @@ class _CheckInSuccessDialog extends HookWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.verified, color: Colors.green, size: 18),
+                      Icon(Icons.verified, color: lifecycleColor, size: 18),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           planLabel,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.green.shade800,
+                            color: lifecycleColor,
                             fontWeight: FontWeight.w600,
                           ),
                           textAlign: TextAlign.center,
@@ -123,7 +134,7 @@ class _CheckInSuccessDialog extends HookWidget {
                     Text(
                       expiryLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: lifecycleColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -136,7 +147,7 @@ class _CheckInSuccessDialog extends HookWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -144,14 +155,14 @@ class _CheckInSuccessDialog extends HookWidget {
                 children: [
                   const Icon(
                     Icons.warning_amber_rounded,
-                    color: Colors.orange,
+                    color: Colors.red,
                     size: 16,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'No active membership',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.orange,
+                      color: Colors.red,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

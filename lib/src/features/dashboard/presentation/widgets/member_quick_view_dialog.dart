@@ -14,6 +14,7 @@ import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../members/presentation/widgets/member_branch_activity_chips.dart';
 import '../../../memberships/domain/member_branch_activity.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../memberships/domain/membership_status_colors.dart';
 import '../../../memberships/domain/pick_renewable_membership.dart';
 import '../../../memberships/presentation/controllers/member_memberships_controller.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
@@ -438,14 +439,10 @@ class _MembershipSummary extends StatelessWidget {
         primary.isExpired && primary.status == MemberMembershipStatus.active;
     final statusLabel =
         effectiveExpired ? 'Expired' : primary.status.displayName;
-    final statusColor = effectiveExpired
-        ? Colors.orange
-        : switch (primary.status) {
-            MemberMembershipStatus.active => Colors.green,
-            MemberMembershipStatus.expired => Colors.orange,
-            MemberMembershipStatus.cancelled => Colors.red,
-            MemberMembershipStatus.voided => Colors.grey,
-          };
+    final statusColor = membershipStatusColor(
+      primary.status,
+      effectiveExpired: effectiveExpired,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -505,6 +502,9 @@ class _MembershipSummary extends StatelessWidget {
               value: primary.daysRemaining == 0
                   ? 'Expires today'
                   : '${primary.daysRemaining} days',
+              valueColor: membershipLifecycleColor(
+                daysRemaining: primary.daysRemaining,
+              ),
             )
           else if (effectiveExpired ||
               primary.status == MemberMembershipStatus.expired)

@@ -356,6 +356,8 @@ class _SaleDetailContent extends HookConsumerWidget {
       'awaitingpayment' => (Colors.amber, 'Awaiting Payment'),
       'paid' => (Colors.green, 'Paid'),
       'completed' => (Colors.green, 'Completed'),
+      'voided' => (Colors.red, 'Voided'),
+      'refunded' => (Colors.orange, 'Refunded'),
       _ => (Colors.grey, sale.status),
     };
 

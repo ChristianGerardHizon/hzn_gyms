@@ -1,5 +1,5 @@
 import '../../memberships/domain/member_membership.dart';
-import 'check_in_chime.dart';
+import '../../memberships/domain/membership_status_colors.dart';
 
 /// Visual membership status for check-in sidebar highlights.
 enum CheckInMembershipHighlight {
