@@ -125,6 +125,8 @@ sentry:
   upload_source_maps: true
   project: ebegym
   org: christian-hizon
+  # Shallow CI clones can't always resolve the previous release SHA
+  ignore_missing: true
 
 flutter_launcher_icons:
   android: "launcher_icon"
