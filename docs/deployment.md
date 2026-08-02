@@ -59,10 +59,12 @@ Same model as sannjose_animal_clinic:
 | *(none, staging only)* | Merge without deploy |
 | `minimum version` | *(main only)* Also set minimum required app version |
 
-| Environment | GitHub Release tag |
-|-------------|--------------------|
-| Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK (APK omitted when `web-only`) |
-| Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) |
+| Environment | GitHub Release tag | Release title |
+|-------------|--------------------|---------------|
+| Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK (APK omitted when `web-only`) | `Deploy X.Y.Z to Staging` |
+| Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) | `Deploy X.Y.Z to Production` |
+
+Auto-promote opens the staging→main PR as **`Deploy vX.Y.Z to Production`** (adds `(web-only)` when applicable).
 
 Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`) and optional `web_only`.
 
@@ -99,6 +101,7 @@ PR merged to staging (or manual dispatch)
   │
   └─ Create GitHub Release (prerelease)
       Tag: staging-X.Y.Z[-build.N]
+      Title: Deploy X.Y.Z to Staging
       Artifact: app-release.apk
 ```
 
@@ -141,6 +144,7 @@ PR merged to main
       ├─ Download APK artifact
       ├─ Create GitHub Release
       │   Tag: vX.Y.Z
+      │   Title: Deploy X.Y.Z to Production
       │   Artifact: app-release.apk
       └─ PATCH Version Manager API with new version
 ```
@@ -156,7 +160,7 @@ Labeled PR merged to staging
   │   └─ If yes → skip
   │
   └─ Create PR: staging → main
-      Title: "Release: promote staging to main"
+      Title: "Deploy vX.Y.Z to Production" (or "... (web-only)")
       Body: includes source PR number and title
 ```
 
@@ -277,10 +281,10 @@ Versions are tracked via an external PocketBase instance (the "Version Manager")
 
 ### Version Formats
 
-| Environment | Version Format | Tag Format | Example |
-|-------------|---------------|------------|---------|
-| Staging | `X.Y.Z-staging` | `staging-X.Y.Z` or `staging-X.Y.Z-build.N` | `1.2.4-staging` / `staging-1.2.4-build.42` |
-| Production | `X.Y.Z` | `vX.Y.Z` | `1.2.4` / `v1.2.4` |
+| Environment | Version Format | Tag Format | Release title | Example |
+|-------------|---------------|------------|---------------|---------|
+| Staging | `X.Y.Z-staging` | `staging-X.Y.Z` or `staging-X.Y.Z-build.N` | `Deploy X.Y.Z to Staging` | `1.2.4-staging` / `staging-1.2.4-build.42` |
+| Production | `X.Y.Z` | `vX.Y.Z` | `Deploy X.Y.Z to Production` | `1.2.4` / `v1.2.4` |
 
 ---
 
