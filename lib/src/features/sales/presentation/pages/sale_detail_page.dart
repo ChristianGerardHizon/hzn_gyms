@@ -10,7 +10,6 @@ import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
@@ -18,9 +17,9 @@ import '../../../pos/domain/sale.dart';
 import '../../../pos/domain/sale_payment_status.dart';
 import '../../../pos/presentation/payments_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
-import '../controllers/paginated_sales_controller.dart';
 import '../controllers/sale_items_provider.dart';
 import '../controllers/sale_provider.dart';
+import '../controllers/sale_refresh.dart';
 import '../widgets/record_payment_dialog.dart';
 import '../widgets/sale_status_chip.dart';
 
@@ -346,9 +345,7 @@ class _SaleDetailContent extends HookConsumerWidget {
         },
         (_) {
           showSuccessSnackBar(context, message: 'Sale voided');
-          ref.invalidate(saleProvider(sale.id));
-          ref.read(paginatedSalesControllerProvider.notifier).refresh();
-          refreshTodaysSales(ref);
+          refreshAfterSaleVoided(ref, sale.id);
         },
       );
     }

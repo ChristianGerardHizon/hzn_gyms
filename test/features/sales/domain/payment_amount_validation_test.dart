@@ -34,5 +34,10 @@ void main() {
       expect(validatePaymentAmount('100.01', balanceDue), isNotNull);
       expect(validatePaymentAmount('150', balanceDue), isNotNull);
     });
+
+    test('accepts decimal amounts within balance', () {
+      expect(validatePaymentAmount('99.99', balanceDue), isNull);
+      expect(validatePaymentAmount('100.00', balanceDue), isNull);
+    });
   });
 }

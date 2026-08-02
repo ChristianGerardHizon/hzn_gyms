@@ -39,6 +39,16 @@ void main() {
         'Membership renewal queued (excluded from sales) — will sync when online',
       );
     });
+
+    test('returns renewed message when excluded from sales but online', () {
+      expect(
+        membershipRenewalSuccessMessage(
+          queuedOffline: false,
+          excludedFromSales: true,
+        ),
+        'Membership renewed successfully',
+      );
+    });
   });
 
   group('PurchaseMembershipDialog', () {

@@ -5,6 +5,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/check_in.routes.dart';
+import '../../../../core/packages/sentry/sentry_config.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../check_in/domain/card_check_in_result.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
@@ -198,6 +199,30 @@ class SystemDebugPanel extends HookConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
+          if (isSentryEnabled) ...[
+            Text(
+              'Sentry',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Send a test exception to confirm error reporting is wired up.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                throw StateError('This is test exception');
+              },
+              icon: const Icon(Icons.bug_report_outlined),
+              label: const Text('Verify Sentry Setup'),
+            ),
+            const SizedBox(height: 24),
+          ],
           Text(
             'Tips',
             style: theme.textTheme.titleSmall?.copyWith(

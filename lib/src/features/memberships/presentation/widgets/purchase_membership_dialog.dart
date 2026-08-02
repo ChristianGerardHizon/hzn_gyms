@@ -69,6 +69,17 @@ String membershipRenewalSuccessMessage({
   return 'Membership renewed successfully';
 }
 
+/// Whether the purchase flow should open [showRecordPaymentDialog].
+bool shouldOpenRecordPaymentAfterPurchase({
+  required bool isRenewal,
+  required MembershipPurchaseResult result,
+}) {
+  if (isRenewal) return false;
+  if (result.excludedFromSales) return false;
+  if (result.queuedOffline) return false;
+  return result.sale != null;
+}
+
 /// Opens the purchase (or renew) flow and records payment when complete.
 ///
 /// Returns `true` when a membership was saved (including renewals).
@@ -117,6 +128,10 @@ Future<bool> purchaseMembershipAndRecordPayment(
         message: 'Membership queued — record payment once synced and online.',
       );
     }
+    return true;
+  }
+
+  if (!shouldOpenRecordPaymentAfterPurchase(isRenewal: isRenewal, result: result)) {
     return true;
   }
 

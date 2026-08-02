@@ -274,6 +274,8 @@ jobs:
           if [ -z "${{ secrets.SSH_HOST }}" ]; then MISSING="$MISSING SSH_HOST"; fi
           if [ -z "${{ secrets.SSH_USER }}" ]; then MISSING="$MISSING SSH_USER"; fi
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then MISSING="$MISSING SSH_PRIVATE_KEY"; fi
+          if [ -z "${{ secrets.SENTRY_AUTH_TOKEN }}" ]; then MISSING="$MISSING SENTRY_AUTH_TOKEN"; fi
+          if [ -z "${{ secrets.SENTRY_DSN_PROD }}" ]; then MISSING="$MISSING SENTRY_DSN_PROD"; fi
           if [ -n "$MISSING" ]; then
             echo "::error::Missing required secrets:$MISSING"
             exit 1
@@ -394,7 +396,11 @@ jobs:
 
       # BUILD WEB & APK
       - name: Build Web
-        run: flutter build web --release --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ env.PROD_VER }}+${{ github.run_number }}
+          SENTRY_DIST: ${{ github.run_number }}
+        run: flutter build web --release --source-maps --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
 
       - name: Build APK (Release)
         env:
@@ -403,7 +409,17 @@ jobs:
           CM_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           CM_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           CM_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: flutter build apk --release --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ env.PROD_VER }}+${{ github.run_number }}
+          SENTRY_DIST: ${{ github.run_number }}
+        run: flutter build apk --release --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
+
+      - name: Upload debug symbols to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ env.PROD_VER }}+${{ github.run_number }}
+          SENTRY_DIST: ${{ github.run_number }}
+        run: dart run sentry_dart_plugin
 
       # --- SSH DEPLOY START ---
       - name: Setup SSH agent

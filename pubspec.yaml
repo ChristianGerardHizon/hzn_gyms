@@ -74,6 +74,7 @@ dependencies:
   drift_flutter: ^0.2.5
   sqlite3_flutter_libs: ^0.5.34
   audioplayers: ^6.8.1
+  sentry_flutter: ^8.14.2
 
 dev_dependencies:
   dart_mappable_builder: ^4.3.0  
@@ -96,6 +97,7 @@ dev_dependencies:
   change_app_package_name: ^1.5.0
   drift_dev: ^2.28.0
   mocktail: ^1.0.5
+  sentry_dart_plugin: ^3.4.0
 
 dependency_overrides:
   flutter_keyboard_visibility_web:
@@ -116,6 +118,12 @@ flutter_gen:
 
 scripts:
   pre-build: version update-pubspec
+
+sentry:
+  upload_debug_symbols: true
+  upload_source_maps: true
+  project: ebegym
+  org: christian-hizon
 
 flutter_launcher_icons:
   android: "launcher_icon"
