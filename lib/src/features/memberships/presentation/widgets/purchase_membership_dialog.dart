@@ -163,15 +163,15 @@ Future<void> sellWalkInAndRecordPayment(
   }
 
   if (result.sale != null) {
-    // Show the new walk-in on Recent Transactions before payment.
-    refreshTodaysSales(ref);
+    // Show the new walk-in on Recent Transactions and Sales list before payment.
+    refreshSalesData(ref);
     await showRecordPaymentDialog(
       context,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
     // Refresh again so paid status / KPI totals match the payment.
-    if (context.mounted) refreshTodaysSales(ref);
+    if (context.mounted) refreshSalesData(ref);
   }
 }
 

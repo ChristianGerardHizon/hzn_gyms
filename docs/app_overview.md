@@ -556,6 +556,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 2 | New Member card step | New Member wizard includes an optional Card step (scan or manual entry) between Photo and Membership; card is saved after member creation |
 | Aug 2 | Member photo live capture | New Member wizard and Edit Member form support live camera preview with Capture button on web/mobile; upload from file remains available as fallback |
 | Aug 2 | Dashboard Search Member | Quick action searches all branches, shows branch activity chips, routes to renew/purchase at current branch or new-member wizard when not found |
 | Aug 2 | Member branch activity labels | Members list shows colored chips for no active branch, single branch, multiple branches, or all branches—using the same check-in access rules as membership plans |

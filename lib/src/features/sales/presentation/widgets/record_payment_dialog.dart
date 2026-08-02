@@ -133,9 +133,9 @@ class RecordPaymentDialog extends HookConsumerWidget {
       if (!dialogContext.mounted) return;
 
       if (payment != null) {
-        // Refresh the sale and dashboard Recent Transactions / sales KPI
+        // Refresh the sale, dashboard KPIs, and paginated sales list
         ref.invalidate(saleProvider(sale.id));
-        refreshTodaysSales(ref);
+        refreshSalesData(ref);
         Navigator.of(dialogContext).pop(true);
         showSuccessSnackBar(dialogContext,
             message: 'Payment recorded successfully',
