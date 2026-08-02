@@ -64,7 +64,25 @@ class MemberListSkeleton extends StatelessWidget {
                 return const ListTile(
                   leading: CircleAvatar(radius: 20),
                   title: Text('Member name placeholder'),
-                  subtitle: Text('0912 345 6789'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('0912 345 6789'),
+                      SizedBox(height: 4),
+                      SizedBox(
+                        height: 22,
+                        width: 72,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0x14000000),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),

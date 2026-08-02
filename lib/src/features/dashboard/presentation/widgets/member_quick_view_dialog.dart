@@ -9,10 +9,15 @@ import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../members/domain/member.dart';
+import '../../../members/presentation/controllers/member_branch_activity_controller.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
+import '../../../members/presentation/widgets/member_branch_activity_chips.dart';
+import '../../../memberships/domain/member_branch_activity.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../memberships/domain/pick_renewable_membership.dart';
 import '../../../memberships/presentation/controllers/member_memberships_controller.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_members_controller.dart';
 
 /// Shows a quick-view dialog with member details and membership summary.
@@ -50,9 +55,13 @@ class MemberQuickViewDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM d, yyyy');
+    final branchId = ref.watch(effectiveBranchIdForWriteProvider);
     final memberAsync = ref.watch(memberProvider(memberId));
     final membershipsAsync =
         ref.watch(memberMembershipsControllerProvider(memberId));
+    final activityAsync = ref.watch(
+      memberBranchActivityForIdsProvider(memberBranchActivityIdsKey([memberId])),
+    );
 
     final fallbackName = dashboardMember?.name ?? 'Member';
     final fallbackPhoto = dashboardMember?.photo;
@@ -141,6 +150,17 @@ class MemberQuickViewDialog extends ConsumerWidget {
                         memberships: memberships,
                         dateFormat: dateFormat,
                         dashboardMember: dashboardMember,
+                        branchId: branchId,
+                        branchActivity: activityAsync.maybeWhen(
+                          data: (state) =>
+                              state.activityByMemberId[memberId],
+                          orElse: () => null,
+                        ),
+                        branchNameById: activityAsync.maybeWhen(
+                          data: (state) => state.branchNameById,
+                          orElse: () => const {},
+                        ),
+                        activityLoading: activityAsync.isLoading,
                       ),
                     ),
                   ],
@@ -156,24 +176,32 @@ class MemberQuickViewDialog extends ConsumerWidget {
                   memberName: fallbackName,
                   renewableMembership: null,
                   membershipsLoaded: false,
+                  branchId: branchId,
                 ),
                 error: (_, __) => _ActionButtons(
                   memberId: memberId,
                   memberName: fallbackName,
                   renewableMembership: null,
                   membershipsLoaded: true,
+                  branchId: branchId,
                 ),
                 data: (memberships) {
                   final name = memberAsync.maybeWhen(
                     data: (m) => m?.name ?? fallbackName,
                     orElse: () => fallbackName,
                   );
+                  final renewable = branchId != null
+                      ? pickRenewableMembershipAtBranch(
+                          memberships,
+                          branchId,
+                        )
+                      : null;
                   return _ActionButtons(
                     memberId: memberId,
                     memberName: name,
-                    renewableMembership:
-                        _pickRenewableMembership(memberships),
+                    renewableMembership: renewable,
                     membershipsLoaded: true,
+                    branchId: branchId,
                   );
                 },
               ),
@@ -183,28 +211,6 @@ class MemberQuickViewDialog extends ConsumerWidget {
       ),
     );
   }
-}
-
-MemberMembership? _pickRenewableMembership(
-  List<MemberMembership> memberships,
-) {
-  final candidates = memberships
-      .where(
-        (m) =>
-            m.status != MemberMembershipStatus.cancelled &&
-            m.status != MemberMembershipStatus.voided,
-      )
-      .toList();
-  if (candidates.isEmpty) return null;
-
-  final active = candidates.where((m) => m.isCurrentlyActive).toList();
-  if (active.isNotEmpty) {
-    active.sort((a, b) => b.endDate.compareTo(a.endDate));
-    return active.first;
-  }
-
-  candidates.sort((a, b) => b.endDate.compareTo(a.endDate));
-  return candidates.first;
 }
 
 class _MemberHeader extends StatelessWidget {
@@ -334,19 +340,30 @@ class _MembershipSummary extends StatelessWidget {
     required this.memberships,
     required this.dateFormat,
     this.dashboardMember,
+    this.branchId,
+    this.branchActivity,
+    this.branchNameById = const {},
+    this.activityLoading = false,
   });
 
   final List<MemberMembership> memberships;
   final DateFormat dateFormat;
   final DashboardMember? dashboardMember;
+  final String? branchId;
+  final MemberBranchActivity? branchActivity;
+  final Map<String, String> branchNameById;
+  final bool activityLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primary = _pickRenewableMembership(memberships);
+    final primary = branchId != null
+        ? pickRenewableMembershipAtBranch(memberships, branchId!)
+        : null;
 
     if (primary == null) {
-      final expiredHint = dashboardMember?.expirationDate;
+      final hasActivityElsewhere =
+          branchActivity != null && !branchActivity!.isEmpty;
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -355,40 +372,63 @@ class _MembershipSummary extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.card_membership_outlined,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'No membership',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+            Row(
+              children: [
+                Icon(
+                  Icons.card_membership_outlined,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        branchId != null
+                            ? 'No membership at this branch'
+                            : 'No membership',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (hasActivityElsewhere)
+                        Text(
+                          'Active at other branches',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      else if (dashboardMember?.expirationDate != null)
+                        Text(
+                          'Last seen expiry: ${dateFormat.format(dashboardMember!.expirationDate!)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      else
+                        Text(
+                          'Purchase a plan to grant access at this branch',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
-                  if (expiredHint != null)
-                    Text(
-                      'Last seen expiry: ${dateFormat.format(expiredHint)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    )
-                  else
-                    Text(
-                      'This member has no membership records yet',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
+            if (branchId != null) ...[
+              const SizedBox(height: 12),
+              MemberBranchActivityChips(
+                activity: branchActivity,
+                branchNameById: branchNameById,
+                currentBranchId: branchId,
+                isLoading: activityLoading,
+              ),
+            ],
           ],
         ),
       );
@@ -495,12 +535,14 @@ class _ActionButtons extends ConsumerWidget {
     required this.memberName,
     required this.renewableMembership,
     required this.membershipsLoaded,
+    this.branchId,
   });
 
   final String memberId;
   final String memberName;
   final MemberMembership? renewableMembership;
   final bool membershipsLoaded;
+  final String? branchId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -511,7 +553,7 @@ class _ActionButtons extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FilledButton.icon(
-          onPressed: !membershipsLoaded
+          onPressed: !membershipsLoaded || branchId == null
               ? null
               : () async {
                   final success = await purchaseMembershipAndRecordPayment(

@@ -6,8 +6,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
+import '../controllers/member_branch_activity_controller.dart';
+import 'member_branch_activity_chips.dart';
+import 'member_form_dialog.dart';
 
 /// Shows a searchable dialog to pick a member.
 ///
@@ -16,6 +20,8 @@ Future<Member?> showMemberPickerDialog(
   BuildContext context, {
   String title = 'Select Member',
   String? subtitle,
+  bool showBranchActivity = false,
+  bool allowCreateOnEmpty = false,
 }) {
   return showConstrainedDialog<Member>(
     context: context,
@@ -23,6 +29,8 @@ Future<Member?> showMemberPickerDialog(
     builder: (context) => MemberPickerDialog(
       title: title,
       subtitle: subtitle,
+      showBranchActivity: showBranchActivity,
+      allowCreateOnEmpty: allowCreateOnEmpty,
     ),
   );
 }
@@ -33,10 +41,14 @@ class MemberPickerDialog extends HookConsumerWidget {
     super.key,
     this.title = 'Select Member',
     this.subtitle,
+    this.showBranchActivity = false,
+    this.allowCreateOnEmpty = false,
   });
 
   final String title;
   final String? subtitle;
+  final bool showBranchActivity;
+  final bool allowCreateOnEmpty;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,6 +59,16 @@ class MemberPickerDialog extends HookConsumerWidget {
     final results = useState<List<Member>>([]);
     final isSearching = useState(false);
     final hasSearched = useState(false);
+
+    final memberIds = results.value.map((m) => m.id).toList();
+    final activityAsync = showBranchActivity && memberIds.isNotEmpty
+        ? ref.watch(
+            memberBranchActivityForIdsProvider(
+              memberBranchActivityIdsKey(memberIds),
+            ),
+          )
+        : null;
+    final currentBranchId = ref.watch(currentBranchIdProvider);
 
     useEffect(() {
       void listener() => rawQuery.value = searchController.text;
@@ -87,6 +109,42 @@ class MemberPickerDialog extends HookConsumerWidget {
       runSearch();
       return () => cancelled = true;
     }, [debouncedQuery.value]);
+
+    Future<void> createNewMember() async {
+      final query = searchController.text.trim();
+      Navigator.of(context).pop();
+      if (!context.mounted) return;
+      final result = await showMemberFormDialog(
+        context,
+        initialName: query.isEmpty ? null : query,
+      );
+      if (context.mounted) {
+        await handleMemberFormPaymentResult(context, result);
+      }
+    }
+
+    Widget? buildSuffixIcon() {
+      final showClear = rawQuery.value.isNotEmpty;
+      if (!allowCreateOnEmpty && !showClear) return null;
+
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showClear)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () => searchController.clear(),
+              tooltip: 'Clear',
+            ),
+          if (allowCreateOnEmpty)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: createNewMember,
+              tooltip: 'Create new member',
+            ),
+        ],
+      );
+    }
 
     return DialogCloseHandler(
       child: ConstrainedDialogContent(
@@ -131,12 +189,7 @@ class MemberPickerDialog extends HookConsumerWidget {
                   hintText: 'Search by name or phone...',
                   border: const OutlineInputBorder(),
                   isDense: true,
-                  suffixIcon: rawQuery.value.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () => searchController.clear(),
-                        )
-                      : null,
+                  suffixIcon: buildSuffixIcon(),
                 ),
               ),
             ),
@@ -160,12 +213,29 @@ class MemberPickerDialog extends HookConsumerWidget {
                   }
                   if (results.value.isEmpty) {
                     return Center(
-                      child: Text(
-                        'No members match "${debouncedQuery.value}"',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'No members match "${debouncedQuery.value}"',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            if (allowCreateOnEmpty &&
+                                debouncedQuery.value.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              FilledButton.icon(
+                                onPressed: createNewMember,
+                                icon: const Icon(Icons.person_add),
+                                label: const Text('Create new member'),
+                              ),
+                            ],
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     );
                   }
@@ -173,6 +243,17 @@ class MemberPickerDialog extends HookConsumerWidget {
                     itemCount: results.value.length,
                     itemBuilder: (context, index) {
                       final member = results.value[index];
+                      final activity = activityAsync?.maybeWhen(
+                        data: (state) => state.activityByMemberId[member.id],
+                        orElse: () => null,
+                      );
+                      final branchNameById = activityAsync?.maybeWhen(
+                        data: (state) => state.branchNameById,
+                        orElse: () => const <String, String>{},
+                      ) ?? const <String, String>{};
+                      final activityLoading = showBranchActivity &&
+                          (activityAsync?.isLoading ?? false);
+
                       return ListTile(
                         leading: CircleAvatar(
                           child: Text(
@@ -182,9 +263,24 @@ class MemberPickerDialog extends HookConsumerWidget {
                           ),
                         ),
                         title: Text(member.name),
-                        subtitle: member.mobileNumber != null
-                            ? Text(member.mobileNumber!)
-                            : null,
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (member.mobileNumber != null)
+                              Text(member.mobileNumber!),
+                            if (showBranchActivity) ...[
+                              if (member.mobileNumber != null)
+                                const SizedBox(height: 6),
+                              MemberBranchActivityChips(
+                                activity: activity,
+                                branchNameById: branchNameById,
+                                currentBranchId: currentBranchId,
+                                isLoading: activityLoading,
+                              ),
+                            ],
+                          ],
+                        ),
+                        isThreeLine: showBranchActivity,
                         onTap: () => Navigator.of(context).pop(member),
                       );
                     },

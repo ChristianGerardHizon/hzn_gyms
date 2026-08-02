@@ -1,16 +1,16 @@
-import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/utils/photo_capture_support.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/utils/search_tokens.dart';
@@ -19,6 +19,7 @@ import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/member_photo_capture_panel.dart';
 import '../../../../core/widgets/step_indicator.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
@@ -29,6 +30,7 @@ import '../../../pos/domain/sale.dart';
 import '../../../memberships/domain/membership.dart';
 import '../../../memberships/domain/membership_add_on.dart';
 import '../../../memberships/presentation/widgets/membership_purchase_content.dart';
+import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/member.dart';
 import '../controllers/members_controller.dart';
@@ -46,6 +48,22 @@ class MemberFormResult {
   final num? totalPrice;
 }
 
+/// Records payment after the new-member wizard when a membership sale was created.
+Future<void> handleMemberFormPaymentResult(
+  BuildContext context,
+  MemberFormResult? result,
+) async {
+  if (result?.sale != null &&
+      result?.totalPrice != null &&
+      context.mounted) {
+    await showRecordPaymentDialog(
+      context,
+      sale: result!.sale!,
+      balanceDue: result.totalPrice!,
+    );
+  }
+}
+
 /// Shows a dialog form for creating or editing a member.
 ///
 /// - **Create mode** (`member == null`): 3-step wizard
@@ -57,20 +75,25 @@ class MemberFormResult {
 Future<MemberFormResult?> showMemberFormDialog(
   BuildContext context, {
   Member? member,
+  String? initialName,
 }) {
   return showConstrainedDialog<MemberFormResult>(
     context: context,
     // The edit form is a plain form that shrink-wraps on desktop/tablet, while
     // the create flow is a full-screen 3-step wizard.
     fullScreen: member == null,
-    builder: (context) => MemberFormDialog(member: member),
+    builder: (context) => MemberFormDialog(
+      member: member,
+      initialName: initialName,
+    ),
   );
 }
 
 class MemberFormDialog extends HookConsumerWidget {
-  const MemberFormDialog({super.key, this.member});
+  const MemberFormDialog({super.key, this.member, this.initialName});
 
   final Member? member;
+  final String? initialName;
 
   bool get isEditing => member != null;
 
@@ -79,7 +102,7 @@ class MemberFormDialog extends HookConsumerWidget {
     if (isEditing) {
       return _MemberEditForm(member: member!);
     }
-    return const _MemberCreateWizard();
+    return _MemberCreateWizard(initialName: initialName);
   }
 }
 
@@ -141,7 +164,9 @@ class _MemberEditForm extends HookConsumerWidget {
         photoFile = http.MultipartFile.fromBytes(
           'photo',
           photoBytes.value!,
-          filename: selectedPhoto.value!.name,
+          filename: selectedPhoto.value!.name.isNotEmpty
+              ? selectedPhoto.value!.name
+              : memberPhotoFilename(),
         );
       }
 
@@ -179,39 +204,12 @@ class _MemberEditForm extends HookConsumerWidget {
       child: Column(
         children: [
           Center(
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundImage: _editFormPhotoProvider(
-                    photoBytes: photoBytes.value,
-                    memberPhoto: member.photo,
-                  ),
-                  child: photoBytes.value == null && member.photo == null
-                      ? const Icon(Icons.person, size: 48)
-                      : null,
-                ),
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: () async {
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(
-                      source: ImageSource.gallery,
-                      maxWidth: 800,
-                      maxHeight: 800,
-                      imageQuality: 85,
-                    );
-                    if (image != null) {
-                      selectedPhoto.value = image;
-                      photoBytes.value = await image.readAsBytes();
-                    }
-                  },
-                  icon: const Icon(Icons.photo_camera),
-                  label: Text(
-                    photoBytes.value != null ? 'Change Photo' : 'Update Photo',
-                  ),
-                ),
-              ],
+            child: MemberPhotoCapturePanel(
+              photoBytes: photoBytes,
+              selectedPhoto: selectedPhoto,
+              previewSize: 200,
+              avatarRadius: 48,
+              existingPhotoUrl: member.photo,
             ),
           ),
           const SizedBox(height: 16),
@@ -227,7 +225,9 @@ class _MemberEditForm extends HookConsumerWidget {
 // =============================================================================
 
 class _MemberCreateWizard extends HookConsumerWidget {
-  const _MemberCreateWizard();
+  const _MemberCreateWizard({this.initialName});
+
+  final String? initialName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -277,7 +277,9 @@ class _MemberCreateWizard extends HookConsumerWidget {
         photoFile = http.MultipartFile.fromBytes(
           'photo',
           photoBytes.value!,
-          filename: selectedPhoto.value!.name,
+          filename: selectedPhoto.value!.name.isNotEmpty
+              ? selectedPhoto.value!.name
+              : memberPhotoFilename(),
         );
       }
 
@@ -511,6 +513,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
                           // Step 0: Member Details
                           _MemberDetailsStep(
                             formKey: formKey,
+                            initialName: initialName,
                             onNext: () => currentStep.value = 1,
                           ),
 
@@ -560,10 +563,15 @@ class _MemberCreateWizard extends HookConsumerWidget {
 // =============================================================================
 
 class _MemberDetailsStep extends StatelessWidget {
-  const _MemberDetailsStep({required this.formKey, required this.onNext});
+  const _MemberDetailsStep({
+    required this.formKey,
+    required this.onNext,
+    this.initialName,
+  });
 
   final GlobalKey<FormBuilderState> formKey;
   final VoidCallback onNext;
+  final String? initialName;
 
   @override
   Widget build(BuildContext context) {
@@ -578,7 +586,7 @@ class _MemberDetailsStep extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 16),
-                  const _MemberFormFields(),
+                  _MemberFormFields(initialName: initialName),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -625,6 +633,7 @@ class _PhotoStep extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    useListenable(selectedPhoto);
 
     return Column(
       children: [
@@ -634,15 +643,6 @@ class _PhotoStep extends HookWidget {
             child: Column(
               children: [
                 const SizedBox(height: 32),
-                // Photo preview
-                if (photoBytes.value != null)
-                  CircleAvatar(
-                    radius: 64,
-                    backgroundImage: MemoryImage(photoBytes.value!),
-                  )
-                else
-                  const CachedAvatar(radius: 64),
-                const SizedBox(height: 24),
                 Text(
                   'Add a Photo',
                   style: theme.textTheme.headlineSmall,
@@ -656,15 +656,10 @@ class _PhotoStep extends HookWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
-                FilledButton.tonalIcon(
-                  onPressed: () => _pickImage(),
-                  icon: const Icon(Icons.camera_alt),
-                  label: Text(
-                    selectedPhoto.value != null
-                        ? 'Change Photo'
-                        : 'Choose Photo',
-                  ),
+                const SizedBox(height: 24),
+                MemberPhotoCapturePanel(
+                  photoBytes: photoBytes,
+                  selectedPhoto: selectedPhoto,
                 ),
               ],
             ),
@@ -686,20 +681,6 @@ class _PhotoStep extends HookWidget {
         ),
       ],
     );
-  }
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 85,
-    );
-    if (image != null) {
-      selectedPhoto.value = image;
-      photoBytes.value = await image.readAsBytes();
-    }
   }
 }
 
@@ -1070,9 +1051,10 @@ class _ReviewRow extends StatelessWidget {
 // =============================================================================
 
 class _MemberFormFields extends StatelessWidget {
-  const _MemberFormFields({this.member});
+  const _MemberFormFields({this.member, this.initialName});
 
   final Member? member;
+  final String? initialName;
 
   @override
   Widget build(BuildContext context) {
@@ -1081,7 +1063,7 @@ class _MemberFormFields extends StatelessWidget {
       children: [
         FormBuilderTextField(
           name: 'name',
-          initialValue: member?.name,
+          initialValue: member?.name ?? initialName,
           decoration: const InputDecoration(labelText: 'Name *'),
           validator: FormBuilderValidators.required(),
           textInputAction: TextInputAction.next,
@@ -1151,14 +1133,4 @@ class _MemberFormFields extends StatelessWidget {
       ],
     );
   }
-}
-
-ImageProvider<Object>? _editFormPhotoProvider({
-  required Uint8List? photoBytes,
-  required String? memberPhoto,
-}) {
-  if (photoBytes != null) return MemoryImage(photoBytes);
-  if (memberPhoto == null || memberPhoto.isEmpty) return null;
-  if (memberPhoto.startsWith('/')) return FileImage(File(memberPhoto));
-  return NetworkImage(memberPhoto);
 }

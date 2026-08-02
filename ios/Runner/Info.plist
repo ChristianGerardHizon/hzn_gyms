@@ -60,6 +60,8 @@
 		<true/>
 		<key>UIFileSharingEnabled</key>
 		<true/>
+		<key>NSCameraUsageDescription</key>
+		<string>Used to take member profile photos</string>
 		<key>NSBluetoothAlwaysUsageDescription</key>
 		<string>Connect to thermal receipt printers via Bluetooth</string>
 		<key>NSBluetoothPeripheralUsageDescription</key>

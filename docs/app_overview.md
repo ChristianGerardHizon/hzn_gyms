@@ -27,7 +27,8 @@ Home screen with gym metrics and quick actions.
 
 - Responsive layout (single column mobile, single-pane tablet)
 - KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
-- Quick action buttons: Check-In, Cashier, Walk-in, Renew, New Member
+- Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member
+- Search Member: cross-branch name/phone search with branch-activity chips; opens quick-view to renew or purchase at the current branch, or create a new member when no match
 - Cashier opens the product POS as a dialog (same layout as `/cashier`; member optional at checkout)
 - Walk-in opens a day-pass dialog (customer name + plan with **Membership not required** + optional add-ons); creates a sale only — no member or membership record
 - Renew Membership: pick any member, then choose a plan for the current branch; if they still have an active membership, the new period defaults to the day after it ends (start date can be customized)
@@ -78,7 +79,7 @@ Member management with membership and check-in tracking.
 - **Sub-features**:
   - Members list with search by name or phone
   - Member detail with info and tabbed sections
-  - Create/edit member via bottom sheet form
+  - Create/edit member via dialog form; **live camera capture** on web and mobile (with upload fallback) for profile photos
 - **Member Detail Sections**:
   - Overview: name, contact, DOB, sex, address, remarks, RFID
   - ID Cards: physical cards (RFID/barcode) with status management (add, deactivate, report lost, delete)
@@ -448,6 +449,8 @@ App Root (Shell)
 
 Destinations are filtered by role permissions. Staff typically see Dashboard through Memberships, Profile, and System (Appearance only).
 
+**Sales permissions:** `sales.view` (sales history), `sales.create` (cashier/POS), `sales.void` (void sales and payments — assign explicitly under the Sales category in Roles).
+
 ---
 
 ## Architecture Patterns
@@ -553,6 +556,9 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 2 | Member photo live capture | New Member wizard and Edit Member form support live camera preview with Capture button on web/mobile; upload from file remains available as fallback |
+| Aug 2 | Dashboard Search Member | Quick action searches all branches, shows branch activity chips, routes to renew/purchase at current branch or new-member wizard when not found |
+| Aug 2 | Member branch activity labels | Members list shows colored chips for no active branch, single branch, multiple branches, or all branches—using the same check-in access rules as membership plans |
 | Aug 1 | Calendar-correct membership duration | Plan duration is now `durationValue` + `durationUnit` (day/week/month/year) instead of a raw day count; end dates use calendar arithmetic (Aug 1 + 1 month = Sep 1) instead of a fixed day offset; existing plans backfilled |
 | Aug 1 | Member name format | Member names saved as Title Case with collapsed whitespace (`Chloe Sy`); dashboard/members search tokenizes on spaces; cleanup script backfills via Admin API |
 | Aug 1 | Add Card scan-first | Member Detail Add Card waits for RFID/keyboard-wedge scan, then Label/Notes; manual Card ID entry as fallback |

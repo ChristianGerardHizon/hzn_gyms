@@ -43,6 +43,19 @@ class PBFilter {
     return this;
   }
 
+  /// Relation ID match for any of [ids]: (field = "a" || field = "b" || ...)
+  ///
+  /// No-op when [ids] is empty.
+  PBFilter relationAny(String field, Iterable<String> ids) {
+    final uniqueIds = ids.toSet();
+    if (uniqueIds.isEmpty) return this;
+
+    final orConditions =
+        uniqueIds.map((id) => '$field = "${escape(id)}"').join(' || ');
+    _conditions.add('($orConditions)');
+    return this;
+  }
+
   // --- Comparison Operators ---
 
   /// Greater than: field > value
