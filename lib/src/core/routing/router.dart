@@ -77,16 +77,21 @@ GoRouter router(Ref ref) {
 
     if (wasAuthenticated != isAuthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final location = router.state.matchedLocation;
+        // Avoid router.state: it throws StateError when matches are empty
+        // (e.g. go_router error pages for unknown URLs). See EBEGYM-1.
+        final location = RouterUtils.currentLocation(router);
+        if (location.isEmpty) return;
 
         if (isAuthenticated &&
             (location == LoginRoute.path || location == SplashRoute.path)) {
-          final pendingUrl =
-              ref.read(pendingRedirectProvider.notifier).consume();
+          final pendingUrl = ref
+              .read(pendingRedirectProvider.notifier)
+              .consume();
           router.go(pendingUrl ?? DashboardRoute.path);
         } else if (!isAuthenticated &&
-            !RouterUtils.ignoredRoutes
-                .any((route) => location.startsWith(route))) {
+            !RouterUtils.ignoredRoutes.any(
+              (route) => location.startsWith(route),
+            )) {
           router.go(LoginRoute.path);
         }
       });

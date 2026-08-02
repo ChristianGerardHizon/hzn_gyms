@@ -25,6 +25,17 @@ abstract class RouterUtils {
   /// Former top-level check-in records path (now nested under check-in).
   static const String legacyCheckInRecordsPath = '/check-in-records';
 
+  /// Current path without calling [GoRouter.state], which throws [StateError]
+  /// when the match list is empty.
+  ///
+  /// go_router error configurations (unknown URLs) set `isError` with an empty
+  /// `matches` list, so [RouteMatchList.last] / [GoRouter.state] crash. Prefer
+  /// [RouteMatchList.lastOrNull] and fall back to the configuration URI.
+  static String currentLocation(GoRouter router) {
+    final config = router.routerDelegate.currentConfiguration;
+    return config.lastOrNull?.matchedLocation ?? config.uri.path;
+  }
+
   /// Global redirect function for auth guards.
   ///
   /// Redirects unauthenticated users to login and
@@ -129,23 +140,14 @@ abstract class RouterUtils {
   /// Error page builder for unknown routes.
   static Widget errorBuilder(BuildContext context, GoRouterState state) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Page Not Found'),
-      ),
+      appBar: AppBar(title: const Text('Page Not Found')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
-            Text(
-              '404',
-              style: Theme.of(context).textTheme.headlineLarge,
-            ),
+            Text('404', style: Theme.of(context).textTheme.headlineLarge),
             const SizedBox(height: 8),
             Text(
               'Page not found',
