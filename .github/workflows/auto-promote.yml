@@ -74,11 +74,19 @@ jobs:
             exit 0
           fi
 
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          WEB_ONLY_NOTE=""
+          TITLE="Deploy v${VERSION} to Production"
+          if echo "$LABELS" | grep -q '"web-only"'; then
+            WEB_ONLY_NOTE=" (**web only** — Android APK skipped)"
+            TITLE="Deploy v${VERSION} to Production (web-only)"
+          fi
+
           PR_URL=$(gh pr create \
             --repo "${{ github.repository }}" \
             --head staging \
             --base main \
-            --title "Deploy v${VERSION} to Production" \
+            --title "$TITLE" \
             --body "$(cat <<EOF
           ## Production Deployment — v${VERSION}
 
@@ -86,7 +94,7 @@ jobs:
 
           **Source PR:** ${{ github.event.pull_request.title }}
 
-          Merging this PR will build and deploy **v${VERSION}** to production.
+          Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
           EOF
           )")
 
@@ -94,9 +102,8 @@ jobs:
 
           echo "Created PR #$PR_NUMBER"
 
-          # Forward version and minimum version labels from source PR.
+          # Forward version, minimum version, and web-only labels from source PR.
           # Pass each label as its own --add-label (comma-joined names are one label).
-          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
           ADD_ARGS=()
 
           if echo "$LABELS" | grep -q '"version:major"'; then
@@ -109,6 +116,10 @@ jobs:
 
           if echo "$LABELS" | grep -q '"minimum version"'; then
             ADD_ARGS+=(--add-label "minimum version")
+          fi
+
+          if echo "$LABELS" | grep -q '"web-only"'; then
+            ADD_ARGS+=(--add-label "web-only")
           fi
 
           if [ ${#ADD_ARGS[@]} -gt 0 ]; then

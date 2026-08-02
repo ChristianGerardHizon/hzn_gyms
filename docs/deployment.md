@@ -55,15 +55,16 @@ Same model as sannjose_animal_clinic:
 | `version:minor` | Bump minor, deploy staging |
 | `version:major` | Bump major, deploy staging |
 | `deploy` | After merge to staging, open staging→main PR (**requires a `version:*` label too**) |
+| `web-only` | Build/deploy **web only** — skip Java, keystore, Android APK, and APK release artifacts. Forwarded to the staging→main PR by auto-promote. |
 | *(none, staging only)* | Merge without deploy |
 | `minimum version` | *(main only)* Also set minimum required app version |
 
 | Environment | GitHub Release tag |
 |-------------|--------------------|
-| Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK |
-| Production | `vX.Y.Z` — full release + APK |
+| Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK (APK omitted when `web-only`) |
+| Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) |
 
-Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`).
+Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`) and optional `web_only`.
 
 ### Staging Deployment
 
