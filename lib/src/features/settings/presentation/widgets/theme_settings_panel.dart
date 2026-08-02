@@ -134,12 +134,11 @@ class ThemeSettingsPanel extends HookConsumerWidget {
               Builder(
                 builder: (context) {
                   final cameraList = cameras.value!;
-                  final selectedValue =
-                      (preferredCameraName != null &&
-                              cameraList
-                                  .any((c) => c.name == preferredCameraName))
-                          ? preferredCameraName
-                          : _automaticCameraValue;
+                  final resolved = resolvedCameraPreferenceName(
+                    preferredCameraName: preferredCameraName,
+                    cameras: cameraList,
+                  );
+                  final selectedValue = resolved ?? _automaticCameraValue;
 
                   return DropdownButtonFormField<String>(
                     key: ValueKey(selectedValue),

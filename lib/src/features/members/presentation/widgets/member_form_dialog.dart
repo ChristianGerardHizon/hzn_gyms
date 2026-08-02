@@ -209,8 +209,8 @@ class _MemberEditForm extends HookConsumerWidget {
             child: MemberPhotoCapturePanel(
               photoBytes: photoBytes,
               selectedPhoto: selectedPhoto,
-              previewSize: 200,
-              avatarRadius: 48,
+              previewSize: 280,
+              avatarRadius: 56,
               existingPhotoUrl: member.photo,
             ),
           ),
@@ -705,10 +705,20 @@ class _PhotoStep extends HookWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                MemberPhotoCapturePanel(
-                  isActive: isActive,
-                  photoBytes: photoBytes,
-                  selectedPhoto: selectedPhoto,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Use full content width, capped so tall screens stay usable.
+                    final previewSize = constraints.maxWidth > 480
+                        ? 480.0
+                        : constraints.maxWidth;
+                    return MemberPhotoCapturePanel(
+                      isActive: isActive,
+                      photoBytes: photoBytes,
+                      selectedPhoto: selectedPhoto,
+                      previewSize: previewSize,
+                      avatarRadius: previewSize / 5,
+                    );
+                  },
                 ),
               ],
             ),

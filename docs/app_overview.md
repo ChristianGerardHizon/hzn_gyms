@@ -192,7 +192,7 @@ Self-service account page for staff (and any user without `users.view`). Shows o
 **Modes:**
 - **Product Categories** (`/system/product-categories`) - Hierarchical product categories
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
-- **Appearance** (`/system/appearance`) - Theme settings (available to Staff via `settings.view`)
+- **Appearance** (`/system/appearance`) - Theme and default camera (available to all signed-in users)
 - **Debug** (`/system/debug`) - Admin tools; simulate RFID check-in dialogs
 - **Activity Log** (`/system/activity-log`) - Admin-only system-wide change history with summary list and field-level diffs
 
@@ -582,6 +582,8 @@ lib/src/
 | Jul 14 | Renew start date | Purchase/renew membership period defaults to day after current membership; start date can be customized via date picker |
 | Jul 14 | Walk-in day pass | Plan flag `memberNotRequired`; dashboard **Walk-in** sells name + plan + add-ons as a sale only (no member membership); dashboard **Cashier** opens product POS dialog; plan list/detail show Walk-in badge; sales store/search Walk-in descriptors and customer labels |
 | Jul 14 | Dashboard members layout | Members grid header menu: columns scale by screen (mobile 1–2, tablet 2–4, desktop 2–5) plus photo vs name-only; preference stored in Drift |
+| Aug 2 | Camera in member forms | New/Edit Member photo step shows Camera dropdown (Automatic + devices); choice persists like Appearance |
+| Aug 2 | Appearance for all users | Theme and default camera under System → Appearance available to every signed-in user (no longer gated by `settings.view`) |
 | Jul 14 | Report period bucketing | Day/Week/Month/Year/All Time use calendar ranges; charts bucket daily/weekly/monthly/yearly via PB views |
 | Jul 14 | Reports overhaul | Sales vs memberships framing; revenue-by-item-type; attendance tab; AR/renewals/staff; lazy tabs; PB date filters; PDF export |
 | Jul 13 | Void payment | Sale detail payment history can void an individual payment/refund; sale paid status recalculates |

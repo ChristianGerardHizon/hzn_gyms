@@ -11,14 +11,17 @@ import '../../features/settings/presentation/controllers/camera_preference_contr
 import '../utils/photo_capture_support.dart';
 import 'cached_avatar.dart';
 
+/// Sentinel value for the "Automatic" camera option in the capture panel.
+const _automaticCameraValue = '';
+
 /// Live camera capture with gallery upload fallback for member profile photos.
 class MemberPhotoCapturePanel extends HookConsumerWidget {
   const MemberPhotoCapturePanel({
     super.key,
     required this.photoBytes,
     required this.selectedPhoto,
-    this.previewSize = 280,
-    this.avatarRadius = 64,
+    this.previewSize = 360,
+    this.avatarRadius = 72,
     this.existingPhotoUrl,
     this.isActive = true,
   });
@@ -73,6 +76,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     Future<void> initCamera({
       bool Function()? isDisposed,
       String? forceCameraName,
+      bool useAutomatic = false,
     }) async {
       isInitializing.value = true;
       cameraError.value = null;
@@ -88,8 +92,11 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
           return;
         }
 
-        final preferred =
-            forceCameraName ?? preferredCameraName ?? selectedCameraName.value;
+        final preferred = useAutomatic
+            ? null
+            : (forceCameraName ??
+                preferredCameraName ??
+                selectedCameraName.value);
         final camera = selectPreferredCamera(
           cameras,
           preferredName: preferred,
@@ -200,12 +207,11 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       await initCamera(isDisposed: isSessionCancelled);
     }
 
-    Future<void> switchCamera(String cameraName) async {
+    Future<void> restartCamera({
+      String? forceCameraName,
+      bool useAutomatic = false,
+    }) async {
       if (isSessionCancelled()) return;
-      if (cameraName == selectedCameraName.value &&
-          cameraController.value?.value.isInitialized == true) {
-        return;
-      }
 
       final existing = cameraController.value;
       cameraController.value = null;
@@ -214,8 +220,27 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       cameraStarted.value = false;
       await initCamera(
         isDisposed: isSessionCancelled,
-        forceCameraName: cameraName,
+        forceCameraName: forceCameraName,
+        useAutomatic: useAutomatic,
       );
+    }
+
+    Future<void> switchCamera(String cameraName) async {
+      if (isSessionCancelled()) return;
+      if (cameraName == selectedCameraName.value &&
+          cameraController.value?.value.isInitialized == true) {
+        return;
+      }
+      await restartCamera(forceCameraName: cameraName);
+    }
+
+    Future<void> selectAutomaticCamera() async {
+      if (isSessionCancelled()) return;
+      await ref
+          .read(cameraPreferenceControllerProvider.notifier)
+          .setPreferredCameraName(null);
+      selectedCameraName.value = null;
+      await restartCamera(useAutomatic: true);
     }
 
     Future<void> applyCaptured(CapturedPhoto captured) async {
@@ -299,8 +324,8 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
         !isInitializing.value &&
         cameraError.value == null;
 
-    final showCameraSwitcher = holdLiveCamera &&
-        availableCameraList.value.length > 1;
+    final showCameraSwitcher =
+        holdLiveCamera && availableCameraList.value.isNotEmpty;
 
     if (hasCapturedPhoto) {
       return Column(
@@ -334,6 +359,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (existingPhotoUrl != null && existingPhotoUrl!.isNotEmpty) ...[
           CachedAvatar(radius: avatarRadius, imageUrl: existingPhotoUrl),
@@ -346,25 +372,30 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
           Builder(
             builder: (context) {
               final cameraList = availableCameraList.value;
-              final currentName = selectedCameraName.value ??
-                  preferredCameraName ??
-                  cameraList.first.name;
-              final value = cameraList.any((c) => c.name == currentName)
-                  ? currentName
-                  : cameraList.first.name;
+              final resolved = resolvedCameraPreferenceName(
+                preferredCameraName: preferredCameraName,
+                cameras: cameraList,
+              );
+              final value = resolved ?? _automaticCameraValue;
 
-              return SizedBox(
-                width: previewSize,
-                child: DropdownButtonFormField<String>(
-                  key: ValueKey(value),
-                  initialValue: value,
-                  decoration: const InputDecoration(
-                    labelText: 'Camera',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  items: cameraList
-                      .map(
+              return Align(
+                child: SizedBox(
+                  width: previewSize,
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey(value),
+                    initialValue: value,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Camera',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    items: [
+                      const DropdownMenuItem(
+                        value: _automaticCameraValue,
+                        child: Text('Automatic'),
+                      ),
+                      ...cameraList.map(
                         (camera) => DropdownMenuItem(
                           value: camera.name,
                           child: Text(
@@ -372,13 +403,19 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      )
-                      .toList(),
-                  onChanged: isInitializing.value
-                      ? null
-                      : (selected) {
-                          if (selected != null) switchCamera(selected);
-                        },
+                      ),
+                    ],
+                    onChanged: isInitializing.value
+                        ? null
+                        : (selected) {
+                            if (selected == null) return;
+                            if (selected == _automaticCameraValue) {
+                              selectAutomaticCamera();
+                            } else {
+                              switchCamera(selected);
+                            }
+                          },
+                  ),
                 ),
               );
             },
