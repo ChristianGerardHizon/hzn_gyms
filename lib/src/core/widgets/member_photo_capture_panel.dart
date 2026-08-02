@@ -98,6 +98,15 @@ class MemberPhotoCapturePanel extends HookWidget {
       };
     }, [canUseLiveCamera, hasCapturedPhoto, retakeKey.value]);
 
+    Future<void> applyCaptured(CapturedPhoto captured) async {
+      final controller = cameraController.value;
+      cameraController.value = null;
+      await controller?.dispose();
+
+      photoBytes.value = captured.bytes;
+      selectedPhoto.value = captured.file;
+    }
+
     Future<void> pickFromGallery() async {
       final picker = ImagePicker();
       final image = await picker.pickImage(
@@ -111,12 +120,28 @@ class MemberPhotoCapturePanel extends HookWidget {
       final captured = await processPickedOrCapturedImage(image);
       if (captured == null) return;
 
-      final controller = cameraController.value;
-      cameraController.value = null;
-      await controller?.dispose();
+      await applyCaptured(captured);
+    }
 
-      photoBytes.value = captured.bytes;
-      selectedPhoto.value = captured.file;
+    Future<void> pickFromCamera() async {
+      final picker = ImagePicker();
+      try {
+        final image = await picker.pickImage(
+          source: ImageSource.camera,
+          maxWidth: 800,
+          maxHeight: 800,
+          imageQuality: 85,
+        );
+        if (image == null) return;
+
+        final captured = await processPickedOrCapturedImage(image);
+        if (captured == null) return;
+
+        cameraError.value = null;
+        await applyCaptured(captured);
+      } catch (_) {
+        cameraError.value = 'Could not open the camera. Try uploading a photo instead.';
+      }
     }
 
     Future<void> capturePhoto() async {
@@ -193,10 +218,10 @@ class MemberPhotoCapturePanel extends HookWidget {
             errorMessage: cameraError.value,
           ),
           const SizedBox(height: 16),
-        ] else if (cameraError.value != null || !canUseLiveCamera) ...[
+        ],
+        if (cameraError.value != null) ...[
           Text(
-            cameraError.value ??
-                'Live camera is not available on this platform. Upload a photo instead.',
+            cameraError.value!,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -215,6 +240,12 @@ class MemberPhotoCapturePanel extends HookWidget {
                 onPressed: capturePhoto,
                 icon: const Icon(Icons.camera_alt),
                 label: const Text('Capture'),
+              )
+            else
+              FilledButton.icon(
+                onPressed: pickFromCamera,
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Take photo'),
               ),
             OutlinedButton.icon(
               onPressed: pickFromGallery,

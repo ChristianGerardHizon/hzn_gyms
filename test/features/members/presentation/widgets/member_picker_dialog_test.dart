@@ -55,5 +55,28 @@ void main() {
 
       expect(find.byIcon(Icons.add), findsNothing);
     });
+    testWidgets('prompts for minimum query length before searching', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 400,
+                height: 700,
+                child: const MemberPickerDialog(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'a');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(find.text('Type at least 2 characters to search'), findsOneWidget);
+    });
   });
 }

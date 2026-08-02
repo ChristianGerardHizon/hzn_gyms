@@ -8,6 +8,16 @@ List<String> splitSearchTokens(String query) {
   return trimmed.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
 }
 
+/// Whether [query] is long enough to run a member search.
+///
+/// Requires at least two characters, or one or more digits (phone prefix).
+bool isMemberSearchQueryReady(String query) {
+  final trimmed = query.trim();
+  if (trimmed.isEmpty) return false;
+  if (trimmed.length >= 2) return true;
+  return RegExp(r'^\d+$').hasMatch(trimmed);
+}
+
 /// Trims and collapses internal whitespace runs to a single space.
 ///
 /// Useful for normalizing stored display names (e.g. `"CHLOE  SY"` → `"CHLOE SY"`).

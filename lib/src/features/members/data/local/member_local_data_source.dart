@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/constants/constants.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/daos/members_dao.dart';
 import '../../../../core/database/database_provider.dart';
@@ -61,6 +62,26 @@ class MemberLocalDataSource {
       totalItems: totalItems,
       totalPages: totalPages,
     );
+  }
+
+  /// Returns up to [limit] cached members matching [query] (no total count query).
+  Future<List<Member>> searchQuick(
+    String query, {
+    List<String>? fields,
+    int limit = Pagination.memberPickerSearchLimit,
+    String? sort,
+    String? branchId,
+  }) async {
+    final searchFields = fields ?? ['name', 'mobileNumber'];
+    final rows = await _dao.searchPaginated(
+      query: query,
+      fields: searchFields,
+      page: 1,
+      perPage: limit,
+      sort: sort ?? 'name',
+      branchId: branchId,
+    );
+    return rows.map(_mapRowToEntity).toList();
   }
 
   /// Searches cached members with pagination.

@@ -6,6 +6,13 @@ import 'package:ebe_gym/src/core/utils/photo_capture_support.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('isLiveCameraSupported', () {
+    test('returns false in test VM (not Android/iOS native)', () {
+      // Unit tests run on the host OS; live preview is only for native mobile.
+      expect(isLiveCameraSupported(), isFalse);
+    });
+  });
+
   group('memberPhotoFilename', () {
     test('uses timestamp in filename', () {
       final now = DateTime(2026, 8, 2, 15, 30, 45, 123);

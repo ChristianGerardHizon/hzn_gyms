@@ -1,12 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/constants/constants.dart';
+import '../../../../core/hooks/use_debounced_callback.dart';
+import '../../../../core/utils/search_tokens.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../data/local/member_local_data_source.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
 import '../controllers/member_branch_activity_controller.dart';
@@ -59,6 +61,7 @@ class MemberPickerDialog extends HookConsumerWidget {
     final results = useState<List<Member>>([]);
     final isSearching = useState(false);
     final hasSearched = useState(false);
+    const searchFields = ['name', 'mobileNumber'];
 
     final memberIds = results.value.map((m) => m.id).toList();
     final activityAsync = showBranchActivity && memberIds.isNotEmpty
@@ -76,32 +79,60 @@ class MemberPickerDialog extends HookConsumerWidget {
       return () => searchController.removeListener(listener);
     }, [searchController]);
 
+    final debouncedSearch = useDebouncedCallback<String>((query) {
+      debouncedQuery.value = query.trim();
+    });
+
     useEffect(() {
-      if (rawQuery.value.trim().isEmpty) {
+      final trimmed = rawQuery.value.trim();
+      debouncedSearch.cancel();
+      if (trimmed.isEmpty) {
         debouncedQuery.value = '';
-        results.value = [];
-        hasSearched.value = false;
         return null;
       }
-      final timer = Timer(const Duration(milliseconds: 400), () {
-        debouncedQuery.value = rawQuery.value.trim();
-      });
-      return timer.cancel;
+      debouncedSearch.call(rawQuery.value);
+      return null;
     }, [rawQuery.value]);
 
     useEffect(() {
       final query = debouncedQuery.value;
-      if (query.isEmpty) return null;
+      if (!isMemberSearchQueryReady(query)) {
+        if (query.isEmpty) {
+          results.value = [];
+          hasSearched.value = false;
+        }
+        isSearching.value = false;
+        return null;
+      }
 
       var cancelled = false;
       Future<void> runSearch() async {
         isSearching.value = true;
         hasSearched.value = true;
-        final result = await ref.read(memberRepositoryProvider).search(query);
+
+        final local = ref.read(memberLocalDataSourceProvider);
+        final cached = await local.searchQuick(
+          query,
+          fields: searchFields,
+          limit: Pagination.memberPickerSearchLimit,
+        );
+        if (cancelled) return;
+        if (cached.isNotEmpty) {
+          results.value = cached;
+          isSearching.value = false;
+        }
+
+        final result = await ref.read(memberRepositoryProvider).searchQuick(
+              query,
+              fields: searchFields,
+              limit: Pagination.memberPickerSearchLimit,
+            );
         if (cancelled) return;
         isSearching.value = false;
         result.fold(
-          (_) => results.value = [],
+          (_) {
+            if (results.value.isEmpty) results.value = [];
+          },
           (members) => results.value = members,
         );
       }
@@ -200,10 +231,14 @@ class MemberPickerDialog extends HookConsumerWidget {
                   if (isSearching.value) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  if (!hasSearched.value) {
+                  if (!hasSearched.value ||
+                      !isMemberSearchQueryReady(rawQuery.value.trim())) {
                     return Center(
                       child: Text(
-                        'Type a name or phone number to find a member',
+                        rawQuery.value.trim().isNotEmpty &&
+                                !isMemberSearchQueryReady(rawQuery.value.trim())
+                            ? 'Type at least 2 characters to search'
+                            : 'Type a name or phone number to find a member',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),

@@ -81,6 +81,9 @@ abstract class Pagination {
   /// Page size for the members list
   static const int membersPageSize = defaultPageSize;
 
+  /// Max results for member picker / quick search dialogs
+  static const int memberPickerSearchLimit = 25;
+
   /// Maximum page size allowed
   static const int maxPageSize = 100;
 }

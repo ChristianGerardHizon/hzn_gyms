@@ -12,9 +12,12 @@ class CapturedPhoto {
   final XFile file;
 }
 
-/// Whether live camera preview is supported on the current platform.
+/// Whether live [CameraController] preview is supported on the current platform.
+///
+/// Web and desktop use [ImagePicker] for capture instead — the `camera` package
+/// live preview is unreliable outside native Android/iOS.
 bool isLiveCameraSupported() {
-  if (kIsWeb) return true;
+  if (kIsWeb) return false;
   return Platform.isAndroid || Platform.isIOS;
 }
 
