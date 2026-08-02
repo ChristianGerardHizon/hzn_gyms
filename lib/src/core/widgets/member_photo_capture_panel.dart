@@ -107,8 +107,9 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
         cameraController.value = controller;
         cameraStarted.value = true;
 
-        // Remember last successfully opened camera.
-        if (preferredCameraName != camera.name) {
+        // Persist only explicit user picks (camera switcher). Do not overwrite
+        // Appearance → Automatic when falling back to a default lens.
+        if (forceCameraName != null && forceCameraName == camera.name) {
           await ref
               .read(cameraPreferenceControllerProvider.notifier)
               .setPreferredCameraName(camera.name);

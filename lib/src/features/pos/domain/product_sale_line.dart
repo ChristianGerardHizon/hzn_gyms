@@ -52,4 +52,11 @@ class ProductSaleLine {
 
   /// Whether this line was sold from a specific lot.
   bool get hasLot => lotNumber != null && lotNumber!.isNotEmpty;
+
+  /// Whether this line should count toward product sales Qty/Revenue totals.
+  ///
+  /// Matches reportable sale statuses used by dashboard/report KPIs: voided and
+  /// unpaid/in-progress sales are excluded.
+  bool get countsTowardSalesTotals =>
+      status == 'completed' || status == 'paid';
 }

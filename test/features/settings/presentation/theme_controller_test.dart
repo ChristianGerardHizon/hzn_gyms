@@ -1,7 +1,10 @@
 import 'package:ebe_gym/src/core/packages/storage/secure_storage_provider.dart';
+import 'package:ebe_gym/src/core/packages/theme/app_themes.dart';
+import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
 import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:ebe_gym/src/features/settings/domain/app_theme_mode.dart';
 import 'package:ebe_gym/src/features/settings/presentation/controllers/theme_controller.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -166,9 +169,49 @@ void main() {
     auth = buildAuthState(userId: 'user-b');
     container.invalidate(currentAuthProvider);
 
+    // Previous user's mode must not drive effective theme during reload.
+    expect(
+      container
+          .read(themeControllerProvider.notifier)
+          .getEffectiveThemeId(Brightness.light),
+      AppThemes.lightId,
+    );
+
     expect(
       await container.read(themeControllerProvider.future),
       AppThemeMode.light,
+    );
+  });
+
+  test('sign-out does not keep prior user theme as effective id', () async {
+    store[themePreferenceKeyForUser('user-a')] = AppThemeMode.dark.name;
+
+    AuthState? auth = buildAuthState(userId: 'user-a');
+    final container = ProviderContainer(
+      overrides: [
+        secureStorageProvider.overrideWithValue(storage),
+        currentAuthProvider.overrideWith((ref) => auth),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(
+      await container.read(themeControllerProvider.future),
+      AppThemeMode.dark,
+    );
+
+    auth = null;
+    container.invalidate(currentAuthProvider);
+
+    expect(
+      container
+          .read(themeControllerProvider.notifier)
+          .getEffectiveThemeId(Brightness.light),
+      AppThemes.lightId,
+    );
+    expect(
+      await container.read(themeControllerProvider.future),
+      AppThemeMode.system,
     );
   });
 }

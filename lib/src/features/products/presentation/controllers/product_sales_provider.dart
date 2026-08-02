@@ -12,7 +12,7 @@ Future<List<ProductSaleLine>> productSales(Ref ref, String productId) async {
   final result = await repository.getSaleItemsByProduct(productId);
 
   return result.fold(
-    (failure) => [],
+    (failure) => throw failure,
     (lines) => lines,
   );
 }

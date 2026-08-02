@@ -34,8 +34,12 @@ class ThemeController extends _$ThemeController {
   }
 
   /// Gets the current effective theme ID based on mode and system brightness.
+  ///
+  /// Ignores a previous user's mode while a reload is in progress after auth
+  /// changes, so shared devices do not keep the stale light/dark choice.
   String getEffectiveThemeId(Brightness systemBrightness) {
-    final mode = state.value ?? AppThemeMode.system;
+    final mode =
+        state.unwrapPrevious().value ?? AppThemeMode.system;
 
     switch (mode) {
       case AppThemeMode.light:
@@ -98,5 +102,6 @@ class ThemeController extends _$ThemeController {
 /// Convenience provider for current theme mode.
 @Riverpod(keepAlive: true)
 AppThemeMode currentThemeMode(Ref ref) {
-  return ref.watch(themeControllerProvider).value ?? AppThemeMode.system;
+  return ref.watch(themeControllerProvider).unwrapPrevious().value ??
+      AppThemeMode.system;
 }

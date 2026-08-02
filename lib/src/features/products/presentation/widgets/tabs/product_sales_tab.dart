@@ -94,9 +94,16 @@ class _SalesListContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final totalQty = lines.fold<num>(0, (sum, line) => sum + line.quantity);
-    final totalRevenue =
-        lines.fold<num>(0, (sum, line) => sum + line.subtotal);
+    final totalQty = lines.fold<num>(
+      0,
+      (sum, line) =>
+          line.countsTowardSalesTotals ? sum + line.quantity : sum,
+    );
+    final totalRevenue = lines.fold<num>(
+      0,
+      (sum, line) =>
+          line.countsTowardSalesTotals ? sum + line.subtotal : sum,
+    );
 
     return Column(
       children: [
