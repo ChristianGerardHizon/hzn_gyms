@@ -59,6 +59,7 @@ RouteBase get $systemShellRoute => ShellRouteData.$route(
           path: 'appearance',
           factory: $AppearanceRoute._fromState,
         ),
+        GoRouteData.$route(path: 'camera', factory: $CameraRoute._fromState),
         GoRouteData.$route(path: 'import', factory: $ImportRoute._fromState),
         GoRouteData.$route(
           path: 'debug',
@@ -294,6 +295,26 @@ mixin $AppearanceRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/system/appearance');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CameraRoute on GoRouteData {
+  static CameraRoute _fromState(GoRouterState state) => const CameraRoute();
+
+  @override
+  String get location => GoRouteData.$location('/system/camera');
 
   @override
   void go(BuildContext context) => context.go(location);

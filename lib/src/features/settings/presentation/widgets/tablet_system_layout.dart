@@ -21,11 +21,12 @@ import 'dialogs/product_category_form_dialog.dart';
 import 'import_landing_panel.dart';
 import 'system_debug_panel.dart';
 import 'system_nav_panel.dart';
+import 'camera_settings_panel.dart';
 import 'theme_settings_panel.dart';
 
 /// Three-panel tablet layout for system settings.
 ///
-/// Panel 1 (72px): Navigation rail for Categories/Printers/Appearance/Import selection
+/// Panel 1 (72px): Navigation rail for Categories/Printers/Appearance/Camera/Import selection
 /// Panel 2 (320px): List panel based on current mode
 /// Panel 3 (expanded): Detail panel from router or empty state
 class TabletSystemLayout extends ConsumerWidget {
@@ -53,6 +54,8 @@ class TabletSystemLayout extends ConsumerWidget {
       currentMode = SystemMode.cashierGroups;
     } else if (path.contains('/appearance')) {
       currentMode = SystemMode.appearance;
+    } else if (path.contains('/camera')) {
+      currentMode = SystemMode.camera;
     } else if (path.contains('/import')) {
       currentMode = SystemMode.import;
     } else if (path.contains('/debug')) {
@@ -80,6 +83,8 @@ class TabletSystemLayout extends ConsumerWidget {
                 const CashierGroupsRoute().go(context);
               case SystemMode.appearance:
                 const AppearanceRoute().go(context);
+              case SystemMode.camera:
+                const CameraRoute().go(context);
               case SystemMode.import:
                 const ImportRoute().go(context);
               case SystemMode.debug:
@@ -91,10 +96,12 @@ class TabletSystemLayout extends ConsumerWidget {
         ),
         const VerticalDivider(width: 1),
 
-        // Panel 2: List (or full panel for appearance/import/debug)
+        // Panel 2: List (or full panel for appearance/camera/import/debug)
         if (currentMode == SystemMode.appearance) ...[
           // Appearance mode: Show settings panel directly (no list/detail split)
           const Expanded(child: ThemeSettingsPanel()),
+        ] else if (currentMode == SystemMode.camera) ...[
+          const Expanded(child: CameraSettingsPanel()),
         ] else if (currentMode == SystemMode.import) ...[
           // Import mode: Show landing panel directly (no list/detail split)
           const Expanded(child: ImportLandingPanel()),
@@ -137,6 +144,8 @@ class TabletSystemLayout extends ConsumerWidget {
               SystemMode.printers =>
                 _PrinterListWrapper(selectedId: selectedId),
               SystemMode.appearance =>
+                const SizedBox.shrink(), // Handled above
+              SystemMode.camera =>
                 const SizedBox.shrink(), // Handled above
               SystemMode.import =>
                 const SizedBox.shrink(), // Handled above

@@ -99,20 +99,22 @@ void main() {
       expect(canAccessPath('/outbox', staff), isFalse);
     });
 
-    test('allows appearance but not other system tabs for staff', () {
+    test('allows appearance and camera but not other system tabs for staff', () {
       expect(canAccessPath('/system', staff), isTrue);
       expect(canAccessPath('/system/appearance', staff), isTrue);
+      expect(canAccessPath('/system/camera', staff), isTrue);
       expect(canAccessPath('/system/product-categories', staff), isFalse);
       expect(canAccessPath('/system/printers', staff), isFalse);
       expect(canAccessPath('/system/activity-log', staff), isFalse);
     });
 
-    test('allows appearance without settings.view', () {
+    test('allows appearance and camera without settings.view', () {
       const noSettings = CurrentUserPermissions(
         permissions: {Permissions.membersView},
       );
       expect(canAccessPath('/system', noSettings), isTrue);
       expect(canAccessPath('/system/appearance', noSettings), isTrue);
+      expect(canAccessPath('/system/camera', noSettings), isTrue);
       expect(canAccessPath('/system/product-categories', noSettings), isFalse);
     });
 
@@ -185,6 +187,7 @@ void main() {
       expect(isPermissionSensitivePath('/system/product-categories'), isTrue);
       expect(isPermissionSensitivePath('/system'), isFalse);
       expect(isPermissionSensitivePath('/system/appearance'), isFalse);
+      expect(isPermissionSensitivePath('/system/camera'), isFalse);
       expect(isPermissionSensitivePath('/members'), isFalse);
       expect(isPermissionSensitivePath('/'), isFalse);
     });
