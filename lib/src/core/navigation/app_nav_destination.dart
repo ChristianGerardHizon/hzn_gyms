@@ -86,7 +86,8 @@ List<AppNavDestination> visibleAppNavDestinations(
           case AppNavId.outbox:
             return permissions.canManageSystem;
           case AppNavId.system:
-            return permissions.canViewSettings;
+            // Appearance (theme + camera) is available to every signed-in user.
+            return true;
         }
       })
       .toList(growable: false);
@@ -152,8 +153,7 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
     return permissions.canManageSystem;
   }
   if (matchesRoutePath(location, SystemRoute.path)) {
-    if (!permissions.canViewSettings) return false;
-    // Appearance is allowed with settings.view; activity log is admin-only.
+    // Appearance is available to every signed-in user; other tabs need admin.
     if (location == SystemRoute.path ||
         location.startsWith('${SystemRoute.path}/appearance')) {
       return true;

@@ -94,12 +94,12 @@ class SystemRoute extends GoRouteData with $SystemRoute {
     final perms = ProviderScope.containerOf(
       context,
     ).read(currentUserPermissionsProvider).value;
-    // Wait until the role loads — defaulting to empty would send staff to the
-    // tablet admin tab (product-categories) before settings.view is known.
+    // Wait until the role loads — defaulting to empty would send non-admins to
+    // the tablet admin tab (product-categories) before permissions are known.
     if (perms == null) return null;
 
-    // Non-admin with settings access: Appearance only.
-    if (!perms.canManageSystem && perms.canViewSettings) {
+    // Non-admin: Appearance only (plus activity log when permitted).
+    if (!perms.canManageSystem) {
       final current = state.uri.path;
       final isAppearance = current.startsWith('$path/appearance');
       final isActivityLog =
@@ -384,16 +384,15 @@ class _MobileSystemLandingPage extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
           ],
-          if (perms.canViewSettings) ...[
-            _SystemOptionCard(
-              icon: Icons.palette,
-              title: 'Appearance',
-              description: 'Customize app theme and colors',
-              color: Colors.purple,
-              onTap: () => const AppearanceRoute().go(context),
-            ),
-            const SizedBox(height: 16),
-          ],
+          _SystemOptionCard(
+            icon: Icons.palette,
+            title: 'Appearance',
+            description: 'Theme and default camera for photo capture',
+            color: Colors.purple,
+            onTap: () => const AppearanceRoute().go(context),
+          ),
+          const SizedBox(height: 16),
+
           if (isAdmin) ...[
             _SystemOptionCard(
               icon: Icons.file_upload,

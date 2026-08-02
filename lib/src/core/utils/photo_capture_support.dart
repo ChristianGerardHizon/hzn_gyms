@@ -55,6 +55,19 @@ String cameraDisplayLabel(CameraDescription camera) {
   return '$name ($direction)';
 }
 
+/// Returns [preferredCameraName] when it matches an available camera; otherwise
+/// `null` meaning Automatic (front → external → back fallback).
+String? resolvedCameraPreferenceName({
+  required String? preferredCameraName,
+  required List<CameraDescription> cameras,
+}) {
+  if (preferredCameraName == null || preferredCameraName.isEmpty) return null;
+  if (cameras.any((c) => c.name == preferredCameraName)) {
+    return preferredCameraName;
+  }
+  return null;
+}
+
 /// Picks the best available camera for member profile photos.
 ///
 /// When [preferredName] matches a camera in [cameras], that device is used.

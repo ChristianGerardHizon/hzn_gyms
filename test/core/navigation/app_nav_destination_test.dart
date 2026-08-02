@@ -37,6 +37,15 @@ void main() {
       },
     );
 
+    test('System nav is visible without settings.view', () {
+      const minimal = CurrentUserPermissions();
+      final ids = visibleAppNavDestinations(minimal).map((d) => d.id).toList();
+
+      expect(ids, contains(AppNavId.dashboard));
+      expect(ids, contains(AppNavId.system));
+      expect(ids, contains(AppNavId.profile));
+    });
+
     test('Admin with users.view sees Organization instead of Profile', () {
       final admin = CurrentUserPermissions(
         permissions: {
@@ -96,6 +105,15 @@ void main() {
       expect(canAccessPath('/system/product-categories', staff), isFalse);
       expect(canAccessPath('/system/printers', staff), isFalse);
       expect(canAccessPath('/system/activity-log', staff), isFalse);
+    });
+
+    test('allows appearance without settings.view', () {
+      const noSettings = CurrentUserPermissions(
+        permissions: {Permissions.membersView},
+      );
+      expect(canAccessPath('/system', noSettings), isTrue);
+      expect(canAccessPath('/system/appearance', noSettings), isTrue);
+      expect(canAccessPath('/system/product-categories', noSettings), isFalse);
     });
 
     test('keeps activity log admin-only', () {
