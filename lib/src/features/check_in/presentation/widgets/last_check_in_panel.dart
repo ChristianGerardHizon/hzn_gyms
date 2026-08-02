@@ -4,14 +4,42 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
+import '../../../../core/widgets/form_feedback.dart';
 import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../memberships/presentation/widgets/member_membership_detail_dialog.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/check_in.dart';
 import '../../domain/check_in_membership_highlight.dart';
 import '../controllers/member_check_ins_controller.dart';
+
+/// Opens the active membership detail modal for a member, or shows info when
+/// there is no active membership.
+Future<void> showActiveMembershipFromCheckIn(
+  BuildContext context,
+  WidgetRef ref, {
+  required String memberId,
+  required String memberName,
+}) async {
+  final membership = await ref.read(
+    memberActiveMembershipProvider(memberId).future,
+  );
+  if (!context.mounted) return;
+
+  if (membership == null) {
+    showInfoSnackBar(context, message: 'No active membership');
+    return;
+  }
+
+  await showMemberMembershipDetailDialog(
+    context,
+    memberMembership: membership,
+    memberId: memberId,
+    memberName: memberName,
+  );
+}
 
 /// Sidebar panel showing details about the most recent check-in.
 ///
@@ -37,19 +65,20 @@ class LastCheckInPanel extends ConsumerWidget {
       children: [
         // Header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
               Icon(
                 Icons.info_outline,
-                size: 20,
+                size: 24,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 'Last Check-in Details',
-                style: theme.textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -60,7 +89,7 @@ class LastCheckInPanel extends ConsumerWidget {
         // Content
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 _MembershipStatusProfileBlock(
@@ -69,18 +98,24 @@ class LastCheckInPanel extends ConsumerWidget {
                   memberAsync: memberAsync,
                   membershipsAsync: membershipsAsync,
                   timeFormat: timeFormat,
+                  onTap: () => showActiveMembershipFromCheckIn(
+                    context,
+                    ref,
+                    memberId: checkIn.memberId,
+                    memberName: checkIn.memberName ?? 'Unknown Member',
+                  ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 const Divider(),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // Recent check-in history header
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'RECENT CHECK-IN HISTORY',
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    style: theme.textTheme.labelMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
@@ -99,7 +134,7 @@ class LastCheckInPanel extends ConsumerWidget {
                   ),
                   error: (_, __) => Text(
                     'Failed to load history',
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.error,
                     ),
                   ),
@@ -109,7 +144,7 @@ class LastCheckInPanel extends ConsumerWidget {
                         padding: const EdgeInsets.all(16),
                         child: Text(
                           'No check-in history',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -139,12 +174,16 @@ class LastCheckInPanel extends ConsumerWidget {
                   },
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // View Full Profile button
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: theme.textTheme.titleSmall,
+                    ),
                     onPressed: () =>
                         MemberDetailRoute(id: checkIn.memberId).go(context),
                     child: const Text('View Full Profile'),
@@ -174,6 +213,7 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
     required this.memberAsync,
     required this.membershipsAsync,
     required this.timeFormat,
+    this.onTap,
   });
 
   final ThemeData theme;
@@ -181,6 +221,7 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
   final AsyncValue<Member?> memberAsync;
   final AsyncValue<MemberMembership?> membershipsAsync;
   final DateFormat timeFormat;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -194,24 +235,24 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
     final content = Column(
       children: [
         memberAsync.when(
-          loading: () => CachedAvatar(radius: 40),
-          error: (_, __) => CachedAvatar(radius: 40),
+          loading: () => const CachedAvatar(radius: 56),
+          error: (_, __) => const CachedAvatar(radius: 56),
           data: (member) =>
-              CachedAvatar(imageUrl: member?.photo, radius: 40),
+              CachedAvatar(imageUrl: member?.photo, radius: 56),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           checkIn.memberName ?? 'Unknown Member',
-          style: theme.textTheme.titleMedium?.copyWith(
+          style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         membershipsAsync.when(
           loading: () => Text(
             'Loading membership...',
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
@@ -220,37 +261,50 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
             membership != null
                 ? 'Membership: ${membership.membershipName ?? 'Active'}'
                 : 'No Active Membership',
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.bodyLarge?.copyWith(
               color: membership != null
                   ? theme.colorScheme.onSurfaceVariant
                   : Colors.red,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Text(
           'Checked in at ${timeFormat.format(checkIn.checkInTime)} Today',
-          style: theme.textTheme.bodySmall?.copyWith(
+          style: theme.textTheme.titleSmall?.copyWith(
             color: statusColor ?? theme.colorScheme.primary,
-            fontWeight: statusColor != null ? FontWeight.w600 : null,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
     );
 
-    if (statusColor == null) {
-      return content;
-    }
+    final padded = statusColor == null
+        ? Padding(
+            padding: const EdgeInsets.all(20),
+            child: content,
+          )
+        : Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+            ),
+            child: content,
+          );
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.12),
+    if (onTap == null) return padded;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+        child: padded,
       ),
-      child: content,
     );
   }
 }
@@ -287,19 +341,19 @@ class _CheckInHistoryTile extends StatelessWidget {
         : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Timeline dot
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: 6),
             child: Container(
-              width: 10,
-              height: 10,
+              width: 12,
+              height: 12,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: dotColor,
+                color: isToday ? theme.colorScheme.primary : dotColor,
               ),
             ),
           ),
@@ -310,16 +364,32 @@ class _CheckInHistoryTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  dateFormat.format(checkIn.checkInTime),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        dateFormat.format(checkIn.checkInTime),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (isToday) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        'TODAY',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${checkIn.method.displayName} check-in',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -330,7 +400,7 @@ class _CheckInHistoryTile extends StatelessWidget {
           // Time
           Text(
             timeFormat.format(checkIn.checkInTime),
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),

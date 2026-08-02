@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
+import 'last_check_in_panel.dart';
 
 /// Widget displaying today's recent check-ins.
 class RecentCheckInsList extends ConsumerWidget {
@@ -64,14 +65,14 @@ class RecentCheckInsList extends ConsumerWidget {
   }
 }
 
-class _CheckInListTile extends StatelessWidget {
+class _CheckInListTile extends ConsumerWidget {
   const _CheckInListTile({required this.checkIn, required this.timeFormat});
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return ListTile(
@@ -85,6 +86,12 @@ class _CheckInListTile extends StatelessWidget {
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),
+      ),
+      onTap: () => showActiveMembershipFromCheckIn(
+        context,
+        ref,
+        memberId: checkIn.memberId,
+        memberName: checkIn.memberName ?? 'Unknown Member',
       ),
     );
   }
