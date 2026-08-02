@@ -21,6 +21,19 @@ bool isLiveCameraSupported() {
 /// Web browsers require a user gesture before [getUserMedia] can open the camera.
 bool requiresCameraUserGesture() => kIsWeb;
 
+/// Whether the live camera session should be held open.
+///
+/// Returns false when the panel is inactive (e.g. another wizard step is
+/// showing via [IndexedStack]) or a photo has already been captured, so the
+/// underlying [CameraController] can be released.
+bool shouldHoldLiveCamera({
+  required bool canUseLiveCamera,
+  required bool isActive,
+  required bool hasCapturedPhoto,
+}) {
+  return canUseLiveCamera && isActive && !hasCapturedPhoto;
+}
+
 /// Whether [ImagePicker] with [ImageSource.camera] opens a real camera UI.
 ///
 /// On web (especially desktop browsers) it falls back to a file picker, so callers
@@ -30,10 +43,34 @@ bool isImagePickerCameraSupported() {
   return Platform.isAndroid || Platform.isIOS;
 }
 
+/// User-facing label for a [CameraDescription] (name + lens direction).
+String cameraDisplayLabel(CameraDescription camera) {
+  final direction = switch (camera.lensDirection) {
+    CameraLensDirection.front => 'Front',
+    CameraLensDirection.back => 'Back',
+    CameraLensDirection.external => 'External',
+  };
+  final name = camera.name.trim();
+  if (name.isEmpty) return direction;
+  return '$name ($direction)';
+}
+
 /// Picks the best available camera for member profile photos.
-CameraDescription selectPreferredCamera(List<CameraDescription> cameras) {
+///
+/// When [preferredName] matches a camera in [cameras], that device is used.
+/// Otherwise falls back to front → external → back → first available.
+CameraDescription selectPreferredCamera(
+  List<CameraDescription> cameras, {
+  String? preferredName,
+}) {
   if (cameras.isEmpty) {
     throw ArgumentError.value(cameras, 'cameras', 'must not be empty');
+  }
+
+  if (preferredName != null && preferredName.isNotEmpty) {
+    for (final camera in cameras) {
+      if (camera.name == preferredName) return camera;
+    }
   }
 
   for (final direction in [

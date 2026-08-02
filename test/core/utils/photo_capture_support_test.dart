@@ -18,6 +18,52 @@ void main() {
     });
   });
 
+  group('shouldHoldLiveCamera', () {
+    test('holds only when live camera is supported, active, and no photo', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: true,
+          isActive: true,
+          hasCapturedPhoto: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('releases when panel is inactive (e.g. another wizard step)', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: true,
+          isActive: false,
+          hasCapturedPhoto: false,
+        ),
+        isFalse,
+      );
+    });
+
+    test('releases after a photo has been captured', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: true,
+          isActive: true,
+          hasCapturedPhoto: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('releases when live camera is unsupported', () {
+      expect(
+        shouldHoldLiveCamera(
+          canUseLiveCamera: false,
+          isActive: true,
+          hasCapturedPhoto: false,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('isImagePickerCameraSupported', () {
     test('returns false in test VM', () {
       expect(isImagePickerCameraSupported(), isFalse);
@@ -28,6 +74,34 @@ void main() {
     test('uses timestamp in filename', () {
       final now = DateTime(2026, 8, 2, 15, 30, 45, 123);
       expect(memberPhotoFilename(now), 'member_photo_${now.millisecondsSinceEpoch}.jpg');
+    });
+  });
+
+  group('cameraDisplayLabel', () {
+    test('includes name and lens direction', () {
+      expect(
+        cameraDisplayLabel(
+          const CameraDescription(
+            name: 'FaceTime HD',
+            lensDirection: CameraLensDirection.front,
+            sensorOrientation: 0,
+          ),
+        ),
+        'FaceTime HD (Front)',
+      );
+    });
+
+    test('uses direction only when name is blank', () {
+      expect(
+        cameraDisplayLabel(
+          const CameraDescription(
+            name: '  ',
+            lensDirection: CameraLensDirection.back,
+            sensorOrientation: 90,
+          ),
+        ),
+        'Back',
+      );
     });
   });
 
@@ -52,6 +126,46 @@ void main() {
       ];
 
       expect(selectPreferredCamera(cameras).name, 'front');
+    });
+
+    test('uses preferredName when it matches an available camera', () {
+      final cameras = [
+        const CameraDescription(
+          name: 'front',
+          lensDirection: CameraLensDirection.front,
+          sensorOrientation: 270,
+        ),
+        const CameraDescription(
+          name: 'usb-cam',
+          lensDirection: CameraLensDirection.external,
+          sensorOrientation: 0,
+        ),
+      ];
+
+      expect(
+        selectPreferredCamera(cameras, preferredName: 'usb-cam').name,
+        'usb-cam',
+      );
+    });
+
+    test('falls back when preferredName is missing from the list', () {
+      final cameras = [
+        const CameraDescription(
+          name: 'back',
+          lensDirection: CameraLensDirection.back,
+          sensorOrientation: 90,
+        ),
+        const CameraDescription(
+          name: 'front',
+          lensDirection: CameraLensDirection.front,
+          sensorOrientation: 270,
+        ),
+      ];
+
+      expect(
+        selectPreferredCamera(cameras, preferredName: 'gone').name,
+        'front',
+      );
     });
 
     test('falls back to external then back camera', () {

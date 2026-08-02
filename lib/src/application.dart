@@ -36,12 +36,15 @@ class Application extends HookConsumerWidget {
                 ? AppThemes.darkId
                 : AppThemes.lightId;
 
-            // Use persisted preference when available, fall back to system
-            final effectiveThemeId = themeModeAsync.whenOrNull(
+            // Use persisted preference when available, fall back to system.
+            // skipLoadingOnReload: false so a user switch does not keep the
+            // previous user's theme while the next preference loads.
+            final effectiveThemeId = themeModeAsync.maybeWhen(
+                  skipLoadingOnReload: false,
                   data: (_) =>
                       themeController.getEffectiveThemeId(systemBrightness),
-                ) ??
-                systemDefault;
+                  orElse: () => systemDefault,
+                );
 
             // Apply theme via post-frame callback to avoid build-time mutations
             WidgetsBinding.instance.addPostFrameCallback((_) {
