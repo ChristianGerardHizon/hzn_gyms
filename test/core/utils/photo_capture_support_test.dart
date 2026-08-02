@@ -7,9 +7,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('isLiveCameraSupported', () {
-    test('returns false in test VM (not Android/iOS native)', () {
-      // Unit tests run on the host OS; live preview is only for native mobile.
+    test('returns false in test VM (not Android/iOS native or web)', () {
       expect(isLiveCameraSupported(), isFalse);
+    });
+  });
+
+  group('requiresCameraUserGesture', () {
+    test('returns false in test VM (web-only behavior)', () {
+      expect(requiresCameraUserGesture(), isFalse);
+    });
+  });
+
+  group('isImagePickerCameraSupported', () {
+    test('returns false in test VM', () {
+      expect(isImagePickerCameraSupported(), isFalse);
     });
   });
 
@@ -21,7 +32,29 @@ void main() {
   });
 
   group('selectPreferredCamera', () {
-    test('prefers external camera when available', () {
+    test('prefers front camera for profile photos when available', () {
+      final cameras = [
+        const CameraDescription(
+          name: 'back',
+          lensDirection: CameraLensDirection.back,
+          sensorOrientation: 90,
+        ),
+        const CameraDescription(
+          name: 'front',
+          lensDirection: CameraLensDirection.front,
+          sensorOrientation: 270,
+        ),
+        const CameraDescription(
+          name: 'external',
+          lensDirection: CameraLensDirection.external,
+          sensorOrientation: 0,
+        ),
+      ];
+
+      expect(selectPreferredCamera(cameras).name, 'front');
+    });
+
+    test('falls back to external then back camera', () {
       final cameras = [
         const CameraDescription(
           name: 'back',
@@ -38,25 +71,23 @@ void main() {
       expect(selectPreferredCamera(cameras).name, 'external');
     });
 
-    test('falls back to front then back camera', () {
-      final cameras = [
-        const CameraDescription(
-          name: 'back',
-          lensDirection: CameraLensDirection.back,
-          sensorOrientation: 90,
-        ),
-        const CameraDescription(
-          name: 'front',
-          lensDirection: CameraLensDirection.front,
-          sensorOrientation: 270,
-        ),
-      ];
-
-      expect(selectPreferredCamera(cameras).name, 'front');
-    });
-
     test('throws when camera list is empty', () {
       expect(() => selectPreferredCamera([]), throwsArgumentError);
+    });
+  });
+
+  group('formatCameraInitError', () {
+    test('maps permission errors to browser guidance', () {
+      final error = CameraException('permissionDenied', 'Permission denied');
+      expect(
+        formatCameraInitError(error),
+        contains('lock icon'),
+      );
+    });
+
+    test('returns camera description when available', () {
+      final error = CameraException('other', 'Custom camera failure');
+      expect(formatCameraInitError(error), 'Custom camera failure');
     });
   });
 

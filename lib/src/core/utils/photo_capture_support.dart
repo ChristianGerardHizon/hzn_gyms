@@ -13,10 +13,19 @@ class CapturedPhoto {
 }
 
 /// Whether live [CameraController] preview is supported on the current platform.
-///
-/// Web and desktop use [ImagePicker] for capture instead — the `camera` package
-/// live preview is unreliable outside native Android/iOS.
 bool isLiveCameraSupported() {
+  if (kIsWeb) return true;
+  return Platform.isAndroid || Platform.isIOS;
+}
+
+/// Web browsers require a user gesture before [getUserMedia] can open the camera.
+bool requiresCameraUserGesture() => kIsWeb;
+
+/// Whether [ImagePicker] with [ImageSource.camera] opens a real camera UI.
+///
+/// On web (especially desktop browsers) it falls back to a file picker, so callers
+/// should use live [CameraController] preview instead.
+bool isImagePickerCameraSupported() {
   if (kIsWeb) return false;
   return Platform.isAndroid || Platform.isIOS;
 }
@@ -28,8 +37,8 @@ CameraDescription selectPreferredCamera(List<CameraDescription> cameras) {
   }
 
   for (final direction in [
-    CameraLensDirection.external,
     CameraLensDirection.front,
+    CameraLensDirection.external,
     CameraLensDirection.back,
   ]) {
     final match = cameras.where((c) => c.lensDirection == direction);
@@ -37,6 +46,73 @@ CameraDescription selectPreferredCamera(List<CameraDescription> cameras) {
   }
 
   return cameras.first;
+}
+
+/// User-facing message for camera initialization failures.
+String formatCameraInitError(Object error) {
+  if (error is CameraException) {
+    final code = error.code.toLowerCase();
+    final description = (error.description ?? '').toLowerCase();
+
+    if (code.contains('permission') || description.contains('permission')) {
+      return 'Camera access was blocked. In Chrome, click the lock icon in the '
+          'address bar, set Camera to Allow, then try again.';
+    }
+    if (code.contains('notreadable') || description.contains('not readable')) {
+      return 'Camera is in use by another app. Close other apps using the '
+          'camera, then try again.';
+    }
+    if (code.contains('notfound') || description.contains('not found')) {
+      return 'No camera found on this device.';
+    }
+    if (code.contains('overconstrained') ||
+        description.contains('overconstrained')) {
+      return 'Could not use this camera at the requested quality. Try again or '
+          'upload a photo instead.';
+    }
+    if (error.description != null && error.description!.isNotEmpty) {
+      return error.description!;
+    }
+    return 'Camera error (${error.code}).';
+  }
+
+  return 'Camera is unavailable. Allow camera access in your browser, or upload '
+      'a photo instead.';
+}
+
+/// Creates and initializes a [CameraController], retrying lower presets on web.
+Future<CameraController> createInitializedCameraController(
+  CameraDescription camera, {
+  bool enableAudio = false,
+}) async {
+  final presets = kIsWeb
+      ? [
+          ResolutionPreset.low,
+          ResolutionPreset.medium,
+          ResolutionPreset.high,
+        ]
+      : [ResolutionPreset.medium];
+
+  Object? lastError;
+  for (final preset in presets) {
+    final controller = CameraController(
+      camera,
+      preset,
+      enableAudio: enableAudio,
+    );
+    try {
+      await controller.initialize();
+      return controller;
+    } catch (error) {
+      lastError = error;
+      await controller.dispose();
+    }
+  }
+
+  if (lastError != null) {
+    Error.throwWithStackTrace(lastError!, StackTrace.current);
+  }
+  throw StateError('Failed to initialize camera');
 }
 
 /// Builds a stable filename for member photo uploads.
