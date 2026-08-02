@@ -1,5 +1,14 @@
 name: Deploy System
 
+# Show environment in the Actions run list (version is in release/PR titles once known).
+run-name: >-
+  ${{
+    github.event_name == 'workflow_dispatch' && format('Deploy to Staging (manual {0})', inputs.version_bump)
+    || (github.event.pull_request.base.ref == 'main' && (github.event.pull_request.title || 'Deploy to Production'))
+    || (github.event.pull_request.base.ref == 'staging' && format('Deploy to Staging — {0}', github.event.pull_request.title))
+    || 'Deploy System'
+  }}
+
 on:
   pull_request:
     types: [ closed ]
@@ -254,7 +263,7 @@ jobs:
         with:
           tag_name: ${{ env.STAGING_TAG }}
           target_commitish: ${{ github.sha }}
-          name: ${{ env.STAGING_TAG }}
+          name: Deploy ${{ env.STAGING_VER_BASE }} to Staging
           prerelease: true
           files: build/app/outputs/flutter-apk/app-release.apk
         env:
@@ -266,7 +275,7 @@ jobs:
         with:
           tag_name: ${{ env.STAGING_TAG }}
           target_commitish: ${{ github.sha }}
-          name: ${{ env.STAGING_TAG }} (web-only)
+          name: Deploy ${{ env.STAGING_VER_BASE }} to Staging (web-only)
           body: "Web-only staging deploy — Android APK was skipped."
           prerelease: true
         env:
@@ -520,7 +529,7 @@ jobs:
         with:
           tag_name: v${{ needs.deploy-production.outputs.prod_ver }}
           target_commitish: ${{ needs.deploy-production.outputs.commit_sha }}
-          name: "v${{ needs.deploy-production.outputs.prod_ver }}"
+          name: Deploy ${{ needs.deploy-production.outputs.prod_ver }} to Production
           files: app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -531,7 +540,7 @@ jobs:
         with:
           tag_name: v${{ needs.deploy-production.outputs.prod_ver }}
           target_commitish: ${{ needs.deploy-production.outputs.commit_sha }}
-          name: "v${{ needs.deploy-production.outputs.prod_ver }} (web-only)"
+          name: Deploy ${{ needs.deploy-production.outputs.prod_ver }} to Production (web-only)
           body: "Web-only production deploy — Android APK was skipped."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
