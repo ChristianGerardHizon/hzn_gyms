@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -510,26 +509,22 @@ class _CameraPreviewFrame extends StatelessWidget {
       child = const Center(child: CircularProgressIndicator());
     } else if (controller != null && controller!.value.isInitialized) {
       final preview = CameraPreview(controller!);
+      final aspectRatio = controller!.value.aspectRatio;
       child = ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: kIsWeb
-            ? SizedBox(
-                width: previewSize,
-                height: previewSize,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  clipBehavior: Clip.hardEdge,
-                  child: SizedBox(
-                    width: previewSize,
-                    height: previewSize / controller!.value.aspectRatio,
-                    child: preview,
-                  ),
-                ),
-              )
-            : AspectRatio(
-                aspectRatio: controller!.value.aspectRatio,
-                child: preview,
-              ),
+        child: SizedBox(
+          width: previewSize,
+          height: previewSize,
+          child: FittedBox(
+            fit: BoxFit.cover,
+            clipBehavior: Clip.hardEdge,
+            child: SizedBox(
+              width: previewSize,
+              height: previewSize / (aspectRatio == 0 ? 1 : aspectRatio),
+              child: preview,
+            ),
+          ),
+        ),
       );
     } else {
       child = Center(

@@ -171,6 +171,31 @@ String memberPhotoFilename([DateTime? now]) {
   return 'member_photo_$timestamp.jpg';
 }
 
+/// Square camera preview size that fits within [maxWidth] × [maxHeight].
+///
+/// [chromeHeight] reserves space for the camera switcher, action buttons, and
+/// spacing that sit above/below the preview inside [MemberPhotoCapturePanel].
+double fittedMemberPhotoPreviewSize({
+  required double maxWidth,
+  required double maxHeight,
+  double maxSize = 480,
+  double minSize = 120,
+  double chromeHeight = 140,
+}) {
+  final widthBudget = maxWidth.isFinite ? maxWidth : maxSize;
+  final heightBudget = maxHeight.isFinite
+      ? (maxHeight - chromeHeight)
+      : maxSize;
+  final size = [
+    maxSize,
+    widthBudget,
+    heightBudget,
+  ].reduce((a, b) => a < b ? a : b);
+  if (size < minSize) return minSize;
+  if (size > maxSize) return maxSize;
+  return size;
+}
+
 /// Reads image bytes and normalizes to a JPEG [XFile] for upload.
 Future<CapturedPhoto?> processPickedOrCapturedImage(XFile file) async {
   final bytes = await file.readAsBytes();

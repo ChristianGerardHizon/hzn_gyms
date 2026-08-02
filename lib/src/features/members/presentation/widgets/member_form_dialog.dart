@@ -205,14 +205,27 @@ class _MemberEditForm extends HookConsumerWidget {
       onSave: handleSave,
       child: Column(
         children: [
-          Center(
-            child: MemberPhotoCapturePanel(
-              photoBytes: photoBytes,
-              selectedPhoto: selectedPhoto,
-              previewSize: 280,
-              avatarRadius: 56,
-              existingPhotoUrl: member.photo,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final screenHeight = MediaQuery.sizeOf(context).height;
+              final previewSize = fittedMemberPhotoPreviewSize(
+                maxWidth: constraints.maxWidth.isFinite
+                    ? constraints.maxWidth
+                    : 280,
+                maxHeight: screenHeight * 0.35,
+                maxSize: 280,
+                chromeHeight: 100,
+              );
+              return Center(
+                child: MemberPhotoCapturePanel(
+                  photoBytes: photoBytes,
+                  selectedPhoto: selectedPhoto,
+                  previewSize: previewSize,
+                  avatarRadius: previewSize / 5,
+                  existingPhotoUrl: member.photo,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 16),
           _MemberFormFields(member: member),
@@ -686,11 +699,11 @@ class _PhotoStep extends HookWidget {
     return Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 Text(
                   'Add a Photo',
                   style: theme.textTheme.headlineSmall,
@@ -704,21 +717,27 @@ class _PhotoStep extends HookWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Use full content width, capped so tall screens stay usable.
-                    final previewSize = constraints.maxWidth > 480
-                        ? 480.0
-                        : constraints.maxWidth;
-                    return MemberPhotoCapturePanel(
-                      isActive: isActive,
-                      photoBytes: photoBytes,
-                      selectedPhoto: selectedPhoto,
-                      previewSize: previewSize,
-                      avatarRadius: previewSize / 5,
-                    );
-                  },
+                const SizedBox(height: 16),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final previewSize = fittedMemberPhotoPreviewSize(
+                        maxWidth: constraints.maxWidth,
+                        maxHeight: constraints.maxHeight,
+                      );
+                      return Center(
+                        child: SingleChildScrollView(
+                          child: MemberPhotoCapturePanel(
+                            isActive: isActive,
+                            photoBytes: photoBytes,
+                            selectedPhoto: selectedPhoto,
+                            previewSize: previewSize,
+                            avatarRadius: previewSize / 5,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -768,34 +787,12 @@ class _CardStep extends HookWidget {
   final VoidCallback onSkip;
   final VoidCallback onBack;
 
-  Future<void> _confirmSkip(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('No card added'),
-        content: const Text(
-          'This member will be created without an ID card. '
-          'You can always add one later from the member profile.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Go Back'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Continue'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      pendingCardValue.value = null;
-      pendingCardLabel.value = null;
-      pendingCardNotes.value = null;
-      cardStepHasDraftInput.value = false;
-      onSkip();
-    }
+  void _handleSkip() {
+    pendingCardValue.value = null;
+    pendingCardLabel.value = null;
+    pendingCardNotes.value = null;
+    cardStepHasDraftInput.value = false;
+    onSkip();
   }
 
   void _handleNext(GlobalKey<FormBuilderState> formKey) {
@@ -870,7 +867,7 @@ class _CardStep extends HookWidget {
               const Spacer(),
               if (!hasCard)
                 TextButton(
-                  onPressed: () => _confirmSkip(context),
+                  onPressed: _handleSkip,
                   child: const Text('Skip'),
                 )
               else
