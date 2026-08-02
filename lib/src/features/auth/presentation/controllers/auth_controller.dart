@@ -15,6 +15,9 @@ part 'auth_controller.g.dart';
 class AuthController extends _$AuthController {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
 
+  /// Invalidates in-flight [_refreshInBackground] calls after login/logout.
+  int _refreshGeneration = 0;
+
   @override
   Future<AuthState?> build() async {
     // Load cached auth immediately (no network call)
@@ -33,7 +36,10 @@ class AuthController extends _$AuthController {
   /// Refreshes auth in the background. If refresh fails with auth error,
   /// logs the user out.
   Future<void> _refreshInBackground() async {
+    final generation = _refreshGeneration;
     final result = await _repository.refreshInBackground();
+
+    if (generation != _refreshGeneration) return;
 
     result.fold(
       (failure) {
@@ -50,10 +56,15 @@ class AuthController extends _$AuthController {
     );
   }
 
+  void _invalidateBackgroundRefresh() {
+    _refreshGeneration++;
+  }
+
   /// Attempts to login with username and password.
   ///
   /// Returns true on success, false on failure.
   Future<bool> login(String username, String password) async {
+    _invalidateBackgroundRefresh();
     state = const AsyncLoading();
 
     final result = await _repository.login(username, password);
@@ -72,6 +83,7 @@ class AuthController extends _$AuthController {
 
   /// Logs out the current user.
   Future<void> logout() async {
+    _invalidateBackgroundRefresh();
     // Clear pending redirect to prevent unexpected navigation on next login
     ref.read(pendingRedirectProvider.notifier).consume();
     await _repository.logout();
