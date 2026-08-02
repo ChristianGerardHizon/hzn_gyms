@@ -15,6 +15,11 @@ on:
           - minor
           - major
         default: patch
+      web_only:
+        description: "Build/deploy web only (skip Android APK and mobile signing)"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -33,14 +38,20 @@ jobs:
     outputs:
       skip: ${{ steps.bump_type.outputs.skip }}
       bump: ${{ steps.bump_type.outputs.bump }}
+      web_only: ${{ steps.bump_type.outputs.web_only }}
     steps:
       - name: Detect version bump type
         id: bump_type
         run: |
+          WEB_ONLY="false"
+
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             BUMP="${{ github.event.inputs.version_bump }}"
             BUMP="${BUMP:-patch}"
-            echo "::notice::Manual dispatch — version bump: $BUMP"
+            if [ "${{ github.event.inputs.web_only }}" == "true" ]; then
+              WEB_ONLY="true"
+            fi
+            echo "::notice::Manual dispatch — version bump: $BUMP (web_only=$WEB_ONLY)"
           else
             LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
 
@@ -55,10 +66,15 @@ jobs:
               echo "skip=true" >> $GITHUB_OUTPUT
               exit 0
             fi
+
+            if echo "$LABELS" | grep -q '"web-only"'; then
+              WEB_ONLY="true"
+            fi
           fi
 
           echo "bump=$BUMP" >> $GITHUB_OUTPUT
-          echo "::notice::Version bump type: $BUMP"
+          echo "web_only=$WEB_ONLY" >> $GITHUB_OUTPUT
+          echo "::notice::Version bump type: $BUMP (web_only=$WEB_ONLY)"
 
   # ==========================================
   # JOB 1: STAGING TRACK
@@ -74,18 +90,22 @@ jobs:
 
       # --- PREFLIGHT CHECKS ---
       - name: Verify deploy secrets exist
+        env:
+          WEB_ONLY: ${{ needs.preflight-staging.outputs.web_only }}
         run: |
           MISSING=""
           if [ -z "${{ secrets.VERSION_MANAGER_URL }}" ]; then MISSING="$MISSING VERSION_MANAGER_URL"; fi
           if [ -z "${{ secrets.VERSION_COLLECTION_ID }}" ]; then MISSING="$MISSING VERSION_COLLECTION_ID"; fi
           if [ -z "${{ secrets.POCKETBASE_URL_STAGING }}" ]; then MISSING="$MISSING POCKETBASE_URL_STAGING"; fi
-          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then MISSING="$MISSING KEYSTORE_BASE64"; fi
-          if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then MISSING="$MISSING KEYSTORE_PASSWORD"; fi
-          if [ -z "${{ secrets.KEY_ALIAS }}" ]; then MISSING="$MISSING KEY_ALIAS"; fi
-          if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then MISSING="$MISSING KEY_PASSWORD"; fi
           if [ -z "${{ secrets.SSH_HOST }}" ]; then MISSING="$MISSING SSH_HOST"; fi
           if [ -z "${{ secrets.SSH_USER }}" ]; then MISSING="$MISSING SSH_USER"; fi
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then MISSING="$MISSING SSH_PRIVATE_KEY"; fi
+          if [ "$WEB_ONLY" != "true" ]; then
+            if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then MISSING="$MISSING KEYSTORE_BASE64"; fi
+            if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then MISSING="$MISSING KEYSTORE_PASSWORD"; fi
+            if [ -z "${{ secrets.KEY_ALIAS }}" ]; then MISSING="$MISSING KEY_ALIAS"; fi
+            if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then MISSING="$MISSING KEY_PASSWORD"; fi
+          fi
           if [ -n "$MISSING" ]; then
             echo "::error::Missing required secrets:$MISSING"
             exit 1
@@ -158,6 +178,7 @@ jobs:
 
       # --- SETUP & CACHE START ---
       - uses: actions/setup-java@v4
+        if: needs.preflight-staging.outputs.web_only != 'true'
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -189,13 +210,15 @@ jobs:
 
       # DECODE KEYSTORE FOR RELEASE SIGNING
       - name: Decode Keystore
+        if: needs.preflight-staging.outputs.web_only != 'true'
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/android/app/upload-keystore.jks
 
-      # BUILD WEB & APK
+      # BUILD WEB (& APK unless web-only)
       - name: Build Web
         run: flutter build web --release --build-name=${{ env.STAGING_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=staging --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
 
       - name: Build APK (Release)
+        if: needs.preflight-staging.outputs.web_only != 'true'
         env:
           CI: "true"
           CM_KEYSTORE_PATH: ${{ github.workspace }}/android/app/upload-keystore.jks
@@ -225,7 +248,8 @@ jobs:
       # --- SSH DEPLOY END ---
 
       # RELEASE
-      - name: Create Staging Release
+      - name: Create Staging Release (with APK)
+        if: needs.preflight-staging.outputs.web_only != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.STAGING_TAG }}
@@ -233,6 +257,18 @@ jobs:
           name: ${{ env.STAGING_TAG }}
           prerelease: true
           files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Staging Release (web-only)
+        if: needs.preflight-staging.outputs.web_only == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.STAGING_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ env.STAGING_TAG }} (web-only)
+          body: "Web-only staging deploy — Android APK was skipped."
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -250,6 +286,7 @@ jobs:
       minor: ${{ steps.calc_prod.outputs.minor }}
       commit_sha: ${{ steps.get_sha.outputs.sha }}
       is_minimum_version: ${{ steps.check_min_ver.outputs.is_minimum_version }}
+      web_only: ${{ steps.bump_type.outputs.web_only }}
 
     steps:
       - uses: actions/checkout@v4
@@ -260,34 +297,13 @@ jobs:
         id: get_sha
         run: echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-      # --- PREFLIGHT CHECKS ---
-      - name: Verify deploy secrets exist
-        run: |
-          MISSING=""
-          if [ -z "${{ secrets.VERSION_MANAGER_URL }}" ]; then MISSING="$MISSING VERSION_MANAGER_URL"; fi
-          if [ -z "${{ secrets.VERSION_COLLECTION_ID }}" ]; then MISSING="$MISSING VERSION_COLLECTION_ID"; fi
-          if [ -z "${{ secrets.POCKETBASE_URL_PROD }}" ]; then MISSING="$MISSING POCKETBASE_URL_PROD"; fi
-          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then MISSING="$MISSING KEYSTORE_BASE64"; fi
-          if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then MISSING="$MISSING KEYSTORE_PASSWORD"; fi
-          if [ -z "${{ secrets.KEY_ALIAS }}" ]; then MISSING="$MISSING KEY_ALIAS"; fi
-          if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then MISSING="$MISSING KEY_PASSWORD"; fi
-          if [ -z "${{ secrets.SSH_HOST }}" ]; then MISSING="$MISSING SSH_HOST"; fi
-          if [ -z "${{ secrets.SSH_USER }}" ]; then MISSING="$MISSING SSH_USER"; fi
-          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then MISSING="$MISSING SSH_PRIVATE_KEY"; fi
-          if [ -z "${{ secrets.SENTRY_AUTH_TOKEN }}" ]; then MISSING="$MISSING SENTRY_AUTH_TOKEN"; fi
-          if [ -z "${{ secrets.SENTRY_DSN_PROD }}" ]; then MISSING="$MISSING SENTRY_DSN_PROD"; fi
-          if [ -n "$MISSING" ]; then
-            echo "::error::Missing required secrets:$MISSING"
-            exit 1
-          fi
-      # --- PREFLIGHT CHECKS END ---
-
       # --- VERSION CHECKS (before setup — no dependencies on Java/Flutter) ---
       # DETECT VERSION BUMP TYPE FROM PR LABELS
       - name: Detect version bump type
         id: bump_type
         run: |
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          WEB_ONLY="false"
 
           if echo "$LABELS" | grep -q '"version:major"'; then
             BUMP="major"
@@ -300,8 +316,39 @@ jobs:
             exit 1
           fi
 
+          if echo "$LABELS" | grep -q '"web-only"'; then
+            WEB_ONLY="true"
+          fi
+
           echo "bump=$BUMP" >> $GITHUB_OUTPUT
-          echo "::notice::Version bump type: $BUMP"
+          echo "web_only=$WEB_ONLY" >> $GITHUB_OUTPUT
+          echo "::notice::Version bump type: $BUMP (web_only=$WEB_ONLY)"
+
+      # --- PREFLIGHT CHECKS ---
+      - name: Verify deploy secrets exist
+        env:
+          WEB_ONLY: ${{ steps.bump_type.outputs.web_only }}
+        run: |
+          MISSING=""
+          if [ -z "${{ secrets.VERSION_MANAGER_URL }}" ]; then MISSING="$MISSING VERSION_MANAGER_URL"; fi
+          if [ -z "${{ secrets.VERSION_COLLECTION_ID }}" ]; then MISSING="$MISSING VERSION_COLLECTION_ID"; fi
+          if [ -z "${{ secrets.POCKETBASE_URL_PROD }}" ]; then MISSING="$MISSING POCKETBASE_URL_PROD"; fi
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then MISSING="$MISSING SSH_HOST"; fi
+          if [ -z "${{ secrets.SSH_USER }}" ]; then MISSING="$MISSING SSH_USER"; fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then MISSING="$MISSING SSH_PRIVATE_KEY"; fi
+          if [ -z "${{ secrets.SENTRY_AUTH_TOKEN }}" ]; then MISSING="$MISSING SENTRY_AUTH_TOKEN"; fi
+          if [ -z "${{ secrets.SENTRY_DSN_PROD }}" ]; then MISSING="$MISSING SENTRY_DSN_PROD"; fi
+          if [ "$WEB_ONLY" != "true" ]; then
+            if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then MISSING="$MISSING KEYSTORE_BASE64"; fi
+            if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then MISSING="$MISSING KEYSTORE_PASSWORD"; fi
+            if [ -z "${{ secrets.KEY_ALIAS }}" ]; then MISSING="$MISSING KEY_ALIAS"; fi
+            if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then MISSING="$MISSING KEY_PASSWORD"; fi
+          fi
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing required secrets:$MISSING"
+            exit 1
+          fi
+      # --- PREFLIGHT CHECKS END ---
 
       - name: Check minimum version label
         id: check_min_ver
@@ -361,6 +408,7 @@ jobs:
 
       # --- SETUP & CACHE START ---
       - uses: actions/setup-java@v4
+        if: steps.bump_type.outputs.web_only != 'true'
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -392,9 +440,10 @@ jobs:
 
       # DECODE KEYSTORE FOR RELEASE SIGNING
       - name: Decode Keystore
+        if: steps.bump_type.outputs.web_only != 'true'
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/android/app/upload-keystore.jks
 
-      # BUILD WEB & APK
+      # BUILD WEB (& APK unless web-only)
       - name: Build Web
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -403,6 +452,7 @@ jobs:
         run: flutter build web --release --source-maps --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
 
       - name: Build APK (Release)
+        if: steps.bump_type.outputs.web_only != 'true'
         env:
           CI: "true"
           CM_KEYSTORE_PATH: ${{ github.workspace }}/android/app/upload-keystore.jks
@@ -443,6 +493,7 @@ jobs:
 
       # UPLOAD & DEPLOY
       - name: Upload APK Artifact
+        if: steps.bump_type.outputs.web_only != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
@@ -458,17 +509,30 @@ jobs:
       contents: write
     steps:
       - name: Download APK
+        if: needs.deploy-production.outputs.web_only != 'true'
         uses: actions/download-artifact@v4
         with:
           name: app-release-apk
 
-      - name: Create Release
+      - name: Create Release (with APK)
+        if: needs.deploy-production.outputs.web_only != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.deploy-production.outputs.prod_ver }}
           target_commitish: ${{ needs.deploy-production.outputs.commit_sha }}
           name: "v${{ needs.deploy-production.outputs.prod_ver }}"
           files: app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release (web-only)
+        if: needs.deploy-production.outputs.web_only == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.deploy-production.outputs.prod_ver }}
+          target_commitish: ${{ needs.deploy-production.outputs.commit_sha }}
+          name: "v${{ needs.deploy-production.outputs.prod_ver }} (web-only)"
+          body: "Web-only production deploy — Android APK was skipped."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
