@@ -7,6 +7,7 @@ void main() {
       expect(isSentryEnabledForEnvironment('prod'), isTrue);
       expect(isSentryEnabledForEnvironment('staging'), isFalse);
       expect(isSentryEnabledForEnvironment('dev'), isFalse);
+      expect(isSentryEnabledForEnvironment(''), isFalse);
     });
   });
 

@@ -22,6 +22,8 @@ void runEbeGymApp({Widget? appChild}) {
 }
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   if (!isSentryEnabled) {
     runEbeGymApp();
     return;
