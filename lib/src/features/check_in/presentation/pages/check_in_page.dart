@@ -525,7 +525,7 @@ class CheckInPage extends HookConsumerWidget {
                   ),
                   const VerticalDivider(width: 1),
                   // Right: last check-in details sidebar
-                  Expanded(flex: 2, child: buildSidebar()),
+                  Expanded(flex: 3, child: buildSidebar()),
                 ],
               ),
       ),

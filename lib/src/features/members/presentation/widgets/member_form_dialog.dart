@@ -550,6 +550,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
 
                           // Step 1: Photo
                           _PhotoStep(
+                            isActive: currentStep.value == 1,
                             selectedPhoto: selectedPhoto,
                             photoBytes: photoBytes,
                             onNext: () => currentStep.value = 2,
@@ -664,12 +665,14 @@ class _MemberDetailsStep extends StatelessWidget {
 
 class _PhotoStep extends HookWidget {
   const _PhotoStep({
+    required this.isActive,
     required this.selectedPhoto,
     required this.photoBytes,
     required this.onNext,
     required this.onBack,
   });
 
+  final bool isActive;
   final ValueNotifier<XFile?> selectedPhoto;
   final ValueNotifier<Uint8List?> photoBytes;
   final VoidCallback onNext;
@@ -703,6 +706,7 @@ class _PhotoStep extends HookWidget {
                 ),
                 const SizedBox(height: 24),
                 MemberPhotoCapturePanel(
+                  isActive: isActive,
                   photoBytes: photoBytes,
                   selectedPhoto: selectedPhoto,
                 ),

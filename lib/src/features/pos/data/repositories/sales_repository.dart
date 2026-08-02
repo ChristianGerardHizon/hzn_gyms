@@ -9,6 +9,7 @@ import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../domain/product_sale_line.dart';
 import '../../domain/sale.dart';
 import '../../domain/sale_item.dart';
 import '../dto/sale_dto.dart';
@@ -38,6 +39,12 @@ abstract class SalesRepository {
 
   /// Fetches all sales for a specific customer.
   FutureEither<List<Sale>> getSalesByCustomer(String customerId);
+
+  /// Fetches recent sale lines for a specific product (newest first).
+  FutureEither<List<ProductSaleLine>> getSaleItemsByProduct(
+    String productId, {
+    int limit = 50,
+  });
 
   /// Fetches sales with pagination.
   FutureEitherPaginated<Sale> fetchPaginated({
@@ -355,5 +362,49 @@ class SalesRepositoryImpl implements SalesRepository {
       },
       Failure.handle,
     ).run();
+  }
+
+  @override
+  FutureEither<List<ProductSaleLine>> getSaleItemsByProduct(
+    String productId, {
+    int limit = 50,
+  }) async {
+    return TaskEither.tryCatch(
+      () async {
+        final result = await _saleItems.getList(
+          page: 1,
+          perPage: limit,
+          filter: 'product = "$productId"',
+          sort: '-created',
+          expand: 'sale',
+        );
+        return result.items.map(_toProductSaleLine).toList();
+      },
+      Failure.handle,
+    ).run();
+  }
+
+  ProductSaleLine _toProductSaleLine(RecordModel record) {
+    final saleExpanded = record.get<RecordModel?>('expand.sale');
+    final sale = saleExpanded != null ? _toSaleEntity(saleExpanded) : null;
+    final lotNumber = record.getStringValue('lotNumber');
+    final customerName = sale?.customerName;
+
+    return ProductSaleLine(
+      saleItemId: record.id,
+      saleId: sale?.id ?? record.getStringValue('sale'),
+      receiptNumber: sale?.receiptNumber ?? '',
+      quantity: record.getDoubleValue('quantity'),
+      unitPrice: record.getDoubleValue('unitPrice'),
+      subtotal: record.getDoubleValue('subtotal'),
+      isPaid: sale?.isPaid ?? false,
+      status: sale?.status ?? '',
+      customerName: customerName != null && customerName.isNotEmpty
+          ? customerName
+          : null,
+      lotNumber: lotNumber.isNotEmpty ? lotNumber : null,
+      created: sale?.created ??
+          parseToLocal(record.get<String>('created')),
+    );
   }
 }
