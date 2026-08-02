@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../domain/card_check_in_result.dart';
+import '../../domain/editable_text_focus.dart';
 import '../../domain/rfid_keyboard_wedge_decoder.dart';
 import '../../domain/rfid_wedge_candidate_key.dart';
 import '../controllers/check_in_controller.dart';
@@ -111,7 +112,11 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
   }
 
   void _onFocusChange() {
-    final next = _computeEditableFocused();
+    // FocusManager may still notify during teardown; skip if we are gone.
+    if (!mounted) return;
+    final next = isEditableTextFocusContext(
+      FocusManager.instance.primaryFocus?.context,
+    );
     if (next == _editableFocused) return;
     _editableFocused = next;
     if (_editableFocused) {
@@ -119,19 +124,11 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
     }
   }
 
-  bool _computeEditableFocused() {
-    final focus = FocusManager.instance.primaryFocus;
-    final context = focus?.context;
-    if (context == null) return false;
-    return context.widget is EditableText ||
-        context.findAncestorStateOfType<EditableTextState>() != null;
-  }
-
   /// Clears partial wedge characters that reached a focused text field.
   void _clearFocusedEditableInput() {
     final focus = FocusManager.instance.primaryFocus;
     final context = focus?.context;
-    if (context != null) {
+    if (context != null && context.mounted) {
       final editable = context.findAncestorStateOfType<EditableTextState>();
       editable?.widget.controller.clear();
     }

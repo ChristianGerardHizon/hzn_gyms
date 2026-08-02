@@ -14,6 +14,7 @@ import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../memberships/domain/membership_status_colors.dart';
 import '../../../memberships/presentation/controllers/member_memberships_controller.dart';
 import '../../../memberships/presentation/widgets/member_membership_detail_dialog.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
@@ -514,9 +515,10 @@ class _MemberMembershipsSection extends ConsumerWidget {
             final mm = memberships[index];
             final effectiveExpired =
                 mm.isExpired && mm.status == MemberMembershipStatus.active;
-            final statusColor = effectiveExpired
-                ? Colors.orange
-                : _statusColor(mm.status);
+            final statusColor = membershipStatusColor(
+              mm.status,
+              effectiveExpired: effectiveExpired,
+            );
 
             return ListTile(
               contentPadding: EdgeInsets.zero,
@@ -565,7 +567,9 @@ class _MemberMembershipsSection extends ConsumerWidget {
                     Text(
                       '${mm.daysRemaining} days left',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: membershipLifecycleColor(
+                          daysRemaining: mm.daysRemaining,
+                        ),
                       ),
                     ),
                   ],
@@ -576,19 +580,6 @@ class _MemberMembershipsSection extends ConsumerWidget {
         );
       },
     );
-  }
-
-  Color _statusColor(MemberMembershipStatus status) {
-    switch (status) {
-      case MemberMembershipStatus.active:
-        return Colors.green;
-      case MemberMembershipStatus.expired:
-        return Colors.orange;
-      case MemberMembershipStatus.cancelled:
-        return Colors.red;
-      case MemberMembershipStatus.voided:
-        return Colors.grey;
-    }
   }
 }
 

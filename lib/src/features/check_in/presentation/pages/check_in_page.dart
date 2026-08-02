@@ -11,9 +11,11 @@ import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../memberships/domain/membership_status_colors.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in_chime.dart';
+import '../../domain/check_in_membership_highlight.dart';
 import '../controllers/check_in_controller.dart';
 import '../utils/check_in_sound_player.dart';
 import '../widgets/check_in_error_dialog.dart';
@@ -549,6 +551,12 @@ class _SelectedMemberCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasActiveMembership = activeMembership != null;
+    final highlight = resolveCheckInMembershipHighlight(activeMembership);
+    final statusColor = switch (highlight) {
+      CheckInMembershipHighlight.active => Colors.green,
+      CheckInMembershipHighlight.nearExpiry => Colors.orange,
+      CheckInMembershipHighlight.expired => Colors.red,
+    };
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return Card(
@@ -603,9 +611,7 @@ class _SelectedMemberCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: hasActiveMembership
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.red.withValues(alpha: 0.1),
+                color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -614,7 +620,7 @@ class _SelectedMemberCard extends StatelessWidget {
                     hasActiveMembership
                         ? Icons.verified
                         : Icons.cancel_outlined,
-                    color: hasActiveMembership ? Colors.green : Colors.red,
+                    color: statusColor,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -629,16 +635,16 @@ class _SelectedMemberCard extends StatelessWidget {
                               : 'No Active Membership',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: hasActiveMembership
-                                ? Colors.green
-                                : Colors.red,
+                            color: statusColor,
                           ),
                         ),
                         if (hasActiveMembership)
                           Text(
                             'Expires ${dateFormat.format(activeMembership!.endDate)} (${activeMembership!.daysRemaining} days left)',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: membershipLifecycleColor(
+                                daysRemaining: activeMembership!.daysRemaining,
+                              ),
                             ),
                           ),
                       ],

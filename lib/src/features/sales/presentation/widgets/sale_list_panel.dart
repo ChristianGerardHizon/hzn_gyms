@@ -8,6 +8,7 @@ import '../../../../core/foundation/sort_config.dart';
 import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/utils/list_search_field.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../../pos/domain/sale.dart';
@@ -41,16 +42,18 @@ class SaleListPanel extends HookConsumerWidget {
     final theme = Theme.of(context);
     final t = Translations.of(context);
 
-    // Local state using hooks
-    final searchController = useTextEditingController();
-    final searchText = useState('');
-
     // Watch providers
     final searchFields = ref.watch(saleSearchFieldsProvider);
     final activeFieldCount = searchFields.length;
     final paginatedController =
         ref.read(paginatedSalesControllerProvider.notifier);
     final sortConfig = ref.watch(saleSortControllerProvider);
+
+    // Seed from keepAlive controller so tab remount restores input + clear.
+    final initialQuery =
+        initialSearchFieldText(paginatedController.currentSearchQuery);
+    final searchController = useTextEditingController(text: initialQuery);
+    final searchText = useState(initialQuery);
 
     void performSearch() {
       final query = searchController.text.trim();
@@ -125,7 +128,10 @@ class SaleListPanel extends HookConsumerWidget {
               sortConfig: sortConfig,
               onSearch: performSearch,
               onTextChanged: onSearchTextChanged,
-              searchText: searchText.value,
+              showClear: shouldShowSearchClear(
+                searchText: searchText.value,
+                isSearchActive: paginatedController.isSearchActive,
+              ),
               onSortPressed: () => _showSortDialog(context, ref),
             ),
           ),
@@ -247,7 +253,7 @@ class _SearchInput extends StatelessWidget {
     required this.sortConfig,
     required this.onSearch,
     required this.onTextChanged,
-    required this.searchText,
+    required this.showClear,
     required this.onSortPressed,
   });
 
@@ -256,7 +262,7 @@ class _SearchInput extends StatelessWidget {
   final SortConfig sortConfig;
   final VoidCallback onSearch;
   final ValueChanged<String> onTextChanged;
-  final String searchText;
+  final bool showClear;
   final VoidCallback onSortPressed;
 
   @override
@@ -274,7 +280,7 @@ class _SearchInput extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '${t.common.search}...',
               prefixIcon: const Icon(Icons.search),
-              suffixIcon: searchText.isNotEmpty
+              suffixIcon: showClear
                   ? IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: () {

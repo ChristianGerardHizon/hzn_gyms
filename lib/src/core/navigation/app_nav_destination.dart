@@ -86,7 +86,7 @@ List<AppNavDestination> visibleAppNavDestinations(
           case AppNavId.outbox:
             return permissions.canManageSystem;
           case AppNavId.system:
-            // Appearance (theme + camera) is available to every signed-in user.
+            // Appearance and Camera are available to every signed-in user.
             return true;
         }
       })
@@ -153,9 +153,10 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
     return permissions.canManageSystem;
   }
   if (matchesRoutePath(location, SystemRoute.path)) {
-    // Appearance is available to every signed-in user; other tabs need admin.
+    // Appearance and Camera are available to every signed-in user; other tabs need admin.
     if (location == SystemRoute.path ||
-        location.startsWith('${SystemRoute.path}/appearance')) {
+        location.startsWith('${SystemRoute.path}/appearance') ||
+        location.startsWith('${SystemRoute.path}/camera')) {
       return true;
     }
     if (location.startsWith('${SystemRoute.path}/activity-log')) {
@@ -173,7 +174,8 @@ bool isPermissionSensitivePath(String location) {
       matchesRoutePath(location, OutboxRoute.path) ||
       (matchesRoutePath(location, SystemRoute.path) &&
           location != SystemRoute.path &&
-          !location.startsWith('${SystemRoute.path}/appearance'));
+          !location.startsWith('${SystemRoute.path}/appearance') &&
+          !location.startsWith('${SystemRoute.path}/camera'));
 }
 
 /// First fallback path when access is denied.

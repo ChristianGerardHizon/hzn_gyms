@@ -134,7 +134,7 @@ class CheckInRecordDetailDialog extends ConsumerWidget {
                         value: membership != null
                             ? (membership.membershipName ?? 'Active')
                             : 'No active membership',
-                        valueColor: membership == null ? Colors.orange : null,
+                        valueColor: membership == null ? Colors.red : null,
                       ),
                     ),
                     if (checkIn.notes != null && checkIn.notes!.isNotEmpty)

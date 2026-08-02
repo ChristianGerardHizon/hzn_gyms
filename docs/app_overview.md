@@ -557,6 +557,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 3 | Membership status colors | Expired/voided memberships and voided sales use red; almost expiring (≤7d) orange; active green; cancelled blueGrey |
 | Aug 2 | Camera source preference | System → Appearance and member photo capture can select a camera device; last used camera is remembered on device |
 | Aug 2 | Per-user Appearance theme | Light/dark/system preference is stored per signed-in user on device so shared tablets keep each user's theme |
 | Aug 2 | Product sales history | Product detail has a Sales tab listing recent purchases (qty, price, receipt) with links to sale detail |
