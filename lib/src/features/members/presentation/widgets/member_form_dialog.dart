@@ -703,13 +703,13 @@ class _PhotoStep extends HookWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
                 Text(
                   'Add a Photo',
                   style: theme.textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   'This step is optional. You can always add a photo later.',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -717,13 +717,15 @@ class _PhotoStep extends HookWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final previewSize = fittedMemberPhotoPreviewSize(
                         maxWidth: constraints.maxWidth,
                         maxHeight: constraints.maxHeight,
+                        maxSize: 160,
+                        chromeHeight: 180,
                       );
                       return Center(
                         child: SingleChildScrollView(

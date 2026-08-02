@@ -294,6 +294,18 @@ void main() {
         120,
       );
     });
+
+    test('new-member wizard caps at compact maxSize', () {
+      expect(
+        fittedMemberPhotoPreviewSize(
+          maxWidth: 800,
+          maxHeight: 900,
+          maxSize: 160,
+          chromeHeight: 180,
+        ),
+        160,
+      );
+    });
   });
 
   group('processPickedOrCapturedImage', () {
