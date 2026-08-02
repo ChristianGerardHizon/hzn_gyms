@@ -58,8 +58,11 @@ class BranchSwitcher extends HookConsumerWidget {
         final canSwitch = canSwitchSnapshot.data ?? false;
         final showAllOption = canViewAllSnapshot.data ?? false;
         final switchableIds = switchableIdsSnapshot.data;
+        final viewingAllSelection = selection.isAll || viewingAll;
+        final preferDropdown =
+            canSwitch || (viewingAllSelection && showAllOption);
 
-        if (!canSwitch) {
+        if (!preferDropdown) {
           if (currentBranch == null) {
             return _NoBranchDisplay(theme: theme, compact: compact);
           }
@@ -72,6 +75,22 @@ class BranchSwitcher extends HookConsumerWidget {
             // branches non-admins should not see).
             final ids = switchableIds;
             if (ids == null) {
+              if (viewingAllSelection && showAllOption) {
+                return _BranchDropdown(
+                  compact: compact,
+                  selectedValue: allBranchesSentinel,
+                  showAllOption: showAllOption,
+                  allLabel: t.navigation.allBranches,
+                  branches: const [],
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref
+                          .read(currentBranchControllerProvider.notifier)
+                          .switchBranch(value);
+                    }
+                  },
+                );
+              }
               return currentBranch != null
                   ? _BranchDisplay(
                       branch: currentBranch,
@@ -89,7 +108,7 @@ class BranchSwitcher extends HookConsumerWidget {
               return _NoBranchDisplay(theme: theme, compact: compact);
             }
 
-            final selectedValue = viewingAll
+            final selectedValue = viewingAllSelection
                 ? allBranchesSentinel
                 : currentBranch?.id;
 
@@ -108,16 +127,52 @@ class BranchSwitcher extends HookConsumerWidget {
               },
             );
           },
-          loading: () => currentBranch != null
-              ? _BranchDisplay(
-                  branch: currentBranch,
-                  isLoading: true,
-                  compact: compact,
-                )
-              : const _BranchLoadingState(),
-          error: (_, __) => currentBranch != null
-              ? _BranchDisplay(branch: currentBranch, compact: compact)
-              : _NoBranchDisplay(theme: theme, compact: compact),
+          loading: () {
+            if (viewingAllSelection && showAllOption) {
+              return _BranchDropdown(
+                compact: compact,
+                selectedValue: allBranchesSentinel,
+                showAllOption: showAllOption,
+                allLabel: t.navigation.allBranches,
+                branches: const [],
+                onChanged: (value) {
+                  if (value != null) {
+                    ref
+                        .read(currentBranchControllerProvider.notifier)
+                        .switchBranch(value);
+                  }
+                },
+              );
+            }
+            return currentBranch != null
+                ? _BranchDisplay(
+                    branch: currentBranch,
+                    isLoading: true,
+                    compact: compact,
+                  )
+                : const _BranchLoadingState();
+          },
+          error: (_, __) {
+            if (viewingAllSelection && showAllOption) {
+              return _BranchDropdown(
+                compact: compact,
+                selectedValue: allBranchesSentinel,
+                showAllOption: showAllOption,
+                allLabel: t.navigation.allBranches,
+                branches: const [],
+                onChanged: (value) {
+                  if (value != null) {
+                    ref
+                        .read(currentBranchControllerProvider.notifier)
+                        .switchBranch(value);
+                  }
+                },
+              );
+            }
+            return currentBranch != null
+                ? _BranchDisplay(branch: currentBranch, compact: compact)
+                : _NoBranchDisplay(theme: theme, compact: compact);
+          },
         );
       },
       loading: () => const _BranchLoadingState(),

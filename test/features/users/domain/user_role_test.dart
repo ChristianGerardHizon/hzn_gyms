@@ -43,6 +43,17 @@ void main() {
     });
   });
 
+  group('Permissions', () {
+    test('Sales category includes void permission', () {
+      final salesPermissions = Permissions.allByCategory['Sales']!;
+      expect(salesPermissions, contains(Permissions.salesVoid));
+      expect(
+        Permissions.getByKey(Permissions.salesVoid)?.category,
+        'Sales',
+      );
+    });
+  });
+
   group('Permission', () {
     test('parses resource and action from key', () {
       const perm = Permission(

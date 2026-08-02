@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ebe_gym/src/core/constants/constants.dart';
 import 'package:ebe_gym/src/core/database/app_database.dart';
 import 'package:ebe_gym/src/core/foundation/failure.dart';
 import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
@@ -465,6 +466,83 @@ void main() {
         fields: ['email'],
       );
       expect(result.isRight(), isTrue);
+    });
+  });
+
+  group('searchQuick', () {
+    test('returns cached matches immediately when offline', () async {
+      online = false;
+      await local.upsertMembers([
+        const Member(id: 'm1', name: 'Jane Doe'),
+      ]);
+
+      final result = await buildRepo().searchQuick('Jane');
+      expect(result.getOrElse((_) => throw StateError('l')).single.name, 'Jane Doe');
+      verifyNever(
+        () => members.getList(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+          filter: any(named: 'filter'),
+          sort: any(named: 'sort'),
+        ),
+      );
+    });
+
+    test('uses capped server page and falls back to cache on empty server result',
+        () async {
+      await local.upsertMembers([
+        const Member(id: 'm1', name: 'Jane Cached'),
+      ]);
+
+      when(
+        () => members.getList(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+          filter: any(named: 'filter'),
+          sort: any(named: 'sort'),
+        ),
+      ).thenAnswer((invocation) async {
+        expect(invocation.namedArguments[#page], 1);
+        expect(invocation.namedArguments[#perPage], Pagination.memberPickerSearchLimit);
+        return ResultList<RecordModel>(
+          page: 1,
+          perPage: Pagination.memberPickerSearchLimit,
+          totalItems: 0,
+          totalPages: 0,
+          items: [],
+        );
+      });
+
+      final result = await buildRepo().searchQuick('Jane');
+      expect(
+        result.getOrElse((_) => throw StateError('l')).single.name,
+        'Jane Cached',
+      );
+    });
+
+    test('prefers server matches when online', () async {
+      when(
+        () => members.getList(
+          page: any(named: 'page'),
+          perPage: any(named: 'perPage'),
+          filter: any(named: 'filter'),
+          sort: any(named: 'sort'),
+        ),
+      ).thenAnswer(
+        (_) async => ResultList<RecordModel>(
+          page: 1,
+          perPage: Pagination.memberPickerSearchLimit,
+          totalItems: 1,
+          totalPages: 1,
+          items: [buildMemberRecord(id: 'm2', name: 'Jane Server')],
+        ),
+      );
+
+      final result = await buildRepo().searchQuick('Jane');
+      expect(
+        result.getOrElse((_) => throw StateError('l')).single.name,
+        'Jane Server',
+      );
     });
   });
 

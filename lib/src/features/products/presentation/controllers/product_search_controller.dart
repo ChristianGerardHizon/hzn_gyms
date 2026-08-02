@@ -9,6 +9,9 @@ const productSearchableFields = [
   'category',
 ];
 
+/// Default fields selected for product search.
+const defaultProductSearchFields = {'name'};
+
 /// Provider for product search query state.
 @riverpod
 class ProductSearchQuery extends _$ProductSearchQuery {
@@ -28,7 +31,7 @@ class ProductSearchQuery extends _$ProductSearchQuery {
 @riverpod
 class ProductSearchFields extends _$ProductSearchFields {
   @override
-  Set<String> build() => {'name'}; // Default: only name
+  Set<String> build() => Set<String>.from(defaultProductSearchFields);
 
   void toggleField(String field) {
     if (state.contains(field)) {
@@ -41,15 +44,15 @@ class ProductSearchFields extends _$ProductSearchFields {
   }
 
   void reset() {
-    state = {'name'};
+    state = Set<String>.from(defaultProductSearchFields);
   }
 
   void setFields(Set<String> fields) {
     // Ensure at least one field is selected
     if (fields.isEmpty) {
-      state = {'name'}; // fallback to name
+      state = Set<String>.from(defaultProductSearchFields);
     } else {
-      state = fields;
+      state = Set<String>.from(fields);
     }
   }
 }

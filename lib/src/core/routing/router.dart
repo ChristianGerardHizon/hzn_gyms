@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../pages/app_root.dart';
 import '../permissions/current_user_permissions.dart';
+import 'pending_redirect_provider.dart';
 import 'router_utils.dart';
 import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
@@ -67,10 +68,30 @@ GoRouter router(Ref ref) {
     ],
   );
 
-  // Listen to auth state changes and refresh router to re-evaluate redirects
+  // Listen to auth state changes: navigate explicitly on login/logout and
+  // refresh redirect guards for permission changes.
   ref.listen(authControllerProvider, (previous, next) {
-    // Refresh router when auth state changes (loading -> data/error)
-    // This triggers redirect logic to navigate after login success/failure
+    final wasAuthenticated = previous?.value != null;
+    final isAuthenticated =
+        next.value != null && !next.isLoading && !next.hasError;
+
+    if (wasAuthenticated != isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final location = router.state.matchedLocation;
+
+        if (isAuthenticated &&
+            (location == LoginRoute.path || location == SplashRoute.path)) {
+          final pendingUrl =
+              ref.read(pendingRedirectProvider.notifier).consume();
+          router.go(pendingUrl ?? DashboardRoute.path);
+        } else if (!isAuthenticated &&
+            !RouterUtils.ignoredRoutes
+                .any((route) => location.startsWith(route))) {
+          router.go(LoginRoute.path);
+        }
+      });
+    }
+
     router.refresh();
   });
 

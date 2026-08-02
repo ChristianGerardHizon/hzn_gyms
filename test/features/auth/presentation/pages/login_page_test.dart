@@ -18,8 +18,7 @@ const _fakeAuth = AuthState(
 );
 
 /// Mirrors the real [AuthController.login] transition (loading -> data/error)
-/// without touching the network, so tests can drive the exact state sequence
-/// that the login-after-logout redirect bug depended on.
+/// without touching the network.
 class _FakeAuthController extends AuthController {
   _FakeAuthController({this.shouldFail = false});
 
@@ -54,20 +53,56 @@ class _FakePbConnectivity extends PbConnectivity {
   Future<bool> build() async => true;
 }
 
-GoRouter _testRouter() => GoRouter(
-      initialLocation: '/login',
-      routes: [
-        GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const Text('DASHBOARD'),
-        ),
-        GoRoute(
-          path: '/deep/link',
-          builder: (context, state) => const Text('DEEP_LINK'),
-        ),
-      ],
-    );
+const _ignoredAuthRoutes = [
+  '/login',
+  '/splash',
+  '/auth-loading',
+  '/forgot-password',
+];
+
+/// Test router with the same auth transition navigation as [router.dart].
+GoRouter _testRouter(ProviderContainer container) {
+  final router = GoRouter(
+    initialLocation: '/login',
+    routes: [
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const Text('DASHBOARD'),
+      ),
+      GoRoute(
+        path: '/deep/link',
+        builder: (context, state) => const Text('DEEP_LINK'),
+      ),
+    ],
+  );
+
+  container.listen(authControllerProvider, (previous, next) {
+    final wasAuthenticated = previous?.value != null;
+    final isAuthenticated =
+        next.value != null && !next.isLoading && !next.hasError;
+
+    if (wasAuthenticated != isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final location = router.state.matchedLocation;
+
+        if (isAuthenticated &&
+            (location == '/login' || location == '/splash')) {
+          final pendingUrl =
+              container.read(pendingRedirectProvider.notifier).consume();
+          router.go(pendingUrl ?? '/');
+        } else if (!isAuthenticated &&
+            !_ignoredAuthRoutes.any((route) => location.startsWith(route))) {
+          router.go('/login');
+        }
+      });
+    }
+
+    router.refresh();
+  });
+
+  return router;
+}
 
 _baseOverrides() => [
       pbConnectivityProvider.overrideWith(_FakePbConnectivity.new),
@@ -95,13 +130,20 @@ void main() {
       'navigates straight to dashboard on successful login '
       '(no manual refresh required)',
       (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            ..._baseOverrides(),
+            authControllerProvider.overrideWith(_FakeAuthController.new),
+          ],
+        );
+        addTearDown(container.dispose);
+
         await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              ..._baseOverrides(),
-              authControllerProvider.overrideWith(_FakeAuthController.new),
-            ],
-            child: MaterialApp.router(routerConfig: _testRouter()),
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(
+              routerConfig: _testRouter(container),
+            ),
           ),
         );
         await tester.pumpAndSettle();
@@ -132,7 +174,9 @@ void main() {
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container,
-            child: MaterialApp.router(routerConfig: _testRouter()),
+            child: MaterialApp.router(
+              routerConfig: _testRouter(container),
+            ),
           ),
         );
         await tester.pumpAndSettle();
@@ -148,15 +192,22 @@ void main() {
     testWidgets(
       'stays on the login page and shows an error on failed login',
       (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            ..._baseOverrides(),
+            authControllerProvider.overrideWith(
+              () => _FakeAuthController(shouldFail: true),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
         await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              ..._baseOverrides(),
-              authControllerProvider.overrideWith(
-                () => _FakeAuthController(shouldFail: true),
-              ),
-            ],
-            child: MaterialApp.router(routerConfig: _testRouter()),
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(
+              routerConfig: _testRouter(container),
+            ),
           ),
         );
         await tester.pumpAndSettle();

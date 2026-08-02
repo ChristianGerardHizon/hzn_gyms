@@ -20,6 +20,24 @@ void main() {
     });
   });
 
+  group('isMemberSearchQueryReady', () {
+    test('returns false for blank or single non-digit character', () {
+      expect(isMemberSearchQueryReady(''), isFalse);
+      expect(isMemberSearchQueryReady('   '), isFalse);
+      expect(isMemberSearchQueryReady('a'), isFalse);
+    });
+
+    test('returns true for two or more characters', () {
+      expect(isMemberSearchQueryReady('jo'), isTrue);
+      expect(isMemberSearchQueryReady('  jo  '), isTrue);
+    });
+
+    test('returns true for numeric phone prefixes', () {
+      expect(isMemberSearchQueryReady('9'), isTrue);
+      expect(isMemberSearchQueryReady('0917'), isTrue);
+    });
+  });
+
   group('normalizeWhitespace', () {
     test('trims and collapses internal whitespace', () {
       expect(normalizeWhitespace('CHLOE  SY'), 'CHLOE SY');

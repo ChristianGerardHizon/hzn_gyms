@@ -49,6 +49,19 @@ class PaginatedMembersController extends _$PaginatedMembersController {
     List<String>? fields,
   }) async {
     if (query != null && query.isNotEmpty) {
+      if (page == 1) {
+        final items = await _localDataSource.searchQuick(
+          query,
+          fields: fields,
+        );
+        if (items.isEmpty) return null;
+        return PaginatedResult(
+          items: items,
+          page: 1,
+          totalItems: items.length,
+          totalPages: 1,
+        );
+      }
       return _localDataSource.searchPaginated(
         query,
         fields: fields,

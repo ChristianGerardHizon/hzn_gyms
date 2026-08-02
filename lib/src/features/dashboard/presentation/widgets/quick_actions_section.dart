@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/check_in.routes.dart';
+import 'dashboard_member_search_flow.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
 import '../../../members/presentation/widgets/member_picker_dialog.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
 import '../../../pos/presentation/components/cashier_dialog.dart';
-import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 
 /// Section displaying quick action buttons on the dashboard.
 ///
@@ -96,19 +96,20 @@ class QuickActionsSection extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(
+                  icon: Icons.person_search,
+                  label: 'Search Member',
+                  color: Colors.purple,
+                  onTap: () => searchMemberFromDashboard(context, ref),
+                ),
+                const SizedBox(width: 12),
+                _QuickActionButton(
                   icon: Icons.person_add,
                   label: 'New Member',
                   color: Colors.blue,
                   onTap: () async {
                     final result = await showMemberFormDialog(context);
-                    if (result?.sale != null &&
-                        result?.totalPrice != null &&
-                        context.mounted) {
-                      await showRecordPaymentDialog(
-                        context,
-                        sale: result!.sale!,
-                        balanceDue: result.totalPrice!,
-                      );
+                    if (context.mounted) {
+                      await handleMemberFormPaymentResult(context, result);
                     }
                   },
                 ),

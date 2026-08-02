@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/widgets/branch_switcher.dart';
 import '../../../../core/widgets/scroll_to_top_button.dart';
 import '../../../check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
@@ -42,11 +43,6 @@ class TabletDashboardLayout extends HookConsumerWidget {
     }
 
     final selection = branchAsync.value;
-    final branchLabel = selection == null
-        ? null
-        : selection.isAll
-            ? 'All Branches'
-            : selection.branch?.name;
 
     return Stack(
       children: [
@@ -97,25 +93,28 @@ class TabletDashboardLayout extends HookConsumerWidget {
                               ),
                             ],
                           ),
-                          if (branchLabel != null)
+                          if (selection != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.store,
-                                    size: 16,
-                                    color: theme.colorScheme.outline,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    branchLabel,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.outline,
+                              child: selection.isAll
+                                  ? const BranchSwitcher(compact: true)
+                                  : Row(
+                                      children: [
+                                        Icon(
+                                          Icons.store,
+                                          size: 16,
+                                          color: theme.colorScheme.outline,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          selection.branch?.name ?? '',
+                                          style:
+                                              theme.textTheme.bodyMedium?.copyWith(
+                                            color: theme.colorScheme.outline,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           const SizedBox(height: 24),
                           const KpiSummarySection(),

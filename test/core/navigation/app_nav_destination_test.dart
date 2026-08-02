@@ -173,11 +173,24 @@ void main() {
   });
 
   group('CurrentUserPermissions', () {
-    test('isAdmin grants all checks', () {
+    test('isAdmin grants has() checks but not sales void without sales.void', () {
       const perms = CurrentUserPermissions(isAdmin: true);
       expect(perms.has(Permissions.salesVoid), isTrue);
-      expect(perms.canVoidSales, isTrue);
+      expect(perms.canVoidSales, isFalse);
       expect(perms.canViewActivityLog, isTrue);
+    });
+
+    test('canVoidSales requires explicit sales.void permission', () {
+      const withVoid = CurrentUserPermissions(
+        permissions: {Permissions.salesVoid},
+      );
+      expect(withVoid.canVoidSales, isTrue);
+
+      const adminOnly = CurrentUserPermissions(
+        permissions: {Permissions.systemAdmin},
+        isAdmin: true,
+      );
+      expect(adminOnly.canVoidSales, isFalse);
     });
 
     test('activity log requires system admin', () {

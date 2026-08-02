@@ -79,6 +79,13 @@ class SaleListPanel extends HookConsumerWidget {
       debouncedSearch.call(text);
     }
 
+    ref.listen(saleSearchFieldsProvider, (previous, next) {
+      if (previous == next || !paginatedController.isSearchActive) return;
+      final query = searchController.text.trim();
+      if (query.isEmpty) return;
+      paginatedController.search(query, fields: next.toList());
+    });
+
     // Infinite scroll hook
     final scrollController = useInfiniteScroll(
       onLoadMore: onLoadMore,

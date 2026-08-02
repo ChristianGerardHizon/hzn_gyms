@@ -81,6 +81,7 @@ class ProductSearchFieldsDialog extends ConsumerWidget {
                         isSelected && selectedFields.length == 1;
 
                     return CheckboxListTile(
+                      key: ValueKey('$field-$isSelected'),
                       value: isSelected,
                       onChanged: isLastSelected
                           ? null // Can't deselect the last field
