@@ -10,13 +10,17 @@ import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/domain/sale_payment_status.dart';
 import '../../../pos/presentation/payments_controller.dart';
+import '../../../products/data/repositories/product_lot_repository.dart';
+import '../../../products/data/repositories/product_repository.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
+import '../../data/sale_side_effects.dart';
 import '../controllers/sale_items_provider.dart';
 import '../controllers/sale_provider.dart';
 import '../controllers/sale_refresh.dart';
@@ -310,7 +314,7 @@ class _SaleDetailContent extends HookConsumerWidget {
         builder: (context) => AlertDialog(
           title: const Text('Void Sale?'),
           content: const Text(
-            'Are you sure you want to void this sale? This action cannot be undone.',
+            'Are you sure you want to void this sale? Linked memberships will be voided and product stock restored. This action cannot be undone.',
           ),
           actions: [
             TextButton(
@@ -329,12 +333,14 @@ class _SaleDetailContent extends HookConsumerWidget {
       if (confirmed != true || !context.mounted) return;
 
       isUpdating.value = true;
-      final repo = ref.read(salesRepositoryProvider);
-
-      final result = await repo.updateSale(sale.id, {
-        'status': 'voided',
-        'voidedBy': ref.read(currentAuthProvider)?.user.id,
-      });
+      final result = await voidSaleWithSideEffects(
+        salesRepo: ref.read(salesRepositoryProvider),
+        memberMembershipRepo: ref.read(memberMembershipRepositoryProvider),
+        lotRepo: ref.read(productLotRepositoryProvider),
+        productRepo: ref.read(productRepositoryProvider),
+        saleId: sale.id,
+        voidedById: ref.read(currentAuthProvider)?.user.id,
+      );
       isUpdating.value = false;
 
       if (!context.mounted) return;

@@ -8,6 +8,7 @@ import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
+import '../../../../core/widgets/form/form_section_header.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
@@ -177,6 +178,11 @@ class MembershipFormDialog extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const FormSectionHeader(
+            title: 'Plan',
+            icon: Icons.card_membership_outlined,
+          ),
+          const SizedBox(height: 12),
           FormBuilderTextField(
             name: 'name',
             initialValue: membership?.name,
@@ -185,7 +191,7 @@ class MembershipFormDialog extends HookConsumerWidget {
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           FormBuilderTextField(
             name: 'description',
             initialValue: membership?.description,
@@ -193,7 +199,7 @@ class MembershipFormDialog extends HookConsumerWidget {
             maxLines: 2,
             textCapitalization: TextCapitalization.sentences,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -201,10 +207,7 @@ class MembershipFormDialog extends HookConsumerWidget {
                 child: FormBuilderTextField(
                   name: 'durationValue',
                   initialValue: membership?.durationValue.toString() ?? '1',
-                  decoration: const InputDecoration(
-                    labelText: 'Duration *',
-                    helperText: 'e.g. 1 for monthly, 3 for a quarterly plan',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Duration *'),
                   keyboardType: TextInputType.number,
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
@@ -234,15 +237,7 @@ class MembershipFormDialog extends HookConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Month/year durations land on the same calendar day next period '
-            '(e.g. Aug 1 + 1 month ends Sep 1), not a fixed day count.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           FormBuilderTextField(
             name: 'price',
             initialValue: membership?.price.toString() ?? '',
@@ -257,29 +252,29 @@ class MembershipFormDialog extends HookConsumerWidget {
             ]),
             textInputAction: TextInputAction.done,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          const FormSectionHeader(
+            title: 'Branches',
+            icon: Icons.store_outlined,
+          ),
+          const SizedBox(height: 4),
           FormBuilderCheckbox(
             name: 'allBranches',
             initialValue: allBranches.value,
             title: const Text('Valid at all branches'),
-            subtitle: const Text(
-              'Members with this plan can check in at every branch',
-            ),
             decoration: const InputDecoration(border: InputBorder.none),
             onChanged: (value) {
               allBranches.value = value ?? false;
             },
           ),
           if (!allBranches.value) ...[
-            const SizedBox(height: 8),
             branchesAsync.when(
               data: (branches) => FormBuilderCheckboxGroup<String>(
                 name: 'validBranches',
                 initialValue: initialValidBranches,
                 decoration: const InputDecoration(
-                  labelText: 'Valid Branches *',
-                  border: OutlineInputBorder(),
-                  helperText: 'Select at least one branch',
+                  labelText: 'Valid at',
+                  border: InputBorder.none,
                 ),
                 enabled: !isSaving.value,
                 orientation: OptionsOrientation.vertical,
@@ -305,7 +300,7 @@ class MembershipFormDialog extends HookConsumerWidget {
                 validator: (value) {
                   if (allBranches.value) return null;
                   if (value == null || value.isEmpty) {
-                    return 'Select at least one branch, or enable all branches';
+                    return 'Select at least one branch';
                   }
                   return null;
                 },
@@ -324,6 +319,7 @@ class MembershipFormDialog extends HookConsumerWidget {
               builder: (field) => const SizedBox.shrink(),
             ),
           const SizedBox(height: 16),
+          const FormSectionHeader(title: 'Options', icon: Icons.tune_outlined),
           FormBuilderSwitch(
             name: 'isActive',
             initialValue: membership?.isActive ?? true,
@@ -334,19 +330,14 @@ class MembershipFormDialog extends HookConsumerWidget {
             name: 'isFavorite',
             initialValue: membership?.isFavorite ?? false,
             title: const Text('Favorite'),
-            subtitle: const Text(
-              'Show at the top when selecting a plan for new members',
-            ),
+            subtitle: const Text('Pin to top of plan lists'),
             decoration: const InputDecoration(border: InputBorder.none),
           ),
           FormBuilderSwitch(
             name: 'memberNotRequired',
             initialValue: membership?.memberNotRequired ?? false,
-            title: const Text('Membership not required'),
-            subtitle: const Text(
-              'Tick this for day pass or walk-in plans. '
-              'Sold with a customer name only — no linked member membership.',
-            ),
+            title: const Text('Walk-in / day pass'),
+            subtitle: const Text('Name only — no linked member'),
             decoration: const InputDecoration(border: InputBorder.none),
           ),
         ],

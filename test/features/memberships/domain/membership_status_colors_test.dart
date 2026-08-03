@@ -11,6 +11,16 @@ void main() {
   });
 
   group('membershipStatusColor', () {
+    test('pending is amber', () {
+      expect(
+        membershipStatusColor(
+          MemberMembershipStatus.pending,
+          effectiveExpired: false,
+        ),
+        Colors.amber,
+      );
+    });
+
     test('active is green', () {
       expect(
         membershipStatusColor(

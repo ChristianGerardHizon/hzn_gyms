@@ -10,8 +10,10 @@ import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/presentation/widgets/member_membership_detail_dialog.dart';
+import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/check_in.dart';
+import '../../domain/check_in_membership_eligibility.dart';
 import '../../domain/check_in_membership_highlight.dart';
 import '../controllers/member_check_ins_controller.dart';
 
@@ -411,7 +413,7 @@ class _CheckInHistoryTile extends StatelessWidget {
 }
 
 /// Provider that fetches the first active membership for a member
-/// that is valid at the current branch.
+/// that is valid at the current branch and paid if linked to a sale.
 /// Used by the sidebar to display membership info without a full controller.
 final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
   ref,
@@ -420,8 +422,13 @@ final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
   final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
   final result = await repo.fetchActive(memberId, validAtBranchId: branchId);
-  return result.fold(
-    (_) => null,
-    (memberships) => memberships.isNotEmpty ? memberships.first : null,
+  final memberships = result.fold(
+    (_) => <MemberMembership>[],
+    (list) => list,
   );
+  final eligible = await filterCheckInEligibleMemberships(
+    memberships: memberships,
+    salesRepo: ref.read(salesRepositoryProvider),
+  );
+  return eligible.isNotEmpty ? eligible.first : null;
 });

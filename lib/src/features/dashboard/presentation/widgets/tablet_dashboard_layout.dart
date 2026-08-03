@@ -13,6 +13,7 @@ import 'inventory_alerts_section.dart';
 import 'kpi_summary_section.dart';
 import 'quick_actions_section.dart';
 import 'recent_transactions_section.dart';
+import 'unpaid_sales_queue_section.dart';
 
 /// Single-pane tablet layout for the dashboard.
 ///
@@ -120,7 +121,9 @@ class TabletDashboardLayout extends HookConsumerWidget {
                           const KpiSummarySection(),
                           const SizedBox(height: 24),
                           const QuickActionsSection(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
+                          const UnpaidSalesQueueSection(),
+                          const SizedBox(height: 8),
                           const RecentTransactionsSection(),
                           const SizedBox(height: 24),
                         ],

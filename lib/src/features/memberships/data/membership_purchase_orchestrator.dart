@@ -350,6 +350,9 @@ class MembershipPurchaseOrchestrator {
           );
         }
 
+        final membershipStatus =
+            saleId != null ? 'pending' : 'active';
+
         final mmOutboxId = await _outbox.enqueueCreate(
           entityType: OutboxEntityType.memberMembership,
           clientRecordId: membershipId,
@@ -359,7 +362,7 @@ class MembershipPurchaseOrchestrator {
             'membership': plan.id,
             'startDate': startDate.toUtcIso8601(),
             'endDate': endDate.toUtcIso8601(),
-            'status': 'active',
+            'status': membershipStatus,
             'branch': branchId,
             if (saleId != null) 'saleId': saleId,
             'soldBy': soldBy,
@@ -388,7 +391,7 @@ class MembershipPurchaseOrchestrator {
             planName: plan.name,
             startDate: startDate,
             endDate: endDate,
-            status: 'active',
+            status: membershipStatus,
             saleId: Value(saleId),
             syncStatus: Value(SyncStatus.pending.name),
             createdAt: DateTime.now(),
@@ -401,7 +404,9 @@ class MembershipPurchaseOrchestrator {
           membershipId: plan.id,
           startDate: startDate,
           endDate: endDate,
-          status: MemberMembershipStatus.active,
+          status: saleId != null
+              ? MemberMembershipStatus.pending
+              : MemberMembershipStatus.active,
           branchId: branchId,
           memberName: memberName,
           membershipName: plan.name,

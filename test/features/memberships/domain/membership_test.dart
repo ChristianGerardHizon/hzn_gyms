@@ -70,4 +70,34 @@ void main() {
       );
     });
   });
+
+  group('formatValidBranchesDisplay', () {
+    test('empty list means all branches', () {
+      expect(formatValidBranchesDisplay(const [], const {}), 'All branches');
+      expect(
+        buildMembership(validBranches: const []).validBranchesDisplay(const {}),
+        'All branches',
+      );
+    });
+
+    test('joins known branch names', () {
+      expect(
+        formatValidBranchesDisplay(
+          const ['b1', 'b2'],
+          const {'b1': 'Main', 'b2': 'Annex'},
+        ),
+        'Main, Annex',
+      );
+    });
+
+    test('falls back to id when name is missing', () {
+      expect(
+        formatValidBranchesDisplay(
+          const ['b1', 'missing'],
+          const {'b1': 'Main'},
+        ),
+        'Main, missing',
+      );
+    });
+  });
 }

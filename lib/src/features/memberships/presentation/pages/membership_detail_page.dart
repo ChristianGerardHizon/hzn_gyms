@@ -6,6 +6,7 @@ import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
 import '../controllers/membership_provider.dart';
@@ -22,6 +23,7 @@ class MembershipDetailPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final membershipAsync = ref.watch(membershipProvider(membershipId));
+    final branchesAsync = ref.watch(branchesControllerProvider);
     final isTablet = Breakpoints.isTabletOrLarger(context);
 
     return membershipAsync.when(
@@ -39,6 +41,13 @@ class MembershipDetailPage extends HookConsumerWidget {
         }
 
         final theme = Theme.of(context);
+        final branchNamesById = <String, String>{
+          for (final branch in branchesAsync.value ?? const [])
+            branch.id: branch.name,
+        };
+        final validBranchesLabel = membership.validBranchesDisplay(
+          branchNamesById,
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -140,6 +149,10 @@ class MembershipDetailPage extends HookConsumerWidget {
                       _InfoRow(
                         label: 'Plan type',
                         value: membership.planTypeDisplay,
+                      ),
+                      _InfoRow(
+                        label: 'Valid branches',
+                        value: validBranchesLabel,
                       ),
                       _InfoRow(
                         label: 'Status',

@@ -27,6 +27,8 @@ class MemberMembershipStatusMapper extends EnumMapper<MemberMembershipStatus> {
   @override
   MemberMembershipStatus decode(dynamic value) {
     switch (value) {
+      case r'pending':
+        return MemberMembershipStatus.pending;
       case r'active':
         return MemberMembershipStatus.active;
       case r'expired':
@@ -43,6 +45,8 @@ class MemberMembershipStatusMapper extends EnumMapper<MemberMembershipStatus> {
   @override
   dynamic encode(MemberMembershipStatus self) {
     switch (self) {
+      case MemberMembershipStatus.pending:
+        return r'pending';
       case MemberMembershipStatus.active:
         return r'active';
       case MemberMembershipStatus.expired:
