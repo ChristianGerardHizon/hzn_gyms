@@ -8,10 +8,12 @@ import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/repositories/check_in_repository.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in.dart';
+import '../../domain/check_in_membership_eligibility.dart';
 import '../../domain/check_in_realtime.dart';
 
 part 'check_in_controller.g.dart';
@@ -171,7 +173,7 @@ class CheckInController extends _$CheckInController {
 
     final resolvedName = memberName ?? 'Member';
 
-    // 3. Check for active membership valid at this branch
+    // 3. Check for active membership valid at this branch (and paid if linked)
     final mmRepo = ref.read(memberMembershipRepositoryProvider);
     final mmResult = await mmRepo.fetchActive(memberId);
     final activeMemberships = mmResult.fold(
@@ -179,11 +181,16 @@ class CheckInController extends _$CheckInController {
       (m) => m,
     );
 
-    if (activeMemberships.isEmpty) {
+    final paidEligible = await filterCheckInEligibleMemberships(
+      memberships: activeMemberships,
+      salesRepo: ref.read(salesRepositoryProvider),
+    );
+
+    if (paidEligible.isEmpty) {
       return CardCheckInNoActiveMembership(memberName: resolvedName);
     }
 
-    final validHere = activeMemberships
+    final validHere = paidEligible
         .where((m) => m.isValidAtBranch(branchId))
         .toList();
     if (validHere.isEmpty) {

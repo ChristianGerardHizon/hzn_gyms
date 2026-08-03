@@ -9,11 +9,13 @@ import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../sales/presentation/widgets/unpaid_sale_flow.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/membership_purchase_orchestrator.dart';
 import '../../data/membership_sale_helper.dart';
 import '../../data/repositories/member_membership_add_on_repository.dart';
 import '../../data/repositories/member_membership_repository.dart';
+import '../../domain/member_membership.dart';
 import '../../domain/membership.dart';
 import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
@@ -242,12 +244,24 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         return;
       }
 
+      final skipSale = !guestMode && isRenewal && excludeFromSales.value;
+
+      // Prevent silent redo when an unpaid sale already exists.
+      if (!skipSale) {
+        final canCreate = await resolveOpenUnpaidBeforeCreate(
+          context,
+          ref,
+          memberId: guestMode ? null : memberId,
+          customerName: resolvedName,
+        );
+        if (!canCreate || !context.mounted) return;
+      }
+
       isPurchasing.value = true;
 
       final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
       final auth = ref.read(currentAuthProvider);
       final orchestrator = ref.read(membershipPurchaseOrchestratorProvider);
-      final skipSale = !guestMode && isRenewal && excludeFromSales.value;
 
       if (orchestrator.shouldQueueOffline) {
         final result = await orchestrator.purchase(
@@ -362,7 +376,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         bonusDays: MembershipAddOn.totalBonusDays(addOnsState.value),
       );
 
-      // Create MemberMembership record (optionally linked to the sale)
+      // Create MemberMembership record (optionally linked to the sale).
+      // Linked unpaid sales start as pending until payment completes.
       final repo = ref.read(memberMembershipRepositoryProvider);
       final result = await repo.create(
         memberId: memberId,
@@ -372,6 +387,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         branchId: branchId,
         saleId: createdSale?.id,
         soldBy: auth?.user.id,
+        status: createdSale != null
+            ? MemberMembershipStatus.pending
+            : MemberMembershipStatus.active,
       );
 
       final createdMembership = result.fold(
@@ -473,7 +491,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                       guestMode
                           ? 'No walk-in / day pass plans yet.\n'
                                 'Create a membership plan and enable '
-                                '"Membership not required".'
+                                '"Walk-in / day pass".'
                           : 'No membership plans available.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,

@@ -261,7 +261,7 @@ Member subscriptions linking members to membership plans.
 - `membership` -> Membership
 - `branch` -> Branch
 
-**Enum:** `MemberMembershipStatus { active, expired, cancelled, voided }`
+**Enum:** `MemberMembershipStatus { pending, active, expired, cancelled, voided }`
 
 **Computed Properties:**
 - `isCurrentlyActive` - Status is active and current date is within start/end range
@@ -534,7 +534,7 @@ System-wide audit trail entries written by PocketBase hooks on record create/upd
 | Enum | Values |
 |------|--------|
 | MemberCardStatus | active, lost, deactivated |
-| MemberMembershipStatus | active, expired, cancelled, voided |
+| MemberMembershipStatus | pending, active, expired, cancelled, voided |
 | CheckInMethod | manual, rfid |
 | SaleStatus | pending, completed, refunded, voided |
 | ProductStatus | inStock, outOfStock, lowStock, noThreshold |

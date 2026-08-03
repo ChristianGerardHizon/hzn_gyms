@@ -12,6 +12,7 @@ import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../domain/product_sale_line.dart';
 import '../../domain/sale.dart';
 import '../../domain/sale_item.dart';
+import '../../../sales/domain/open_unpaid_sale.dart';
 import '../dto/sale_dto.dart';
 import '../dto/sale_item_dto.dart';
 
@@ -29,6 +30,15 @@ abstract class SalesRepository {
     int? limit,
     List<String>? statuses,
   });
+
+  /// Today's open unpaid sales (`awaitingPayment` / `pending`) for a branch.
+  FutureEither<List<Sale>> getOpenUnpaidSales({
+    required String branchId,
+    DateTime? date,
+    String? memberId,
+    String? customerName,
+  });
+
   FutureEither<List<SaleItem>> getSaleItems(String saleId);
 
   /// Updates a sale record.
@@ -248,6 +258,41 @@ class SalesRepositoryImpl implements SalesRepository {
       },
       Failure.handle,
     ).run();
+  }
+
+  @override
+  FutureEither<List<Sale>> getOpenUnpaidSales({
+    required String branchId,
+    DateTime? date,
+    String? memberId,
+    String? customerName,
+  }) async {
+    final result = await getSales(
+      branchId: branchId,
+      date: date ?? DateTime.now(),
+      statuses: openUnpaidSaleStatuses,
+    );
+    final member = memberId?.trim();
+    final name = customerName?.trim();
+    final hasFilter = (member != null && member.isNotEmpty) ||
+        (name != null && name.isNotEmpty);
+
+    if (!hasFilter) {
+      return result.map(
+        (sales) => sales
+            .where((sale) => isOpenUnpaidSale(sale, branchId: branchId))
+            .toList(),
+      );
+    }
+
+    return result.map((sales) {
+      return findMatchingOpenUnpaidSales(
+        sales: sales,
+        memberId: memberId,
+        customerName: customerName,
+        branchId: branchId,
+      );
+    });
   }
 
   @override

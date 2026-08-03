@@ -107,6 +107,8 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
 
   static MemberMembershipStatus _parseStatus(String value) {
     switch (value.toLowerCase()) {
+      case 'pending':
+        return MemberMembershipStatus.pending;
       case 'active':
         return MemberMembershipStatus.active;
       case 'expired':

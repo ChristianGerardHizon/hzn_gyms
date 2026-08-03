@@ -12,10 +12,12 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../domain/member.dart';
+import '../controllers/member_active_branch_filter_controller.dart';
 import '../controllers/member_branch_activity_controller.dart';
 import '../controllers/member_search_controller.dart';
 import '../controllers/member_sort_controller.dart';
 import '../controllers/paginated_members_controller.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import 'dialogs/member_search_fields_dialog.dart';
@@ -55,6 +57,8 @@ class MemberListPanel extends HookConsumerWidget {
     final searchText = useState(initialQuery);
     final branchActivityAsync = ref.watch(memberBranchActivityMapProvider);
     final currentBranchId = ref.watch(currentBranchIdProvider);
+    final activeBranchFilter = ref.watch(memberActiveBranchFilterProvider);
+    final branchesAsync = ref.watch(branchesControllerProvider);
 
     // Get selected member ID from current route
     final routerState = GoRouterState.of(context);
@@ -139,6 +143,43 @@ class MemberListPanel extends HookConsumerWidget {
                 isSearchActive: paginatedController.isSearchActive,
               ),
               onSortPressed: () => _showSortDialog(context, ref),
+            ),
+          ),
+
+          // Active-at-branch filter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: branchesAsync.when(
+              data: (branches) => SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ChoiceChip(
+                      label: const Text('All'),
+                      selected: activeBranchFilter == null,
+                      onSelected: (_) {
+                        ref
+                            .read(memberActiveBranchFilterProvider.notifier)
+                            .clear();
+                      },
+                    ),
+                    for (final branch in branches) ...[
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text(branch.name),
+                        selected: activeBranchFilter == branch.id,
+                        onSelected: (_) {
+                          ref
+                              .read(memberActiveBranchFilterProvider.notifier)
+                              .setBranchId(branch.id);
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
             ),
           ),
 

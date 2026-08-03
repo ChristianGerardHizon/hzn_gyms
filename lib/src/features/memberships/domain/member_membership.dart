@@ -7,6 +7,8 @@ part 'member_membership.mapper.dart';
 /// Status of a member's membership subscription.
 @MappableEnum()
 enum MemberMembershipStatus {
+  /// Sold but linked sale is not paid yet — not valid for check-in.
+  pending,
   active,
   expired,
   cancelled,
@@ -14,6 +16,8 @@ enum MemberMembershipStatus {
 
   String get displayName {
     switch (this) {
+      case MemberMembershipStatus.pending:
+        return 'Pending payment';
       case MemberMembershipStatus.active:
         return 'Active';
       case MemberMembershipStatus.expired:

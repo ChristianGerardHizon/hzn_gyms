@@ -17,6 +17,7 @@ Color membershipStatusColor(
 }) {
   if (effectiveExpired) return Colors.red;
   return switch (status) {
+    MemberMembershipStatus.pending => Colors.amber,
     MemberMembershipStatus.active => Colors.green,
     MemberMembershipStatus.expired => Colors.red,
     MemberMembershipStatus.voided => Colors.red,

@@ -6,7 +6,7 @@ import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
 import '../../../pos/domain/sale.dart';
-import '../../../sales/presentation/widgets/record_payment_dialog.dart';
+import '../../../sales/presentation/widgets/unpaid_sale_flow.dart';
 import '../controllers/member_memberships_controller.dart';
 import 'membership_purchase_content.dart';
 
@@ -136,8 +136,9 @@ Future<bool> purchaseMembershipAndRecordPayment(
   }
 
   if (context.mounted) {
-    await showRecordPaymentDialog(
+    await recordPaymentWithDisposition(
       context,
+      ref,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
@@ -165,8 +166,9 @@ Future<void> sellWalkInAndRecordPayment(
   if (result.sale != null) {
     // Show the new walk-in on Recent Transactions and Sales list before payment.
     refreshSalesData(ref);
-    await showRecordPaymentDialog(
+    await recordPaymentWithDisposition(
       context,
+      ref,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
