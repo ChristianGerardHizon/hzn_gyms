@@ -5,17 +5,23 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/foundation/paginated_state.dart';
 import '../../../../core/foundation/type_defs.dart';
+import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
+import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../memberships/data/repositories/membership_repository.dart';
 import '../../data/local/member_local_data_source.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
+import '../../domain/member_active_branch_list_filter.dart';
+import 'member_active_branch_filter_controller.dart';
 import 'member_sort_controller.dart';
 
 part 'paginated_members_controller.g.dart';
 
 /// Controller for managing paginated members list.
 ///
-/// Members are branch-agnostic — lists and search are not filtered by the
-/// current branch switcher.
+/// By default the list is branch-agnostic (not tied to the global branch
+/// switcher). An optional [memberActiveBranchFilterProvider] limits results to
+/// members with a currently active membership valid at the selected branch.
 @Riverpod(keepAlive: true)
 class PaginatedMembersController extends _$PaginatedMembersController {
   MemberRepository get _repository => ref.read(memberRepositoryProvider);
@@ -29,6 +35,16 @@ class PaginatedMembersController extends _$PaginatedMembersController {
   /// Gets the current sort string from the sort controller.
   String get _currentSort =>
       ref.read(memberSortControllerProvider).toSortString();
+
+  String? get _branchFilterId => ref.read(memberActiveBranchFilterProvider);
+
+  String get _branchViewSort {
+    final sort = ref.read(memberSortControllerProvider);
+    return activeBranchMembersSortString(
+      field: sort.field,
+      descending: sort.descending,
+    );
+  }
 
   PaginatedState<Member> _toPaginatedState(
     PaginatedResult<Member> result, {
@@ -83,15 +99,76 @@ class PaginatedMembersController extends _$PaginatedMembersController {
     unawaited(_repository.syncAllMembers(sort: _currentSort));
   }
 
+  Future<PaginatedResult<Member>> _fetchActiveAtBranchPage({
+    required String branchId,
+    required int page,
+    String? searchQuery,
+  }) async {
+    final plansResult = await ref
+        .read(membershipRepositoryProvider)
+        .fetchAll(branchId: branchId);
+    final planIds = plansResult.fold(
+      (_) => <String>[],
+      (plans) => plans.map((p) => p.id).toList(),
+    );
+
+    final filterString = buildActiveMembersAtBranchViewFilter(
+      planIds: planIds,
+      searchQuery: searchQuery,
+    );
+    if (filterString == null) {
+      return const PaginatedResult(
+        items: [],
+        page: 1,
+        totalItems: 0,
+        totalPages: 0,
+      );
+    }
+
+    final pb = ref.read(pocketbaseProvider);
+    final result = await pb
+        .collection(PocketBaseCollections.membersWithMembershipStatus)
+        .getList(
+          page: page,
+          perPage: Pagination.membersPageSize,
+          filter: filterString,
+          sort: _branchViewSort,
+        );
+
+    final items = result.items
+        .map(
+          (r) => memberFromMembershipStatusView(r, baseUrl: pb.baseURL),
+        )
+        .toList();
+
+    return PaginatedResult(
+      items: items,
+      page: result.page,
+      totalItems: result.totalItems,
+      totalPages: result.totalPages,
+    );
+  }
+
   @override
   Future<PaginatedState<Member>> build() async {
     _currentSearchQuery = null;
     _currentSearchFields = null;
 
+    // Rebuild when the active-branch filter changes.
+    final branchFilterId = ref.watch(memberActiveBranchFilterProvider);
+
     // Listen to sort changes and refresh
     ref.listen(memberSortControllerProvider, (_, __) {
       refresh();
     });
+
+    if (branchFilterId != null && branchFilterId.isNotEmpty) {
+      final result = await _fetchActiveAtBranchPage(
+        branchId: branchFilterId,
+        page: 1,
+      );
+      return _toPaginatedState(result);
+    }
 
     final cached = await _loadCachedPage(page: 1);
     if (cached != null && cached.items.isNotEmpty) {
@@ -136,6 +213,28 @@ class PaginatedMembersController extends _$PaginatedMembersController {
     state = AsyncValue.data(currentState.copyWith(isLoadingMore: true));
 
     final nextPage = currentState.currentPage + 1;
+    final branchId = _branchFilterId;
+
+    if (branchId != null && branchId.isNotEmpty) {
+      try {
+        final paginated = await _fetchActiveAtBranchPage(
+          branchId: branchId,
+          page: nextPage,
+          searchQuery: _currentSearchQuery,
+        );
+        state = AsyncValue.data(
+          currentState.appendItems(
+            paginated.items,
+            page: paginated.page,
+            totalItems: paginated.totalItems,
+            totalPages: paginated.totalPages,
+          ),
+        );
+      } catch (_) {
+        state = AsyncValue.data(currentState.copyWith(isLoadingMore: false));
+      }
+      return;
+    }
 
     final result = _currentSearchQuery != null
         ? await _repository.searchPaginated(
@@ -168,8 +267,31 @@ class PaginatedMembersController extends _$PaginatedMembersController {
     );
   }
 
-  /// Refreshes the list (respects current search and sort).
+  /// Refreshes the list (respects current search, sort, and branch filter).
   Future<void> refresh() async {
+    final branchId = _branchFilterId;
+    if (branchId != null && branchId.isNotEmpty) {
+      final cached = state.value;
+      if (cached == null || cached.items.isEmpty) {
+        state = const AsyncValue.loading();
+      }
+      try {
+        final paginated = await _fetchActiveAtBranchPage(
+          branchId: branchId,
+          page: 1,
+          searchQuery: _currentSearchQuery,
+        );
+        state = AsyncData(_toPaginatedState(paginated));
+      } catch (error, stackTrace) {
+        if (cached != null && cached.items.isNotEmpty) {
+          state = AsyncData(cached);
+          return;
+        }
+        state = AsyncError(error, stackTrace);
+      }
+      return;
+    }
+
     final cached = state.value;
     if (cached == null || cached.items.isEmpty) {
       state = const AsyncValue.loading();
@@ -227,6 +349,21 @@ class PaginatedMembersController extends _$PaginatedMembersController {
 
     _currentSearchQuery = query;
     _currentSearchFields = fields;
+
+    final branchId = _branchFilterId;
+    if (branchId != null && branchId.isNotEmpty) {
+      try {
+        final paginated = await _fetchActiveAtBranchPage(
+          branchId: branchId,
+          page: 1,
+          searchQuery: query,
+        );
+        state = AsyncData(_toPaginatedState(paginated));
+      } catch (error, stackTrace) {
+        state = AsyncError(error, stackTrace);
+      }
+      return;
+    }
 
     final cached = await _loadCachedPage(page: 1, query: query, fields: fields);
     if (cached != null && cached.items.isNotEmpty) {

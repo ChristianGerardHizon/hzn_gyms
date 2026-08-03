@@ -10,8 +10,9 @@ part of 'paginated_members_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Controller for managing paginated members list.
 ///
-/// Members are branch-agnostic — lists and search are not filtered by the
-/// current branch switcher.
+/// By default the list is branch-agnostic (not tied to the global branch
+/// switcher). An optional [memberActiveBranchFilterProvider] limits results to
+/// members with a currently active membership valid at the selected branch.
 
 @ProviderFor(PaginatedMembersController)
 final paginatedMembersControllerProvider =
@@ -19,8 +20,9 @@ final paginatedMembersControllerProvider =
 
 /// Controller for managing paginated members list.
 ///
-/// Members are branch-agnostic — lists and search are not filtered by the
-/// current branch switcher.
+/// By default the list is branch-agnostic (not tied to the global branch
+/// switcher). An optional [memberActiveBranchFilterProvider] limits results to
+/// members with a currently active membership valid at the selected branch.
 final class PaginatedMembersControllerProvider
     extends
         $AsyncNotifierProvider<
@@ -29,8 +31,9 @@ final class PaginatedMembersControllerProvider
         > {
   /// Controller for managing paginated members list.
   ///
-  /// Members are branch-agnostic — lists and search are not filtered by the
-  /// current branch switcher.
+  /// By default the list is branch-agnostic (not tied to the global branch
+  /// switcher). An optional [memberActiveBranchFilterProvider] limits results to
+  /// members with a currently active membership valid at the selected branch.
   PaginatedMembersControllerProvider._()
     : super(
         from: null,
@@ -51,12 +54,13 @@ final class PaginatedMembersControllerProvider
 }
 
 String _$paginatedMembersControllerHash() =>
-    r'181041de21693de4fd4672d96089a3610fd29e45';
+    r'3c8888bc62c4a9e9051b756c750f6e2b8c579dcd';
 
 /// Controller for managing paginated members list.
 ///
-/// Members are branch-agnostic — lists and search are not filtered by the
-/// current branch switcher.
+/// By default the list is branch-agnostic (not tied to the global branch
+/// switcher). An optional [memberActiveBranchFilterProvider] limits results to
+/// members with a currently active membership valid at the selected branch.
 
 abstract class _$PaginatedMembersController
     extends $AsyncNotifier<PaginatedState<Member>> {

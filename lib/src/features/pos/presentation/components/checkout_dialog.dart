@@ -14,7 +14,7 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../../dashboard/presentation/controllers/todays_sales_controller.dart';
 import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
 import '../../../sales/presentation/controllers/sale_provider.dart';
-import '../../../sales/presentation/widgets/record_payment_dialog.dart';
+import '../../../sales/presentation/widgets/unpaid_sale_flow.dart';
 import '../../domain/cart_item.dart';
 import '../../domain/sale.dart';
 import '../../domain/sale_item.dart';
@@ -89,11 +89,22 @@ class CheckoutDialog extends HookConsumerWidget {
 
       final values = formKey.currentState!.value;
 
-      isSaving.value = true;
-
       // Determine member info
       final customerId = selectedMember.value?.id;
       final customerName = selectedMember.value?.name;
+
+      if (customerId != null ||
+          (customerName != null && customerName.trim().isNotEmpty)) {
+        final canCreate = await resolveOpenUnpaidBeforeCreate(
+          context,
+          ref,
+          memberId: customerId,
+          customerName: customerName,
+        );
+        if (!canCreate || !context.mounted) return;
+      }
+
+      isSaving.value = true;
 
       // Process checkout - create unpaid sale, then collect payment
       final result =
@@ -140,9 +151,9 @@ class CheckoutDialog extends HookConsumerWidget {
 
           if (!context.mounted) return;
 
-          // Payment step (same flow as membership purchase)
-          await showRecordPaymentDialog(
+          final wasPaid = await recordPaymentWithDisposition(
             context,
+            ref,
             sale: sale,
             balanceDue: sale.totalAmount,
           );
@@ -163,11 +174,21 @@ class CheckoutDialog extends HookConsumerWidget {
 
           if (!context.mounted) return;
 
-          showReceiptDialog(
-            context,
-            sale: receiptSale,
-            saleItems: saleItems,
-          );
+          // Only show a success receipt when the sale is paid (or still open unpaid
+          // after explicit "Keep unpaid" — skip voided).
+          if (wasPaid || receiptSale.isPaid) {
+            showReceiptDialog(
+              context,
+              sale: receiptSale,
+              saleItems: saleItems,
+            );
+          } else if (receiptSale.status.toLowerCase() != 'voided') {
+            showInfoSnackBar(
+              context,
+              message:
+                  'Sale ${receiptSale.shortReceiptNumber} kept unpaid — finish payment from Unpaid today or Sales.',
+            );
+          }
         },
       );
     }

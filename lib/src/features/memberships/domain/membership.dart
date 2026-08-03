@@ -74,6 +74,13 @@ class Membership with MembershipMappable {
   bool isValidAtBranch(String branchId) =>
       validBranches.isEmpty || validBranches.contains(branchId);
 
+  /// Human-readable label for [validBranches] using [branchNamesById].
+  ///
+  /// Empty [validBranches] means all branches. Unknown IDs fall back to the
+  /// raw ID string.
+  String validBranchesDisplay(Map<String, String> branchNamesById) =>
+      formatValidBranchesDisplay(validBranches, branchNamesById);
+
   /// Display string for duration, e.g. `"1 month"` / `"3 weeks"`.
   String get durationDisplay => durationUnit.label(durationValue);
 
@@ -97,4 +104,16 @@ class Membership with MembershipMappable {
     }
     return a.name.toLowerCase().compareTo(b.name.toLowerCase());
   }
+}
+
+/// Formats plan [validBranchIds] for display.
+///
+/// Empty list → `"All branches"`. Otherwise joins names from
+/// [branchNamesById], falling back to the raw ID when a name is missing.
+String formatValidBranchesDisplay(
+  List<String> validBranchIds,
+  Map<String, String> branchNamesById,
+) {
+  if (validBranchIds.isEmpty) return 'All branches';
+  return validBranchIds.map((id) => branchNamesById[id] ?? id).join(', ');
 }

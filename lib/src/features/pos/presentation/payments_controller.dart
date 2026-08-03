@@ -1,7 +1,11 @@
 import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../memberships/data/repositories/member_membership_repository.dart';
+import '../../memberships/domain/member_membership.dart';
+import '../../sales/data/sale_side_effects.dart';
 import '../data/repositories/payment_repository.dart';
+import '../data/repositories/sales_repository.dart';
 import '../domain/payment.dart';
 import '../domain/payment_method.dart';
 import '../domain/payment_type.dart';
@@ -63,15 +67,29 @@ class PaymentsController extends _$PaymentsController {
       paymentProofFile: paymentProofFile,
     );
 
-    return result.fold(
-      (failure) {
+    return await result.fold(
+      (failure) async {
         if (ref.mounted) {
           state = AsyncError(failure, StackTrace.current);
         }
         return null;
       },
-      (payment) {
-        // Invalidate the payments list to trigger refresh
+      (payment) async {
+        final saleResult =
+            await ref.read(salesRepositoryProvider).getSale(saleId);
+        await saleResult.fold(
+          (_) async {},
+          (sale) async {
+            await activateMembershipsForPaidSale(
+              memberMembershipRepo:
+                  ref.read(memberMembershipRepositoryProvider),
+              saleId: saleId,
+              isPaid: sale.isPaid,
+              status: sale.status,
+            );
+          },
+        );
+
         if (ref.mounted) {
           ref.invalidate(salePaymentsProvider(saleId));
         }
@@ -85,15 +103,30 @@ class PaymentsController extends _$PaymentsController {
     final repo = ref.read(paymentRepositoryProvider);
     final result = await repo.delete(paymentId);
 
-    return result.fold(
-      (failure) {
+    return await result.fold(
+      (failure) async {
         if (ref.mounted) {
           state = AsyncError(failure, StackTrace.current);
         }
         return false;
       },
-      (_) {
-        // Invalidate the payments list to trigger refresh
+      (_) async {
+        final saleResult =
+            await ref.read(salesRepositoryProvider).getSale(saleId);
+        await saleResult.fold(
+          (_) async {},
+          (sale) async {
+            if (!sale.isPaid && sale.status.toLowerCase() != 'voided') {
+              await ref
+                  .read(memberMembershipRepositoryProvider)
+                  .updateStatusBySaleId(
+                    saleId,
+                    MemberMembershipStatus.pending,
+                  );
+            }
+          },
+        );
+
         if (ref.mounted) {
           ref.invalidate(salePaymentsProvider(saleId));
         }

@@ -39,6 +39,9 @@ abstract class ProductLotRepository {
   /// Decrements quantity for a lot by the specified amount.
   FutureEither<ProductLot> decrementQuantity(String id, num amount);
 
+  /// Increments quantity for a lot by the specified amount (e.g. void restore).
+  FutureEither<ProductLot> incrementQuantity(String id, num amount);
+
   /// Calculates total quantity across all lots for a product.
   FutureEither<num> calculateTotalQuantity(String productId);
 }
@@ -195,6 +198,23 @@ class ProductLotRepositoryImpl implements ProductLotRepository {
         // Calculate new quantity (ensure it doesn't go below 0)
         final newQuantity = (currentLot.quantity - amount).clamp(0, double.infinity);
 
+        final record = await _collection.update(
+          id,
+          body: {'quantity': newQuantity},
+        );
+        return _toEntity(record);
+      },
+      Failure.handle,
+    ).run();
+  }
+
+  @override
+  FutureEither<ProductLot> incrementQuantity(String id, num amount) async {
+    return TaskEither.tryCatch(
+      () async {
+        final currentRecord = await _collection.getOne(id);
+        final currentLot = _toEntity(currentRecord);
+        final newQuantity = currentLot.quantity + amount;
         final record = await _collection.update(
           id,
           body: {'quantity': newQuantity},

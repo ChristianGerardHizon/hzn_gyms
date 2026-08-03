@@ -12,9 +12,11 @@ import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/domain/membership_status_colors.dart';
+import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in_chime.dart';
+import '../../domain/check_in_membership_eligibility.dart';
 import '../../domain/check_in_membership_highlight.dart';
 import '../controllers/check_in_controller.dart';
 import '../utils/check_in_sound_player.dart';
@@ -76,18 +78,26 @@ class CheckInPage extends HookConsumerWidget {
       searchResults.value = [];
       inputController.text = member.name;
 
-      // Fetch active membership valid at the current branch
+      // Fetch active membership valid at the current branch and paid if linked
       final branchId = ref.read(effectiveBranchIdForWriteProvider);
       final mmRepo = ref.read(memberMembershipRepositoryProvider);
       final result = await mmRepo.fetchActive(
         member.id,
         validAtBranchId: branchId,
       );
-      result.fold((_) => activeMembership.value = null, (memberships) {
-        activeMembership.value = memberships.isNotEmpty
-            ? memberships.first
-            : null;
-      });
+      await result.fold(
+        (_) async {
+          activeMembership.value = null;
+        },
+        (memberships) async {
+          final eligible = await filterCheckInEligibleMemberships(
+            memberships: memberships,
+            salesRepo: ref.read(salesRepositoryProvider),
+          );
+          activeMembership.value =
+              eligible.isNotEmpty ? eligible.first : null;
+        },
+      );
     }
 
     void clearSelection() {
