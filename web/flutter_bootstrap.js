@@ -10,3 +10,12 @@ _flutter.loader.load({
     canvasKitBaseUrl: "canvaskit/",
   },
 });
+
+// Poll for a new deployed service worker so long-lived tabs pick up new
+// versions without the user needing to manually hard-refresh; the generated
+// service worker force-reloads all open tabs once it activates.
+if ('serviceWorker' in navigator) {
+  setInterval(() => {
+    navigator.serviceWorker.getRegistration().then((reg) => reg?.update());
+  }, 60000);
+}
