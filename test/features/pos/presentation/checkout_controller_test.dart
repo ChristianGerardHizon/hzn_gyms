@@ -243,15 +243,17 @@ void main() {
         paymentProofFile: any(named: 'paymentProofFile'),
       ),
     ).thenAnswer(
-      (_) async => right(
-        const Payment(
+      (_) async => right((
+        payment: const Payment(
           id: 'pay-1',
           saleId: 'created-2',
           amount: 100,
           paymentMethod: PaymentMethod.cash,
           type: PaymentType.payment,
         ),
-      ),
+        saleIsPaid: true,
+        saleStatus: 'paid',
+      )),
     );
     when(() => salesRepo.getSale('created-2')).thenAnswer(
       (_) async => right(
@@ -300,15 +302,17 @@ void main() {
         paymentProofFile: any(named: 'paymentProofFile'),
       ),
     ).thenAnswer(
-      (_) async => right(
-        const Payment(
+      (_) async => right((
+        payment: const Payment(
           id: 'pay-2',
           saleId: 'created-3',
           amount: 40,
           paymentMethod: PaymentMethod.cash,
           type: PaymentType.payment,
         ),
-      ),
+        saleIsPaid: false,
+        saleStatus: 'awaitingPayment',
+      )),
     );
     when(() => salesRepo.getSale('created-3')).thenAnswer(
       (_) async => right(

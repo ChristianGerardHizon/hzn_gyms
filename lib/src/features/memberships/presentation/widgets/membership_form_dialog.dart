@@ -15,7 +15,7 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../domain/membership.dart';
 import '../controllers/memberships_controller.dart';
 
-/// Top-of-form plan type: standard membership vs walk-in / day pass.
+/// Top-of-form plan type: recurring membership vs walk-in / day pass.
 enum MembershipPlanFormKind { monthly, walkIn }
 
 /// Default duration for walk-in / day-pass plans.
@@ -243,7 +243,7 @@ class MembershipFormDialog extends HookConsumerWidget {
               segments: const [
                 ButtonSegment(
                   value: MembershipPlanFormKind.monthly,
-                  label: Text('Monthly'),
+                  label: Text('Recurring'),
                   icon: Icon(Icons.card_membership_outlined),
                 ),
                 ButtonSegment(

@@ -90,7 +90,7 @@ class Membership with MembershipMappable {
   /// Plan type label for detail views.
   String get planTypeDisplay => memberNotRequired
       ? 'Walk-in (membership not required)'
-      : 'Standard (membership required)';
+      : 'Recurring (membership required)';
 
   /// Sort comparator for membership plan lists.
   ///
