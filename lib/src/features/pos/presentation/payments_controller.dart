@@ -57,6 +57,7 @@ class PaymentsController extends _$PaymentsController {
     http.MultipartFile? paymentProofFile,
   }) async {
     final repo = ref.read(paymentRepositoryProvider);
+    final memberMembershipRepo = ref.read(memberMembershipRepositoryProvider);
     final result = await repo.create(
       saleId: saleId,
       amount: amount,
@@ -76,7 +77,7 @@ class PaymentsController extends _$PaymentsController {
       },
       (created) async {
         await activateMembershipsForPaidSale(
-          memberMembershipRepo: ref.read(memberMembershipRepositoryProvider),
+          memberMembershipRepo: memberMembershipRepo,
           saleId: saleId,
           isPaid: created.saleIsPaid,
           status: created.saleStatus,
@@ -93,6 +94,8 @@ class PaymentsController extends _$PaymentsController {
   /// Deletes a payment.
   Future<bool> deletePayment(String paymentId, String saleId) async {
     final repo = ref.read(paymentRepositoryProvider);
+    final salesRepo = ref.read(salesRepositoryProvider);
+    final memberMembershipRepo = ref.read(memberMembershipRepositoryProvider);
     final result = await repo.delete(paymentId);
 
     return await result.fold(
@@ -103,18 +106,15 @@ class PaymentsController extends _$PaymentsController {
         return false;
       },
       (_) async {
-        final saleResult =
-            await ref.read(salesRepositoryProvider).getSale(saleId);
+        final saleResult = await salesRepo.getSale(saleId);
         await saleResult.fold(
           (_) async {},
           (sale) async {
             if (!sale.isPaid && sale.status.toLowerCase() != 'voided') {
-              await ref
-                  .read(memberMembershipRepositoryProvider)
-                  .updateStatusBySaleId(
-                    saleId,
-                    MemberMembershipStatus.pending,
-                  );
+              await memberMembershipRepo.updateStatusBySaleId(
+                saleId,
+                MemberMembershipStatus.pending,
+              );
             }
           },
         );
