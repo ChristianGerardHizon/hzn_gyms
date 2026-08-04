@@ -2,6 +2,7 @@ import 'package:ebe_gym/src/core/packages/pocketbase/pb_filter.dart';
 import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
 import 'package:ebe_gym/src/core/utils/date_utils.dart';
 import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -16,6 +17,7 @@ RecordModel buildMemberMembershipRecord({
   DateTime? startDate,
   DateTime? endDate,
   String branch = 'branch-1',
+  String? saleId,
   List<String> validBranches = const [],
 }) {
   final start = startDate ?? DateTime.now().subtract(const Duration(days: 1));
@@ -40,6 +42,7 @@ RecordModel buildMemberMembershipRecord({
       'endDate': end.toUtcIso8601(),
       'status': status,
       'branch': branch,
+      if (saleId != null) 'saleId': saleId,
       'expand': {
         'membership': membershipExpand.toJson(),
       },
@@ -135,6 +138,93 @@ void main() {
     expect(captured, contains('member = "member-1"'));
     expect(captured, contains('member = "member-2"'));
     expect(captured, contains("status = 'active'"));
+  });
+
+  test('updateStatusBySaleId updates matching records', () async {
+    when(
+      () => memberMemberships.getFullList(filter: any(named: 'filter')),
+    ).thenAnswer(
+      (_) async => [
+        buildMemberMembershipRecord(
+          id: 'mm-1',
+          member: 'member-1',
+          saleId: 'sale-1',
+          status: 'pending',
+        ),
+        buildMemberMembershipRecord(
+          id: 'mm-2',
+          member: 'member-2',
+          saleId: 'sale-1',
+          status: 'pending',
+        ),
+      ],
+    );
+    when(
+      () => memberMemberships.update(any(), body: any(named: 'body')),
+    ).thenAnswer((invocation) async {
+      final id = invocation.positionalArguments.first as String;
+      return buildMemberMembershipRecord(
+        id: id,
+        saleId: 'sale-1',
+        status: 'active',
+      );
+    });
+
+    final result = await repo.updateStatusBySaleId(
+      'sale-1',
+      MemberMembershipStatus.active,
+    );
+
+    expect(result.isRight(), isTrue);
+    final filter = verify(
+      () => memberMemberships.getFullList(filter: captureAny(named: 'filter')),
+    ).captured.single as String?;
+    expect(filter, "saleId = 'sale-1'");
+
+    verify(
+      () => memberMemberships.update(
+        'mm-1',
+        body: {'status': 'active'},
+      ),
+    ).called(1);
+    verify(
+      () => memberMemberships.update(
+        'mm-2',
+        body: {'status': 'active'},
+      ),
+    ).called(1);
+  });
+
+  test('create persists provided status', () async {
+    when(
+      () => memberMemberships.create(body: any(named: 'body')),
+    ).thenAnswer((invocation) async {
+      final body = invocation.namedArguments[#body] as Map<String, dynamic>;
+      return buildMemberMembershipRecord(
+        id: 'mm-new',
+        status: body['status'] as String,
+        saleId: body['saleId'] as String?,
+      );
+    });
+
+    final start = DateTime(2026, 1, 1);
+    final end = DateTime(2026, 2, 1);
+    final result = await repo.create(
+      memberId: 'member-1',
+      membershipId: 'plan-1',
+      startDate: start,
+      endDate: end,
+      branchId: 'branch-1',
+      saleId: 'sale-1',
+      status: MemberMembershipStatus.pending,
+    );
+
+    expect(result.isRight(), isTrue);
+    final body = verify(
+      () => memberMemberships.create(body: captureAny(named: 'body')),
+    ).captured.single as Map<String, dynamic>;
+    expect(body['status'], 'pending');
+    expect(body['saleId'], 'sale-1');
   });
 
   group('PBFilter.relationAny', () {
