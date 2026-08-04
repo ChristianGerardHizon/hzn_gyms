@@ -18,6 +18,11 @@ sealed class Failure with FailureMappable {
     final error = message;
 
     if (error is ClientException) {
+      // Set by PocketBase when the underlying http request is aborted,
+      // which includes our request-timeout wrapper (see TimeoutHttpClient).
+      if (error.isAbort) {
+        return 'Request timed out. Please check your connection and try again.';
+      }
       final data = error.response;
       final serverMessage = data['message'];
       if (serverMessage is String && serverMessage.isNotEmpty) {

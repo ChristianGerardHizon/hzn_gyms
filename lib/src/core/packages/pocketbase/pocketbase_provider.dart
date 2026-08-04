@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../constants/constants.dart';
 import '../storage/secure_storage_provider.dart';
+import 'timeout_http_client.dart';
 
 part 'pocketbase_provider.g.dart';
 
@@ -94,7 +97,15 @@ class PbDebugController extends _$PbDebugController {
 ///
 /// The instance uses the URL resolved from --dart-define=ENV or falls back
 /// to kDebugMode-based selection.
+///
+/// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
+/// very slow connection fails fast with an error instead of leaving the UI
+/// spinning indefinitely.
 @Riverpod(keepAlive: true)
 PocketBase pocketbase(Ref ref) {
-  return PocketBase(pocketbaseUrl);
+  return PocketBase(
+    pocketbaseUrl,
+    httpClientFactory: () =>
+        TimeoutHttpClient(http.Client(), ApiConstants.requestTimeout),
+  );
 }

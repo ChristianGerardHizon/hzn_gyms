@@ -15,9 +15,18 @@ import '../dto/payment_dto.dart';
 
 part 'payment_repository.g.dart';
 
+/// Result of [PaymentRepository.create]: the created payment plus the sale's
+/// resolved isPaid/status, so callers don't need a separate round trip to
+/// re-fetch the sale just to learn what [create] already computed.
+typedef PaymentCreateResult = ({
+  Payment payment,
+  bool saleIsPaid,
+  String saleStatus,
+});
+
 abstract class PaymentRepository {
   /// Creates a new payment and updates the sale's isPaid status.
-  FutureEither<Payment> create({
+  FutureEither<PaymentCreateResult> create({
     required String saleId,
     required num amount,
     required PaymentMethod paymentMethod,
@@ -55,7 +64,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
   }
 
   @override
-  FutureEither<Payment> create({
+  FutureEither<PaymentCreateResult> create({
     required String saleId,
     required num amount,
     required PaymentMethod paymentMethod,
@@ -82,9 +91,13 @@ class PaymentRepositoryImpl implements PaymentRepository {
         );
 
         // Update sale's isPaid status
-        await _updateSaleIsPaid(saleId);
+        final resolved = await _updateSaleIsPaid(saleId);
 
-        return _toEntity(record);
+        return (
+          payment: _toEntity(record),
+          saleIsPaid: resolved.isPaid,
+          saleStatus: resolved.status,
+        );
       },
       Failure.handle,
     ).run();
@@ -148,8 +161,12 @@ class PaymentRepositoryImpl implements PaymentRepository {
     );
   }
 
-  /// Updates sale.isPaid and status based on total payments vs totalAmount.
-  Future<void> _updateSaleIsPaid(String saleId) async {
+  /// Updates sale.isPaid and status based on total payments vs totalAmount,
+  /// returning the resolved values so callers don't need to re-fetch the
+  /// sale to learn what was just written.
+  Future<({bool isPaid, String status})> _updateSaleIsPaid(
+    String saleId,
+  ) async {
     final sale = await _sales.getOne(saleId);
     final totalAmount = sale.getDoubleValue('totalAmount');
     final currentStatus = sale.getStringValue('status');
@@ -160,6 +177,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       totalPaid: totalPaid,
       currentStatus: currentStatus,
     );
+    final status = resolved.status ?? currentStatus;
 
     final body = <String, dynamic>{'isPaid': resolved.isPaid};
     if (resolved.status != null) {
@@ -167,5 +185,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
     }
 
     await _sales.update(saleId, body: body);
+
+    return (isPaid: resolved.isPaid, status: status);
   }
 }

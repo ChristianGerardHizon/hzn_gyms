@@ -224,10 +224,10 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
         filter: PBFilter().equals('saleId', saleId).build(),
       );
 
-      for (final record in records) {
+      await Future.wait(records.map((record) async {
         await _collection.update(record.id, body: {'status': status.name});
         _invalidateMemberCache(record.getStringValue('member'));
-      }
+      }));
     }, Failure.handle).run();
   }
 
