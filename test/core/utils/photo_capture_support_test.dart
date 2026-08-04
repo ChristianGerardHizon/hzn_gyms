@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
-import 'package:cross_file/cross_file.dart';
 import 'package:ebe_gym/src/core/utils/photo_capture_support.dart';
 import 'package:flutter_test/flutter_test.dart';
 

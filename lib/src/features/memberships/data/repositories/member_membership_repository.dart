@@ -31,6 +31,7 @@ abstract class MemberMembershipRepository {
     String? saleId,
     String? soldBy,
     String? notes,
+    MemberMembershipStatus status = MemberMembershipStatus.active,
   });
 
   /// Updates an existing member membership.
@@ -41,6 +42,12 @@ abstract class MemberMembershipRepository {
     DateTime? startDate,
     DateTime? endDate,
   });
+
+  /// Sets [status] on every membership linked to [saleId].
+  FutureEither<void> updateStatusBySaleId(
+    String saleId,
+    MemberMembershipStatus status,
+  );
 
   /// Cancels a member membership.
   FutureEither<MemberMembership> cancel(String id);
@@ -165,6 +172,7 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     String? saleId,
     String? soldBy,
     String? notes,
+    MemberMembershipStatus status = MemberMembershipStatus.active,
   }) async {
     return TaskEither.tryCatch(() async {
       final body = <String, dynamic>{
@@ -172,7 +180,7 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
         'membership': membershipId,
         'startDate': startDate.toUtcIso8601(),
         'endDate': endDate.toUtcIso8601(),
-        'status': 'active',
+        'status': status.name,
         'branch': branchId,
         if (saleId != null) 'saleId': saleId,
         'soldBy': soldBy,
@@ -203,6 +211,23 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
       final record = await _collection.update(id, body: body);
       invalidateCache();
       return _toEntity(record);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<void> updateStatusBySaleId(
+    String saleId,
+    MemberMembershipStatus status,
+  ) async {
+    return TaskEither.tryCatch(() async {
+      final records = await _collection.getFullList(
+        filter: PBFilter().equals('saleId', saleId).build(),
+      );
+
+      for (final record in records) {
+        await _collection.update(record.id, body: {'status': status.name});
+        _invalidateMemberCache(record.getStringValue('member'));
+      }
     }, Failure.handle).run();
   }
 
