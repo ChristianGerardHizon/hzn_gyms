@@ -59,14 +59,14 @@ void main() {
       expect(buildMembership().walkInBadgeLabel, isNull);
     });
 
-    test('planTypeDisplay distinguishes walk-in from standard', () {
+    test('planTypeDisplay distinguishes walk-in from recurring', () {
       expect(
         buildMembership(memberNotRequired: true).planTypeDisplay,
         'Walk-in (membership not required)',
       );
       expect(
         buildMembership().planTypeDisplay,
-        'Standard (membership required)',
+        'Recurring (membership required)',
       );
     });
   });
