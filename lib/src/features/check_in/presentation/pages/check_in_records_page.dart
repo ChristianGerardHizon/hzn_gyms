@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/error_state.dart';
+import '../../../members/presentation/controllers/member_provider.dart';
 import '../../domain/check_in.dart';
 import '../controllers/check_in_records_controller.dart';
 import '../controllers/check_in_records_date_controller.dart';
@@ -213,20 +215,22 @@ class _DateSelector extends ConsumerWidget {
   }
 }
 
-class _CheckInRecordTile extends StatelessWidget {
+class _CheckInRecordTile extends ConsumerWidget {
   const _CheckInRecordTile({required this.checkIn, required this.timeFormat});
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final memberAsync = ref.watch(memberProvider(checkIn.memberId));
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.green.withValues(alpha: 0.15),
-        child: const Icon(Icons.how_to_reg, color: Colors.green, size: 20),
+      leading: CachedAvatar(
+        imageUrl: memberAsync.value?.photo,
+        radius: 20,
+        thumbSize: 80,
       ),
       title: Text(checkIn.memberName ?? 'Unknown Member'),
       subtitle: Text(

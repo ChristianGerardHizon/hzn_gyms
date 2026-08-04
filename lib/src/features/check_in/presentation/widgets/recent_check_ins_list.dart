@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/error_state.dart';
+import '../../../members/presentation/controllers/member_provider.dart';
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
 import 'last_check_in_panel.dart';
@@ -74,11 +76,13 @@ class _CheckInListTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final memberAsync = ref.watch(memberProvider(checkIn.memberId));
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.green.withValues(alpha: 0.15),
-        child: const Icon(Icons.how_to_reg, color: Colors.green, size: 20),
+      leading: CachedAvatar(
+        imageUrl: memberAsync.value?.photo,
+        radius: 20,
+        thumbSize: 80,
       ),
       title: Text(checkIn.memberName ?? 'Unknown Member'),
       subtitle: Text(

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
@@ -321,13 +322,10 @@ class CheckInPage extends HookConsumerWidget {
                   itemBuilder: (context, index) {
                     final member = searchResults.value[index];
                     return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.person,
-                          color: theme.colorScheme.onPrimaryContainer,
-                          size: 20,
-                        ),
+                      leading: CachedAvatar(
+                        imageUrl: member.photo,
+                        radius: 20,
+                        thumbSize: 80,
                       ),
                       title: Text(member.name),
                       subtitle:
@@ -578,14 +576,10 @@ class _SelectedMemberCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                CachedAvatar(
+                  imageUrl: member.photo,
                   radius: 24,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.person,
-                    color: theme.colorScheme.onPrimaryContainer,
-                    size: 28,
-                  ),
+                  thumbSize: 96,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
