@@ -74,26 +74,18 @@ class PaymentsController extends _$PaymentsController {
         }
         return null;
       },
-      (payment) async {
-        final saleResult =
-            await ref.read(salesRepositoryProvider).getSale(saleId);
-        await saleResult.fold(
-          (_) async {},
-          (sale) async {
-            await activateMembershipsForPaidSale(
-              memberMembershipRepo:
-                  ref.read(memberMembershipRepositoryProvider),
-              saleId: saleId,
-              isPaid: sale.isPaid,
-              status: sale.status,
-            );
-          },
+      (created) async {
+        await activateMembershipsForPaidSale(
+          memberMembershipRepo: ref.read(memberMembershipRepositoryProvider),
+          saleId: saleId,
+          isPaid: created.saleIsPaid,
+          status: created.saleStatus,
         );
 
         if (ref.mounted) {
           ref.invalidate(salePaymentsProvider(saleId));
         }
-        return payment;
+        return created.payment;
       },
     );
   }

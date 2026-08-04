@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 import 'package:ebe_gym/src/core/foundation/error_display.dart';
 import 'package:ebe_gym/src/core/foundation/failure.dart';
@@ -35,6 +36,18 @@ void main() {
       expect(
         PocketbaseFailure(error).messageString,
         'Server request failed (HTTP 500)',
+      );
+    });
+
+    test('returns a friendly message for aborted/timed-out requests', () {
+      final error = ClientException(
+        url: Uri.parse('https://example.com'),
+        isAbort: true,
+        originalError: http.ClientException('Request timed out after 30s'),
+      );
+      expect(
+        PocketbaseFailure(error).messageString,
+        'Request timed out. Please check your connection and try again.',
       );
     });
   });

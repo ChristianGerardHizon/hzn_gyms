@@ -135,7 +135,11 @@ void main() {
           notes: any(named: 'notes'),
           paymentProofFile: any(named: 'paymentProofFile'),
         ),
-      ).thenAnswer((_) async => right(created));
+      ).thenAnswer(
+        (_) async => right(
+          (payment: created, saleIsPaid: true, saleStatus: 'paid'),
+        ),
+      );
 
       // Warm cache so invalidate is observable via a subsequent fetch.
       when(() => paymentRepo.getBySaleId('sale-1'))
