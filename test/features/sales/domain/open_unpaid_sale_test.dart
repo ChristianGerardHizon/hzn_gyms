@@ -86,5 +86,35 @@ void main() {
       );
       expect(matches, isEmpty);
     });
+
+    test('matches walk-in name with a trailing number appended', () {
+      final jeff = buildSale(
+        id: 's6',
+        status: 'awaitingPayment',
+        isPaid: false,
+      ).copyWith(customerName: 'JEFF', branchId: 'b1');
+
+      final matches = findMatchingOpenUnpaidSales(
+        sales: [jeff],
+        customerName: 'JEFF 10',
+        branchId: 'b1',
+      );
+      expect(matches.map((s) => s.id), ['s6']);
+    });
+
+    test('does not match unrelated names that both end in numbers', () {
+      final room7 = buildSale(
+        id: 's7',
+        status: 'awaitingPayment',
+        isPaid: false,
+      ).copyWith(customerName: 'Room 7', branchId: 'b1');
+
+      final matches = findMatchingOpenUnpaidSales(
+        sales: [room7],
+        customerName: 'Table 12',
+        branchId: 'b1',
+      );
+      expect(matches, isEmpty);
+    });
   });
 }

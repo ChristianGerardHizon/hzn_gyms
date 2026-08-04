@@ -37,10 +37,21 @@ bool isOpenUnpaidSale(Sale sale, {String? branchId}) {
   return true;
 }
 
+/// Strips a trailing " <digits>" suffix from a normalized name, e.g.
+/// `"jeff 10"` -> `"jeff"`. Used to catch near-duplicate walk-in entries
+/// where a cashier appended a number to an otherwise identical guest name
+/// (typo or retry) instead of it matching an existing unpaid sale exactly.
+String _withoutTrailingNumber(String normalized) {
+  final match = RegExp(r'^(.*\S)\s+\d+$').firstMatch(normalized);
+  return match?.group(1) ?? normalized;
+}
+
 /// Finds open unpaid sales for the same member and/or walk-in name.
 ///
 /// [memberId] match takes priority when both are provided.
-/// Guest walk-ins match on normalized [customerName] (ignores generic "Walk-in").
+/// Guest walk-ins match on normalized [customerName] (ignores generic
+/// "Walk-in"), or on the name with a trailing number stripped (so "Jeff"
+/// and "Jeff 10" are still flagged as a likely duplicate).
 List<Sale> findMatchingOpenUnpaidSales({
   required Iterable<Sale> sales,
   String? memberId,
@@ -52,6 +63,7 @@ List<Sale> findMatchingOpenUnpaidSales({
   final normalizedName = normalizeCustomerName(customerName);
   final ignoreName = normalizedName.isEmpty ||
       normalizedName == normalizeCustomerName(Sale.walkInLabel);
+  final baseName = _withoutTrailingNumber(normalizedName);
 
   return sales.where((sale) {
     if (!isOpenUnpaidSale(sale, branchId: branchId)) return false;
@@ -62,6 +74,8 @@ List<Sale> findMatchingOpenUnpaidSales({
     }
 
     if (ignoreName) return false;
-    return normalizeCustomerName(sale.customerName) == normalizedName;
+    final saleName = normalizeCustomerName(sale.customerName);
+    if (saleName == normalizedName) return true;
+    return baseName.isNotEmpty && baseName == _withoutTrailingNumber(saleName);
   }).toList();
 }
