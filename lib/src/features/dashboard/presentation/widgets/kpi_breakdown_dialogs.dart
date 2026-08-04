@@ -3,9 +3,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 import '../../../check_in/domain/check_in.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
 import '../../../members/domain/member.dart';
+import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../pos/domain/sale.dart';
 import '../controllers/active_members_count_controller.dart';
@@ -123,21 +125,27 @@ Future<void> showTodaysCheckInsBreakdownDialog(BuildContext context) {
         },
         itemBuilder: (context, checkIn) {
           final theme = Theme.of(context);
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.teal.withValues(alpha: 0.15),
-              child: const Icon(Icons.how_to_reg, color: Colors.teal, size: 20),
-            ),
-            title: Text(checkIn.memberName ?? 'Unknown Member'),
-            subtitle: Text(
-              '${timeFormat.format(checkIn.checkInTime)} · ${checkIn.method.displayName}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            onTap: () {
-              Navigator.of(context).pop();
-              MemberDetailRoute(id: checkIn.memberId).go(context);
+          return Consumer(
+            builder: (context, ref, _) {
+              final memberAsync = ref.watch(memberProvider(checkIn.memberId));
+              return ListTile(
+                leading: CachedAvatar(
+                  imageUrl: memberAsync.value?.photo,
+                  radius: 20,
+                  thumbSize: 80,
+                ),
+                title: Text(checkIn.memberName ?? 'Unknown Member'),
+                subtitle: Text(
+                  '${timeFormat.format(checkIn.checkInTime)} · ${checkIn.method.displayName}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  MemberDetailRoute(id: checkIn.memberId).go(context);
+                },
+              );
             },
           );
         },
