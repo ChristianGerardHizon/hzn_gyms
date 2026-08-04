@@ -160,7 +160,7 @@ Future<CameraController> createInitializedCameraController(
   }
 
   if (lastError != null) {
-    Error.throwWithStackTrace(lastError!, StackTrace.current);
+    Error.throwWithStackTrace(lastError, StackTrace.current);
   }
   throw StateError('Failed to initialize camera');
 }
