@@ -8,9 +8,10 @@ import 'report_period.dart';
 
 /// Formats a local calendar date as `yyyy-MM-dd` for PocketBase view filters.
 ///
-/// Report views must bucket with SQLite `localtime` (e.g.
-/// `DATE(s.created, 'localtime')`) so these local dates align with Manila
-/// business days — UTC `DATE(s.created)` shifts overnight sales to yesterday.
+/// Report views must bucket with a fixed Manila offset (e.g.
+/// `DATE(s.created, '+8 hours')`) so these local dates align with PH business
+/// days. Server `localtime` is UTC on prod and mis-buckets midnight–8AM Manila
+/// activity onto the previous calendar day.
 String formatViewDate(DateTime date) {
   final y = date.year.toString().padLeft(4, '0');
   final m = date.month.toString().padLeft(2, '0');
