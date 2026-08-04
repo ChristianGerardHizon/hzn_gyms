@@ -1,3 +1,4 @@
+import 'package:ebe_gym/src/core/utils/date_utils.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/widgets/membership_form_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,6 +23,18 @@ void main() {
 
     test('returns true when selection includes extras but covers all', () {
       expect(selectsAllBranches(['a', 'b', 'c'], ['a', 'b']), isTrue);
+    });
+  });
+
+  group('MembershipPlanFormKind', () {
+    test('isWalkInPlanKind distinguishes monthly vs walk-in', () {
+      expect(isWalkInPlanKind(MembershipPlanFormKind.monthly), isFalse);
+      expect(isWalkInPlanKind(MembershipPlanFormKind.walkIn), isTrue);
+    });
+
+    test('walk-in defaults are 1 day', () {
+      expect(walkInDefaultDurationValue, 1);
+      expect(walkInDefaultDurationUnit, MembershipDurationUnit.days);
     });
   });
 }

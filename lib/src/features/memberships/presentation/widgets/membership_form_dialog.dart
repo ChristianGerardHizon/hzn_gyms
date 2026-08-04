@@ -15,6 +15,19 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../domain/membership.dart';
 import '../controllers/memberships_controller.dart';
 
+/// Top-of-form plan type: standard membership vs walk-in / day pass.
+enum MembershipPlanFormKind { monthly, walkIn }
+
+/// Default duration for walk-in / day-pass plans.
+const walkInDefaultDurationValue = 1;
+
+/// Default duration unit for walk-in / day-pass plans.
+const walkInDefaultDurationUnit = MembershipDurationUnit.days;
+
+/// Whether [kind] is the walk-in / day-pass plan type.
+bool isWalkInPlanKind(MembershipPlanFormKind kind) =>
+    kind == MembershipPlanFormKind.walkIn;
+
 /// Dropdown label for a [MembershipDurationUnit].
 String _durationUnitLabel(MembershipDurationUnit unit) {
   switch (unit) {
@@ -73,6 +86,12 @@ class MembershipFormDialog extends HookConsumerWidget {
         ? membership!.validBranches.isEmpty
         : false;
     final allBranches = useState(isAllBranches);
+    final planKind = useState(
+      membership?.memberNotRequired == true
+          ? MembershipPlanFormKind.walkIn
+          : MembershipPlanFormKind.monthly,
+    );
+    final isWalkIn = isWalkInPlanKind(planKind.value);
 
     final initialValidBranches = membership != null
         ? (membership!.validBranches.isEmpty
@@ -89,13 +108,14 @@ class MembershipFormDialog extends HookConsumerWidget {
             'price': membership!.price.toString(),
             'isActive': membership!.isActive,
             'isFavorite': membership!.isFavorite,
-            'memberNotRequired': membership!.memberNotRequired,
             'allBranches': isAllBranches,
             'validBranches': initialValidBranches,
           }
         : <String, dynamic>{
             'allBranches': false,
             'validBranches': initialValidBranches,
+            'durationValue': '1',
+            'durationUnit': MembershipDurationUnit.months,
           };
 
     final dirtyGuard = useFormDirtyGuard(
@@ -103,38 +123,65 @@ class MembershipFormDialog extends HookConsumerWidget {
       initialValues: initialValues,
     );
 
+    void applyWalkInDefaults() {
+      formKey.currentState?.fields['durationValue']?.didChange(
+        walkInDefaultDurationValue.toString(),
+      );
+      formKey.currentState?.fields['durationUnit']?.didChange(
+        walkInDefaultDurationUnit,
+      );
+      if (allBranches.value) {
+        allBranches.value = false;
+        formKey.currentState?.fields['allBranches']?.didChange(false);
+        final branches = currentBranchId != null
+            ? [currentBranchId]
+            : initialValidBranches;
+        formKey.currentState?.fields['validBranches']?.didChange(branches);
+      }
+    }
+
     Future<void> handleSave(BuildContext dialogContext) async {
       if (!formKey.currentState!.saveAndValidate()) return;
 
       isSaving.value = true;
       final values = formKey.currentState!.value;
+      final walkIn = isWalkInPlanKind(planKind.value);
 
       final branchId =
           membership?.branchId ??
           ref.read(effectiveBranchIdForWriteProvider) ??
           '';
 
-      final all = values['allBranches'] as bool? ?? false;
+      final all = walkIn
+          ? false
+          : values['allBranches'] as bool? ?? false;
       final selectedRaw = values['validBranches'];
       final selected = selectedRaw is List
           ? selectedRaw.map((e) => e.toString()).toList()
           : <String>[];
 
+      final durationValue = walkIn
+          ? walkInDefaultDurationValue
+          : int.tryParse(values['durationValue']?.toString() ?? '') ?? 0;
+      final durationUnit = walkIn
+          ? walkInDefaultDurationUnit
+          : values['durationUnit'] as MembershipDurationUnit? ??
+                MembershipDurationUnit.days;
+
       final membershipData = Membership(
         id: membership?.id ?? '',
         name: values['name'] as String,
-        description: values['description'] as String?,
-        durationValue:
-            int.tryParse(values['durationValue']?.toString() ?? '') ?? 0,
-        durationUnit:
-            values['durationUnit'] as MembershipDurationUnit? ??
-            MembershipDurationUnit.days,
+        description: walkIn
+            ? null
+            : values['description'] as String?,
+        durationValue: durationValue,
+        durationUnit: durationUnit,
         price: num.tryParse(values['price']?.toString() ?? '') ?? 0,
         branchId: branchId,
         validBranches: all ? const [] : selected,
         isActive: values['isActive'] as bool? ?? true,
         isFavorite: values['isFavorite'] as bool? ?? false,
-        memberNotRequired: values['memberNotRequired'] as bool? ?? false,
+        memberNotRequired: walkIn,
       );
 
       final controller = ref.read(membershipsControllerProvider.notifier);
@@ -153,8 +200,12 @@ class MembershipFormDialog extends HookConsumerWidget {
         showSuccessSnackBar(
           dialogContext,
           message: isEditing
-              ? 'Membership plan updated'
-              : 'Membership plan created',
+              ? (walkIn
+                    ? 'Walk-in plan updated'
+                    : 'Membership plan updated')
+              : (walkIn
+                    ? 'Walk-in plan created'
+                    : 'Membership plan created'),
           useRootMessenger: false,
         );
         Navigator.of(dialogContext).pop(true);
@@ -162,15 +213,23 @@ class MembershipFormDialog extends HookConsumerWidget {
         showErrorSnackBar(
           dialogContext,
           message: isEditing
-              ? 'Failed to update membership plan'
-              : 'Failed to create membership plan',
+              ? (walkIn
+                    ? 'Failed to update walk-in plan'
+                    : 'Failed to update membership plan')
+              : (walkIn
+                    ? 'Failed to create walk-in plan'
+                    : 'Failed to create membership plan'),
           useRootMessenger: false,
         );
       }
     }
 
+    final title = isEditing
+        ? (isWalkIn ? 'Edit Walk-in Plan' : 'Edit Membership Plan')
+        : (isWalkIn ? 'New Walk-in Plan' : 'New Membership Plan');
+
     return FormDialogScaffold(
-      title: isEditing ? 'Edit Membership Plan' : 'New Membership Plan',
+      title: title,
       formKey: formKey,
       dirtyGuard: dirtyGuard,
       isSaving: isSaving.value,
@@ -178,65 +237,120 @@ class MembershipFormDialog extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const FormSectionHeader(
-            title: 'Plan',
-            icon: Icons.card_membership_outlined,
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<MembershipPlanFormKind>(
+              segments: const [
+                ButtonSegment(
+                  value: MembershipPlanFormKind.monthly,
+                  label: Text('Monthly'),
+                  icon: Icon(Icons.card_membership_outlined),
+                ),
+                ButtonSegment(
+                  value: MembershipPlanFormKind.walkIn,
+                  label: Text('Walk-in'),
+                  icon: Icon(Icons.directions_walk),
+                ),
+              ],
+              selected: {planKind.value},
+              onSelectionChanged: isSaving.value
+                  ? null
+                  : (selected) {
+                      final next = selected.first;
+                      planKind.value = next;
+                      if (isWalkInPlanKind(next)) {
+                        // Apply after the walk-in hidden fields mount.
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          applyWalkInDefaults();
+                        });
+                      }
+                    },
+            ),
+          ),
+          const SizedBox(height: 16),
+          FormSectionHeader(
+            title: isWalkIn ? 'Day pass' : 'Plan',
+            icon: isWalkIn
+                ? Icons.directions_walk
+                : Icons.card_membership_outlined,
           ),
           const SizedBox(height: 12),
           FormBuilderTextField(
             name: 'name',
             initialValue: membership?.name,
-            decoration: const InputDecoration(labelText: 'Plan Name *'),
+            decoration: InputDecoration(
+              labelText: isWalkIn ? 'Walk-in name *' : 'Plan Name *',
+            ),
             validator: FormBuilderValidators.required(),
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 12),
-          FormBuilderTextField(
-            name: 'description',
-            initialValue: membership?.description,
-            decoration: const InputDecoration(labelText: 'Description'),
-            maxLines: 2,
-            textCapitalization: TextCapitalization.sentences,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: FormBuilderTextField(
-                  name: 'durationValue',
-                  initialValue: membership?.durationValue.toString() ?? '1',
-                  decoration: const InputDecoration(labelText: 'Duration *'),
-                  keyboardType: TextInputType.number,
-                  validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(),
-                    FormBuilderValidators.integer(),
-                    FormBuilderValidators.min(1),
-                  ]),
-                  textInputAction: TextInputAction.next,
+          if (!isWalkIn) ...[
+            const SizedBox(height: 12),
+            FormBuilderTextField(
+              name: 'description',
+              initialValue: membership?.description,
+              decoration: const InputDecoration(labelText: 'Description'),
+              maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: FormBuilderTextField(
+                    name: 'durationValue',
+                    initialValue: membership?.durationValue.toString() ?? '1',
+                    decoration: const InputDecoration(labelText: 'Duration *'),
+                    keyboardType: TextInputType.number,
+                    validator: FormBuilderValidators.compose([
+                      FormBuilderValidators.required(),
+                      FormBuilderValidators.integer(),
+                      FormBuilderValidators.min(1),
+                    ]),
+                    textInputAction: TextInputAction.next,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FormBuilderDropdown<MembershipDurationUnit>(
-                  name: 'durationUnit',
-                  initialValue:
-                      membership?.durationUnit ?? MembershipDurationUnit.days,
-                  decoration: const InputDecoration(labelText: 'Unit *'),
-                  items: MembershipDurationUnit.values
-                      .map(
-                        (unit) => DropdownMenuItem(
-                          value: unit,
-                          child: Text(_durationUnitLabel(unit)),
-                        ),
-                      )
-                      .toList(),
-                  validator: FormBuilderValidators.required(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FormBuilderDropdown<MembershipDurationUnit>(
+                    name: 'durationUnit',
+                    initialValue:
+                        membership?.durationUnit ??
+                        MembershipDurationUnit.months,
+                    decoration: const InputDecoration(labelText: 'Unit *'),
+                    items: MembershipDurationUnit.values
+                        .map(
+                          (unit) => DropdownMenuItem(
+                            value: unit,
+                            child: Text(_durationUnitLabel(unit)),
+                          ),
+                        )
+                        .toList(),
+                    validator: FormBuilderValidators.required(),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ] else ...[
+            // Walk-in day passes are always 1 day — keep fields registered.
+            FormBuilderField<String>(
+              name: 'durationValue',
+              initialValue: walkInDefaultDurationValue.toString(),
+              builder: (field) => const SizedBox.shrink(),
+            ),
+            FormBuilderField<MembershipDurationUnit>(
+              name: 'durationUnit',
+              initialValue: walkInDefaultDurationUnit,
+              builder: (field) => const SizedBox.shrink(),
+            ),
+            FormBuilderField<String?>(
+              name: 'description',
+              initialValue: null,
+              builder: (field) => const SizedBox.shrink(),
+            ),
+          ],
           const SizedBox(height: 12),
           FormBuilderTextField(
             name: 'price',
@@ -252,26 +366,46 @@ class MembershipFormDialog extends HookConsumerWidget {
             ]),
             textInputAction: TextInputAction.done,
           ),
+          if (isWalkIn)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Duration is fixed to 1 day for walk-in / day passes.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
           const SizedBox(height: 24),
           const FormSectionHeader(
             title: 'Branches',
             icon: Icons.store_outlined,
           ),
           const SizedBox(height: 4),
-          FormBuilderCheckbox(
-            name: 'allBranches',
-            initialValue: allBranches.value,
-            title: const Text('Valid at all branches'),
-            decoration: const InputDecoration(border: InputBorder.none),
-            onChanged: (value) {
-              allBranches.value = value ?? false;
-            },
-          ),
-          if (!allBranches.value) ...[
+          if (!isWalkIn)
+            FormBuilderCheckbox(
+              name: 'allBranches',
+              initialValue: allBranches.value,
+              title: const Text('Valid at all branches'),
+              decoration: const InputDecoration(border: InputBorder.none),
+              onChanged: (value) {
+                allBranches.value = value ?? false;
+              },
+            )
+          else
+            FormBuilderField<bool>(
+              name: 'allBranches',
+              initialValue: false,
+              builder: (field) => const SizedBox.shrink(),
+            ),
+          if (!allBranches.value || isWalkIn) ...[
             branchesAsync.when(
               data: (branches) => FormBuilderCheckboxGroup<String>(
                 name: 'validBranches',
-                initialValue: initialValidBranches,
+                initialValue: initialValidBranches.isEmpty &&
+                        currentBranchId != null
+                    ? [currentBranchId]
+                    : initialValidBranches,
                 decoration: const InputDecoration(
                   labelText: 'Valid at',
                   border: InputBorder.none,
@@ -287,6 +421,7 @@ class MembershipFormDialog extends HookConsumerWidget {
                     )
                     .toList(),
                 onChanged: (value) {
+                  if (isWalkIn) return;
                   final selected = value ?? const <String>[];
                   final allIds = branches.map((b) => b.id);
                   if (!selectsAllBranches(selected, allIds)) return;
@@ -298,7 +433,7 @@ class MembershipFormDialog extends HookConsumerWidget {
                   );
                 },
                 validator: (value) {
-                  if (allBranches.value) return null;
+                  if (!isWalkIn && allBranches.value) return null;
                   if (value == null || value.isEmpty) {
                     return 'Select at least one branch';
                   }
@@ -330,14 +465,11 @@ class MembershipFormDialog extends HookConsumerWidget {
             name: 'isFavorite',
             initialValue: membership?.isFavorite ?? false,
             title: const Text('Favorite'),
-            subtitle: const Text('Pin to top of plan lists'),
-            decoration: const InputDecoration(border: InputBorder.none),
-          ),
-          FormBuilderSwitch(
-            name: 'memberNotRequired',
-            initialValue: membership?.memberNotRequired ?? false,
-            title: const Text('Walk-in / day pass'),
-            subtitle: const Text('Name only — no linked member'),
+            subtitle: Text(
+              isWalkIn
+                  ? 'Pin to top of walk-in plan lists'
+                  : 'Pin to top of plan lists',
+            ),
             decoration: const InputDecoration(border: InputBorder.none),
           ),
         ],
