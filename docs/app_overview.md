@@ -95,7 +95,7 @@ Membership plan management for gym subscriptions.
 - **Sub-features**:
   - Membership plans list with search
   - Plan detail with duration, price, active/inactive status
-  - Create/edit plans via form with top **Monthly | Walk-in** toggle (Walk-in hides description/duration/all-branches and fixes duration to 1 day)
+  - Create/edit plans via form with top **Recurring | Walk-in** toggle (Walk-in hides description/duration/all-branches and fixes duration to 1 day)
   - **Add-ons per plan** (e.g., Treadmill Access, Coach/Instructor, Locker, Pool Access) — each with its own price, managed from the plan detail page
   - Purchase membership flow from member detail page with optional add-on selection — total cost = base price + selected add-ons; add-ons with extra days extend the end date (excludes walk-in plans)
   - Walk-in / day-pass sale from dashboard **Walk-in** quick action: customer name + walk-in plan + optional add-ons → sale only (no member membership)
@@ -557,7 +557,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
-| Aug 4 | Membership plan type toggle | New/Edit plan form uses **Monthly \| Walk-in** segmented control; Walk-in simplifies the form (1-day duration, no description / all-branches) |
+| Aug 4 | Membership plan type labels | Plan form toggle and detail plan type use **Recurring \| Walk-in** (replacing Monthly / Standard); Walk-in still simplifies the form (1-day duration, no description / all-branches) |
 | Aug 3 | Membership status colors | Expired/voided memberships and voided sales use red; almost expiring (≤7d) orange; active green; cancelled blueGrey |
 | Aug 2 | Camera source preference | System → Appearance and member photo capture can select a camera device; last used camera is remembered on device |
 | Aug 2 | Per-user Appearance theme | Light/dark/system preference is stored per signed-in user on device so shared tablets keep each user's theme |
