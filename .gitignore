@@ -78,3 +78,12 @@ app.*.map.json
 
 # Firebase migration scripts (one-time use)
 /firebase/
+
+# FVM local SDK link (machine-specific)
+.fvm/flutter_sdk
+
+# Local scratch/test artifacts (auth tokens, one-off exports)
+.pbtoken
+/auth.json
+/patch.json
+.tmp_*.json

@@ -154,7 +154,9 @@ class _MembershipListTile extends ConsumerWidget {
             ? theme.colorScheme.primaryContainer
             : theme.colorScheme.surfaceContainerHighest,
         child: Icon(
-          Icons.card_membership,
+          membership.memberNotRequired
+              ? Icons.directions_walk
+              : Icons.card_membership,
           color: membership.isActive
               ? theme.colorScheme.onPrimaryContainer
               : theme.colorScheme.onSurfaceVariant,
