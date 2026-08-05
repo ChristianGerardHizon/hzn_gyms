@@ -184,7 +184,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 - **Branches** (`/organization/branches`) - Multi-location support with address and contact info
 
 #### Profile (`/profile`)
-Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment).
+Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
 
 #### System Settings (`/system`)
 3-panel tablet layout for system configuration.
@@ -557,6 +557,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 5 | Profile change password | Profile page can change own password with current + new + confirm (PocketBase `oldPassword`) |
 | Aug 4 | Membership plan type labels | Plan form toggle and detail plan type use **Recurring \| Walk-in** (replacing Monthly / Standard); Walk-in still simplifies the form (1-day duration, no description / all-branches) |
 | Aug 3 | Membership status colors | Expired/voided memberships and voided sales use red; almost expiring (≤7d) orange; active green; cancelled blueGrey |
 | Aug 2 | Camera source preference | System → Appearance and member photo capture can select a camera device; last used camera is remembered on device |
@@ -565,6 +566,8 @@ lib/src/
 | Aug 2 | New Member card step | New Member wizard includes an optional Card step (scan or manual entry) between Photo and Membership; card is saved after member creation |
 | Aug 2 | Member photo live capture | New Member wizard and Edit Member form support live camera preview with Capture button on web/mobile; upload from file remains available as fallback |
 | Aug 2 | Dashboard Search Member | Quick action searches all branches, shows branch activity chips, routes to renew/purchase at current branch or new-member wizard when not found |
+| Aug 5 | Membership purchase guards | Warn when buying an already-active exact plan; UUID `idempotencyKey` on sales / memberMemberships / payments so retries reuse the same records instead of duplicating |
+| Aug 5 | Manila (+8) report views | Prod/local SQL views use fixed `+8 hours` (not server `localtime`/UTC) so overnight PH sales/check-ins land on the correct calendar day; `vw_todays_sales` uses Manila day UTC range |
 | Aug 2 | Member branch activity labels | Members list shows colored chips for no active branch, single branch, multiple branches, or all branches—using the same check-in access rules as membership plans |
 | Aug 1 | Calendar-correct membership duration | Plan duration is now `durationValue` + `durationUnit` (day/week/month/year) instead of a raw day count; end dates use calendar arithmetic (Aug 1 + 1 month = Sep 1) instead of a fixed day offset; existing plans backfilled |
 | Aug 1 | Member name format | Member names saved as Title Case with collapsed whitespace (`Chloe Sy`); dashboard/members search tokenizes on spaces; cleanup script backfills via Admin API |

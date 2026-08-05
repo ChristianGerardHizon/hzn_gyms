@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../users/data/repositories/user_repository.dart';
@@ -77,6 +78,7 @@ class EditProfileDialog extends HookConsumerWidget {
       dirtyGuard: dirtyGuard,
       isSaving: isSaving.value,
       onSave: (_) => handleSave(),
+      maxWidth: DialogConstraints.compactMaxWidth,
       initialValue: {
         'name': user.name,
         'username': user.username,
@@ -121,8 +123,9 @@ class EditProfileDialog extends HookConsumerWidget {
 }
 
 void showEditProfileDialog(BuildContext context, {required User user}) {
-  showDialog<void>(
+  showConstrainedDialog(
     context: context,
+    maxWidth: DialogConstraints.compactMaxWidth,
     builder: (context) => EditProfileDialog(user: user),
   );
 }

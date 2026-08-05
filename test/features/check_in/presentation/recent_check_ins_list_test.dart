@@ -3,6 +3,7 @@ import 'package:ebe_gym/src/features/check_in/domain/check_in.dart';
 import 'package:ebe_gym/src/features/check_in/presentation/controllers/check_in_controller.dart';
 import 'package:ebe_gym/src/features/check_in/presentation/widgets/last_check_in_panel.dart';
 import 'package:ebe_gym/src/features/check_in/presentation/widgets/recent_check_ins_list.dart';
+import 'package:ebe_gym/src/features/members/presentation/controllers/member_provider.dart';
 import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_membership_add_ons_provider.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/membership_provider.dart';
@@ -39,6 +40,13 @@ void main() {
             for (final checkIn in checkIns)
               memberActiveMembershipProvider(checkIn.memberId).overrideWith(
                 (ref) async => membership,
+              ),
+            for (final checkIn in checkIns)
+              memberProvider(checkIn.memberId).overrideWith(
+                (ref) async => buildMember(
+                  id: checkIn.memberId,
+                  name: checkIn.memberName ?? 'Jane Doe',
+                ),
               ),
             currentUserPermissionsProvider.overrideWith(
               (ref) async => const CurrentUserPermissions(
@@ -81,6 +89,11 @@ void main() {
 
       expect(find.byType(MemberMembershipDetailDialog), findsOneWidget);
       expect(find.text('Membership Details'), findsOneWidget);
+
+      final dialog = tester.widget<MemberMembershipDetailDialog>(
+        find.byType(MemberMembershipDetailDialog),
+      );
+      expect(dialog.showPhoto, isTrue);
     });
 
     testWidgets('shows snackbar when tapped member has no membership', (

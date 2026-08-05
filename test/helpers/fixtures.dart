@@ -208,6 +208,7 @@ Sale buildSale({
   String? customerId,
   String? customerName,
   String? descriptor,
+  String? idempotencyKey,
 }) {
   return Sale(
     id: id,
@@ -220,6 +221,7 @@ Sale buildSale({
     customerId: customerId,
     customerName: customerName,
     descriptor: descriptor,
+    idempotencyKey: idempotencyKey,
   );
 }
 

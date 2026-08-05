@@ -70,7 +70,7 @@ final class ProductSalesProvider
   }
 }
 
-String _$productSalesHash() => r'0a827ee5040b1c9bdc13fa633f7d12af5d77da25';
+String _$productSalesHash() => r'e8ec98d24fffcc88e89aefd47c97cc086bc465ae';
 
 /// Provider for fetching a product's recent sales history.
 

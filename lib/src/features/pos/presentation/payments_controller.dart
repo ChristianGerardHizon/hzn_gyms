@@ -54,6 +54,7 @@ class PaymentsController extends _$PaymentsController {
     required PaymentType type,
     String? paymentRef,
     String? notes,
+    String? idempotencyKey,
     http.MultipartFile? paymentProofFile,
   }) async {
     final repo = ref.read(paymentRepositoryProvider);
@@ -65,6 +66,7 @@ class PaymentsController extends _$PaymentsController {
       type: type,
       paymentRef: paymentRef,
       notes: notes,
+      idempotencyKey: idempotencyKey,
       paymentProofFile: paymentProofFile,
     );
 

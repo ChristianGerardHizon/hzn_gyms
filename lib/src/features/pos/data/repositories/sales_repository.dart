@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
@@ -124,6 +125,7 @@ class SalesRepositoryImpl implements SalesRepository {
             isWalkIn: sale.isWalkIn,
           );
         }();
+        final idempotencyKey = sale.idempotencyKey?.trim();
         final saleBody = <String, dynamic>{
           'receiptNumber': sale.receiptNumber,
           'branch': sale.branchId,
@@ -135,37 +137,98 @@ class SalesRepositoryImpl implements SalesRepository {
           if (customerName != null) 'customerName': customerName,
           'descriptor': descriptor,
           'notes': sale.notes,
+          if (idempotencyKey != null && idempotencyKey.isNotEmpty)
+            'idempotencyKey': idempotencyKey,
         };
-        final saleRecord = await _sales.create(body: saleBody);
 
-        // 2. Create Sale Items (products)
-        for (final item in items) {
-          final itemBody = <String, dynamic>{
-            'sale': saleRecord.id,
-            'productName': item.productName,
-            'quantity': item.quantity,
-            'unitPrice': item.unitPrice,
-            'subtotal': item.subtotal,
-          };
-          if (item.productId.isNotEmpty) {
-            itemBody['product'] = item.productId;
+        late final RecordModel saleRecord;
+        try {
+          saleRecord = await _sales.create(body: saleBody);
+        } on ClientException catch (error) {
+          if (idempotencyKey != null &&
+              idempotencyKey.isNotEmpty &&
+              isPocketBaseUniqueViolation(error)) {
+            final existing = await _findByIdempotencyKey(idempotencyKey);
+            if (existing != null) {
+              // Sale row may exist from a prior attempt that failed while
+              // creating line items — finish any missing items, then reuse.
+              await _ensureSaleItems(existing.id, items);
+              return existing;
+            }
           }
-          if (item.productLotId != null && item.productLotId!.isNotEmpty) {
-            itemBody['productLot'] = item.productLotId;
-            itemBody['lotNumber'] = item.lotNumber;
-          }
-          if (item.itemType != null && item.itemType!.isNotEmpty) {
-            itemBody['itemType'] = item.itemType;
-          }
-          await _saleItems.create(body: itemBody);
+          rethrow;
         }
 
-        final createdSale = _toSaleEntity(saleRecord);
+        // 2. Create Sale Items (products)
+        await _ensureSaleItems(saleRecord.id, items);
 
-        return createdSale;
+        return _toSaleEntity(saleRecord);
       },
       Failure.handle,
     ).run();
+  }
+
+  Future<Sale?> _findByIdempotencyKey(String key) async {
+    final escaped = escapeIdempotencyKeyForFilter(key);
+    final result = await _sales.getList(
+      page: 1,
+      perPage: 1,
+      filter: 'idempotencyKey = "$escaped"',
+    );
+    if (result.items.isEmpty) return null;
+    return _toSaleEntity(result.items.first);
+  }
+
+  /// Creates any [items] not already present on [saleId].
+  ///
+  /// Used both for first-time creates and idempotent retries where the sale
+  /// row exists but line-item creation previously failed mid-batch.
+  Future<void> _ensureSaleItems(String saleId, List<SaleItem> items) async {
+    if (items.isEmpty) return;
+
+    final existing = await _saleItems.getFullList(filter: 'sale = "$saleId"');
+    final existingKeys = existing.map(_saleItemMatchKey).toSet();
+
+    for (final item in items) {
+      final key = _saleItemMatchKeyFromItem(item);
+      if (existingKeys.contains(key)) continue;
+
+      final itemBody = <String, dynamic>{
+        'sale': saleId,
+        'productName': item.productName,
+        'quantity': item.quantity,
+        'unitPrice': item.unitPrice,
+        'subtotal': item.subtotal,
+      };
+      if (item.productId.isNotEmpty) {
+        itemBody['product'] = item.productId;
+      }
+      if (item.productLotId != null && item.productLotId!.isNotEmpty) {
+        itemBody['productLot'] = item.productLotId;
+        itemBody['lotNumber'] = item.lotNumber;
+      }
+      if (item.itemType != null && item.itemType!.isNotEmpty) {
+        itemBody['itemType'] = item.itemType;
+      }
+      await _saleItems.create(body: itemBody);
+      existingKeys.add(key);
+    }
+  }
+
+  static String _saleItemMatchKey(RecordModel record) {
+    final product = record.getStringValue('product');
+    final name = record.getStringValue('productName');
+    final qty = record.getDoubleValue('quantity');
+    final unitPrice = record.getDoubleValue('unitPrice');
+    final itemType = record.getStringValue('itemType');
+    return '$product|$name|${qty.toStringAsFixed(4)}|'
+        '${unitPrice.toStringAsFixed(4)}|$itemType';
+  }
+
+  static String _saleItemMatchKeyFromItem(SaleItem item) {
+    return '${item.productId}|${item.productName}|'
+        '${item.quantity.toDouble().toStringAsFixed(4)}|'
+        '${item.unitPrice.toDouble().toStringAsFixed(4)}|${item.itemType ?? ''}';
   }
 
   @override

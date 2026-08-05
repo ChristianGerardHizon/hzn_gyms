@@ -13,6 +13,7 @@ import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/utils/photo_capture_support.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../../../core/utils/search_tokens.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
@@ -43,12 +44,23 @@ import '../controllers/paginated_members_controller.dart';
 class MemberFormResult {
   const MemberFormResult({this.sale, this.totalPrice});
 
-  /// The sale created during membership purchase (null if no membership).
+  /// The sale created during membership purchase (null if no membership
+  /// or sales were excluded).
   final Sale? sale;
 
   /// Total price of the membership + add-ons.
   final num? totalPrice;
 }
+
+/// Whether the new-member wizard should create a sale for the selected plan.
+///
+/// Default is to create a sale (and open record payment). Checking
+/// "Exclude from sales" skips the sale while still creating the membership.
+bool shouldCreateNewMemberSale({
+  required bool hasSelectedMembership,
+  required bool excludeFromSales,
+}) =>
+    hasSelectedMembership && !excludeFromSales;
 
 /// Records payment after the new-member wizard when a membership sale was created.
 Future<void> handleMemberFormPaymentResult(
@@ -267,6 +279,10 @@ class _MemberCreateWizard extends HookConsumerWidget {
     // Step 4: Membership state
     final selectedMembership = useState<Membership?>(null);
     final selectedAddOns = useState<Set<MembershipAddOn>>({});
+    // Default: create a sale + open record payment. Opt out via Review checkbox.
+    final excludeFromSales = useState(false);
+    // One key for this wizard session so Save retries reuse sale/membership rows.
+    final membershipIdempotencyKey = useMemoized(generateIdempotencyKey);
 
     Future<void> handleFinish() async {
       // Validate form from step 1
@@ -353,28 +369,37 @@ class _MemberCreateWizard extends HookConsumerWidget {
           bonusDays: MembershipAddOn.totalBonusDays(selectedAddOns.value),
         );
 
-        // 2a. Create a Sale record for this membership purchase
-        final saleResult = await createMembershipSale(
-          ref: ref,
-          memberId: created.id,
-          customerName: created.name,
-          plan: plan,
-          addOns: selectedAddOns.value,
-          branchId: branchId,
+        final operationId = membershipIdempotencyKey;
+        final createSale = shouldCreateNewMemberSale(
+          hasSelectedMembership: true,
+          excludeFromSales: excludeFromSales.value,
         );
-        saleResult.fold((failure) {
-          // Sale failed — warn but continue with membership creation
-          if (context.mounted) {
-            showErrorSnackBar(
-              context,
-              message: 'Member created but failed to record sale',
-              useRootMessenger: false,
-            );
-          }
-        }, (sale) => createdSale = sale);
+
+        // 2a. Create a Sale record unless excluded from sales
+        if (createSale) {
+          final saleResult = await createMembershipSale(
+            ref: ref,
+            memberId: created.id,
+            customerName: created.name,
+            plan: plan,
+            addOns: selectedAddOns.value,
+            branchId: branchId,
+            idempotencyKey: operationId,
+          );
+          saleResult.fold((failure) {
+            // Sale failed — warn but continue with membership creation
+            if (context.mounted) {
+              showErrorSnackBar(
+                context,
+                message: 'Member created but failed to record sale',
+                useRootMessenger: false,
+              );
+            }
+          }, (sale) => createdSale = sale);
+        }
         final saleId = createdSale?.id;
 
-        // 2b. Create MemberMembership record linked to the sale
+        // 2b. Create MemberMembership record linked to the sale (if any)
         final membershipRepo = ref.read(memberMembershipRepositoryProvider);
         final result = await membershipRepo.create(
           memberId: created.id,
@@ -384,6 +409,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
           branchId: branchId,
           saleId: saleId,
           soldBy: auth?.user.id,
+          idempotencyKey: operationId,
         );
 
         final createdMembership = result.fold(
@@ -599,6 +625,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
                             pendingCardLabel: pendingCardLabel,
                             selectedMembership: selectedMembership,
                             selectedAddOns: selectedAddOns,
+                            excludeFromSales: excludeFromSales,
                             isSaving: isSaving.value,
                             onSave: handleFinish,
                             onBack: () => currentStep.value = 3,
@@ -969,7 +996,7 @@ class _MembershipStep extends StatelessWidget {
 // Step 4: Review
 // =============================================================================
 
-class _ReviewStep extends StatelessWidget {
+class _ReviewStep extends HookWidget {
   const _ReviewStep({
     required this.formKey,
     required this.photoBytes,
@@ -977,6 +1004,7 @@ class _ReviewStep extends StatelessWidget {
     required this.pendingCardLabel,
     required this.selectedMembership,
     required this.selectedAddOns,
+    required this.excludeFromSales,
     required this.isSaving,
     required this.onSave,
     required this.onBack,
@@ -988,12 +1016,17 @@ class _ReviewStep extends StatelessWidget {
   final ValueNotifier<String?> pendingCardLabel;
   final ValueNotifier<Membership?> selectedMembership;
   final ValueNotifier<Set<MembershipAddOn>> selectedAddOns;
+  final ValueNotifier<bool> excludeFromSales;
   final bool isSaving;
   final VoidCallback onSave;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
+    useListenable(excludeFromSales);
+    useListenable(selectedMembership);
+    useListenable(selectedAddOns);
+
     final theme = Theme.of(context);
     final values = formKey.currentState?.value ?? {};
     final name = formatPersonName(values['name'] as String? ?? '');
@@ -1203,6 +1236,25 @@ class _ReviewStep extends StatelessWidget {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    value: excludeFromSales.value,
+                    onChanged: isSaving
+                        ? null
+                        : (checked) {
+                            excludeFromSales.value = checked ?? false;
+                          },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('Exclude from sales'),
+                    subtitle: Text(
+                      'Create membership without a sale or payment',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 ] else
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1248,7 +1300,11 @@ class _ReviewStep extends StatelessWidget {
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Save'),
+                    : Text(
+                        plan != null && excludeFromSales.value
+                            ? 'Save (no sale)'
+                            : 'Save',
+                      ),
               ),
             ],
           ),

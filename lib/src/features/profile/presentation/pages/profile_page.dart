@@ -6,6 +6,7 @@ import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 import '../../../users/presentation/widgets/tabs/user_overview_tab.dart';
+import '../widgets/change_password_dialog.dart';
 import '../widgets/edit_profile_dialog.dart';
 
 /// Shows the signed-in user's profile with a restricted self-edit action.
@@ -41,6 +42,12 @@ class ProfilePage extends HookConsumerWidget {
             },
             orElse: () => const SizedBox.shrink(),
           ),
+          IconButton(
+            icon: const Icon(Icons.lock_outline),
+            tooltip: 'Change password',
+            onPressed: () =>
+                showChangePasswordDialog(context, userId: userId),
+          ),
         ],
       ),
       body: userAsync.when(
@@ -59,14 +66,25 @@ class ProfilePage extends HookConsumerWidget {
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () =>
-                          showEditProfileDialog(context, user: user),
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit Profile'),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: () =>
+                            showEditProfileDialog(context, user: user),
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Edit Profile'),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => showChangePasswordDialog(
+                          context,
+                          userId: user.id,
+                        ),
+                        icon: const Icon(Icons.lock_outline),
+                        label: const Text('Change Password'),
+                      ),
+                    ],
                   ),
                 ),
               ),

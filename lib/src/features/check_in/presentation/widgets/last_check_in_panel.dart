@@ -40,6 +40,7 @@ Future<void> showActiveMembershipFromCheckIn(
     memberMembership: membership,
     memberId: memberId,
     memberName: memberName,
+    showPhoto: true,
   );
 }
 

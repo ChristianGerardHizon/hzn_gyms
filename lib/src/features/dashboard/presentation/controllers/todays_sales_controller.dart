@@ -36,7 +36,8 @@ Future<List<Sale>> todaySales(Ref ref) async {
 }
 
 /// Today's sales summary (count and total amount).
-/// Uses vw_todays_sales view for optimized query.
+/// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
+/// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
 /// Filtered by the current branch.
 @riverpod
 Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {

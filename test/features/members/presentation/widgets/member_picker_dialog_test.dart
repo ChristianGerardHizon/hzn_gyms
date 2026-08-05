@@ -78,5 +78,26 @@ void main() {
 
       expect(find.text('Type at least 2 characters to search'), findsOneWidget);
     });
+
+    testWidgets('focuses the search input when opened', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SizedBox(
+                width: 400,
+                height: 700,
+                child: const MemberPickerDialog(title: 'Search Member'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.focusNode?.hasFocus, isTrue);
+    });
   });
 }

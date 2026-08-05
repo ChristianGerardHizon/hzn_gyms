@@ -63,6 +63,12 @@ class PaymentDtoMapper extends ClassMapperBase<PaymentDto> {
     _$notes,
     opt: true,
   );
+  static String? _$idempotencyKey(PaymentDto v) => v.idempotencyKey;
+  static const Field<PaymentDto, String> _f$idempotencyKey = Field(
+    'idempotencyKey',
+    _$idempotencyKey,
+    opt: true,
+  );
   static String? _$created(PaymentDto v) => v.created;
   static const Field<PaymentDto, String> _f$created = Field(
     'created',
@@ -88,6 +94,7 @@ class PaymentDtoMapper extends ClassMapperBase<PaymentDto> {
     #paymentRef: _f$paymentRef,
     #paymentProof: _f$paymentProof,
     #notes: _f$notes,
+    #idempotencyKey: _f$idempotencyKey,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -104,6 +111,7 @@ class PaymentDtoMapper extends ClassMapperBase<PaymentDto> {
       paymentRef: data.dec(_f$paymentRef),
       paymentProof: data.dec(_f$paymentProof),
       notes: data.dec(_f$notes),
+      idempotencyKey: data.dec(_f$idempotencyKey),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -180,6 +188,7 @@ abstract class PaymentDtoCopyWith<$R, $In extends PaymentDto, $Out>
     String? paymentRef,
     String? paymentProof,
     String? notes,
+    String? idempotencyKey,
     String? created,
     String? updated,
   });
@@ -206,6 +215,7 @@ class _PaymentDtoCopyWithImpl<$R, $Out>
     Object? paymentRef = $none,
     Object? paymentProof = $none,
     Object? notes = $none,
+    Object? idempotencyKey = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -220,6 +230,7 @@ class _PaymentDtoCopyWithImpl<$R, $Out>
       if (paymentRef != $none) #paymentRef: paymentRef,
       if (paymentProof != $none) #paymentProof: paymentProof,
       if (notes != $none) #notes: notes,
+      if (idempotencyKey != $none) #idempotencyKey: idempotencyKey,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -236,6 +247,7 @@ class _PaymentDtoCopyWithImpl<$R, $Out>
     paymentRef: data.get(#paymentRef, or: $value.paymentRef),
     paymentProof: data.get(#paymentProof, or: $value.paymentProof),
     notes: data.get(#notes, or: $value.notes),
+    idempotencyKey: data.get(#idempotencyKey, or: $value.idempotencyKey),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

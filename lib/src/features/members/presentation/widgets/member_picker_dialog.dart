@@ -56,6 +56,7 @@ class MemberPickerDialog extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final searchController = useTextEditingController();
+    final searchFocusNode = useFocusNode();
     final rawQuery = useState('');
     final debouncedQuery = useState('');
     final results = useState<List<Member>>([]);
@@ -72,6 +73,16 @@ class MemberPickerDialog extends HookConsumerWidget {
           )
         : null;
     final currentBranchId = ref.watch(currentBranchIdProvider);
+
+    // Dialog transitions often steal autofocus; re-request after the first frame.
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (searchFocusNode.canRequestFocus) {
+          searchFocusNode.requestFocus();
+        }
+      });
+      return null;
+    }, [searchFocusNode]);
 
     useEffect(() {
       void listener() => rawQuery.value = searchController.text;
@@ -214,6 +225,7 @@ class MemberPickerDialog extends HookConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: TextField(
                 controller: searchController,
+                focusNode: searchFocusNode,
                 autofocus: true,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
