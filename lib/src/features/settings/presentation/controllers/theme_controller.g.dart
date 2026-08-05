@@ -10,19 +10,19 @@ part of 'theme_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Controller for managing app theme mode.
 ///
-/// Handles light/dark/system theme switching with persistence.
+/// Handles light/dark/system theme switching with per-user persistence.
 
 @ProviderFor(ThemeController)
 final themeControllerProvider = ThemeControllerProvider._();
 
 /// Controller for managing app theme mode.
 ///
-/// Handles light/dark/system theme switching with persistence.
+/// Handles light/dark/system theme switching with per-user persistence.
 final class ThemeControllerProvider
     extends $AsyncNotifierProvider<ThemeController, AppThemeMode> {
   /// Controller for managing app theme mode.
   ///
-  /// Handles light/dark/system theme switching with persistence.
+  /// Handles light/dark/system theme switching with per-user persistence.
   ThemeControllerProvider._()
     : super(
         from: null,
@@ -42,11 +42,11 @@ final class ThemeControllerProvider
   ThemeController create() => ThemeController();
 }
 
-String _$themeControllerHash() => r'62889fd1a98d1ba9dd26c439c59253c7753774e0';
+String _$themeControllerHash() => r'aaca8658b88bbc9447e48aff0e9ce6df40cadb53';
 
 /// Controller for managing app theme mode.
 ///
-/// Handles light/dark/system theme switching with persistence.
+/// Handles light/dark/system theme switching with per-user persistence.
 
 abstract class _$ThemeController extends $AsyncNotifier<AppThemeMode> {
   FutureOr<AppThemeMode> build();
@@ -110,4 +110,4 @@ final class CurrentThemeModeProvider
   }
 }
 
-String _$currentThemeModeHash() => r'595f322edf28331b4188f5d37c94040c9f067ec3';
+String _$currentThemeModeHash() => r'a08a64b83db39e01edcaf0b73018f110618f7fde';

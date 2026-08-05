@@ -4,8 +4,10 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../members/presentation/controllers/member_provider.dart';
 import '../../domain/member_membership.dart';
 import '../../domain/membership_status_colors.dart';
 import '../controllers/member_membership_add_ons_provider.dart';
@@ -15,11 +17,15 @@ import 'edit_member_membership_dates_dialog.dart';
 import 'purchase_membership_dialog.dart';
 
 /// Shows details for a member's membership subscription.
+///
+/// When [showPhoto] is true, the member's profile photo is shown above the
+/// name (used from check-in so staff can verify identity).
 Future<void> showMemberMembershipDetailDialog(
   BuildContext context, {
   required MemberMembership memberMembership,
   required String memberId,
   required String memberName,
+  bool showPhoto = false,
 }) {
   return showConstrainedDialog<void>(
     context: context,
@@ -29,6 +35,7 @@ Future<void> showMemberMembershipDetailDialog(
       memberMembership: memberMembership,
       memberId: memberId,
       memberName: memberName,
+      showPhoto: showPhoto,
     ),
   );
 }
@@ -39,11 +46,13 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
     required this.memberMembership,
     required this.memberId,
     required this.memberName,
+    this.showPhoto = false,
   });
 
   final MemberMembership memberMembership;
   final String memberId;
   final String memberName;
+  final bool showPhoto;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -114,11 +123,25 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
+                  if (showPhoto) ...[
+                    Center(
+                      child: ref.watch(memberProvider(memberId)).when(
+                        loading: () => const CachedAvatar(radius: 48),
+                        error: (_, __) => const CachedAvatar(radius: 48),
+                        data: (member) => CachedAvatar(
+                          imageUrl: member?.photo,
+                          radius: 48,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Text(
                     memberName,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
+                    textAlign: showPhoto ? TextAlign.center : TextAlign.start,
                   ),
                   const SizedBox(height: 20),
                   _InfoRow(

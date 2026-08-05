@@ -30,7 +30,7 @@ void main() {
       () => sales.create(body: any(named: 'body')),
     ).thenAnswer((invocation) async {
       final body = invocation.namedArguments[#body] as Map<String, dynamic>;
-      expect(body['descriptor'], 'WATER');
+      expect(body['descriptor'], 'Walk-in · WATER');
       expect(body['customerName'], Sale.walkInLabel);
       expect(body.containsKey('member'), isFalse);
       return buildSaleRecord(id: 'sale-1', descriptor: body['descriptor'] as String);
@@ -72,6 +72,61 @@ void main() {
     );
     expect(result.isRight(), isTrue);
     verify(() => saleItems.create(body: any(named: 'body'))).called(1);
+  });
+
+  test('createSale reuses sale when idempotencyKey already exists', () async {
+    when(
+      () => sales.create(body: any(named: 'body')),
+    ).thenThrow(
+      ClientException(
+        url: Uri.parse('https://pb.test'),
+        statusCode: 400,
+        response: {
+          'data': {
+            'idempotencyKey': {
+              'code': 'validation_not_unique',
+              'message': 'Value must be unique.',
+            },
+          },
+        },
+      ),
+    );
+    when(
+      () => sales.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+      ),
+    ).thenAnswer(
+      (_) async => ResultList<RecordModel>(
+        items: [
+          buildSaleRecord(id: 'existing-sale', descriptor: 'WATER'),
+        ],
+      ),
+    );
+
+    final result = await repo.createSale(
+      buildSale(id: '', idempotencyKey: 'sale-key-1'),
+      [
+        const SaleItem(
+          id: '',
+          saleId: '',
+          productId: 'prod-1',
+          productName: 'WATER',
+          quantity: 1,
+          unitPrice: 50,
+          subtotal: 50,
+          itemType: 'product',
+        ),
+      ],
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(
+      result.getOrElse((_) => throw StateError('expected right')).id,
+      'existing-sale',
+    );
+    verifyNever(() => saleItems.create(body: any(named: 'body')));
   });
 
   test('createSale omits empty product for membership walk-in items', () async {

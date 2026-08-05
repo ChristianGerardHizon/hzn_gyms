@@ -217,6 +217,7 @@ void main() {
       branchId: 'branch-1',
       saleId: 'sale-1',
       status: MemberMembershipStatus.pending,
+      idempotencyKey: 'mm-key-1',
     );
 
     expect(result.isRight(), isTrue);
@@ -225,6 +226,57 @@ void main() {
     ).captured.single as Map<String, dynamic>;
     expect(body['status'], 'pending');
     expect(body['saleId'], 'sale-1');
+    expect(body['idempotencyKey'], 'mm-key-1');
+  });
+
+  test('create reuses membership when idempotencyKey already exists', () async {
+    when(
+      () => memberMemberships.create(body: any(named: 'body')),
+    ).thenThrow(
+      ClientException(
+        url: Uri.parse('https://pb.test'),
+        statusCode: 400,
+        response: {
+          'data': {
+            'idempotencyKey': {
+              'code': 'validation_not_unique',
+              'message': 'Value must be unique.',
+            },
+          },
+        },
+      ),
+    );
+    when(
+      () => memberMemberships.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer(
+      (_) async => ResultList<RecordModel>(
+        items: [
+          buildMemberMembershipRecord(id: 'mm-existing', status: 'pending'),
+        ],
+      ),
+    );
+
+    final result = await repo.create(
+      memberId: 'member-1',
+      membershipId: 'plan-1',
+      startDate: DateTime(2026, 1, 1),
+      endDate: DateTime(2026, 2, 1),
+      branchId: 'branch-1',
+      saleId: 'sale-1',
+      status: MemberMembershipStatus.pending,
+      idempotencyKey: 'mm-dup-key',
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(
+      result.getOrElse((_) => throw StateError('expected right')).id,
+      'mm-existing',
+    );
   });
 
   group('PBFilter.relationAny', () {

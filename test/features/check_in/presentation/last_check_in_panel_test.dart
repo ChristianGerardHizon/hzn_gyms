@@ -22,7 +22,11 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            memberProvider('member-1').overrideWith((ref) async => null),
+            memberProvider('member-1').overrideWith(
+              (ref) async => buildMember().copyWith(
+                photo: 'https://example.com/jane.jpg',
+              ),
+            ),
             memberActiveMembershipProvider('member-1').overrideWith(
               (ref) async => membership,
             ),
@@ -130,6 +134,11 @@ void main() {
       expect(find.byType(MemberMembershipDetailDialog), findsOneWidget);
       expect(find.text('Membership Details'), findsOneWidget);
       expect(find.text('Monthly Plan'), findsWidgets);
+
+      final dialog = tester.widget<MemberMembershipDetailDialog>(
+        find.byType(MemberMembershipDetailDialog),
+      );
+      expect(dialog.showPhoto, isTrue);
     });
 
     testWidgets('shows info snackbar when tapped with no membership', (

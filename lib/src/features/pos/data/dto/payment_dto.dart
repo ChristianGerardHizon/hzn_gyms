@@ -20,6 +20,7 @@ class PaymentDto with PaymentDtoMappable {
   final String? paymentRef;
   final String? paymentProof;
   final String? notes;
+  final String? idempotencyKey;
   final String? created;
   final String? updated;
 
@@ -34,6 +35,7 @@ class PaymentDto with PaymentDtoMappable {
     this.paymentRef,
     this.paymentProof,
     this.notes,
+    this.idempotencyKey,
     this.created,
     this.updated,
   });
@@ -50,6 +52,7 @@ class PaymentDto with PaymentDtoMappable {
       paymentRef: record.getStringValue('paymentRef'),
       paymentProof: record.getStringValue('paymentProof'),
       notes: record.getStringValue('notes'),
+      idempotencyKey: record.getStringValue('idempotencyKey'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
@@ -65,6 +68,10 @@ class PaymentDto with PaymentDtoMappable {
       paymentRef: paymentRef != null && paymentRef!.isNotEmpty ? paymentRef : null,
       paymentProofUrl: _buildPaymentProofUrl(baseUrl),
       notes: notes != null && notes!.isNotEmpty ? notes : null,
+      idempotencyKey:
+          idempotencyKey != null && idempotencyKey!.isNotEmpty
+              ? idempotencyKey
+              : null,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

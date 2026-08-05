@@ -1,4 +1,6 @@
 import 'package:ebe_gym/src/core/permissions/current_user_permissions.dart';
+import 'package:ebe_gym/src/core/widgets/cached_avatar.dart';
+import 'package:ebe_gym/src/features/members/presentation/controllers/member_provider.dart';
 import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
 import 'package:ebe_gym/src/features/memberships/domain/member_membership_add_on.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_membership_add_ons_provider.dart';
@@ -26,6 +28,7 @@ void main() {
       WidgetTester tester, {
       CurrentUserPermissions permissions = CurrentUserPermissions.empty,
       MemberMembership? membershipOverride,
+      bool showPhoto = false,
     }) async {
       final mm = membershipOverride ?? membership;
 
@@ -55,6 +58,12 @@ void main() {
                 ),
               ],
             ),
+            memberProvider(mm.memberId).overrideWith(
+              (ref) async => buildMember(
+                id: mm.memberId,
+                name: 'GEROME AMAR',
+              ).copyWith(photo: 'https://example.com/photo.jpg'),
+            ),
           ],
           child: MaterialApp(
             home: Builder(
@@ -66,6 +75,7 @@ void main() {
                       memberMembership: mm,
                       memberId: mm.memberId,
                       memberName: 'GEROME AMAR',
+                      showPhoto: showPhoto,
                     ),
                     child: const Text('Open'),
                   ),
@@ -90,6 +100,7 @@ void main() {
       expect(find.text('(ORIGINAL) Monthly Membership'), findsOneWidget);
       expect(find.text('Membership Fee'), findsOneWidget);
       expect(find.text('Close'), findsOneWidget);
+      expect(find.byType(CachedAvatar), findsNothing);
 
       // One Dialog from showConstrainedDialog — not a nested inner Dialog.
       expect(find.byType(Dialog), findsOneWidget);
@@ -111,6 +122,15 @@ void main() {
       expect(contentSize.height, lessThan(600));
       expect(find.text('Edit Dates'), findsNothing);
       expect(find.text('Cancel'), findsNothing);
+    });
+
+    testWidgets('shows member photo when showPhoto is true', (tester) async {
+      await openDialog(tester, showPhoto: true);
+
+      expect(find.byType(CachedAvatar), findsOneWidget);
+      final avatar = tester.widget<CachedAvatar>(find.byType(CachedAvatar));
+      expect(avatar.imageUrl, 'https://example.com/photo.jpg');
+      expect(avatar.radius, 48);
     });
 
     testWidgets('hides edit/cancel without memberships.edit', (tester) async {

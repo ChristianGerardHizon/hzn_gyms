@@ -22,6 +22,7 @@ class Sale with SaleMappable {
     this.descriptor,
     this.notes,
     this.voidedById,
+    this.idempotencyKey,
     this.created,
     this.updated,
   });
@@ -64,6 +65,9 @@ class Sale with SaleMappable {
 
   /// User ID of whoever voided this sale (null if not voided).
   final String? voidedById;
+
+  /// Client-generated key so retries reuse this sale instead of duplicating.
+  final String? idempotencyKey;
 
   /// Creation timestamp.
   final DateTime? created;

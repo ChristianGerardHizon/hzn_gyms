@@ -76,6 +76,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.34
   audioplayers: ^6.8.1
   sentry_flutter: ^8.14.2
+  uuid: ^4.6.0
 
 dev_dependencies:
   dart_mappable_builder: ^4.3.0  

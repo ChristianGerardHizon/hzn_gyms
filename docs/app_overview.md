@@ -565,6 +565,7 @@ lib/src/
 | Aug 2 | New Member card step | New Member wizard includes an optional Card step (scan or manual entry) between Photo and Membership; card is saved after member creation |
 | Aug 2 | Member photo live capture | New Member wizard and Edit Member form support live camera preview with Capture button on web/mobile; upload from file remains available as fallback |
 | Aug 2 | Dashboard Search Member | Quick action searches all branches, shows branch activity chips, routes to renew/purchase at current branch or new-member wizard when not found |
+| Aug 5 | Membership purchase guards | Warn when buying an already-active exact plan; UUID `idempotencyKey` on sales / memberMemberships / payments so retries reuse the same records instead of duplicating |
 | Aug 5 | Manila (+8) report views | Prod/local SQL views use fixed `+8 hours` (not server `localtime`/UTC) so overnight PH sales/check-ins land on the correct calendar day; `vw_todays_sales` uses Manila day UTC range |
 | Aug 2 | Member branch activity labels | Members list shows colored chips for no active branch, single branch, multiple branches, or all branches—using the same check-in access rules as membership plans |
 | Aug 1 | Calendar-correct membership duration | Plan duration is now `durationValue` + `durationUnit` (day/week/month/year) instead of a raw day count; end dates use calendar arithmetic (Aug 1 + 1 month = Sep 1) instead of a fixed day offset; existing plans backfilled |

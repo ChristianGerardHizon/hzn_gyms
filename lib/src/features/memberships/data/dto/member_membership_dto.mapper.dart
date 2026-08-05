@@ -84,6 +84,12 @@ class MemberMembershipDtoMapper extends ClassMapperBase<MemberMembershipDto> {
     _$notes,
     opt: true,
   );
+  static String? _$idempotencyKey(MemberMembershipDto v) => v.idempotencyKey;
+  static const Field<MemberMembershipDto, String> _f$idempotencyKey = Field(
+    'idempotencyKey',
+    _$idempotencyKey,
+    opt: true,
+  );
   static String? _$created(MemberMembershipDto v) => v.created;
   static const Field<MemberMembershipDto, String> _f$created = Field(
     'created',
@@ -132,6 +138,7 @@ class MemberMembershipDtoMapper extends ClassMapperBase<MemberMembershipDto> {
     #sale: _f$sale,
     #soldBy: _f$soldBy,
     #notes: _f$notes,
+    #idempotencyKey: _f$idempotencyKey,
     #created: _f$created,
     #updated: _f$updated,
     #memberName: _f$memberName,
@@ -153,6 +160,7 @@ class MemberMembershipDtoMapper extends ClassMapperBase<MemberMembershipDto> {
       sale: data.dec(_f$sale),
       soldBy: data.dec(_f$soldBy),
       notes: data.dec(_f$notes),
+      idempotencyKey: data.dec(_f$idempotencyKey),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
       memberName: data.dec(_f$memberName),
@@ -246,6 +254,7 @@ abstract class MemberMembershipDtoCopyWith<
     String? sale,
     String? soldBy,
     String? notes,
+    String? idempotencyKey,
     String? created,
     String? updated,
     String? memberName,
@@ -286,6 +295,7 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
     Object? sale = $none,
     Object? soldBy = $none,
     Object? notes = $none,
+    Object? idempotencyKey = $none,
     Object? created = $none,
     Object? updated = $none,
     Object? memberName = $none,
@@ -305,6 +315,7 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
       if (sale != $none) #sale: sale,
       if (soldBy != $none) #soldBy: soldBy,
       if (notes != $none) #notes: notes,
+      if (idempotencyKey != $none) #idempotencyKey: idempotencyKey,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
       if (memberName != $none) #memberName: memberName,
@@ -327,6 +338,7 @@ class _MemberMembershipDtoCopyWithImpl<$R, $Out>
     sale: data.get(#sale, or: $value.sale),
     soldBy: data.get(#soldBy, or: $value.soldBy),
     notes: data.get(#notes, or: $value.notes),
+    idempotencyKey: data.get(#idempotencyKey, or: $value.idempotencyKey),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
     memberName: data.get(#memberName, or: $value.memberName),

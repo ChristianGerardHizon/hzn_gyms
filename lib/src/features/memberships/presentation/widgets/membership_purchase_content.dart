@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
@@ -15,11 +16,13 @@ import '../../data/membership_purchase_orchestrator.dart';
 import '../../data/membership_sale_helper.dart';
 import '../../data/repositories/member_membership_add_on_repository.dart';
 import '../../data/repositories/member_membership_repository.dart';
+import '../../domain/active_membership_plan.dart';
 import '../../domain/member_membership.dart';
 import '../../domain/membership.dart';
 import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
 import '../controllers/memberships_controller.dart';
+import 'active_membership_warning_dialog.dart';
 
 /// Reusable membership plan selection + add-on content.
 ///
@@ -257,6 +260,32 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         if (!canCreate || !context.mounted) return;
       }
 
+      // Warn when this exact plan is already active (non-renewal member buys).
+      if (!guestMode && !isRenewal) {
+        final activeResult = await ref
+            .read(memberMembershipRepositoryProvider)
+            .fetchActive(memberId);
+        final activeSamePlan = activeResult.fold(
+          (_) => null,
+          (memberships) => findActiveMembershipForPlan(
+            memberships: memberships,
+            planId: plan.id,
+          ),
+        );
+        if (activeSamePlan != null) {
+          if (!context.mounted) return;
+          final continueAnyway = await showActiveMembershipWarningDialog(
+            context,
+            memberName: resolvedName,
+            planName: plan.name,
+          );
+          if (continueAnyway != true || !context.mounted) return;
+        }
+      }
+
+      // One UUID for this purchase action — sale + membership share it.
+      final operationId = generateIdempotencyKey();
+
       isPurchasing.value = true;
 
       final branchId = ref.read(effectiveBranchIdForWriteProvider) ?? '';
@@ -331,6 +360,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
           plan: plan,
           addOns: addOnsState.value,
           branchId: branchId,
+          idempotencyKey: operationId,
         );
 
         saleResult.fold((failure) {}, (sale) => createdSale = sale);
@@ -387,6 +417,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         branchId: branchId,
         saleId: createdSale?.id,
         soldBy: auth?.user.id,
+        idempotencyKey: operationId,
         status: createdSale != null
             ? MemberMembershipStatus.pending
             : MemberMembershipStatus.active,

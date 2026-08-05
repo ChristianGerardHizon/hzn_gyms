@@ -70,6 +70,10 @@ abstract class _$PbDebugController extends $AsyncNotifier<bool> {
 ///
 /// The instance uses the URL resolved from --dart-define=ENV or falls back
 /// to kDebugMode-based selection.
+///
+/// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
+/// very slow connection fails fast with an error instead of leaving the UI
+/// spinning indefinitely.
 
 @ProviderFor(pocketbase)
 final pocketbaseProvider = PocketbaseProvider._();
@@ -78,6 +82,10 @@ final pocketbaseProvider = PocketbaseProvider._();
 ///
 /// The instance uses the URL resolved from --dart-define=ENV or falls back
 /// to kDebugMode-based selection.
+///
+/// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
+/// very slow connection fails fast with an error instead of leaving the UI
+/// spinning indefinitely.
 
 final class PocketbaseProvider
     extends $FunctionalProvider<PocketBase, PocketBase, PocketBase>
@@ -86,6 +94,10 @@ final class PocketbaseProvider
   ///
   /// The instance uses the URL resolved from --dart-define=ENV or falls back
   /// to kDebugMode-based selection.
+  ///
+  /// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
+  /// very slow connection fails fast with an error instead of leaving the UI
+  /// spinning indefinitely.
   PocketbaseProvider._()
     : super(
         from: null,
@@ -119,4 +131,4 @@ final class PocketbaseProvider
   }
 }
 
-String _$pocketbaseHash() => r'504c7dfbfae9874cc12c1a0bbf23d94b01a9e525';
+String _$pocketbaseHash() => r'c3a8cc2ec43292c31c15705e88b4ddb6f495e15d';

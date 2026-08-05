@@ -13,6 +13,7 @@ import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/utils/photo_capture_support.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../../../core/utils/search_tokens.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
@@ -354,6 +355,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
         );
 
         // 2a. Create a Sale record for this membership purchase
+        final operationId = generateIdempotencyKey();
         final saleResult = await createMembershipSale(
           ref: ref,
           memberId: created.id,
@@ -361,6 +363,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
           plan: plan,
           addOns: selectedAddOns.value,
           branchId: branchId,
+          idempotencyKey: operationId,
         );
         saleResult.fold((failure) {
           // Sale failed — warn but continue with membership creation
@@ -384,6 +387,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
           branchId: branchId,
           saleId: saleId,
           soldBy: auth?.user.id,
+          idempotencyKey: operationId,
         );
 
         final createdMembership = result.fold(

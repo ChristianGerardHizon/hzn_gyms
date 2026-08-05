@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../../../core/foundation/failure.dart';
 import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
@@ -124,6 +125,7 @@ class SalesRepositoryImpl implements SalesRepository {
             isWalkIn: sale.isWalkIn,
           );
         }();
+        final idempotencyKey = sale.idempotencyKey?.trim();
         final saleBody = <String, dynamic>{
           'receiptNumber': sale.receiptNumber,
           'branch': sale.branchId,
@@ -135,8 +137,22 @@ class SalesRepositoryImpl implements SalesRepository {
           if (customerName != null) 'customerName': customerName,
           'descriptor': descriptor,
           'notes': sale.notes,
+          if (idempotencyKey != null && idempotencyKey.isNotEmpty)
+            'idempotencyKey': idempotencyKey,
         };
-        final saleRecord = await _sales.create(body: saleBody);
+
+        late final RecordModel saleRecord;
+        try {
+          saleRecord = await _sales.create(body: saleBody);
+        } on ClientException catch (error) {
+          if (idempotencyKey != null &&
+              idempotencyKey.isNotEmpty &&
+              isPocketBaseUniqueViolation(error)) {
+            final existing = await _findByIdempotencyKey(idempotencyKey);
+            if (existing != null) return existing;
+          }
+          rethrow;
+        }
 
         // 2. Create Sale Items (products)
         for (final item in items) {
@@ -160,12 +176,21 @@ class SalesRepositoryImpl implements SalesRepository {
           await _saleItems.create(body: itemBody);
         }
 
-        final createdSale = _toSaleEntity(saleRecord);
-
-        return createdSale;
+        return _toSaleEntity(saleRecord);
       },
       Failure.handle,
     ).run();
+  }
+
+  Future<Sale?> _findByIdempotencyKey(String key) async {
+    final escaped = escapeIdempotencyKeyForFilter(key);
+    final result = await _sales.getList(
+      page: 1,
+      perPage: 1,
+      filter: 'idempotencyKey = "$escaped"',
+    );
+    if (result.items.isEmpty) return null;
+    return _toSaleEntity(result.items.first);
   }
 
   @override
