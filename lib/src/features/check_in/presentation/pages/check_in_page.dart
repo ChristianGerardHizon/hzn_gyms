@@ -145,6 +145,7 @@ class CheckInPage extends HookConsumerWidget {
         final membership = activeMembership.value;
         final hadActiveMembership = membership != null;
         final checkedInMemberName = member.name;
+        final checkedInMemberPhoto = member.photo;
 
         clearSelection();
 
@@ -155,6 +156,7 @@ class CheckInPage extends HookConsumerWidget {
           membershipName: membership?.membershipName,
           membershipEndDate: membership?.endDate,
           membershipDaysRemaining: membership?.daysRemaining,
+          memberPhotoUrl: checkedInMemberPhoto,
         );
         if (context.mounted) {
           readyForNextScan();
@@ -193,6 +195,7 @@ class CheckInPage extends HookConsumerWidget {
           :final membershipName,
           :final membershipEndDate,
           :final membershipDaysRemaining,
+          :final memberPhoto,
         ):
           clearSelection();
           await showCheckInSuccessDialog(
@@ -202,6 +205,7 @@ class CheckInPage extends HookConsumerWidget {
             membershipName: membershipName,
             membershipEndDate: membershipEndDate,
             membershipDaysRemaining: membershipDaysRemaining,
+            memberPhotoUrl: memberPhoto,
           );
           if (context.mounted) {
             readyForNextScan();

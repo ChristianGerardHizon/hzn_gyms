@@ -214,6 +214,7 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
           :final membershipName,
           :final membershipEndDate,
           :final membershipDaysRemaining,
+          :final memberPhoto,
         ):
           await showCheckInSuccessDialog(
             context,
@@ -222,6 +223,7 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
             membershipName: membershipName,
             membershipEndDate: membershipEndDate,
             membershipDaysRemaining: membershipDaysRemaining,
+            memberPhotoUrl: memberPhoto,
           );
         case CardCheckInCardNotFound():
           await showCheckInErrorDialog(

@@ -60,6 +60,7 @@ void main() {
 
       expect(find.text('No membership at this branch'), findsOneWidget);
       expect(find.text('Purchase membership'), findsOneWidget);
+      expect(find.text('Add Card'), findsOneWidget);
       expect(find.text('Active at other branches'), findsOneWidget);
     });
 
@@ -108,6 +109,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Renew membership'), findsOneWidget);
+      expect(find.text('Add Card'), findsOneWidget);
       expect(find.text('Monthly Plan'), findsOneWidget);
     });
   });

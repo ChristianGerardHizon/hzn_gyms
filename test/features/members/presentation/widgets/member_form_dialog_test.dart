@@ -40,4 +40,20 @@ void main() {
       );
     });
   });
+
+  group('member form required fields', () {
+    test('name validator rejects empty values', () {
+      final validator = memberNameValidator();
+      expect(validator(null), isNotNull);
+      expect(validator(''), isNotNull);
+      expect(validator('Jane Doe'), isNull);
+    });
+
+    test('mobile number validator rejects empty values', () {
+      final validator = memberMobileNumberValidator();
+      expect(validator(null), isNotNull);
+      expect(validator(''), isNotNull);
+      expect(validator('09171234567'), isNull);
+    });
+  });
 }

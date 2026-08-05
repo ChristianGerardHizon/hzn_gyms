@@ -8,6 +8,8 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/state/error_state.dart';
+import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
+import '../../../member_cards/presentation/widgets/add_card_dialog.dart';
 import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_branch_activity_controller.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
@@ -571,6 +573,20 @@ class _ActionButtons extends ConsumerWidget {
                 },
           icon: Icon(hasRenewable ? Icons.autorenew : Icons.add),
           label: Text(renewLabel),
+        ),
+        const SizedBox(height: 8),
+        FilledButton.tonalIcon(
+          onPressed: () async {
+            final result = await showAddCardDialog(
+              context,
+              memberId: memberId,
+            );
+            if (result == true) {
+              ref.invalidate(memberCardsControllerProvider(memberId));
+            }
+          },
+          icon: const Icon(Icons.credit_card),
+          label: const Text('Add Card'),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(

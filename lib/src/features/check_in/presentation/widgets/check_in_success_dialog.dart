@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../../../../core/widgets/cached_avatar.dart';
 import '../../domain/check_in_chime.dart';
 import '../../domain/membership_expiry_label.dart';
 import '../../../memberships/domain/membership_status_colors.dart';
@@ -16,6 +17,7 @@ Future<void> showCheckInSuccessDialog(
   String? membershipName,
   DateTime? membershipEndDate,
   int? membershipDaysRemaining,
+  String? memberPhotoUrl,
 }) {
   CheckInSoundPlayer.play(
     hasActiveMembership
@@ -31,6 +33,7 @@ Future<void> showCheckInSuccessDialog(
       membershipName: membershipName,
       membershipEndDate: membershipEndDate,
       membershipDaysRemaining: membershipDaysRemaining,
+      memberPhotoUrl: memberPhotoUrl,
     ),
   );
 }
@@ -42,6 +45,7 @@ class _CheckInSuccessDialog extends HookWidget {
     this.membershipName,
     this.membershipEndDate,
     this.membershipDaysRemaining,
+    this.memberPhotoUrl,
   });
 
   final String memberName;
@@ -49,6 +53,7 @@ class _CheckInSuccessDialog extends HookWidget {
   final String? membershipName;
   final DateTime? membershipEndDate;
   final int? membershipDaysRemaining;
+  final String? memberPhotoUrl;
 
   static const _autoCloseDuration = 4;
 
@@ -84,16 +89,38 @@ class _CheckInSuccessDialog extends HookWidget {
             ? Colors.green
             : Colors.red;
 
+    final statusColor = hasActiveMembership ? Colors.green : Colors.red;
+
     return AlertDialog(
-      icon: Icon(
-        hasActiveMembership ? Icons.check_circle : Icons.warning_amber_rounded,
-        color: hasActiveMembership ? Colors.green : Colors.red,
-        size: 48,
-      ),
-      title: const Text('Check-In Successful'),
+      title: const Text('Check-In Successful', textAlign: TextAlign.center),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CachedAvatar(imageUrl: memberPhotoUrl, radius: 48),
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    hasActiveMembership
+                        ? Icons.check_circle
+                        : Icons.warning_amber_rounded,
+                    color: statusColor,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Text(
             memberName,
             style: theme.textTheme.titleMedium?.copyWith(

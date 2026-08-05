@@ -81,7 +81,7 @@ class MemberCardRepositoryImpl implements MemberCardRepository {
   }
 
   MemberCard _toEntity(RecordModel record) {
-    return MemberCardDto.fromRecord(record).toEntity();
+    return MemberCardDto.fromRecord(record).toEntity(baseUrl: _pb.baseURL);
   }
 
   @override

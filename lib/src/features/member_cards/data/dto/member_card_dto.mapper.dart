@@ -85,6 +85,18 @@ class MemberCardDtoMapper extends ClassMapperBase<MemberCardDto> {
     _$memberName,
     opt: true,
   );
+  static String? _$memberPhoto(MemberCardDto v) => v.memberPhoto;
+  static const Field<MemberCardDto, String> _f$memberPhoto = Field(
+    'memberPhoto',
+    _$memberPhoto,
+    opt: true,
+  );
+  static String? _$memberUpdated(MemberCardDto v) => v.memberUpdated;
+  static const Field<MemberCardDto, String> _f$memberUpdated = Field(
+    'memberUpdated',
+    _$memberUpdated,
+    opt: true,
+  );
 
   @override
   final MappableFields<MemberCardDto> fields = const {
@@ -100,6 +112,8 @@ class MemberCardDtoMapper extends ClassMapperBase<MemberCardDto> {
     #created: _f$created,
     #updated: _f$updated,
     #memberName: _f$memberName,
+    #memberPhoto: _f$memberPhoto,
+    #memberUpdated: _f$memberUpdated,
   };
 
   static MemberCardDto _instantiate(DecodingData data) {
@@ -116,6 +130,8 @@ class MemberCardDtoMapper extends ClassMapperBase<MemberCardDto> {
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
       memberName: data.dec(_f$memberName),
+      memberPhoto: data.dec(_f$memberPhoto),
+      memberUpdated: data.dec(_f$memberUpdated),
     );
   }
 
@@ -194,6 +210,8 @@ abstract class MemberCardDtoCopyWith<$R, $In extends MemberCardDto, $Out>
     String? created,
     String? updated,
     String? memberName,
+    String? memberPhoto,
+    String? memberUpdated,
   });
   MemberCardDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -220,6 +238,8 @@ class _MemberCardDtoCopyWithImpl<$R, $Out>
     Object? created = $none,
     Object? updated = $none,
     Object? memberName = $none,
+    Object? memberPhoto = $none,
+    Object? memberUpdated = $none,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -234,6 +254,8 @@ class _MemberCardDtoCopyWithImpl<$R, $Out>
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
       if (memberName != $none) #memberName: memberName,
+      if (memberPhoto != $none) #memberPhoto: memberPhoto,
+      if (memberUpdated != $none) #memberUpdated: memberUpdated,
     }),
   );
   @override
@@ -250,6 +272,8 @@ class _MemberCardDtoCopyWithImpl<$R, $Out>
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
     memberName: data.get(#memberName, or: $value.memberName),
+    memberPhoto: data.get(#memberPhoto, or: $value.memberPhoto),
+    memberUpdated: data.get(#memberUpdated, or: $value.memberUpdated),
   );
 
   @override

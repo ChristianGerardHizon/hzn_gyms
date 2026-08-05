@@ -166,6 +166,7 @@ MemberCard buildMemberCard({
   String memberId = 'member-1',
   String cardValue = 'RFID123',
   String? memberName = 'Jane Doe',
+  String? memberPhoto,
   MemberCardStatus status = MemberCardStatus.active,
 }) {
   return MemberCard(
@@ -174,6 +175,7 @@ MemberCard buildMemberCard({
     cardValue: cardValue,
     status: status,
     memberName: memberName,
+    memberPhoto: memberPhoto,
   );
 }
 
