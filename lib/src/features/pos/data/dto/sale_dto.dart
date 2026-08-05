@@ -22,6 +22,7 @@ class SaleDto with SaleDtoMappable {
   final String? descriptor;
   final String? notes;
   final String? voidedBy;
+  final String? idempotencyKey;
   final String? created;
   final String? updated;
 
@@ -40,6 +41,7 @@ class SaleDto with SaleDtoMappable {
     this.descriptor,
     this.notes,
     this.voidedBy,
+    this.idempotencyKey,
     this.created,
     this.updated,
   });
@@ -60,6 +62,7 @@ class SaleDto with SaleDtoMappable {
       descriptor: record.getStringValue('descriptor'),
       notes: record.getStringValue('notes'),
       voidedBy: record.getStringValue('voidedBy'),
+      idempotencyKey: record.getStringValue('idempotencyKey'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
     );
@@ -79,6 +82,10 @@ class SaleDto with SaleDtoMappable {
       descriptor: descriptor != null && descriptor!.isNotEmpty ? descriptor : null,
       notes: notes,
       voidedById: voidedBy != null && voidedBy!.isNotEmpty ? voidedBy : null,
+      idempotencyKey:
+          idempotencyKey != null && idempotencyKey!.isNotEmpty
+              ? idempotencyKey
+              : null,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

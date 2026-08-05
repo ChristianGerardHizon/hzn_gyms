@@ -44,7 +44,7 @@ final class CameraPreferenceControllerProvider
 }
 
 String _$cameraPreferenceControllerHash() =>
-    r'68d1c72ff54408afaedf0daa6a843db9eeb65e17';
+    r'da41835446b71c43dde146bcee8bfeeff8cd74d4';
 
 /// Controller for the preferred camera device used for live photo capture.
 ///

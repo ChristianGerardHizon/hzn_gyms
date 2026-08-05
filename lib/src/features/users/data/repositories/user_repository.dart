@@ -63,6 +63,13 @@ abstract class UserRepository {
   /// Resets a user's password (admin action).
   FutureEither<void> resetPassword(String userId, String newPassword);
 
+  /// Changes the signed-in user's password (requires current password).
+  FutureEither<void> changePassword({
+    required String userId,
+    required String oldPassword,
+    required String newPassword,
+  });
+
   /// Invalidates the user list cache.
   void invalidateCache();
 }
@@ -327,6 +334,24 @@ class UserRepositoryImpl implements UserRepository {
       await _collection.update(
         userId,
         body: {'password': newPassword, 'passwordConfirm': newPassword},
+      );
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<void> changePassword({
+    required String userId,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      await _collection.update(
+        userId,
+        body: {
+          'oldPassword': oldPassword,
+          'password': newPassword,
+          'passwordConfirm': newPassword,
+        },
       );
     }, Failure.handle).run();
   }

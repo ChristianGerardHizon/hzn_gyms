@@ -87,6 +87,12 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
     _$voidedBy,
     opt: true,
   );
+  static String? _$idempotencyKey(SaleDto v) => v.idempotencyKey;
+  static const Field<SaleDto, String> _f$idempotencyKey = Field(
+    'idempotencyKey',
+    _$idempotencyKey,
+    opt: true,
+  );
   static String? _$created(SaleDto v) => v.created;
   static const Field<SaleDto, String> _f$created = Field(
     'created',
@@ -116,6 +122,7 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
     #descriptor: _f$descriptor,
     #notes: _f$notes,
     #voidedBy: _f$voidedBy,
+    #idempotencyKey: _f$idempotencyKey,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -136,6 +143,7 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
       descriptor: data.dec(_f$descriptor),
       notes: data.dec(_f$notes),
       voidedBy: data.dec(_f$voidedBy),
+      idempotencyKey: data.dec(_f$idempotencyKey),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -213,6 +221,7 @@ abstract class SaleDtoCopyWith<$R, $In extends SaleDto, $Out>
     String? descriptor,
     String? notes,
     String? voidedBy,
+    String? idempotencyKey,
     String? created,
     String? updated,
   });
@@ -243,6 +252,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
     Object? descriptor = $none,
     Object? notes = $none,
     Object? voidedBy = $none,
+    Object? idempotencyKey = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -261,6 +271,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
       if (descriptor != $none) #descriptor: descriptor,
       if (notes != $none) #notes: notes,
       if (voidedBy != $none) #voidedBy: voidedBy,
+      if (idempotencyKey != $none) #idempotencyKey: idempotencyKey,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -281,6 +292,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
     descriptor: data.get(#descriptor, or: $value.descriptor),
     notes: data.get(#notes, or: $value.notes),
     voidedBy: data.get(#voidedBy, or: $value.voidedBy),
+    idempotencyKey: data.get(#idempotencyKey, or: $value.idempotencyKey),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

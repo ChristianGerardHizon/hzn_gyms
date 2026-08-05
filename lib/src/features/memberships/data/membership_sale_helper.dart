@@ -18,6 +18,9 @@ import '../domain/membership_add_on.dart';
 ///
 /// When [memberId] is null/empty (walk-in / day pass), the sale stores only
 /// [customerName] with no linked member.
+///
+/// Pass [idempotencyKey] so retries reuse the same sale instead of creating
+/// a duplicate.
 Future<Either<Failure, Sale>> createMembershipSale({
   required WidgetRef ref,
   String? memberId,
@@ -25,6 +28,7 @@ Future<Either<Failure, Sale>> createMembershipSale({
   required Membership plan,
   required Set<MembershipAddOn> addOns,
   required String branchId,
+  String? idempotencyKey,
 }) async {
   final auth = ref.read(currentAuthProvider);
   if (auth == null) {
@@ -56,6 +60,7 @@ Future<Either<Failure, Sale>> createMembershipSale({
     isPaid: false,
     customerId: hasMember ? linkedMemberId : null,
     customerName: resolvedCustomerName,
+    idempotencyKey: idempotencyKey,
   );
 
   // Build sale items

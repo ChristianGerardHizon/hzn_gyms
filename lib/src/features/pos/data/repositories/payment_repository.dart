@@ -7,6 +7,7 @@ import '../../../../core/foundation/failure.dart';
 import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../domain/payment.dart';
 import '../../domain/payment_method.dart';
 import '../../domain/payment_type.dart';
@@ -26,6 +27,10 @@ typedef PaymentCreateResult = ({
 
 abstract class PaymentRepository {
   /// Creates a new payment and updates the sale's isPaid status.
+  ///
+  /// When [idempotencyKey] is set, retries that hit a unique conflict return
+  /// the existing payment. If the sale is already paid, returns an existing
+  /// payment without inserting another row.
   FutureEither<PaymentCreateResult> create({
     required String saleId,
     required num amount,
@@ -33,6 +38,7 @@ abstract class PaymentRepository {
     required PaymentType type,
     String? paymentRef,
     String? notes,
+    String? idempotencyKey,
     http.MultipartFile? paymentProofFile,
   });
 
@@ -71,24 +77,76 @@ class PaymentRepositoryImpl implements PaymentRepository {
     required PaymentType type,
     String? paymentRef,
     String? notes,
+    String? idempotencyKey,
     http.MultipartFile? paymentProofFile,
   }) async {
     return TaskEither.tryCatch(
       () async {
-        // Create payment record
-        final body = {
+        final sale = await _sales.getOne(saleId);
+        final currentStatus = sale.getStringValue('status');
+        if (sale.getBoolValue('isPaid')) {
+          final existingPayments = await _payments.getFullList(
+            filter: 'sale = "$saleId"',
+            sort: '-created',
+          );
+          if (existingPayments.isNotEmpty) {
+            return (
+              payment: _toEntity(existingPayments.first),
+              saleIsPaid: true,
+              saleStatus: currentStatus,
+            );
+          }
+          // Already marked paid but no payment rows (legacy / manual flag) —
+          // do not insert another payment.
+          return (
+            payment: Payment(
+              id: '',
+              saleId: saleId,
+              amount: sale.getDoubleValue('totalAmount'),
+              paymentMethod: paymentMethod,
+              type: type,
+              paymentRef: paymentRef,
+              notes: notes,
+              idempotencyKey: idempotencyKey?.trim(),
+            ),
+            saleIsPaid: true,
+            saleStatus: currentStatus,
+          );
+        }
+
+        final key = idempotencyKey?.trim();
+        final body = <String, dynamic>{
           'sale': saleId,
           'amount': amount,
           'paymentMethod': paymentMethod.name,
           'type': type.name,
           'paymentRef': paymentRef,
           'notes': notes,
+          if (key != null && key.isNotEmpty) 'idempotencyKey': key,
         };
 
-        final record = await _payments.create(
-          body: body,
-          files: paymentProofFile != null ? [paymentProofFile] : [],
-        );
+        late final RecordModel record;
+        try {
+          record = await _payments.create(
+            body: body,
+            files: paymentProofFile != null ? [paymentProofFile] : [],
+          );
+        } on ClientException catch (error) {
+          if (key != null &&
+              key.isNotEmpty &&
+              isPocketBaseUniqueViolation(error)) {
+            final existing = await _findByIdempotencyKey(key);
+            if (existing != null) {
+              final resolved = await _updateSaleIsPaid(saleId);
+              return (
+                payment: existing,
+                saleIsPaid: resolved.isPaid,
+                saleStatus: resolved.status,
+              );
+            }
+          }
+          rethrow;
+        }
 
         // Update sale's isPaid status
         final resolved = await _updateSaleIsPaid(saleId);
@@ -101,6 +159,17 @@ class PaymentRepositoryImpl implements PaymentRepository {
       },
       Failure.handle,
     ).run();
+  }
+
+  Future<Payment?> _findByIdempotencyKey(String key) async {
+    final escaped = escapeIdempotencyKeyForFilter(key);
+    final result = await _payments.getList(
+      page: 1,
+      perPage: 1,
+      filter: 'idempotencyKey = "$escaped"',
+    );
+    if (result.items.isEmpty) return null;
+    return _toEntity(result.items.first);
   }
 
   @override

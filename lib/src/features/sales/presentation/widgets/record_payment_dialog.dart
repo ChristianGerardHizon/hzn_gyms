@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -53,6 +54,8 @@ class RecordPaymentDialog extends HookConsumerWidget {
     final isSaving = useState(false);
     final selectedPaymentType = useState(PaymentType.payment);
     final proofImage = useState<XFile?>(null);
+    // One key for this dialog session so retries reuse the same payment row.
+    final paymentIdempotencyKey = useMemoized(generateIdempotencyKey);
     final currencyFormat =
         NumberFormat.currency(symbol: '\u20B1', decimalDigits: 2);
     final imagePicker = useMemoized(() => ImagePicker());
@@ -125,6 +128,7 @@ class RecordPaymentDialog extends HookConsumerWidget {
         type: paymentType,
         paymentRef: paymentRef,
         notes: notes,
+        idempotencyKey: paymentIdempotencyKey,
         paymentProofFile: proofFile,
       );
 

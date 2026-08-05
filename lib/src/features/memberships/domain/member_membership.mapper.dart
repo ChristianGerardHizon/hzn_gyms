@@ -151,6 +151,12 @@ class MemberMembershipMapper extends ClassMapperBase<MemberMembership> {
     _$notes,
     opt: true,
   );
+  static String? _$idempotencyKey(MemberMembership v) => v.idempotencyKey;
+  static const Field<MemberMembership, String> _f$idempotencyKey = Field(
+    'idempotencyKey',
+    _$idempotencyKey,
+    opt: true,
+  );
   static DateTime? _$created(MemberMembership v) => v.created;
   static const Field<MemberMembership, DateTime> _f$created = Field(
     'created',
@@ -179,6 +185,7 @@ class MemberMembershipMapper extends ClassMapperBase<MemberMembership> {
     #saleId: _f$saleId,
     #soldBy: _f$soldBy,
     #notes: _f$notes,
+    #idempotencyKey: _f$idempotencyKey,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -198,6 +205,7 @@ class MemberMembershipMapper extends ClassMapperBase<MemberMembership> {
       saleId: data.dec(_f$saleId),
       soldBy: data.dec(_f$soldBy),
       notes: data.dec(_f$notes),
+      idempotencyKey: data.dec(_f$idempotencyKey),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -281,6 +289,7 @@ abstract class MemberMembershipCopyWith<$R, $In extends MemberMembership, $Out>
     String? saleId,
     String? soldBy,
     String? notes,
+    String? idempotencyKey,
     DateTime? created,
     DateTime? updated,
   });
@@ -319,6 +328,7 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
     Object? saleId = $none,
     Object? soldBy = $none,
     Object? notes = $none,
+    Object? idempotencyKey = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -337,6 +347,7 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
       if (saleId != $none) #saleId: saleId,
       if (soldBy != $none) #soldBy: soldBy,
       if (notes != $none) #notes: notes,
+      if (idempotencyKey != $none) #idempotencyKey: idempotencyKey,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -359,6 +370,7 @@ class _MemberMembershipCopyWithImpl<$R, $Out>
     saleId: data.get(#saleId, or: $value.saleId),
     soldBy: data.get(#soldBy, or: $value.soldBy),
     notes: data.get(#notes, or: $value.notes),
+    idempotencyKey: data.get(#idempotencyKey, or: $value.idempotencyKey),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

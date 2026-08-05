@@ -55,14 +55,16 @@ final class TodaySalesProvider
 String _$todaySalesHash() => r'463641acfebbfe000e0aaa7a232ad38f4f0c2293';
 
 /// Today's sales summary (count and total amount).
-/// Uses vw_todays_sales view for optimized query.
+/// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
+/// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
 /// Filtered by the current branch.
 
 @ProviderFor(todaySalesSummary)
 final todaySalesSummaryProvider = TodaySalesSummaryProvider._();
 
 /// Today's sales summary (count and total amount).
-/// Uses vw_todays_sales view for optimized query.
+/// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
+/// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
 /// Filtered by the current branch.
 
 final class TodaySalesSummaryProvider
@@ -76,7 +78,8 @@ final class TodaySalesSummaryProvider
         $FutureModifier<TodaySalesSummary>,
         $FutureProvider<TodaySalesSummary> {
   /// Today's sales summary (count and total amount).
-  /// Uses vw_todays_sales view for optimized query.
+  /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
+  /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
   /// Filtered by the current branch.
   TodaySalesSummaryProvider._()
     : super(

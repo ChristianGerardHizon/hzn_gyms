@@ -19,6 +19,7 @@ class Payment with PaymentMappable {
     this.paymentRef,
     this.paymentProofUrl,
     this.notes,
+    this.idempotencyKey,
     this.created,
     this.updated,
   });
@@ -46,6 +47,9 @@ class Payment with PaymentMappable {
 
   /// Optional notes.
   final String? notes;
+
+  /// Client-generated key so retries reuse this payment instead of duplicating.
+  final String? idempotencyKey;
 
   /// Creation timestamp.
   final DateTime? created;

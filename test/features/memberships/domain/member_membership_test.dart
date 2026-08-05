@@ -14,6 +14,12 @@ void main() {
       );
       expect(active.isCurrentlyActive, isTrue);
 
+      final startsNow = buildMemberMembership(
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(const Duration(days: 30)),
+      );
+      expect(startsNow.isCurrentlyActive, isTrue);
+
       final cancelled = buildMemberMembership(
         status: MemberMembershipStatus.cancelled,
       );

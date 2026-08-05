@@ -21,6 +21,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
   final String? sale;
   final String? soldBy;
   final String? notes;
+  final String? idempotencyKey;
   final String? created;
   final String? updated;
 
@@ -42,6 +43,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
     this.sale,
     this.soldBy,
     this.notes,
+    this.idempotencyKey,
     this.created,
     this.updated,
     this.memberName,
@@ -69,6 +71,7 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
       sale: record.getStringValue('saleId'),
       soldBy: record.getStringValue('soldBy'),
       notes: record.getStringValue('notes'),
+      idempotencyKey: record.getStringValue('idempotencyKey'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
       memberName: memberExpand?.getStringValue('name'),
@@ -100,6 +103,10 @@ class MemberMembershipDto with MemberMembershipDtoMappable {
       saleId: sale != null && sale!.isNotEmpty ? sale : null,
       soldBy: soldBy != null && soldBy!.isNotEmpty ? soldBy : null,
       notes: notes != null && notes!.isNotEmpty ? notes : null,
+      idempotencyKey:
+          idempotencyKey != null && idempotencyKey!.isNotEmpty
+              ? idempotencyKey
+              : null,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

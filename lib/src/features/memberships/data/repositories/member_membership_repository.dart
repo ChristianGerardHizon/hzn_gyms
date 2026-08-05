@@ -8,6 +8,7 @@ import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/idempotency.dart';
 import '../../domain/member_membership.dart';
 import '../dto/member_membership_dto.dart';
 
@@ -31,6 +32,7 @@ abstract class MemberMembershipRepository {
     String? saleId,
     String? soldBy,
     String? notes,
+    String? idempotencyKey,
     MemberMembershipStatus status = MemberMembershipStatus.active,
   });
 
@@ -172,9 +174,11 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     String? saleId,
     String? soldBy,
     String? notes,
+    String? idempotencyKey,
     MemberMembershipStatus status = MemberMembershipStatus.active,
   }) async {
     return TaskEither.tryCatch(() async {
+      final key = idempotencyKey?.trim();
       final body = <String, dynamic>{
         'member': memberId,
         'membership': membershipId,
@@ -185,12 +189,38 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
         if (saleId != null) 'saleId': saleId,
         'soldBy': soldBy,
         'notes': notes,
+        if (key != null && key.isNotEmpty) 'idempotencyKey': key,
       };
 
-      final record = await _collection.create(body: body);
-      _invalidateMemberCache(memberId);
-      return _toEntity(record);
+      try {
+        final record = await _collection.create(body: body);
+        _invalidateMemberCache(memberId);
+        return _toEntity(record);
+      } on ClientException catch (error) {
+        if (key != null &&
+            key.isNotEmpty &&
+            isPocketBaseUniqueViolation(error)) {
+          final existing = await _findByIdempotencyKey(key);
+          if (existing != null) {
+            _invalidateMemberCache(memberId);
+            return existing;
+          }
+        }
+        rethrow;
+      }
     }, Failure.handle).run();
+  }
+
+  Future<MemberMembership?> _findByIdempotencyKey(String key) async {
+    final escaped = escapeIdempotencyKeyForFilter(key);
+    final result = await _collection.getList(
+      page: 1,
+      perPage: 1,
+      filter: 'idempotencyKey = "$escaped"',
+      expand: 'member,membership',
+    );
+    if (result.items.isEmpty) return null;
+    return _toEntity(result.items.first);
   }
 
   @override
