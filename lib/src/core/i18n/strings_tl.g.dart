@@ -166,6 +166,11 @@ class _Translations$fields$tl implements Translations$fields$en {
 	@override String get notes => 'Mga Tala';
 	@override String get description => 'Paglalarawan';
 	@override String get category => 'Kategorya';
+	@override String get statusFilters => 'Status';
+	@override String get statusFiltersHint => 'Ipakita ang mga benta na may mga status na ito';
+	@override String get statusPaid => 'Bayad';
+	@override String get statusVoided => 'Voided';
+	@override String get statusAwaitingPayment => 'Naghihintay ng Bayad';
 }
 
 // Path: navigation
@@ -331,6 +336,11 @@ extension on TranslationsTl {
 			'fields.notes' => 'Mga Tala',
 			'fields.description' => 'Paglalarawan',
 			'fields.category' => 'Kategorya',
+			'fields.statusFilters' => 'Status',
+			'fields.statusFiltersHint' => 'Ipakita ang mga benta na may mga status na ito',
+			'fields.statusPaid' => 'Bayad',
+			'fields.statusVoided' => 'Voided',
+			'fields.statusAwaitingPayment' => 'Naghihintay ng Bayad',
 			'navigation.dashboard' => 'Dashboard',
 			'navigation.products' => 'Mga Produkto',
 			'navigation.inventory' => 'Imbentaryo',

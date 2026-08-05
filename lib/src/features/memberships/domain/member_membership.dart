@@ -112,6 +112,13 @@ class MemberMembership with MemberMembershipMappable {
     return !now.isBefore(startDate) && !isBeforeToday(endDate);
   }
 
+  /// Whether this membership belongs in the primary list on member detail.
+  ///
+  /// Includes active and not-yet-started plans; excludes expired-by-date
+  /// (even if status is still active), pending, cancelled, and voided.
+  bool get isPrimaryActiveList =>
+      status == MemberMembershipStatus.active && !isExpired;
+
   /// Whether the linked plan grants access at [branchId].
   ///
   /// Empty [membershipValidBranches] means all branches.

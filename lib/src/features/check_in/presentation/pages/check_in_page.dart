@@ -19,6 +19,7 @@ import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in_chime.dart';
 import '../../domain/check_in_membership_eligibility.dart';
 import '../../domain/check_in_membership_highlight.dart';
+import '../../domain/membership_expiry_label.dart';
 import '../controllers/check_in_controller.dart';
 import '../utils/check_in_sound_player.dart';
 import '../widgets/check_in_error_dialog.dart';
@@ -648,7 +649,11 @@ class _SelectedMemberCard extends StatelessWidget {
                         ),
                         if (hasActiveMembership)
                           Text(
-                            'Expires ${dateFormat.format(activeMembership!.endDate)} (${activeMembership!.daysRemaining} days left)',
+                            formatMembershipExpiryLabel(
+                              endDate: activeMembership!.endDate,
+                              daysRemaining: activeMembership!.daysRemaining,
+                              dateFormat: dateFormat,
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: membershipLifecycleColor(
                                 daysRemaining: activeMembership!.daysRemaining,

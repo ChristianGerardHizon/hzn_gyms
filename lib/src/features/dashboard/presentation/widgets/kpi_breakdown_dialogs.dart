@@ -8,6 +8,7 @@ import '../../../check_in/domain/check_in.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
 import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
+import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../pos/domain/sale.dart';
 import '../controllers/active_members_count_controller.dart';
@@ -219,7 +220,7 @@ Future<void> showActiveMembersBreakdownDialog(BuildContext context) {
               [
                 membership.membershipName ?? 'Unknown plan',
                 'Ends ${dateFormat.format(membership.endDate)}',
-                days == 0 ? 'Expires today' : '$days days left',
+                formatDaysRemainingLabel(days),
               ].join(' · '),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

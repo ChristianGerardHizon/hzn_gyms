@@ -9,6 +9,7 @@ import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/empty_state.dart';
+import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/dashboard_members_layout.dart';
 import '../controllers/dashboard_members_controller.dart';
@@ -726,23 +727,18 @@ class _DaysLeftBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final days = this.days;
     final String label;
     final Color backgroundColor;
 
     if (days == null) {
       label = 'No membership';
       backgroundColor = Colors.grey.shade700;
-    } else if (days == 0) {
-      label = 'Expires today';
-      backgroundColor = Colors.orange.shade700;
-    } else if (days! < 0) {
+    } else if (days < 0) {
       label = 'Expired';
       backgroundColor = Colors.red.shade700;
-    } else if (days == 1) {
-      label = '1 day left';
-      backgroundColor = Colors.orange.shade700;
     } else {
-      label = '$days days left';
+      label = formatDaysRemainingLabel(days);
       backgroundColor = Colors.orange.shade700;
     }
 

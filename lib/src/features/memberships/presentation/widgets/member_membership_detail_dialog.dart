@@ -8,6 +8,8 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../domain/days_remaining_label.dart';
 import '../../domain/member_membership.dart';
 import '../../domain/membership_status_colors.dart';
 import '../controllers/member_membership_add_ons_provider.dart';
@@ -64,6 +66,15 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
     final addOnsAsync = ref.watch(
       memberMembershipAddOnsProvider(memberMembership.id),
     );
+    final branchesAsync = ref.watch(branchesControllerProvider);
+    final branchNamesById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        branch.id: branch.name,
+    };
+    final branchLabel = memberMembership.branchId.isEmpty
+        ? null
+        : (branchNamesById[memberMembership.branchId] ??
+              memberMembership.branchId);
     final canEdit =
         ref.watch(currentUserPermissionsProvider).value?.canEditMemberships ??
         false;
@@ -148,6 +159,11 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                     label: 'Plan',
                     value: memberMembership.membershipName ?? 'Membership',
                   ),
+                  if (branchLabel != null)
+                    _InfoRow(
+                      label: 'Branch',
+                      value: branchLabel,
+                    ),
                   _InfoRow(
                     label: 'Start Date',
                     value: dateFormat.format(memberMembership.startDate),
@@ -166,7 +182,9 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                   if (memberMembership.isCurrentlyActive)
                     _InfoRow(
                       label: 'Days Remaining',
-                      value: '${memberMembership.daysRemaining}',
+                      value: formatDaysRemainingLabel(
+                        memberMembership.daysRemaining,
+                      ),
                       valueColor: membershipLifecycleColor(
                         daysRemaining: memberMembership.daysRemaining,
                       ),

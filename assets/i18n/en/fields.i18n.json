@@ -16,5 +16,10 @@
     "paymentRef": "Payment Reference",
     "notes": "Notes",
     "description": "Description",
-    "category": "Category"
+    "category": "Category",
+    "statusFilters": "Status",
+    "statusFiltersHint": "Show sales with these statuses",
+    "statusPaid": "Paid",
+    "statusVoided": "Voided",
+    "statusAwaitingPayment": "Awaiting Payment"
 }

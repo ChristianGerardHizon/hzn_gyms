@@ -326,6 +326,21 @@ class Translations$fields$en {
 
 	/// en: 'Category'
 	String get category => 'Category';
+
+	/// en: 'Status'
+	String get statusFilters => 'Status';
+
+	/// en: 'Show sales with these statuses'
+	String get statusFiltersHint => 'Show sales with these statuses';
+
+	/// en: 'Paid'
+	String get statusPaid => 'Paid';
+
+	/// en: 'Voided'
+	String get statusVoided => 'Voided';
+
+	/// en: 'Awaiting Payment'
+	String get statusAwaitingPayment => 'Awaiting Payment';
 }
 
 // Path: navigation
@@ -583,6 +598,11 @@ extension on Translations {
 			'fields.notes' => 'Notes',
 			'fields.description' => 'Description',
 			'fields.category' => 'Category',
+			'fields.statusFilters' => 'Status',
+			'fields.statusFiltersHint' => 'Show sales with these statuses',
+			'fields.statusPaid' => 'Paid',
+			'fields.statusVoided' => 'Voided',
+			'fields.statusAwaitingPayment' => 'Awaiting Payment',
 			'navigation.dashboard' => 'Dashboard',
 			'navigation.products' => 'Products',
 			'navigation.inventory' => 'Inventory',

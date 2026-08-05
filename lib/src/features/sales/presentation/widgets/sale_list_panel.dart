@@ -15,6 +15,7 @@ import '../../../pos/domain/sale.dart';
 import '../controllers/paginated_sales_controller.dart';
 import '../controllers/sale_search_controller.dart';
 import '../controllers/sale_sort_controller.dart';
+import '../../domain/sale_status_filter.dart';
 import 'sale_status_chip.dart';
 import 'dialogs/sale_search_fields_dialog.dart';
 
@@ -45,6 +46,9 @@ class SaleListPanel extends HookConsumerWidget {
     // Watch providers
     final searchFields = ref.watch(saleSearchFieldsProvider);
     final activeFieldCount = searchFields.length;
+    final statusFilters = ref.watch(saleStatusFiltersProvider);
+    final isStatusNarrowed =
+        statusFilters.length < defaultSaleStatusFilters.length;
     final paginatedController =
         ref.read(paginatedSalesControllerProvider.notifier);
     final sortConfig = ref.watch(saleSortControllerProvider);
@@ -125,6 +129,7 @@ class SaleListPanel extends HookConsumerWidget {
             child: _SearchInput(
               controller: searchController,
               fieldCount: activeFieldCount,
+              showFilterBadge: activeFieldCount > 1 || isStatusNarrowed,
               sortConfig: sortConfig,
               onSearch: performSearch,
               onTextChanged: onSearchTextChanged,
@@ -250,6 +255,7 @@ class _SearchInput extends StatelessWidget {
   const _SearchInput({
     required this.controller,
     required this.fieldCount,
+    required this.showFilterBadge,
     required this.sortConfig,
     required this.onSearch,
     required this.onTextChanged,
@@ -259,6 +265,7 @@ class _SearchInput extends StatelessWidget {
 
   final TextEditingController controller;
   final int fieldCount;
+  final bool showFilterBadge;
   final SortConfig sortConfig;
   final VoidCallback onSearch;
   final ValueChanged<String> onTextChanged;
@@ -308,7 +315,7 @@ class _SearchInput extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Badge(
-          isLabelVisible: fieldCount > 1,
+          isLabelVisible: showFilterBadge,
           label: Text('$fieldCount'),
           child: IconButton.filledTonal(
             icon: const Icon(Icons.tune),

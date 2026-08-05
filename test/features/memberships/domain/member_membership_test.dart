@@ -32,6 +32,37 @@ void main() {
       expect(future.isCurrentlyActive, isFalse);
     });
 
+    test('isPrimaryActiveList includes active and upcoming, excludes expired',
+        () {
+      final active = buildMemberMembership(
+        startDate: DateTime.now().subtract(const Duration(days: 2)),
+        endDate: DateTime.now().add(const Duration(days: 5)),
+      );
+      expect(active.isPrimaryActiveList, isTrue);
+
+      final upcoming = buildMemberMembership(
+        startDate: DateTime.now().add(const Duration(days: 2)),
+        endDate: DateTime.now().add(const Duration(days: 32)),
+      );
+      expect(upcoming.isPrimaryActiveList, isTrue);
+
+      final dateExpired = buildMemberMembership(
+        startDate: DateTime.now().subtract(const Duration(days: 40)),
+        endDate: DateTime.now().subtract(const Duration(days: 1)),
+      );
+      expect(dateExpired.isPrimaryActiveList, isFalse);
+
+      final cancelled = buildMemberMembership(
+        status: MemberMembershipStatus.cancelled,
+      );
+      expect(cancelled.isPrimaryActiveList, isFalse);
+
+      final pending = buildMemberMembership(
+        status: MemberMembershipStatus.pending,
+      );
+      expect(pending.isPrimaryActiveList, isFalse);
+    });
+
     test('isExpired uses inclusive end date', () {
       final endsToday = buildMemberMembership(endDate: DateTime.now());
       expect(endsToday.isExpired, isFalse);
