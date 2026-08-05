@@ -56,6 +56,17 @@ void main() {
       expect(find.text('Member optional at checkout'), findsOneWidget);
       expect(find.byTooltip('Close'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Close'), findsNothing);
+
+      // Cart pane uses Material (not ColoredBox) so ListTile ink is visible.
+      final theme = Theme.of(tester.element(find.text('Cashier')));
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Material &&
+              widget.color == theme.colorScheme.surfaceContainerLowest,
+        ),
+        findsWidgets,
+      );
     });
   });
 }

@@ -422,14 +422,20 @@ final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
 ) async {
   final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
+  final salesRepo = ref.read(salesRepositoryProvider);
+
   final result = await repo.fetchActive(memberId, validAtBranchId: branchId);
+  if (!ref.mounted) return null;
+
   final memberships = result.fold(
     (_) => <MemberMembership>[],
     (list) => list,
   );
   final eligible = await filterCheckInEligibleMemberships(
     memberships: memberships,
-    salesRepo: ref.read(salesRepositoryProvider),
+    salesRepo: salesRepo,
   );
+  if (!ref.mounted) return null;
+
   return eligible.isNotEmpty ? eligible.first : null;
 });

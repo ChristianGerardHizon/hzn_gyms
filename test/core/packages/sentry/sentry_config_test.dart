@@ -29,4 +29,13 @@ void main() {
       );
     });
   });
+
+  group('sentryReleaseLabel', () {
+    test('joins version and build number with plus', () {
+      expect(
+        sentryReleaseLabel(version: '1.22.0', buildNumber: '30'),
+        '1.22.0+30',
+      );
+    });
+  });
 }

@@ -25,3 +25,10 @@ String sentryDsnFor({
 
 /// Sentry DSN for the current app build, or empty when disabled.
 String get sentryDsn => isSentryEnabled ? prodSentryDsn : '';
+
+/// Formats the Sentry `release` value from package version + build number.
+String sentryReleaseLabel({
+  required String version,
+  required String buildNumber,
+}) =>
+    '$version+$buildNumber';

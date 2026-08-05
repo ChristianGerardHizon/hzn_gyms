@@ -160,11 +160,8 @@ class _AppRootState extends ConsumerState<AppRoot> {
   }
 
   Widget _buildBranchBar(BuildContext context) {
-    return const ColoredBox(
-      // BranchSwitcher supplies its own surface styling.
-      color: Colors.transparent,
-      child: BranchSwitcher(compact: true),
-    );
+    // BranchSwitcher supplies its own surface styling.
+    return const BranchSwitcher(compact: true);
   }
 
   Widget _buildMobileLayout(
@@ -172,8 +169,12 @@ class _AppRootState extends ConsumerState<AppRoot> {
     List<AppNavDestination> destinations,
     int selectedIndex,
   ) {
+    // Use Scaffold.backgroundColor — not a ColoredBox around [child] — so
+    // ListTile ink/background still paint on the nearest Material (Flutter
+    // asserts when a ColoredBox sits between Material and ListTile).
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       drawer: MobileDrawer(
         destinations: destinations,
         selectedIndex: selectedIndex,
@@ -184,14 +185,11 @@ class _AppRootState extends ConsumerState<AppRoot> {
         },
       ),
       body: SafeArea(
-        child: ColoredBox(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Column(
-            children: [
-              _buildBranchBar(context),
-              Expanded(child: widget.child),
-            ],
-          ),
+        child: Column(
+          children: [
+            _buildBranchBar(context),
+            Expanded(child: widget.child),
+          ],
         ),
       ),
       bottomNavigationBar: MobileBottomNav(
@@ -213,6 +211,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
     int selectedIndex,
   ) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Row(
           children: [
@@ -232,15 +231,13 @@ class _AppRootState extends ConsumerState<AppRoot> {
             // Main content area
             Expanded(
               child: Scaffold(
-                body: ColoredBox(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBranchBar(context),
-                      Expanded(child: widget.child),
-                    ],
-                  ),
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBranchBar(context),
+                    Expanded(child: widget.child),
+                  ],
                 ),
               ),
             ),

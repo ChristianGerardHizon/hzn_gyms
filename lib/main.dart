@@ -22,25 +22,38 @@ void runEbeGymApp({Widget? appChild}) {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   if (!isSentryEnabled) {
+    WidgetsFlutterBinding.ensureInitialized();
     runEbeGymApp();
     return;
   }
 
-  await SentryFlutter.init(
-    (options) async {
-      final info = await PackageInfo.fromPlatform();
+  // On web, SentryFlutter.init wraps appRunner in runZonedGuarded when started
+  // from the root zone. Calling ensureInitialized (or PackageInfo) in the root
+  // zone then runApp inside that child zone causes "Zone mismatch" (EBEGYM-3).
+  // Enter Sentry's zone first so bindings and runApp share the same zone; init
+  // then skips creating a nested zone because we are no longer in the root zone.
+  await Sentry.runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-      options.dsn = sentryDsn;
-      options.environment = currentEnvironment;
-      options.release = '${info.version}+${info.buildNumber}';
-      options.dist = info.buildNumber;
-      options.tracesSampleRate = 0.2;
-    },
-    appRunner: () => runEbeGymApp(
-      appChild: SentryWidget(child: const Application()),
-    ),
-  );
+    await SentryFlutter.init(
+      (options) async {
+        final info = await PackageInfo.fromPlatform();
+
+        options.dsn = sentryDsn;
+        options.environment = currentEnvironment;
+        options.release = sentryReleaseLabel(
+          version: info.version,
+          buildNumber: info.buildNumber,
+        );
+        options.dist = info.buildNumber;
+        options.tracesSampleRate = 0.2;
+      },
+      appRunner: () => runEbeGymApp(
+        appChild: SentryWidget(child: const Application()),
+      ),
+    );
+  }, (error, stackTrace) {
+    // Sentry.runZonedGuarded already reports [error].
+  });
 }

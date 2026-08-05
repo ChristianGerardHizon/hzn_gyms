@@ -167,7 +167,9 @@ class _DesktopCashierBody extends StatelessWidget {
         const VerticalDivider(width: 1),
         Expanded(
           flex: 4,
-          child: ColoredBox(
+          // Material (not ColoredBox) so CartView ListTiles can paint ink/
+          // tile backgrounds on this ancestor.
+          child: Material(
             color: theme.colorScheme.surfaceContainerLowest,
             child: const CartView(),
           ),
