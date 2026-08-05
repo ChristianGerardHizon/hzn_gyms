@@ -1,3 +1,4 @@
+import 'package:ebe_gym/src/features/sales/domain/sale_status_filter.dart';
 import 'package:ebe_gym/src/features/sales/presentation/controllers/sale_search_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +34,40 @@ void main() {
       notifier.toggleField('receiptNumber');
 
       expect(container.read(saleSearchFieldsProvider), {'receiptNumber'});
+    });
+  });
+
+  group('SaleStatusFilters', () {
+    test('reset restores default statuses after toggling', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(saleStatusFiltersProvider.notifier);
+      notifier.toggleStatus('voided');
+
+      expect(
+        container.read(saleStatusFiltersProvider),
+        {'paid', 'awaitingPayment'},
+      );
+
+      notifier.reset();
+
+      expect(
+        container.read(saleStatusFiltersProvider),
+        defaultSaleStatusFilters,
+      );
+    });
+
+    test('toggleStatus prevents removing the last selected status', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(saleStatusFiltersProvider.notifier);
+      notifier.toggleStatus('paid');
+      notifier.toggleStatus('voided');
+      notifier.toggleStatus('awaitingPayment');
+
+      expect(container.read(saleStatusFiltersProvider), {'awaitingPayment'});
     });
   });
 }

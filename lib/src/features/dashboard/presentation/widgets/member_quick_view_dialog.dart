@@ -14,6 +14,7 @@ import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_branch_activity_controller.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../members/presentation/widgets/member_branch_activity_chips.dart';
+import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_branch_activity.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/domain/membership_status_colors.dart';
@@ -501,9 +502,7 @@ class _MembershipSummary extends StatelessWidget {
           if (primary.isCurrentlyActive)
             _InfoRow(
               label: 'Days left',
-              value: primary.daysRemaining == 0
-                  ? 'Expires today'
-                  : '${primary.daysRemaining} days',
+              value: formatDaysRemainingLabel(primary.daysRemaining),
               valueColor: membershipLifecycleColor(
                 daysRemaining: primary.daysRemaining,
               ),

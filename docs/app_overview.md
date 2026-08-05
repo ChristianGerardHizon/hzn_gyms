@@ -147,7 +147,9 @@ View and manage completed transactions.
 
 - Paginated sales history with search
 - Sale status display (pending, completed, refunded, voided)
+- Search fields dialog can toggle status filters (Paid, Voided, Awaiting Payment)
 - Detailed sale view with items and payment info
+- Reprint receipt from sale detail (thermal printer and/or PDF), same flow as checkout
 - Refund/unrefund functionality with confirmation dialogs
 
 #### Reports (`/reports`)
@@ -557,6 +559,8 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 6 | Sales status filters | Sales search fields dialog toggles Paid / Voided / Awaiting Payment; list refreshes with PocketBase status filter |
+| Aug 6 | Sale receipt reprint | Sale detail Print Receipt opens the receipt dialog (thermal + PDF); reprint skips auto-print and includes line items |
 | Aug 5 | Profile change password | Profile page can change own password with current + new + confirm (PocketBase `oldPassword`) |
 | Aug 4 | Membership plan type labels | Plan form toggle and detail plan type use **Recurring \| Walk-in** (replacing Monthly / Standard); Walk-in still simplifies the form (1-day duration, no description / all-branches) |
 | Aug 3 | Membership status colors | Expired/voided memberships and voided sales use red; almost expiring (≤7d) orange; active green; cancelled blueGrey |

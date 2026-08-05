@@ -16,6 +16,7 @@ import '../../../pos/domain/payment.dart';
 import '../../../pos/domain/payment_type.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../pos/domain/sale_payment_status.dart';
+import '../../../pos/presentation/components/receipt_dialog.dart';
 import '../../../pos/presentation/payments_controller.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
@@ -121,9 +122,16 @@ class _SaleDetailContent extends HookConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.print),
-            onPressed: () {
-              showWarningSnackBar(context,
-                  message: 'Print functionality coming soon');
+            onPressed: () async {
+              final items =
+                  await ref.read(saleItemsProvider(sale.id).future);
+              if (!context.mounted) return;
+              await showReceiptDialog(
+                context,
+                sale: sale,
+                saleItems: items,
+                isReprint: true,
+              );
             },
             tooltip: 'Print Receipt',
           ),

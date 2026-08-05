@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/sale_status_filter.dart';
+
 part 'sale_search_controller.g.dart';
 
 /// Available search fields for sales.
@@ -59,6 +61,34 @@ class SaleSearchFields extends _$SaleSearchFields {
       state = Set<String>.from(defaultSaleSearchFields);
     } else {
       state = Set<String>.from(fields);
+    }
+  }
+}
+
+/// Provider for which sale status groups are included in the list filter.
+@riverpod
+class SaleStatusFilters extends _$SaleStatusFilters {
+  @override
+  Set<String> build() => Set<String>.from(defaultSaleStatusFilters);
+
+  void toggleStatus(String status) {
+    if (state.contains(status)) {
+      if (state.length <= 1) return;
+      state = {...state}..remove(status);
+    } else {
+      state = {...state, status};
+    }
+  }
+
+  void reset() {
+    state = Set<String>.from(defaultSaleStatusFilters);
+  }
+
+  void setStatuses(Set<String> statuses) {
+    if (statuses.isEmpty) {
+      state = Set<String>.from(defaultSaleStatusFilters);
+    } else {
+      state = Set<String>.from(statuses);
     }
   }
 }
