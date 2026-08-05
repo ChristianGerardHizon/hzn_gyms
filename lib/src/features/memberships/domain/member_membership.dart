@@ -103,10 +103,13 @@ class MemberMembership with MemberMembershipMappable {
   final DateTime? updated;
 
   /// Whether this subscription is currently active.
+  ///
+  /// Aligns with server `fetchActive` (`startDate <= now`): the start
+  /// instant itself counts as active, not only moments strictly after it.
   bool get isCurrentlyActive {
     if (status != MemberMembershipStatus.active) return false;
     final now = DateTime.now();
-    return now.isAfter(startDate) && !isBeforeToday(endDate);
+    return !now.isBefore(startDate) && !isBeforeToday(endDate);
   }
 
   /// Whether the linked plan grants access at [branchId].

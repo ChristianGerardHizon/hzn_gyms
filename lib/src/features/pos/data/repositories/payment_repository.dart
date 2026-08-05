@@ -96,6 +96,22 @@ class PaymentRepositoryImpl implements PaymentRepository {
               saleStatus: currentStatus,
             );
           }
+          // Already marked paid but no payment rows (legacy / manual flag) —
+          // do not insert another payment.
+          return (
+            payment: Payment(
+              id: '',
+              saleId: saleId,
+              amount: sale.getDoubleValue('totalAmount'),
+              paymentMethod: paymentMethod,
+              type: type,
+              paymentRef: paymentRef,
+              notes: notes,
+              idempotencyKey: idempotencyKey?.trim(),
+            ),
+            saleIsPaid: true,
+            saleStatus: currentStatus,
+          );
         }
 
         final key = idempotencyKey?.trim();

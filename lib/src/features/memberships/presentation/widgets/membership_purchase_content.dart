@@ -95,6 +95,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
     final startDateManuallySet = useState(false);
     final guestNameController = useTextEditingController();
     final guestName = useState('');
+    // One key for this dialog session so purchase retries reuse the same rows.
+    final purchaseIdempotencyKey = useMemoized(generateIdempotencyKey);
 
     useEffect(() {
       void listener() {
@@ -265,6 +267,17 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         final activeResult = await ref
             .read(memberMembershipRepositoryProvider)
             .fetchActive(memberId);
+        final fetchFailed = activeResult.fold((_) => true, (_) => false);
+        if (fetchFailed) {
+          if (context.mounted) {
+            showErrorSnackBar(
+              context,
+              message: 'Could not verify active memberships. Try again.',
+              useRootMessenger: false,
+            );
+          }
+          return;
+        }
         final activeSamePlan = activeResult.fold(
           (_) => null,
           (memberships) => findActiveMembershipForPlan(
@@ -283,8 +296,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         }
       }
 
-      // One UUID for this purchase action — sale + membership share it.
-      final operationId = generateIdempotencyKey();
+      // One UUID for this dialog session — sale + membership share it on retries.
+      final operationId = purchaseIdempotencyKey;
 
       isPurchasing.value = true;
 

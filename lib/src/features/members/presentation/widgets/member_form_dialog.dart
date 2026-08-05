@@ -281,6 +281,8 @@ class _MemberCreateWizard extends HookConsumerWidget {
     final selectedAddOns = useState<Set<MembershipAddOn>>({});
     // Default: create a sale + open record payment. Opt out via Review checkbox.
     final excludeFromSales = useState(false);
+    // One key for this wizard session so Save retries reuse sale/membership rows.
+    final membershipIdempotencyKey = useMemoized(generateIdempotencyKey);
 
     Future<void> handleFinish() async {
       // Validate form from step 1
@@ -367,7 +369,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
           bonusDays: MembershipAddOn.totalBonusDays(selectedAddOns.value),
         );
 
-        final operationId = generateIdempotencyKey();
+        final operationId = membershipIdempotencyKey;
         final createSale = shouldCreateNewMemberSale(
           hasSelectedMembership: true,
           excludeFromSales: excludeFromSales.value,

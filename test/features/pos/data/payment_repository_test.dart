@@ -115,6 +115,42 @@ void main() {
     );
   });
 
+  test('create on paid sale with no payment rows skips insert', () async {
+    when(() => sales.getOne('sale-1')).thenAnswer(
+      (_) async => buildSaleRecord(
+        isPaid: true,
+        status: 'paid',
+        totalAmount: 150,
+      ),
+    );
+    when(
+      () => payments.getFullList(
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+      ),
+    ).thenAnswer((_) async => const []);
+
+    final result = await repo.create(
+      saleId: 'sale-1',
+      amount: 150,
+      paymentMethod: PaymentMethod.cash,
+      type: PaymentType.payment,
+      idempotencyKey: 'orphan-paid-key',
+    );
+
+    expect(result.isRight(), isTrue);
+    final created = result.getOrElse((_) => throw StateError('expected right'));
+    expect(created.saleIsPaid, isTrue);
+    expect(created.payment.saleId, 'sale-1');
+    expect(created.payment.amount, 150);
+    verifyNever(
+      () => payments.create(
+        body: any(named: 'body'),
+        files: any(named: 'files'),
+      ),
+    );
+  });
+
   test('create reuses payment when idempotencyKey already exists', () async {
     when(() => sales.getOne('sale-1')).thenAnswer(
       (_) async => buildSaleRecord(totalAmount: 100, status: 'pending'),

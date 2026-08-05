@@ -36,6 +36,9 @@ void main() {
       return buildSaleRecord(id: 'sale-1', descriptor: body['descriptor'] as String);
     });
     when(
+      () => saleItems.getFullList(filter: any(named: 'filter')),
+    ).thenAnswer((_) async => const []);
+    when(
       () => saleItems.create(body: any(named: 'body')),
     ).thenAnswer((invocation) async {
       final body = invocation.namedArguments[#body] as Map<String, dynamic>;
@@ -104,6 +107,25 @@ void main() {
         ],
       ),
     );
+    when(
+      () => saleItems.getFullList(filter: any(named: 'filter')),
+    ).thenAnswer(
+      (_) async => [
+        buildRecord(
+          id: 'si-existing',
+          collectionName: 'saleItems',
+          data: {
+            'sale': 'existing-sale',
+            'product': 'prod-1',
+            'productName': 'WATER',
+            'quantity': 1,
+            'unitPrice': 50,
+            'subtotal': 50,
+            'itemType': 'product',
+          },
+        ),
+      ],
+    );
 
     final result = await repo.createSale(
       buildSale(id: '', idempotencyKey: 'sale-key-1'),
@@ -129,6 +151,76 @@ void main() {
     verifyNever(() => saleItems.create(body: any(named: 'body')));
   });
 
+  test('createSale fills missing line items on idempotent retry', () async {
+    when(
+      () => sales.create(body: any(named: 'body')),
+    ).thenThrow(
+      ClientException(
+        url: Uri.parse('https://pb.test'),
+        statusCode: 400,
+        response: {
+          'data': {
+            'idempotencyKey': {
+              'code': 'validation_not_unique',
+              'message': 'Value must be unique.',
+            },
+          },
+        },
+      ),
+    );
+    when(
+      () => sales.getList(
+        page: any(named: 'page'),
+        perPage: any(named: 'perPage'),
+        filter: any(named: 'filter'),
+      ),
+    ).thenAnswer(
+      (_) async => ResultList<RecordModel>(
+        items: [
+          buildSaleRecord(id: 'existing-sale', descriptor: 'WATER'),
+        ],
+      ),
+    );
+    when(
+      () => saleItems.getFullList(filter: any(named: 'filter')),
+    ).thenAnswer((_) async => const []);
+    when(
+      () => saleItems.create(body: any(named: 'body')),
+    ).thenAnswer((invocation) async {
+      final body = invocation.namedArguments[#body] as Map<String, dynamic>;
+      expect(body['sale'], 'existing-sale');
+      expect(body['productName'], 'WATER');
+      return buildRecord(
+        id: 'si-1',
+        collectionName: 'saleItems',
+        data: body,
+      );
+    });
+
+    final result = await repo.createSale(
+      buildSale(id: '', idempotencyKey: 'sale-key-incomplete'),
+      [
+        const SaleItem(
+          id: '',
+          saleId: '',
+          productId: 'prod-1',
+          productName: 'WATER',
+          quantity: 1,
+          unitPrice: 50,
+          subtotal: 50,
+          itemType: 'product',
+        ),
+      ],
+    );
+
+    expect(result.isRight(), isTrue);
+    expect(
+      result.getOrElse((_) => throw StateError('expected right')).id,
+      'existing-sale',
+    );
+    verify(() => saleItems.create(body: any(named: 'body'))).called(1);
+  });
+
   test('createSale omits empty product for membership walk-in items', () async {
     when(
       () => sales.create(body: any(named: 'body')),
@@ -143,6 +235,9 @@ void main() {
         customerName: 'Jane',
       );
     });
+    when(
+      () => saleItems.getFullList(filter: any(named: 'filter')),
+    ).thenAnswer((_) async => const []);
     when(
       () => saleItems.create(body: any(named: 'body')),
     ).thenAnswer((invocation) async {
