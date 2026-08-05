@@ -173,10 +173,14 @@ class FormDialogScaffold extends StatelessWidget {
 
     // A local [Scaffold] is only needed in expand mode so in-dialog snackbars
     // render above the full-height panel. In shrink-wrap mode a Scaffold would
-    // force the dialog back to full height, so it is intentionally omitted.
+    // force the dialog back to full height, so it is intentionally omitted —
+    // wrap with [Material] instead so TextFields still have an ink ancestor.
     final Widget body = expand
         ? ScaffoldMessenger(child: Scaffold(body: column))
-        : column;
+        : Material(
+            type: MaterialType.transparency,
+            child: column,
+          );
 
     return DialogCloseHandler(
       onClose: (ctx) => dirtyGuard.confirmDiscard(ctx),
