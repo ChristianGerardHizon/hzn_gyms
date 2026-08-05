@@ -25,23 +25,35 @@ Future<void> showActiveMembershipFromCheckIn(
   required String memberId,
   required String memberName,
 }) async {
-  final membership = await ref.read(
-    memberActiveMembershipProvider(memberId).future,
+  // Keep the autoDispose provider alive for the duration of this await so a
+  // mid-fetch dispose does not complete as null and flash "No active membership".
+  final subscription = ref.listenManual(
+    memberActiveMembershipProvider(memberId),
+    (_, __) {},
   );
-  if (!context.mounted) return;
+  try {
+    final membership = await ref.read(
+      memberActiveMembershipProvider(memberId).future,
+    );
+    if (!context.mounted) return;
 
-  if (membership == null) {
-    showInfoSnackBar(context, message: 'No active membership');
+    if (membership == null) {
+      showInfoSnackBar(context, message: 'No active membership');
+      return;
+    }
+
+    await showMemberMembershipDetailDialog(
+      context,
+      memberMembership: membership,
+      memberId: memberId,
+      memberName: memberName,
+      showPhoto: true,
+    );
+  } on MemberActiveMembershipCancelled {
     return;
+  } finally {
+    subscription.close();
   }
-
-  await showMemberMembershipDetailDialog(
-    context,
-    memberMembership: membership,
-    memberId: memberId,
-    memberName: memberName,
-    showPhoto: true,
-  );
 }
 
 /// Sidebar panel showing details about the most recent check-in.
@@ -413,6 +425,13 @@ class _CheckInHistoryTile extends StatelessWidget {
   }
 }
 
+/// Thrown when [memberActiveMembershipProvider] is disposed mid-fetch.
+///
+/// Callers must not treat this as "no active membership".
+class MemberActiveMembershipCancelled implements Exception {
+  const MemberActiveMembershipCancelled();
+}
+
 /// Provider that fetches the first active membership for a member
 /// that is valid at the current branch and paid if linked to a sale.
 /// Used by the sidebar to display membership info without a full controller.
@@ -422,14 +441,20 @@ final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
 ) async {
   final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
+  final salesRepo = ref.read(salesRepositoryProvider);
+
   final result = await repo.fetchActive(memberId, validAtBranchId: branchId);
+  if (!ref.mounted) throw const MemberActiveMembershipCancelled();
+
   final memberships = result.fold(
     (_) => <MemberMembership>[],
     (list) => list,
   );
   final eligible = await filterCheckInEligibleMemberships(
     memberships: memberships,
-    salesRepo: ref.read(salesRepositoryProvider),
+    salesRepo: salesRepo,
   );
+  if (!ref.mounted) throw const MemberActiveMembershipCancelled();
+
   return eligible.isNotEmpty ? eligible.first : null;
 });
