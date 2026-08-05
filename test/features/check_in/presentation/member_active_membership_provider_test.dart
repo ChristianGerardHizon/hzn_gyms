@@ -46,6 +46,7 @@ void main() {
       final completer =
           Completer<Either<Failure, List<MemberMembership>>>();
       final container = createContainer(fetchCompleter: completer);
+      addTearDown(container.dispose);
       Object? providerError;
 
       final subscription = container.listen(
@@ -59,18 +60,22 @@ void main() {
       expect(completer.isCompleted, isFalse);
 
       // Drop the only listener so autoDispose disposes the provider mid-fetch.
+      // Do not retain .future here — that would keep the provider alive.
       subscription.close();
       await Future<void>.value();
 
       completer.complete(right([buildMemberMembership()]));
+      await Future<void>.value();
       await Future<void>.value();
 
       expect(
         providerError?.toString() ?? '',
         isNot(contains('after it has been disposed')),
       );
-
-      container.dispose();
+      expect(
+        providerError,
+        anyOf(isNull, isA<MemberActiveMembershipCancelled>()),
+      );
     },
   );
 
@@ -78,6 +83,12 @@ void main() {
     final completer = Completer<Either<Failure, List<MemberMembership>>>();
     final container = createContainer(fetchCompleter: completer);
     addTearDown(container.dispose);
+
+    final subscription = container.listen(
+      memberActiveMembershipProvider('member-1'),
+      (_, __) {},
+    );
+    addTearDown(subscription.close);
 
     final future = container.read(
       memberActiveMembershipProvider('member-1').future,
