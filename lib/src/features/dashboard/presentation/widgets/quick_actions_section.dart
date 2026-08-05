@@ -109,7 +109,7 @@ class QuickActionsSection extends ConsumerWidget {
                   onTap: () async {
                     final result = await showMemberFormDialog(context);
                     if (context.mounted) {
-                      await handleMemberFormPaymentResult(context, result);
+                      await handleMemberFormPaymentResult(context, ref, result);
                     }
                   },
                 ),

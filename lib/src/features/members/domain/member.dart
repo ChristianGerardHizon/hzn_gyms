@@ -56,7 +56,7 @@ class Member with MemberMappable {
   /// Profile photo URL (optional).
   final String? photo;
 
-  /// Mobile/phone number (optional).
+  /// Mobile/phone number (required in member forms; nullable for legacy rows).
   final String? mobileNumber;
 
   /// Date of birth (optional).

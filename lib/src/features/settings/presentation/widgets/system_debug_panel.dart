@@ -49,6 +49,7 @@ class SystemDebugPanel extends HookConsumerWidget {
             :final membershipName,
             :final membershipEndDate,
             :final membershipDaysRemaining,
+            :final memberPhoto,
           ):
             await showCheckInSuccessDialog(
               context,
@@ -57,6 +58,7 @@ class SystemDebugPanel extends HookConsumerWidget {
               membershipName: membershipName,
               membershipEndDate: membershipEndDate,
               membershipDaysRemaining: membershipDaysRemaining,
+              memberPhotoUrl: memberPhoto,
             );
           case CardCheckInCardNotFound():
             await showCheckInErrorDialog(

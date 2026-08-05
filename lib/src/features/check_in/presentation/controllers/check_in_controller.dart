@@ -148,12 +148,14 @@ class CheckInController extends _$CheckInController {
 
     String? memberId;
     String? memberName;
+    String? memberPhoto;
 
     final card = cardResult.fold((_) => null, (card) => card);
 
     if (card != null) {
       memberId = card.memberId;
       memberName = card.memberName;
+      memberPhoto = card.memberPhoto;
     } else {
       // 2. Fallback: search by legacy rfidCardId on member
       final memberRepo = ref.read(memberRepositoryProvider);
@@ -166,6 +168,7 @@ class CheckInController extends _$CheckInController {
         final member = members.first;
         memberId = member.id;
         memberName = member.name;
+        memberPhoto = member.photo;
       }
     }
 
@@ -215,6 +218,7 @@ class CheckInController extends _$CheckInController {
         membershipName: activeMembership.membershipName,
         membershipEndDate: activeMembership.endDate,
         membershipDaysRemaining: activeMembership.daysRemaining,
+        memberPhoto: memberPhoto,
       );
     });
   }

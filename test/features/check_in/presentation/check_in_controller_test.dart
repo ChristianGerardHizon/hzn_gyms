@@ -147,7 +147,9 @@ void main() {
     final checkIn = buildCheckIn(memberMembershipId: 'mm-1');
 
     when(() => cardRepo.findByCardValue(any())).thenAnswer(
-      (_) async => right(buildMemberCard()),
+      (_) async => right(
+        buildMemberCard(memberPhoto: 'https://pb.example/jane.jpg'),
+      ),
     );
     when(() => mmRepo.fetchActive('member-1')).thenAnswer(
       (_) async => right([buildMemberMembership()]),
@@ -172,6 +174,7 @@ void main() {
     expect(success.membershipName, 'Monthly Plan');
     expect(success.membershipEndDate, isNotNull);
     expect(success.membershipDaysRemaining, isNotNull);
+    expect(success.memberPhoto, 'https://pb.example/jane.jpg');
   });
 
   test('returns failed when check-in repository errors', () async {

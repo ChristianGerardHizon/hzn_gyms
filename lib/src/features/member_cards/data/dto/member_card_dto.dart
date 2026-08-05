@@ -1,6 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:pocketbase/pocketbase.dart';
 
+import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../domain/member_card.dart';
 
@@ -23,6 +24,8 @@ class MemberCardDto with MemberCardDtoMappable {
 
   // Expanded fields
   final String? memberName;
+  final String? memberPhoto;
+  final String? memberUpdated;
 
   const MemberCardDto({
     required this.id,
@@ -37,6 +40,8 @@ class MemberCardDto with MemberCardDtoMappable {
     this.created,
     this.updated,
     this.memberName,
+    this.memberPhoto,
+    this.memberUpdated,
   });
 
   /// Creates a DTO from a PocketBase RecordModel.
@@ -56,11 +61,13 @@ class MemberCardDto with MemberCardDtoMappable {
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
       memberName: memberExpand?.getStringValue('name'),
+      memberPhoto: memberExpand?.getStringValue('photo'),
+      memberUpdated: memberExpand?.get<String>('updated'),
     );
   }
 
   /// Converts the DTO to a domain MemberCard entity.
-  MemberCard toEntity() {
+  MemberCard toEntity({String? baseUrl}) {
     return MemberCard(
       id: id,
       memberId: member,
@@ -70,9 +77,22 @@ class MemberCardDto with MemberCardDtoMappable {
       deactivatedAt: parseToLocal(deactivatedAt),
       notes: notes != null && notes!.isNotEmpty ? notes : null,
       memberName: memberName,
+      memberPhoto: _buildMemberPhotoUrl(baseUrl),
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );
+  }
+
+  String? _buildMemberPhotoUrl(String? baseUrl) {
+    if (memberPhoto == null || memberPhoto!.isEmpty || baseUrl == null) {
+      return null;
+    }
+    final url =
+        '$baseUrl/api/files/${PocketBaseCollections.members}/$member/$memberPhoto';
+    if (memberUpdated != null && memberUpdated!.isNotEmpty) {
+      return '$url?t=$memberUpdated';
+    }
+    return url;
   }
 
   static MemberCardStatus _parseStatus(String value) {

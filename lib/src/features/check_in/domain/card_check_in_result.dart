@@ -13,6 +13,7 @@ class CardCheckInSuccess extends CardCheckInResult {
     required this.membershipEndDate,
     this.membershipName,
     this.membershipDaysRemaining,
+    this.memberPhoto,
   });
 
   final CheckIn checkIn;
@@ -26,6 +27,9 @@ class CardCheckInSuccess extends CardCheckInResult {
 
   /// Days left until expiry (`0` on the expiration day), when known.
   final int? membershipDaysRemaining;
+
+  /// Member profile photo URL, when available.
+  final String? memberPhoto;
 }
 
 /// No member card (or legacy RFID) matched the scanned value.

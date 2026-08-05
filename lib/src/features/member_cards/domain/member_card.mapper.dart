@@ -114,6 +114,12 @@ class MemberCardMapper extends ClassMapperBase<MemberCard> {
     _$memberName,
     opt: true,
   );
+  static String? _$memberPhoto(MemberCard v) => v.memberPhoto;
+  static const Field<MemberCard, String> _f$memberPhoto = Field(
+    'memberPhoto',
+    _$memberPhoto,
+    opt: true,
+  );
   static DateTime? _$created(MemberCard v) => v.created;
   static const Field<MemberCard, DateTime> _f$created = Field(
     'created',
@@ -137,6 +143,7 @@ class MemberCardMapper extends ClassMapperBase<MemberCard> {
     #deactivatedAt: _f$deactivatedAt,
     #notes: _f$notes,
     #memberName: _f$memberName,
+    #memberPhoto: _f$memberPhoto,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -151,6 +158,7 @@ class MemberCardMapper extends ClassMapperBase<MemberCard> {
       deactivatedAt: data.dec(_f$deactivatedAt),
       notes: data.dec(_f$notes),
       memberName: data.dec(_f$memberName),
+      memberPhoto: data.dec(_f$memberPhoto),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -225,6 +233,7 @@ abstract class MemberCardCopyWith<$R, $In extends MemberCard, $Out>
     DateTime? deactivatedAt,
     String? notes,
     String? memberName,
+    String? memberPhoto,
     DateTime? created,
     DateTime? updated,
   });
@@ -249,6 +258,7 @@ class _MemberCardCopyWithImpl<$R, $Out>
     Object? deactivatedAt = $none,
     Object? notes = $none,
     Object? memberName = $none,
+    Object? memberPhoto = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -261,6 +271,7 @@ class _MemberCardCopyWithImpl<$R, $Out>
       if (deactivatedAt != $none) #deactivatedAt: deactivatedAt,
       if (notes != $none) #notes: notes,
       if (memberName != $none) #memberName: memberName,
+      if (memberPhoto != $none) #memberPhoto: memberPhoto,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -275,6 +286,7 @@ class _MemberCardCopyWithImpl<$R, $Out>
     deactivatedAt: data.get(#deactivatedAt, or: $value.deactivatedAt),
     notes: data.get(#notes, or: $value.notes),
     memberName: data.get(#memberName, or: $value.memberName),
+    memberPhoto: data.get(#memberPhoto, or: $value.memberPhoto),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );
