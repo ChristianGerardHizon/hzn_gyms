@@ -184,7 +184,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 - **Branches** (`/organization/branches`) - Multi-location support with address and contact info
 
 #### Profile (`/profile`)
-Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment).
+Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
 
 #### System Settings (`/system`)
 3-panel tablet layout for system configuration.
@@ -557,6 +557,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 5 | Profile change password | Profile page can change own password with current + new + confirm (PocketBase `oldPassword`) |
 | Aug 4 | Membership plan type labels | Plan form toggle and detail plan type use **Recurring \| Walk-in** (replacing Monthly / Standard); Walk-in still simplifies the form (1-day duration, no description / all-branches) |
 | Aug 3 | Membership status colors | Expired/voided memberships and voided sales use red; almost expiring (≤7d) orange; active green; cancelled blueGrey |
 | Aug 2 | Camera source preference | System → Appearance and member photo capture can select a camera device; last used camera is remembered on device |
