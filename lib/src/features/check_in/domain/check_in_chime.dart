@@ -33,6 +33,7 @@ CheckInChime resolveCheckInChime(CardCheckInResult result) {
       resolveCheckInSuccessChime(membershipDaysRemaining),
     CardCheckInCardNotFound() ||
     CardCheckInNoActiveMembership() ||
+    CardCheckInUnpaidMembership() ||
     CardCheckInMembershipNotValidAtBranch() ||
     CardCheckInNoBranch() ||
     CardCheckInFailed() =>

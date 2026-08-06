@@ -13,7 +13,7 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../data/repositories/check_in_repository.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in.dart';
-import '../../domain/check_in_membership_eligibility.dart';
+import '../../domain/check_in_block_reason.dart';
 import '../../domain/check_in_realtime.dart';
 
 part 'check_in_controller.g.dart';
@@ -176,7 +176,7 @@ class CheckInController extends _$CheckInController {
 
     final resolvedName = memberName ?? 'Member';
 
-    // 3. Check for active membership valid at this branch (and paid if linked)
+    // 3. Resolve an eligible membership at this branch (paid if sale linked)
     final mmRepo = ref.read(memberMembershipRepositoryProvider);
     final mmResult = await mmRepo.fetchActive(memberId);
     final activeMemberships = mmResult.fold(
@@ -184,23 +184,24 @@ class CheckInController extends _$CheckInController {
       (m) => m,
     );
 
-    final paidEligible = await filterCheckInEligibleMemberships(
-      memberships: activeMemberships,
+    final resolution = await resolveCheckInMembership(
+      activeMemberships: activeMemberships,
+      branchId: branchId,
       salesRepo: ref.read(salesRepositoryProvider),
     );
 
-    if (paidEligible.isEmpty) {
-      return CardCheckInNoActiveMembership(memberName: resolvedName);
+    if (!resolution.isAllowed) {
+      return switch (resolution.reason!) {
+        CheckInBlockReason.noActiveMembership =>
+          CardCheckInNoActiveMembership(memberName: resolvedName),
+        CheckInBlockReason.unpaidMembership =>
+          CardCheckInUnpaidMembership(memberName: resolvedName),
+        CheckInBlockReason.notValidAtBranch =>
+          CardCheckInMembershipNotValidAtBranch(memberName: resolvedName),
+      };
     }
 
-    final validHere = paidEligible
-        .where((m) => m.isValidAtBranch(branchId))
-        .toList();
-    if (validHere.isEmpty) {
-      return CardCheckInMembershipNotValidAtBranch(memberName: resolvedName);
-    }
-
-    final activeMembership = validHere.first;
+    final activeMembership = resolution.membership!;
 
     // 4. Create check-in
     final result = await _repository.checkIn(

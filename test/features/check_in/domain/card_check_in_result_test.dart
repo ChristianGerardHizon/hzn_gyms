@@ -15,6 +15,7 @@ void main() {
       ),
       const CardCheckInCardNotFound(),
       const CardCheckInNoActiveMembership(memberName: 'Jane'),
+      const CardCheckInUnpaidMembership(memberName: 'Jane'),
       const CardCheckInMembershipNotValidAtBranch(memberName: 'Jane'),
       const CardCheckInNoBranch(),
       const CardCheckInFailed(),
@@ -23,6 +24,7 @@ void main() {
     expect(results.whereType<CardCheckInSuccess>(), hasLength(1));
     expect(results.whereType<CardCheckInCardNotFound>(), hasLength(1));
     expect(results.whereType<CardCheckInNoActiveMembership>(), hasLength(1));
+    expect(results.whereType<CardCheckInUnpaidMembership>(), hasLength(1));
     expect(
       results.whereType<CardCheckInMembershipNotValidAtBranch>(),
       hasLength(1),

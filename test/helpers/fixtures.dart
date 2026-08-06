@@ -136,6 +136,7 @@ MemberMembership buildMemberMembership({
   List<String> membershipValidBranches = const [],
   String? memberName = 'Jane Doe',
   String? membershipName = 'Monthly Plan',
+  String? saleId,
 }) {
   final start = startDate ?? DateTime.now().subtract(const Duration(days: 1));
   final end = endDate ?? DateTime.now().add(const Duration(days: 29));
@@ -150,6 +151,7 @@ MemberMembership buildMemberMembership({
     membershipValidBranches: membershipValidBranches,
     memberName: memberName,
     membershipName: membershipName,
+    saleId: saleId,
   );
 }
 

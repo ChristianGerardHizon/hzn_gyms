@@ -16,8 +16,8 @@ import '../../../memberships/domain/membership_status_colors.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
+import '../../domain/check_in_block_reason.dart';
 import '../../domain/check_in_chime.dart';
-import '../../domain/check_in_membership_eligibility.dart';
 import '../../domain/check_in_membership_highlight.dart';
 import '../../domain/membership_expiry_label.dart';
 import '../controllers/check_in_controller.dart';
@@ -50,6 +50,7 @@ class CheckInPage extends HookConsumerWidget {
     final searchResults = useState<List<Member>>([]);
     final selectedMember = useState<Member?>(null);
     final activeMembership = useState<MemberMembership?>(null);
+    final checkInBlockReason = useState<CheckInBlockReason?>(null);
     final isSearching = useState(false);
     final isCheckingIn = useState(false);
     final isCardCheckingIn = useState(false);
@@ -80,24 +81,28 @@ class CheckInPage extends HookConsumerWidget {
       searchResults.value = [];
       inputController.text = member.name;
 
-      // Fetch active membership valid at the current branch and paid if linked
       final branchId = ref.read(effectiveBranchIdForWriteProvider);
+      if (branchId == null) {
+        activeMembership.value = null;
+        checkInBlockReason.value = null;
+        return;
+      }
+
       final mmRepo = ref.read(memberMembershipRepositoryProvider);
-      final result = await mmRepo.fetchActive(
-        member.id,
-        validAtBranchId: branchId,
-      );
+      final result = await mmRepo.fetchActive(member.id);
       await result.fold(
         (_) async {
           activeMembership.value = null;
+          checkInBlockReason.value = CheckInBlockReason.noActiveMembership;
         },
         (memberships) async {
-          final eligible = await filterCheckInEligibleMemberships(
-            memberships: memberships,
+          final resolution = await resolveCheckInMembership(
+            activeMemberships: memberships,
+            branchId: branchId,
             salesRepo: ref.read(salesRepositoryProvider),
           );
-          activeMembership.value =
-              eligible.isNotEmpty ? eligible.first : null;
+          activeMembership.value = resolution.membership;
+          checkInBlockReason.value = resolution.reason;
         },
       );
     }
@@ -105,6 +110,7 @@ class CheckInPage extends HookConsumerWidget {
     void clearSelection() {
       selectedMember.value = null;
       activeMembership.value = null;
+      checkInBlockReason.value = null;
       inputController.clear();
       searchResults.value = [];
       // Keep field unfocused so USB RFID wedge keeps auto-listening.
@@ -115,16 +121,14 @@ class CheckInPage extends HookConsumerWidget {
       final member = selectedMember.value;
       if (member == null) return;
 
-      // Block check-in if member has no membership valid at this branch
       if (activeMembership.value == null) {
         if (context.mounted) {
-          CheckInSoundPlayer.play(CheckInChime.failure);
-          showErrorSnackBar(
+          final reason =
+              checkInBlockReason.value ?? CheckInBlockReason.noActiveMembership;
+          await showCheckInErrorDialog(
             context,
-            message:
-                '${member.name} has no membership valid at this branch. '
-                'Only members with an active membership for this branch '
-                'can check in.',
+            title: checkInBlockTitle(reason),
+            message: checkInBlockMessage(reason, member.name),
           );
         }
         return;
@@ -163,8 +167,11 @@ class CheckInPage extends HookConsumerWidget {
           readyForNextScan();
         }
       } else if (context.mounted) {
-        CheckInSoundPlayer.play(CheckInChime.failure);
-        showErrorSnackBar(context, message: 'Failed to check in');
+        await showCheckInErrorDialog(
+          context,
+          title: 'Check-In Failed',
+          message: 'Could not record check-in. Try again.',
+        );
       }
     }
 
@@ -215,9 +222,23 @@ class CheckInPage extends HookConsumerWidget {
         case CardCheckInNoActiveMembership(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'No Active Membership',
-            message:
-                '$memberName has no active membership and cannot check in.',
+            title: checkInBlockTitle(CheckInBlockReason.noActiveMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.noActiveMembership,
+              memberName,
+            ),
+          );
+          inputController.clear();
+          readyForNextScan();
+          return;
+        case CardCheckInUnpaidMembership(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: checkInBlockTitle(CheckInBlockReason.unpaidMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.unpaidMembership,
+              memberName,
+            ),
           );
           inputController.clear();
           readyForNextScan();
@@ -225,10 +246,11 @@ class CheckInPage extends HookConsumerWidget {
         case CardCheckInMembershipNotValidAtBranch(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'Not Valid at This Branch',
-            message:
-                '$memberName has an active membership, but it is not valid '
-                'at this branch.',
+            title: checkInBlockTitle(CheckInBlockReason.notValidAtBranch),
+            message: checkInBlockMessage(
+              CheckInBlockReason.notValidAtBranch,
+              memberName,
+            ),
           );
           inputController.clear();
           readyForNextScan();
@@ -244,8 +266,11 @@ class CheckInPage extends HookConsumerWidget {
           readyForNextScan();
           return;
         case CardCheckInFailed():
-          CheckInSoundPlayer.play(CheckInChime.failure);
-          showErrorSnackBar(context, message: 'Failed to check in');
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Failed',
+            message: 'Could not record check-in. Try again.',
+          );
           readyForNextScan();
           return;
         case CardCheckInCardNotFound():
@@ -308,6 +333,7 @@ class CheckInPage extends HookConsumerWidget {
               if (selectedMember.value != null) {
                 selectedMember.value = null;
                 activeMembership.value = null;
+                checkInBlockReason.value = null;
               }
               searchMembers(query);
             },
@@ -381,7 +407,11 @@ class CheckInPage extends HookConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'This member has no active membership and cannot check in.',
+                          checkInBlockMessage(
+                            checkInBlockReason.value ??
+                                CheckInBlockReason.noActiveMembership,
+                            selectedMember.value!.name,
+                          ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.red.shade700,
                           ),
