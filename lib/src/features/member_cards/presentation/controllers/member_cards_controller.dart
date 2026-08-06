@@ -83,6 +83,19 @@ class MemberCardsController extends _$MemberCardsController {
     );
   }
 
+  /// Reactivates a deactivated or lost card.
+  Future<bool> reactivateCard(String cardId) async {
+    final result =
+        await _repository.updateStatus(cardId, MemberCardStatus.active);
+    return result.fold(
+      (failure) => false,
+      (_) {
+        refresh();
+        return true;
+      },
+    );
+  }
+
   /// Deletes a card.
   Future<bool> deleteCard(String cardId) async {
     final result = await _repository.delete(cardId);

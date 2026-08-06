@@ -807,6 +807,31 @@ class _MemberCardsSection extends ConsumerWidget {
                           ),
                         ),
                       ],
+                    )
+                  else
+                    PopupMenuButton<String>(
+                      onSelected: (value) =>
+                          _handleCardAction(context, ref, value, card),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'reactivate',
+                          child: ListTile(
+                            leading: Icon(Icons.refresh),
+                            title: Text('Reactivate'),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                            leading: Icon(Icons.delete, color: Colors.red),
+                            title: Text('Delete'),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -828,6 +853,38 @@ class _MemberCardsSection extends ConsumerWidget {
     }
   }
 
+  Future<bool> _confirmCardAction({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required String confirmLabel,
+    bool isDestructive = false,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: isDestructive
+                ? FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  )
+                : null,
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
   void _handleCardAction(
     BuildContext context,
     WidgetRef ref,
@@ -840,6 +897,14 @@ class _MemberCardsSection extends ConsumerWidget {
 
     switch (action) {
       case 'deactivate':
+        final confirmed = await _confirmCardAction(
+          context: context,
+          title: 'Deactivate Card',
+          content:
+              'Deactivate this card? It will no longer work for check-in.',
+          confirmLabel: 'Deactivate',
+        );
+        if (!confirmed) return;
         final success = await controller.deactivateCard(card.id);
         if (context.mounted) {
           if (success) {
@@ -849,6 +914,14 @@ class _MemberCardsSection extends ConsumerWidget {
           }
         }
       case 'lost':
+        final confirmed = await _confirmCardAction(
+          context: context,
+          title: 'Report Lost Card',
+          content:
+              'Mark this card as lost? It will no longer work for check-in.',
+          confirmLabel: 'Report Lost',
+        );
+        if (!confirmed) return;
         final success = await controller.reportLost(card.id);
         if (context.mounted) {
           if (success) {
@@ -860,30 +933,32 @@ class _MemberCardsSection extends ConsumerWidget {
             );
           }
         }
-      case 'delete':
-        final confirmed = await showDialog<bool>(
+      case 'reactivate':
+        final confirmed = await _confirmCardAction(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Card'),
-            content: const Text(
-              'Are you sure you want to delete this card? This cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+          title: 'Reactivate Card',
+          content: 'Reactivate this card? It will work for check-in again.',
+          confirmLabel: 'Reactivate',
         );
-        if (confirmed == true) {
+        if (!confirmed) return;
+        final success = await controller.reactivateCard(card.id);
+        if (context.mounted) {
+          if (success) {
+            showSuccessSnackBar(context, message: 'Card reactivated');
+          } else {
+            showErrorSnackBar(context, message: 'Failed to reactivate card');
+          }
+        }
+      case 'delete':
+        final confirmed = await _confirmCardAction(
+          context: context,
+          title: 'Delete Card',
+          content:
+              'Are you sure you want to delete this card? This cannot be undone.',
+          confirmLabel: 'Delete',
+          isDestructive: true,
+        );
+        if (confirmed) {
           final success = await controller.deleteCard(card.id);
           if (context.mounted) {
             if (success) {
