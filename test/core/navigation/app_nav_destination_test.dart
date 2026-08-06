@@ -198,7 +198,20 @@ void main() {
       const perms = CurrentUserPermissions(isAdmin: true);
       expect(perms.has(Permissions.salesVoid), isTrue);
       expect(perms.canVoidSales, isFalse);
+      expect(perms.canEditProductQuantity, isTrue);
       expect(perms.canViewActivityLog, isTrue);
+    });
+
+    test('canEditProductQuantity requires products.editQuantity or admin', () {
+      const withPerm = CurrentUserPermissions(
+        permissions: {Permissions.productsEditQuantity},
+      );
+      expect(withPerm.canEditProductQuantity, isTrue);
+
+      const staff = CurrentUserPermissions(
+        permissions: {Permissions.productsEdit},
+      );
+      expect(staff.canEditProductQuantity, isFalse);
     });
 
     test('canVoidSales requires explicit sales.void permission', () {

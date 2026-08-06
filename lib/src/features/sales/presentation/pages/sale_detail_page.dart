@@ -18,6 +18,7 @@ import '../../../pos/domain/sale.dart';
 import '../../../pos/domain/sale_payment_status.dart';
 import '../../../pos/presentation/components/receipt_dialog.dart';
 import '../../../pos/presentation/payments_controller.dart';
+import '../../../products/data/repositories/product_adjustment_repository.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
@@ -346,6 +347,7 @@ class _SaleDetailContent extends HookConsumerWidget {
         memberMembershipRepo: ref.read(memberMembershipRepositoryProvider),
         lotRepo: ref.read(productLotRepositoryProvider),
         productRepo: ref.read(productRepositoryProvider),
+        adjustmentRepo: ref.read(productAdjustmentRepositoryProvider),
         saleId: sale.id,
         voidedById: ref.read(currentAuthProvider)?.user.id,
       );

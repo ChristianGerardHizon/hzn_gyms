@@ -11,6 +11,7 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../domain/product.dart';
+import '../../domain/stock_quantity_change.dart';
 import '../dto/product_dto.dart';
 
 part 'product_repository.g.dart';
@@ -65,11 +66,17 @@ abstract class ProductRepository {
 
   /// Decrements a product's quantity by [amount], clamped at 0.
   /// Used for non-lot stock-tracked products sold via POS.
-  FutureEither<Product> decrementQuantity(String productId, num amount);
+  FutureEither<StockQuantityChange> decrementQuantity(
+    String productId,
+    num amount,
+  );
 
   /// Increments a product's quantity by [amount].
   /// Used when voiding sales of non-lot stock-tracked products.
-  FutureEither<Product> incrementQuantity(String productId, num amount);
+  FutureEither<StockQuantityChange> incrementQuantity(
+    String productId,
+    num amount,
+  );
 }
 
 /// Provides the ProductRepository instance.
@@ -369,38 +376,44 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  FutureEither<Product> decrementQuantity(String productId, num amount) async {
+  FutureEither<StockQuantityChange> decrementQuantity(
+    String productId,
+    num amount,
+  ) async {
     return TaskEither.tryCatch(
       () async {
         final current = _toEntity(await _collection.getOne(productId));
-        final currentQty = current.quantity ?? 0;
-        final newQuantity = (currentQty - amount).clamp(0, double.infinity);
-        final record = await _collection.update(
+        final oldValue = current.quantity ?? 0;
+        final newValue = (oldValue - amount).clamp(0, double.infinity);
+        await _collection.update(
           productId,
-          body: {'quantity': newQuantity},
+          body: {'quantity': newValue},
           expand: _expand,
         );
         invalidateCache();
-        return _toEntity(record);
+        return StockQuantityChange(oldValue: oldValue, newValue: newValue);
       },
       Failure.handle,
     ).run();
   }
 
   @override
-  FutureEither<Product> incrementQuantity(String productId, num amount) async {
+  FutureEither<StockQuantityChange> incrementQuantity(
+    String productId,
+    num amount,
+  ) async {
     return TaskEither.tryCatch(
       () async {
         final current = _toEntity(await _collection.getOne(productId));
-        final currentQty = current.quantity ?? 0;
-        final newQuantity = currentQty + amount;
-        final record = await _collection.update(
+        final oldValue = current.quantity ?? 0;
+        final newValue = oldValue + amount;
+        await _collection.update(
           productId,
-          body: {'quantity': newQuantity},
+          body: {'quantity': newValue},
           expand: _expand,
         );
         invalidateCache();
-        return _toEntity(record);
+        return StockQuantityChange(oldValue: oldValue, newValue: newValue);
       },
       Failure.handle,
     ).run();

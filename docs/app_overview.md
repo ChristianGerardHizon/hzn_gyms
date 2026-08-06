@@ -454,6 +454,8 @@ Destinations are filtered by role permissions. Staff typically see Dashboard thr
 
 **Sales permissions:** `sales.view` (sales history), `sales.create` (cashier/POS), `sales.void` (void sales and payments — assign explicitly under the Sales category in Roles).
 
+**Product quantity:** `products.editQuantity` is required to change on-hand quantity in Edit Product. Admins (`system.admin`) have it by default; other roles should use Stock Adjustment unless this permission is assigned.
+
 ---
 
 ## Architecture Patterns
@@ -559,6 +561,8 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Edit product quantity permission | New `products.editQuantity`; Edit Product quantity is read-only without it (admins included via `system.admin`). Prefer Stock Adjustment otherwise. |
+| Aug 7 | POS sale stock adjustments | Checkout writes `productAdjustments` linked to the sale UUID; void restores qty and writes a reverse adjustment on the same sale |
 | Aug 6 | POS non-lot stock decrement | Cashier checkout now decreases `products.quantity` for `trackStock` products without lots; void restores the same. Lot-tracked path unchanged. |
 | Aug 6 | Sales status filters | Sales search fields dialog toggles Paid / Voided / Awaiting Payment; list refreshes with PocketBase status filter |
 | Aug 6 | Sale receipt reprint | Sale detail Print Receipt opens the receipt dialog (thermal + PDF); reprint skips auto-print and includes line items |

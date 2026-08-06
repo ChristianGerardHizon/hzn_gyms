@@ -35,6 +35,7 @@ class CurrentUserPermissions {
   /// Requires explicit [Permissions.salesVoid]; not granted by [isAdmin] alone.
   bool get canVoidSales => permissions.contains(Permissions.salesVoid);
   bool get canEditMemberships => has(Permissions.membershipsEdit);
+  bool get canEditProductQuantity => has(Permissions.productsEditQuantity);
   bool get canManageSystem => has(Permissions.systemAdmin);
   bool get canViewActivityLog => canManageSystem;
 }

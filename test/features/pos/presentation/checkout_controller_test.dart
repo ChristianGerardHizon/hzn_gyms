@@ -12,8 +12,12 @@ import 'package:ebe_gym/src/features/pos/domain/sale.dart';
 import 'package:ebe_gym/src/features/pos/domain/sale_item.dart';
 import 'package:ebe_gym/src/features/pos/presentation/cart_controller.dart';
 import 'package:ebe_gym/src/features/pos/presentation/checkout_controller.dart';
+import 'package:ebe_gym/src/features/products/data/repositories/product_adjustment_repository.dart';
 import 'package:ebe_gym/src/features/products/data/repositories/product_lot_repository.dart';
 import 'package:ebe_gym/src/features/products/data/repositories/product_repository.dart';
+import 'package:ebe_gym/src/features/products/domain/product_adjustment.dart';
+import 'package:ebe_gym/src/features/products/domain/product_adjustment_type.dart';
+import 'package:ebe_gym/src/features/products/domain/stock_quantity_change.dart';
 import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -22,6 +26,9 @@ import '../../../helpers/mocks.dart';
 class _FakeSale extends Fake implements Sale {}
 
 class _FakeSaleItem extends Fake implements SaleItem {}
+
+class MockProductAdjustmentRepository extends Mock
+    implements ProductAdjustmentRepository {}
 
 class _TestCartController extends CartController {
   _TestCartController(this._initial);
@@ -44,12 +51,14 @@ void main() {
     registerFallbackValue(<SaleItem>[]);
     registerFallbackValue(PaymentMethod.cash);
     registerFallbackValue(PaymentType.payment);
+    registerFallbackValue(ProductAdjustmentType.product);
   });
 
   late MockSalesRepository salesRepo;
   late MockPaymentRepository paymentRepo;
   late MockProductLotRepository lotRepo;
   late MockProductRepository productRepo;
+  late MockProductAdjustmentRepository adjustmentRepo;
 
   ProviderContainer createContainer({
     CartState? cart,
@@ -60,25 +69,56 @@ void main() {
     paymentRepo = MockPaymentRepository();
     lotRepo = MockProductLotRepository();
     productRepo = MockProductRepository();
+    adjustmentRepo = MockProductAdjustmentRepository();
 
     // Default stock side-effect stubs (overridden per-test when verifying)
     when(() => productRepo.decrementQuantity(any(), any())).thenAnswer(
-      (_) async => Right(buildProduct()),
+      (_) async => const Right(
+        StockQuantityChange(oldValue: 10, newValue: 8),
+      ),
     );
     when(() => productRepo.incrementQuantity(any(), any())).thenAnswer(
-      (_) async => Right(buildProduct()),
+      (_) async => const Right(
+        StockQuantityChange(oldValue: 8, newValue: 10),
+      ),
     );
     when(() => productRepo.updateQuantity(any(), any())).thenAnswer(
       (_) async => Right(buildProduct()),
     );
     when(() => lotRepo.decrementQuantity(any(), any())).thenAnswer(
-      (_) async => Right(buildProductLot()),
+      (_) async => const Right(
+        StockQuantityChange(oldValue: 5, newValue: 2),
+      ),
     );
     when(() => lotRepo.incrementQuantity(any(), any())).thenAnswer(
-      (_) async => Right(buildProductLot()),
+      (_) async => const Right(
+        StockQuantityChange(oldValue: 2, newValue: 5),
+      ),
     );
     when(() => lotRepo.calculateTotalQuantity(any())).thenAnswer(
       (_) async => const Right(0),
+    );
+    when(
+      () => adjustmentRepo.create(
+        type: any(named: 'type'),
+        oldValue: any(named: 'oldValue'),
+        newValue: any(named: 'newValue'),
+        reason: any(named: 'reason'),
+        productId: any(named: 'productId'),
+        productStockId: any(named: 'productStockId'),
+        productLotId: any(named: 'productLotId'),
+        saleId: any(named: 'saleId'),
+      ),
+    ).thenAnswer(
+      (_) async => const Right(
+        ProductAdjustment(
+          id: 'adj-1',
+          type: ProductAdjustmentType.product,
+          oldValue: 10,
+          newValue: 8,
+          saleId: 'created-1',
+        ),
+      ),
     );
 
     final cartState = cart ??
@@ -104,6 +144,7 @@ void main() {
         paymentRepositoryProvider.overrideWithValue(paymentRepo),
         productLotRepositoryProvider.overrideWithValue(lotRepo),
         productRepositoryProvider.overrideWithValue(productRepo),
+        productAdjustmentRepositoryProvider.overrideWithValue(adjustmentRepo),
       ],
     );
   }
@@ -380,6 +421,18 @@ void main() {
     expect(result.isRight(), isTrue);
     verify(() => productRepo.decrementQuantity('prod-nl', 2)).called(1);
     verifyNever(() => lotRepo.decrementQuantity(any(), any()));
+    verify(
+      () => adjustmentRepo.create(
+        type: ProductAdjustmentType.product,
+        oldValue: 10,
+        newValue: 8,
+        reason: any(named: 'reason'),
+        productId: 'prod-nl',
+        productStockId: any(named: 'productStockId'),
+        productLotId: any(named: 'productLotId'),
+        saleId: 'created-nl',
+      ),
+    ).called(1);
   });
 
   test('skips product decrement when trackStock is false', () async {
@@ -410,6 +463,18 @@ void main() {
     expect(result.isRight(), isTrue);
     verifyNever(() => productRepo.decrementQuantity(any(), any()));
     verifyNever(() => lotRepo.decrementQuantity(any(), any()));
+    verifyNever(
+      () => adjustmentRepo.create(
+        type: any(named: 'type'),
+        oldValue: any(named: 'oldValue'),
+        newValue: any(named: 'newValue'),
+        reason: any(named: 'reason'),
+        productId: any(named: 'productId'),
+        productStockId: any(named: 'productStockId'),
+        productLotId: any(named: 'productLotId'),
+        saleId: any(named: 'saleId'),
+      ),
+    );
   });
 
   test('decrements lot and syncs product quantity for lot-tracked items', () async {
@@ -456,5 +521,17 @@ void main() {
     verify(() => lotRepo.decrementQuantity('lot-1', 3)).called(1);
     verify(() => productRepo.updateQuantity('prod-lot', 7)).called(1);
     verifyNever(() => productRepo.decrementQuantity(any(), any()));
+    verify(
+      () => adjustmentRepo.create(
+        type: ProductAdjustmentType.productStock,
+        oldValue: 5,
+        newValue: 2,
+        reason: any(named: 'reason'),
+        productId: 'prod-lot',
+        productStockId: any(named: 'productStockId'),
+        productLotId: 'lot-1',
+        saleId: 'created-lot',
+      ),
+    ).called(1);
   });
 }

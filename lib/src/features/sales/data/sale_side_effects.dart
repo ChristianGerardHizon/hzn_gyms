@@ -6,8 +6,10 @@ import '../../memberships/domain/member_membership.dart';
 import '../../memberships/domain/membership_payment_lifecycle.dart';
 import '../../pos/data/repositories/sales_repository.dart';
 import '../../pos/domain/sale.dart';
+import '../../products/data/repositories/product_adjustment_repository.dart';
 import '../../products/data/repositories/product_lot_repository.dart';
 import '../../products/data/repositories/product_repository.dart';
+import '../../products/domain/product_adjustment_type.dart';
 
 /// Voids a sale and cascades membership + stock side effects.
 ///
@@ -15,11 +17,13 @@ import '../../products/data/repositories/product_repository.dart';
 /// - Voids linked [MemberMembership] records
 /// - Restores lot quantities for lot-tracked line items and syncs product totals
 /// - Restores product quantities for non-lot stock-tracked line items
+/// - Writes reverse [productAdjustments] linked to the same sale UUID
 FutureEither<Sale> voidSaleWithSideEffects({
   required SalesRepository salesRepo,
   required MemberMembershipRepository memberMembershipRepo,
   required ProductLotRepository lotRepo,
   required ProductRepository productRepo,
+  required ProductAdjustmentRepository adjustmentRepo,
   required String saleId,
   String? voidedById,
 }) async {
@@ -42,6 +46,11 @@ FutureEither<Sale> voidSaleWithSideEffects({
     MemberMembershipStatus.voided,
   );
 
+  final receiptLabel = voidedSale.receiptNumber.isNotEmpty
+      ? voidedSale.receiptNumber
+      : saleId;
+  final adjustmentReason = 'Void sale $receiptLabel';
+
   final itemsResult = await salesRepo.getSaleItems(saleId);
   await itemsResult.fold(
     (_) async {},
@@ -52,7 +61,24 @@ FutureEither<Sale> voidSaleWithSideEffects({
         if (item.productId.isEmpty) continue;
 
         if (item.hasLot) {
-          await lotRepo.incrementQuantity(item.productLotId!, item.quantity);
+          final lotChange = await lotRepo.incrementQuantity(
+            item.productLotId!,
+            item.quantity,
+          );
+          await lotChange.fold(
+            (_) async {},
+            (change) async {
+              await adjustmentRepo.create(
+                type: ProductAdjustmentType.productStock,
+                oldValue: change.oldValue,
+                newValue: change.newValue,
+                reason: adjustmentReason,
+                productId: item.productId,
+                productLotId: item.productLotId,
+                saleId: saleId,
+              );
+            },
+          );
           productIdsToSync.add(item.productId);
           continue;
         }
@@ -62,7 +88,23 @@ FutureEither<Sale> voidSaleWithSideEffects({
         final isProductLine =
             item.itemType == null || item.itemType == 'product';
         if (isProductLine && item.product?.trackStock == true) {
-          await productRepo.incrementQuantity(item.productId, item.quantity);
+          final productChange = await productRepo.incrementQuantity(
+            item.productId,
+            item.quantity,
+          );
+          await productChange.fold(
+            (_) async {},
+            (change) async {
+              await adjustmentRepo.create(
+                type: ProductAdjustmentType.product,
+                oldValue: change.oldValue,
+                newValue: change.newValue,
+                reason: adjustmentReason,
+                productId: item.productId,
+                saleId: saleId,
+              );
+            },
+          );
         }
       }
 

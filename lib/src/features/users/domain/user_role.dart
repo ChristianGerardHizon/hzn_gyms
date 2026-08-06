@@ -113,6 +113,7 @@ abstract class Permissions {
   static const productsView = 'products.view';
   static const productsCreate = 'products.create';
   static const productsEdit = 'products.edit';
+  static const productsEditQuantity = 'products.editQuantity';
   static const productsDelete = 'products.delete';
 
   // Inventory permissions
@@ -166,7 +167,13 @@ abstract class Permissions {
       memberCardsDelete,
     ],
     'Reports': [reportsView],
-    'Products': [productsView, productsCreate, productsEdit, productsDelete],
+    'Products': [
+      productsView,
+      productsCreate,
+      productsEdit,
+      productsEditQuantity,
+      productsDelete,
+    ],
     'Inventory': [inventoryView, inventoryAdjust],
     'Sales': [salesView, salesCreate, salesVoid],
     'Users': [usersView, usersCreate, usersEdit, usersDelete],
@@ -344,6 +351,14 @@ abstract class Permissions {
         category: 'Products',
         description: 'Modify product information',
         icon: Icons.edit,
+      ),
+      const Permission(
+        key: productsEditQuantity,
+        name: 'Edit Product Quantity',
+        category: 'Products',
+        description:
+            'Change on-hand quantity in Edit Product (prefer Stock Adjustment otherwise)',
+        icon: Icons.numbers,
       ),
       const Permission(
         key: productsDelete,

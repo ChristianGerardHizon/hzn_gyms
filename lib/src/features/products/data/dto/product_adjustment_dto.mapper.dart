@@ -73,6 +73,12 @@ class ProductAdjustmentDtoMapper extends ClassMapperBase<ProductAdjustmentDto> {
     _$productLot,
     opt: true,
   );
+  static String? _$sale(ProductAdjustmentDto v) => v.sale;
+  static const Field<ProductAdjustmentDto, String> _f$sale = Field(
+    'sale',
+    _$sale,
+    opt: true,
+  );
   static bool _$isDeleted(ProductAdjustmentDto v) => v.isDeleted;
   static const Field<ProductAdjustmentDto, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -105,6 +111,7 @@ class ProductAdjustmentDtoMapper extends ClassMapperBase<ProductAdjustmentDto> {
     #product: _f$product,
     #productStock: _f$productStock,
     #productLot: _f$productLot,
+    #sale: _f$sale,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -122,6 +129,7 @@ class ProductAdjustmentDtoMapper extends ClassMapperBase<ProductAdjustmentDto> {
       product: data.dec(_f$product),
       productStock: data.dec(_f$productStock),
       productLot: data.dec(_f$productLot),
+      sale: data.dec(_f$sale),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -209,6 +217,7 @@ abstract class ProductAdjustmentDtoCopyWith<
     String? product,
     String? productStock,
     String? productLot,
+    String? sale,
     bool? isDeleted,
     String? created,
     String? updated,
@@ -238,6 +247,7 @@ class _ProductAdjustmentDtoCopyWithImpl<$R, $Out>
     Object? product = $none,
     Object? productStock = $none,
     Object? productLot = $none,
+    Object? sale = $none,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -253,6 +263,7 @@ class _ProductAdjustmentDtoCopyWithImpl<$R, $Out>
       if (product != $none) #product: product,
       if (productStock != $none) #productStock: productStock,
       if (productLot != $none) #productLot: productLot,
+      if (sale != $none) #sale: sale,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -270,6 +281,7 @@ class _ProductAdjustmentDtoCopyWithImpl<$R, $Out>
     product: data.get(#product, or: $value.product),
     productStock: data.get(#productStock, or: $value.productStock),
     productLot: data.get(#productLot, or: $value.productLot),
+    sale: data.get(#sale, or: $value.sale),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

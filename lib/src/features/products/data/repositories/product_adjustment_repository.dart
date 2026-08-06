@@ -30,6 +30,7 @@ abstract class ProductAdjustmentRepository {
     String? productId,
     String? productStockId,
     String? productLotId,
+    String? saleId,
   });
 }
 
@@ -104,6 +105,7 @@ class ProductAdjustmentRepositoryImpl implements ProductAdjustmentRepository {
     String? productId,
     String? productStockId,
     String? productLotId,
+    String? saleId,
   }) async {
     return TaskEither.tryCatch(
       () async {
@@ -115,6 +117,7 @@ class ProductAdjustmentRepositoryImpl implements ProductAdjustmentRepository {
           productId: productId,
           productStockId: productStockId,
           productLotId: productLotId,
+          saleId: saleId,
         );
 
         final record = await _collection.create(body: body);
