@@ -44,6 +44,13 @@ class CardCheckInNoActiveMembership extends CardCheckInResult {
   final String memberName;
 }
 
+/// Member has an active membership, but the linked sale is unpaid.
+class CardCheckInUnpaidMembership extends CardCheckInResult {
+  const CardCheckInUnpaidMembership({required this.memberName});
+
+  final String memberName;
+}
+
 /// Member has an active membership, but it is not valid at this branch.
 class CardCheckInMembershipNotValidAtBranch extends CardCheckInResult {
   const CardCheckInMembershipNotValidAtBranch({required this.memberName});

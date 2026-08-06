@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../domain/card_check_in_result.dart';
+import '../../domain/check_in_block_reason.dart';
 import '../../domain/editable_text_focus.dart';
 import '../../domain/rfid_keyboard_wedge_decoder.dart';
 import '../../domain/rfid_wedge_candidate_key.dart';
@@ -236,17 +237,29 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
         case CardCheckInNoActiveMembership(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'No Active Membership',
-            message:
-                '$memberName has no active membership and cannot check in.',
+            title: checkInBlockTitle(CheckInBlockReason.noActiveMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.noActiveMembership,
+              memberName,
+            ),
+          );
+        case CardCheckInUnpaidMembership(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: checkInBlockTitle(CheckInBlockReason.unpaidMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.unpaidMembership,
+              memberName,
+            ),
           );
         case CardCheckInMembershipNotValidAtBranch(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'Not Valid at This Branch',
-            message:
-                '$memberName has an active membership, but it is not valid '
-                'at this branch.',
+            title: checkInBlockTitle(CheckInBlockReason.notValidAtBranch),
+            message: checkInBlockMessage(
+              CheckInBlockReason.notValidAtBranch,
+              memberName,
+            ),
           );
         case CardCheckInNoBranch():
           await showCheckInErrorDialog(
@@ -260,7 +273,7 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
           await showCheckInErrorDialog(
             context,
             title: 'Check-In Failed',
-            message: 'Something went wrong while recording the check-in.',
+            message: 'Could not record check-in. Try again.',
           );
       }
     } finally {

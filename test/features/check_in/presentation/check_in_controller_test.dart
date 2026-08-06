@@ -11,6 +11,7 @@ import 'package:ebe_gym/src/features/check_in/presentation/controllers/check_in_
 import 'package:ebe_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
 import 'package:ebe_gym/src/features/members/data/repositories/member_repository.dart';
 import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:ebe_gym/src/features/pos/data/repositories/sales_repository.dart';
 import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -28,6 +29,7 @@ void main() {
   late MockMemberCardRepository cardRepo;
   late MockMemberRepository memberRepo;
   late MockMemberMembershipRepository mmRepo;
+  late MockSalesRepository salesRepo;
   void Function(RecordSubscriptionEvent event)? onRealtimeEvent;
   var unsubscribeCalls = 0;
 
@@ -39,6 +41,7 @@ void main() {
     cardRepo = MockMemberCardRepository();
     memberRepo = MockMemberRepository();
     mmRepo = MockMemberMembershipRepository();
+    salesRepo = MockSalesRepository();
     onRealtimeEvent = null;
     unsubscribeCalls = 0;
 
@@ -65,6 +68,7 @@ void main() {
         memberCardRepositoryProvider.overrideWithValue(cardRepo),
         memberRepositoryProvider.overrideWithValue(memberRepo),
         memberMembershipRepositoryProvider.overrideWithValue(mmRepo),
+        salesRepositoryProvider.overrideWithValue(salesRepo),
         viewingAllBranchesProvider.overrideWithValue(viewingAll),
         effectiveBranchIdForWriteProvider.overrideWithValue(branchId),
         currentBranchIdProvider.overrideWithValue(branchId),
@@ -116,6 +120,31 @@ void main() {
         .cardCheckIn(cardValue: 'RFID123');
 
     expect(result, isA<CardCheckInNoActiveMembership>());
+  });
+
+  test('returns unpaid membership when linked sale is unpaid', () async {
+    final container = createContainer();
+    addTearDown(container.dispose);
+
+    when(() => cardRepo.findByCardValue('RFID123')).thenAnswer(
+      (_) async => right(buildMemberCard()),
+    );
+    when(() => mmRepo.fetchActive('member-1')).thenAnswer(
+      (_) async => right([
+        buildMemberMembership(saleId: 'sale-unpaid'),
+      ]),
+    );
+    when(() => salesRepo.getSale('sale-unpaid')).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'sale-unpaid', status: 'awaitingPayment', isPaid: false),
+      ),
+    );
+
+    final result = await container
+        .read(checkInControllerProvider.notifier)
+        .cardCheckIn(cardValue: 'RFID123');
+
+    expect(result, isA<CardCheckInUnpaidMembership>());
   });
 
   test('returns wrong branch when membership not valid here', () async {

@@ -52,6 +52,7 @@ void main() {
       const denies = <CardCheckInResult>[
         CardCheckInCardNotFound(),
         CardCheckInNoActiveMembership(memberName: 'Jane'),
+        CardCheckInUnpaidMembership(memberName: 'Jane'),
         CardCheckInMembershipNotValidAtBranch(memberName: 'Jane'),
         CardCheckInNoBranch(),
         CardCheckInFailed(),
