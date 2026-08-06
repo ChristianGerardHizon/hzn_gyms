@@ -62,6 +62,14 @@ abstract class ProductRepository {
   /// Updates only the quantity field for a product.
   /// Used for syncing product quantity from lots.
   FutureEither<Product> updateQuantity(String productId, num quantity);
+
+  /// Decrements a product's quantity by [amount], clamped at 0.
+  /// Used for non-lot stock-tracked products sold via POS.
+  FutureEither<Product> decrementQuantity(String productId, num amount);
+
+  /// Increments a product's quantity by [amount].
+  /// Used when voiding sales of non-lot stock-tracked products.
+  FutureEither<Product> incrementQuantity(String productId, num amount);
 }
 
 /// Provides the ProductRepository instance.
@@ -351,6 +359,44 @@ class ProductRepositoryImpl implements ProductRepository {
         final record = await _collection.update(
           productId,
           body: {'quantity': quantity},
+          expand: _expand,
+        );
+        invalidateCache();
+        return _toEntity(record);
+      },
+      Failure.handle,
+    ).run();
+  }
+
+  @override
+  FutureEither<Product> decrementQuantity(String productId, num amount) async {
+    return TaskEither.tryCatch(
+      () async {
+        final current = _toEntity(await _collection.getOne(productId));
+        final currentQty = current.quantity ?? 0;
+        final newQuantity = (currentQty - amount).clamp(0, double.infinity);
+        final record = await _collection.update(
+          productId,
+          body: {'quantity': newQuantity},
+          expand: _expand,
+        );
+        invalidateCache();
+        return _toEntity(record);
+      },
+      Failure.handle,
+    ).run();
+  }
+
+  @override
+  FutureEither<Product> incrementQuantity(String productId, num amount) async {
+    return TaskEither.tryCatch(
+      () async {
+        final current = _toEntity(await _collection.getOne(productId));
+        final currentQty = current.quantity ?? 0;
+        final newQuantity = currentQty + amount;
+        final record = await _collection.update(
+          productId,
+          body: {'quantity': newQuantity},
           expand: _expand,
         );
         invalidateCache();

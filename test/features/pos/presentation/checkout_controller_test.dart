@@ -61,6 +61,26 @@ void main() {
     lotRepo = MockProductLotRepository();
     productRepo = MockProductRepository();
 
+    // Default stock side-effect stubs (overridden per-test when verifying)
+    when(() => productRepo.decrementQuantity(any(), any())).thenAnswer(
+      (_) async => Right(buildProduct()),
+    );
+    when(() => productRepo.incrementQuantity(any(), any())).thenAnswer(
+      (_) async => Right(buildProduct()),
+    );
+    when(() => productRepo.updateQuantity(any(), any())).thenAnswer(
+      (_) async => Right(buildProduct()),
+    );
+    when(() => lotRepo.decrementQuantity(any(), any())).thenAnswer(
+      (_) async => Right(buildProductLot()),
+    );
+    when(() => lotRepo.incrementQuantity(any(), any())).thenAnswer(
+      (_) async => Right(buildProductLot()),
+    );
+    when(() => lotRepo.calculateTotalQuantity(any())).thenAnswer(
+      (_) async => const Right(0),
+    );
+
     final cartState = cart ??
         CartState(
           items: [
@@ -330,5 +350,111 @@ void main() {
         );
 
     expect(result.isRight(), isTrue);
+  });
+
+  test('decrements product quantity for non-lot trackStock items', () async {
+    final product = buildProduct(id: 'prod-nl', price: 50, trackStock: true);
+    final container = createContainer(
+      cart: CartState(
+        items: [buildCartItem(quantity: 2, product: product, productId: product.id)],
+      ),
+    );
+    addTearDown(container.dispose);
+    await waitForCart(container);
+
+    when(() => salesRepo.createSale(any(), any())).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'created-nl', totalAmount: 100, status: 'pending'),
+      ),
+    );
+    when(() => salesRepo.getSale('created-nl')).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'created-nl', totalAmount: 100, status: 'pending'),
+      ),
+    );
+
+    final result = await container
+        .read(checkoutControllerProvider.notifier)
+        .processCheckout(payNow: false);
+
+    expect(result.isRight(), isTrue);
+    verify(() => productRepo.decrementQuantity('prod-nl', 2)).called(1);
+    verifyNever(() => lotRepo.decrementQuantity(any(), any()));
+  });
+
+  test('skips product decrement when trackStock is false', () async {
+    final product = buildProduct(id: 'prod-ns', price: 50, trackStock: false);
+    final container = createContainer(
+      cart: CartState(
+        items: [buildCartItem(quantity: 1, product: product, productId: product.id)],
+      ),
+    );
+    addTearDown(container.dispose);
+    await waitForCart(container);
+
+    when(() => salesRepo.createSale(any(), any())).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'created-ns', totalAmount: 50, status: 'pending'),
+      ),
+    );
+    when(() => salesRepo.getSale('created-ns')).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'created-ns', totalAmount: 50, status: 'pending'),
+      ),
+    );
+
+    final result = await container
+        .read(checkoutControllerProvider.notifier)
+        .processCheckout(payNow: false);
+
+    expect(result.isRight(), isTrue);
+    verifyNever(() => productRepo.decrementQuantity(any(), any()));
+    verifyNever(() => lotRepo.decrementQuantity(any(), any()));
+  });
+
+  test('decrements lot and syncs product quantity for lot-tracked items', () async {
+    final product = buildProduct(
+      id: 'prod-lot',
+      price: 50,
+      trackStock: true,
+      trackByLot: true,
+    );
+    final container = createContainer(
+      cart: CartState(
+        items: [
+          buildCartItem(
+            quantity: 3,
+            product: product,
+            productId: product.id,
+            productLotId: 'lot-1',
+            lotNumber: 'L1',
+          ),
+        ],
+      ),
+    );
+    addTearDown(container.dispose);
+    await waitForCart(container);
+
+    when(() => salesRepo.createSale(any(), any())).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'created-lot', totalAmount: 150, status: 'pending'),
+      ),
+    );
+    when(() => salesRepo.getSale('created-lot')).thenAnswer(
+      (_) async => right(
+        buildSale(id: 'created-lot', totalAmount: 150, status: 'pending'),
+      ),
+    );
+    when(() => lotRepo.calculateTotalQuantity('prod-lot'))
+        .thenAnswer((_) async => const Right(7));
+
+    final result = await container
+        .read(checkoutControllerProvider.notifier)
+        .processCheckout(payNow: false);
+
+    expect(result.isRight(), isTrue);
+    verify(() => lotRepo.decrementQuantity('lot-1', 3)).called(1);
+    verify(() => productRepo.updateQuantity('prod-lot', 7)).called(1);
+    verifyNever(() => productRepo.decrementQuantity(any(), any()));
   });
 }

@@ -1,0 +1,48 @@
+﻿{
+    "batch_id":  "recon-2026-08-06",
+    "applied_at_utc":  "2026-08-06T15:09:55.3519707Z",
+    "prod_url":  "https://ebegym.hznsystems.com",
+    "policy":  "Only applied verify_with_physical_count rows where system_qty != hint and live qty matched snapshot. DO_NOT_AUTO_CORRECT products left untouched.",
+    "reason":  "Stock reconciliation recon-2026-08-06 (POS non-lot sales never decremented; subtract non-voided sold qty)",
+    "results":  [
+                    {
+                        "status":  "applied",
+                        "product_id":  "934ppj5avh3t9p1",
+                        "name":  "pandanon 500ml",
+                        "previous_quantity":  106,
+                        "expected_old":  106,
+                        "new_quantity":  98,
+                        "sold_qty":  8,
+                        "adjustment_id":  "kuwgbl3n821340t",
+                        "note":  "Applied; revert by setting quantity to previous_quantity and creating reverse adjustment"
+                    },
+                    {
+                        "status":  "applied",
+                        "product_id":  "byd43kbrlemf3tj",
+                        "name":  "pandanon 1000ml",
+                        "previous_quantity":  41,
+                        "expected_old":  41,
+                        "new_quantity":  32,
+                        "sold_qty":  9,
+                        "adjustment_id":  "2dbwgerf0mpqj9h",
+                        "note":  "Applied; revert by setting quantity to previous_quantity and creating reverse adjustment"
+                    },
+                    {
+                        "status":  "applied",
+                        "product_id":  "p2dc6oro2et9zd4",
+                        "name":  "GYM TOWEL",
+                        "previous_quantity":  36,
+                        "expected_old":  36,
+                        "new_quantity":  35,
+                        "sold_qty":  1,
+                        "adjustment_id":  "o95jlstskw3hexp",
+                        "note":  "Applied; revert by setting quantity to previous_quantity and creating reverse adjustment"
+                    }
+                ],
+    "revert_instructions":  [
+                                "For each result with status=applied:",
+                                "1. PATCH products/{product_id} with quantity=previous_quantity",
+                                "2. POST productAdjustments with type=product, oldValue=new_quantity, newValue=previous_quantity, product=product_id, reason=\u0027Revert recon-2026-08-06\u0027",
+                                "Or soft-delete/keep the original adjustment for audit and add the reverse adjustment."
+                            ]
+}

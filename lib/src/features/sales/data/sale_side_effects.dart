@@ -13,7 +13,8 @@ import '../../products/data/repositories/product_repository.dart';
 ///
 /// - Sets sale `status` to `voided` (and optional `voidedBy`)
 /// - Voids linked [MemberMembership] records
-/// - Restores lot quantities for product line items and syncs product totals
+/// - Restores lot quantities for lot-tracked line items and syncs product totals
+/// - Restores product quantities for non-lot stock-tracked line items
 FutureEither<Sale> voidSaleWithSideEffects({
   required SalesRepository salesRepo,
   required MemberMembershipRepository memberMembershipRepo,
@@ -48,11 +49,20 @@ FutureEither<Sale> voidSaleWithSideEffects({
       final productIdsToSync = <String>{};
 
       for (final item in items) {
-        final lotId = item.productLotId;
-        if (lotId == null || lotId.isEmpty) continue;
-        await lotRepo.incrementQuantity(lotId, item.quantity);
-        if (item.productId.isNotEmpty) {
+        if (item.productId.isEmpty) continue;
+
+        if (item.hasLot) {
+          await lotRepo.incrementQuantity(item.productLotId!, item.quantity);
           productIdsToSync.add(item.productId);
+          continue;
+        }
+
+        // Non-lot product lines: restore product.quantity when stock is tracked.
+        // Membership/addon/walkIn lines are skipped (no trackStock product).
+        final isProductLine =
+            item.itemType == null || item.itemType == 'product';
+        if (isProductLine && item.product?.trackStock == true) {
+          await productRepo.incrementQuantity(item.productId, item.quantity);
         }
       }
 

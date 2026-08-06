@@ -84,6 +84,7 @@ class CheckoutController extends _$CheckoutController {
         quantity: cartItem.quantity,
         unitPrice: cartItem.effectivePrice,
         subtotal: cartItem.total,
+        product: product,
         productLotId: cartItem.productLotId,
         lotNumber: cartItem.lotNumber,
         itemType: 'product',
@@ -156,14 +157,22 @@ class CheckoutController extends _$CheckoutController {
           );
         }
 
-        // Track products that need quantity sync
+        // Track products that need quantity sync from lots
         final productIdsToSync = <String>{};
 
-        // Decrement lot quantities for lot-tracked items
+        // Decrement stock for product line items
         for (final item in saleItems) {
-          if (item.productLotId != null && item.productLotId!.isNotEmpty) {
+          if (item.productId.isEmpty) continue;
+
+          if (item.hasLot) {
             await lotRepo.decrementQuantity(item.productLotId!, item.quantity);
             productIdsToSync.add(item.productId);
+            continue;
+          }
+
+          // Non-lot stock-tracked products: decrement product.quantity directly
+          if (item.product?.trackStock == true) {
+            await productRepo.decrementQuantity(item.productId, item.quantity);
           }
         }
 
