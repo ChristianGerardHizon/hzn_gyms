@@ -12,6 +12,7 @@ import '../../../products/domain/product_status.dart';
 import '../cart_controller.dart';
 import '../providers/pos_product_stock_provider.dart';
 import 'lot_selection_dialog.dart';
+import 'out_of_stock_continue_dialog.dart';
 import 'variable_price_dialog.dart';
 
 class ProductGrid extends ConsumerWidget {
@@ -171,19 +172,17 @@ class _ProductCard extends ConsumerWidget {
   }) {
     final isOutOfStock = stockStatus == ProductStatus.outOfStock;
     final isLowStock = stockStatus == ProductStatus.lowStock;
-    final isDisabled = isOutOfStock && product.requireStock;
+    final dimForStock = isOutOfStock && product.requireStock;
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: isDisabled
-            ? () => _showOutOfStockMessage(context)
-            : () => _handleProductTap(context, ref),
+        onTap: () => _onProductTap(context, ref, stockStatus),
         child: Stack(
           children: [
             // Main content - compact layout with name and price only
             Opacity(
-              opacity: isDisabled ? 0.5 : 1.0,
+              opacity: dimForStock ? 0.5 : 1.0,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -247,7 +246,22 @@ class _ProductCard extends ConsumerWidget {
     );
   }
 
-  void _handleProductTap(BuildContext context, WidgetRef ref) {
+  Future<void> _onProductTap(
+    BuildContext context,
+    WidgetRef ref,
+    ProductStatus? stockStatus,
+  ) async {
+    final allowed = await confirmOutOfStockSaleIfNeeded(
+      context: context,
+      ref: ref,
+      product: product,
+      stockStatus: stockStatus,
+    );
+    if (!allowed || !context.mounted) return;
+    await _handleProductTap(context, ref);
+  }
+
+  Future<void> _handleProductTap(BuildContext context, WidgetRef ref) async {
     // Capture notifier before async operation to avoid using ref after widget unmount
     final cartNotifier = ref.read(cartControllerProvider.notifier);
 
@@ -288,34 +302,24 @@ class _ProductCard extends ConsumerWidget {
       );
     } else if (product.isVariablePrice) {
       // Variable-price product: prompt for price before adding to cart
-      showVariablePriceDialog(
+      final price = await showVariablePriceDialog(
         context,
         productName: product.name,
-      ).then((price) async {
-        if (price != null) {
-          final error =
-              await cartNotifier.addToCart(product, customPrice: price);
-          if (error != null && context.mounted) {
-            showErrorSnackBar(context, message: error);
-          }
-        }
-      });
-    } else {
-      // Regular add to cart for non-lot products
-      cartNotifier.addToCart(product).then((error) {
+      );
+      if (price != null) {
+        final error =
+            await cartNotifier.addToCart(product, customPrice: price);
         if (error != null && context.mounted) {
           showErrorSnackBar(context, message: error);
         }
-      });
+      }
+    } else {
+      // Regular add to cart for non-lot products
+      final error = await cartNotifier.addToCart(product);
+      if (error != null && context.mounted) {
+        showErrorSnackBar(context, message: error);
+      }
     }
-  }
-
-  void _showOutOfStockMessage(BuildContext context) {
-    showErrorSnackBar(
-      context,
-      message: '${product.name} is out of stock',
-      duration: const Duration(seconds: 2),
-    );
   }
 }
 

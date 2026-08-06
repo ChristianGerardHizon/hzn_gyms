@@ -22,6 +22,7 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
   final String? product;
   final String? productStock;
   final String? productLot;
+  final String? sale;
   final bool isDeleted;
   final String? created;
   final String? updated;
@@ -37,6 +38,7 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
     this.product,
     this.productStock,
     this.productLot,
+    this.sale,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -57,6 +59,7 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
       product: json['product'] as String?,
       productStock: json['productStock'] as String?,
       productLot: json['productLot'] as String?,
+      sale: json['sale'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
@@ -74,6 +77,7 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
       productId: product,
       productStockId: productStock,
       productLotId: productLot,
+      saleId: sale,
       isDeleted: isDeleted,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
@@ -100,6 +104,7 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
     String? productId,
     String? productStockId,
     String? productLotId,
+    String? saleId,
   }) {
     return {
       'type': type.name,
@@ -111,6 +116,7 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
         'productStock': productStockId,
       if (productLotId != null && productLotId.isNotEmpty)
         'productLot': productLotId,
+      if (saleId != null && saleId.isNotEmpty) 'sale': saleId,
     };
   }
 }

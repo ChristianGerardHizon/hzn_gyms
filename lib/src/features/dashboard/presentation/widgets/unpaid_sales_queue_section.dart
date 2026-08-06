@@ -6,6 +6,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../products/data/repositories/product_adjustment_repository.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../sales/data/sale_side_effects.dart';
@@ -162,6 +163,7 @@ class _UnpaidSaleTile extends ConsumerWidget {
                     ref.read(memberMembershipRepositoryProvider),
                 lotRepo: ref.read(productLotRepositoryProvider),
                 productRepo: ref.read(productRepositoryProvider),
+                adjustmentRepo: ref.read(productAdjustmentRepositoryProvider),
                 saleId: sale.id,
                 voidedById: ref.read(currentAuthProvider)?.user.id,
               );

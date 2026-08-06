@@ -8,6 +8,7 @@ import '../../../../core/utils/currency_format.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../cart_controller.dart';
 import 'lot_selection_dialog.dart';
+import 'out_of_stock_continue_dialog.dart';
 import 'variable_price_dialog.dart';
 
 /// A search field with a dropdown overlay that shows matching products.
@@ -365,6 +366,14 @@ class _SearchResultTile extends StatelessWidget {
 
     await result.fold((_) async {}, (product) async {
       if (!context.mounted) return;
+
+      final allowed = await confirmOutOfStockSaleIfNeeded(
+        context: context,
+        ref: ref,
+        product: product,
+      );
+      if (!allowed || !context.mounted) return;
+
       final cartNotifier = ref.read(cartControllerProvider.notifier);
 
       if (product.trackByLot) {

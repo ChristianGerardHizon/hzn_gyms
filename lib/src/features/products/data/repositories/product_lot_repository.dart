@@ -9,6 +9,7 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../domain/product_lot.dart';
+import '../../domain/stock_quantity_change.dart';
 import '../dto/product_lot_dto.dart';
 
 part 'product_lot_repository.g.dart';
@@ -37,10 +38,10 @@ abstract class ProductLotRepository {
   FutureEither<ProductLot> updateQuantity(String id, num quantity);
 
   /// Decrements quantity for a lot by the specified amount.
-  FutureEither<ProductLot> decrementQuantity(String id, num amount);
+  FutureEither<StockQuantityChange> decrementQuantity(String id, num amount);
 
   /// Increments quantity for a lot by the specified amount (e.g. void restore).
-  FutureEither<ProductLot> incrementQuantity(String id, num amount);
+  FutureEither<StockQuantityChange> incrementQuantity(String id, num amount);
 
   /// Calculates total quantity across all lots for a product.
   FutureEither<num> calculateTotalQuantity(String productId);
@@ -188,38 +189,40 @@ class ProductLotRepositoryImpl implements ProductLotRepository {
   }
 
   @override
-  FutureEither<ProductLot> decrementQuantity(String id, num amount) async {
+  FutureEither<StockQuantityChange> decrementQuantity(
+    String id,
+    num amount,
+  ) async {
     return TaskEither.tryCatch(
       () async {
-        // Fetch current lot to get current quantity
-        final currentRecord = await _collection.getOne(id);
-        final currentLot = _toEntity(currentRecord);
-
-        // Calculate new quantity (ensure it doesn't go below 0)
-        final newQuantity = (currentLot.quantity - amount).clamp(0, double.infinity);
-
-        final record = await _collection.update(
+        final currentLot = _toEntity(await _collection.getOne(id));
+        final oldValue = currentLot.quantity;
+        final newValue = (oldValue - amount).clamp(0, double.infinity);
+        await _collection.update(
           id,
-          body: {'quantity': newQuantity},
+          body: {'quantity': newValue},
         );
-        return _toEntity(record);
+        return StockQuantityChange(oldValue: oldValue, newValue: newValue);
       },
       Failure.handle,
     ).run();
   }
 
   @override
-  FutureEither<ProductLot> incrementQuantity(String id, num amount) async {
+  FutureEither<StockQuantityChange> incrementQuantity(
+    String id,
+    num amount,
+  ) async {
     return TaskEither.tryCatch(
       () async {
-        final currentRecord = await _collection.getOne(id);
-        final currentLot = _toEntity(currentRecord);
-        final newQuantity = currentLot.quantity + amount;
-        final record = await _collection.update(
+        final currentLot = _toEntity(await _collection.getOne(id));
+        final oldValue = currentLot.quantity;
+        final newValue = oldValue + amount;
+        await _collection.update(
           id,
-          body: {'quantity': newQuantity},
+          body: {'quantity': newValue},
         );
-        return _toEntity(record);
+        return StockQuantityChange(oldValue: oldValue, newValue: newValue);
       },
       Failure.handle,
     ).run();

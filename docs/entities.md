@@ -427,6 +427,8 @@ Stock adjustment records.
 | `newValue` | num | Yes | New value |
 | `product` | String (FK) | Conditional | FK to Product (if type=product) |
 | `productStock` | String (FK) | Conditional | FK to ProductStock (if type=productStock) |
+| `productLot` | String (FK) | Conditional | FK to ProductLot (lot adjustments) |
+| `sale` | String (FK) | No | FK to Sale when caused by POS sale/void |
 
 **Collection:** `productAdjustments`
 

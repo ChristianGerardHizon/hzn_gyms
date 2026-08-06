@@ -19,6 +19,7 @@ class ProductAdjustment with ProductAdjustmentMappable {
     this.productId,
     this.productStockId,
     this.productLotId,
+    this.saleId,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -47,6 +48,9 @@ class ProductAdjustment with ProductAdjustmentMappable {
 
   /// ProductLot FK ID (when type is productStock for lot adjustments).
   final String? productLotId;
+
+  /// Sale FK ID when the adjustment was caused by a POS sale or void.
+  final String? saleId;
 
   /// Soft delete flag.
   final bool isDeleted;

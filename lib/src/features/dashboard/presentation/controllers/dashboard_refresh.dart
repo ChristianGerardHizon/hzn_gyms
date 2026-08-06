@@ -12,14 +12,24 @@ import 'todays_sales_controller.dart';
 
 /// Invalidates today's sales list and KPI so Recent Transactions stay current.
 void refreshTodaysSales(WidgetRef ref) {
-  ref.invalidate(todaySalesSummaryProvider);
-  ref.invalidate(todaySalesProvider);
+  refreshTodaysSalesOnContainer(ref.container);
+}
+
+/// Same as [refreshTodaysSales] using a [ProviderContainer] (safe after async gaps).
+void refreshTodaysSalesOnContainer(ProviderContainer container) {
+  container.invalidate(todaySalesSummaryProvider);
+  container.invalidate(todaySalesProvider);
 }
 
 /// Refreshes dashboard sales KPIs and the paginated sales list.
 void refreshSalesData(WidgetRef ref) {
-  refreshTodaysSales(ref);
-  ref.read(paginatedSalesControllerProvider.notifier).refresh();
+  refreshSalesDataOnContainer(ref.container);
+}
+
+/// Same as [refreshSalesData] using a [ProviderContainer] (safe after async gaps).
+void refreshSalesDataOnContainer(ProviderContainer container) {
+  refreshTodaysSalesOnContainer(container);
+  container.read(paginatedSalesControllerProvider.notifier).refresh();
 }
 
 /// Invalidates membership/sales dashboard cards after create or renew.

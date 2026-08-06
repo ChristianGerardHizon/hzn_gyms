@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../../core/permissions/current_user_permissions.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form/form_section_header.dart';
@@ -181,6 +182,11 @@ class _EditProductForm extends HookConsumerWidget {
     final priceEnabled = useState(!product.isVariablePrice);
     // Stock section is enabled if the product has trackStock enabled
     final stockEnabled = useState(product.trackStock);
+    final canEditQuantity = ref
+            .watch(currentUserPermissionsProvider)
+            .value
+            ?.canEditProductQuantity ??
+        false;
 
     // Watch categories and branches
     final categoriesAsync = ref.watch(productCategoriesProvider);
@@ -203,6 +209,16 @@ class _EditProductForm extends HookConsumerWidget {
 
       isSaving.value = true;
 
+      // Quantity changes require products.editQuantity; otherwise keep existing.
+      final num? nextQuantity;
+      if (!stockEnabled.value) {
+        nextQuantity = null;
+      } else if (canEditQuantity) {
+        nextQuantity = _parseNum(values['quantity'] as String?);
+      } else {
+        nextQuantity = product.quantity;
+      }
+
       // Create updated product
       final updatedProduct = Product(
         id: product.id,
@@ -212,9 +228,7 @@ class _EditProductForm extends HookConsumerWidget {
         price: priceEnabled.value
             ? (_parseNum(values['price'] as String?) ?? 0)
             : 0,
-        quantity: stockEnabled.value
-            ? _parseNum(values['quantity'] as String?)
-            : null,
+        quantity: nextQuantity,
         stockThreshold: stockEnabled.value
             ? _parseNum(values['stockThreshold'] as String?)
             : null,
@@ -461,11 +475,14 @@ class _EditProductForm extends HookConsumerWidget {
             if (!trackByLot.value) ...[
               FormBuilderTextField(
                 name: 'quantity',
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Quantity',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  helperText: canEditQuantity
+                      ? null
+                      : 'Requires Edit Product Quantity permission. Use Stock Adjustment instead.',
                 ),
-                enabled: !isSaving.value,
+                enabled: !isSaving.value && canEditQuantity,
                 keyboardType: TextInputType.number,
                 validator: FormBuilderValidators.numeric(
                   errorText: 'Must be a number',
