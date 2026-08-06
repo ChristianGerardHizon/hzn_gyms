@@ -76,10 +76,10 @@ jobs:
 
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
           WEB_ONLY_NOTE=""
-          TITLE="Deploy v${VERSION} to Production"
+          TITLE="v${VERSION}"
           if echo "$LABELS" | grep -q '"web-only"'; then
             WEB_ONLY_NOTE=" (**web only** — Android APK skipped)"
-            TITLE="Deploy v${VERSION} to Production (web-only)"
+            TITLE="v${VERSION} (web-only)"
           fi
 
           PR_URL=$(gh pr create \
