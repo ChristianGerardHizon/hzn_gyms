@@ -561,6 +561,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Out-of-stock continue warning | Cashier warns when adding an out-of-stock product; Continue still adds it, with optional Don't warn again until tomorrow |
 | Aug 7 | Edit product quantity permission | New `products.editQuantity`; Edit Product quantity is read-only without it (admins included via `system.admin`). Prefer Stock Adjustment otherwise. |
 | Aug 7 | POS sale stock adjustments | Checkout writes `productAdjustments` linked to the sale UUID; void restores qty and writes a reverse adjustment on the same sale |
 | Aug 6 | POS non-lot stock decrement | Cashier checkout now decreases `products.quantity` for `trackStock` products without lots; void restores the same. Lot-tracked path unchanged. |
