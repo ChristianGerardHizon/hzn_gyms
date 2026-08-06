@@ -98,6 +98,105 @@ void main() {
       ).called(1);
       verify(() => lotRepo.incrementQuantity('lot-1', 2)).called(1);
       verify(() => productRepo.updateQuantity('prod-1', 7)).called(1);
+      verifyNever(() => productRepo.incrementQuantity(any(), any()));
+    });
+
+    test('restores product quantity for non-lot trackStock items', () async {
+      final voided = buildSale(id: 'sale-2', status: 'voided', isPaid: false);
+      final product = buildProduct(id: 'prod-2', trackStock: true);
+      final items = [
+        SaleItem(
+          id: 'si-1',
+          saleId: 'sale-2',
+          productId: 'prod-2',
+          productName: 'Pandanon',
+          quantity: 2,
+          unitPrice: 50,
+          subtotal: 100,
+          product: product,
+          itemType: 'product',
+        ),
+        SaleItem(
+          id: 'si-2',
+          saleId: 'sale-2',
+          productId: 'plan-1',
+          productName: 'Monthly',
+          quantity: 1,
+          unitPrice: 1500,
+          subtotal: 1500,
+          itemType: 'membership',
+        ),
+      ];
+
+      when(
+        () => salesRepo.updateSale('sale-2', any()),
+      ).thenAnswer((_) async => Right(voided));
+      when(
+        () => membershipRepo.updateStatusBySaleId(
+          'sale-2',
+          MemberMembershipStatus.voided,
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(() => salesRepo.getSaleItems('sale-2'))
+          .thenAnswer((_) async => Right(items));
+      when(() => productRepo.incrementQuantity('prod-2', 2)).thenAnswer(
+        (_) async => Right(buildProduct(id: 'prod-2', quantity: 12)),
+      );
+
+      final result = await voidSaleWithSideEffects(
+        salesRepo: salesRepo,
+        memberMembershipRepo: membershipRepo,
+        lotRepo: lotRepo,
+        productRepo: productRepo,
+        saleId: 'sale-2',
+      );
+
+      expect(result.isRight(), isTrue);
+      verify(() => productRepo.incrementQuantity('prod-2', 2)).called(1);
+      verifyNever(() => lotRepo.incrementQuantity(any(), any()));
+      verifyNever(() => productRepo.updateQuantity(any(), any()));
+    });
+
+    test('skips non-lot restore when trackStock is false', () async {
+      final voided = buildSale(id: 'sale-3', status: 'voided', isPaid: false);
+      final product = buildProduct(id: 'prod-3', trackStock: false);
+      final items = [
+        SaleItem(
+          id: 'si-1',
+          saleId: 'sale-3',
+          productId: 'prod-3',
+          productName: 'Water',
+          quantity: 1,
+          unitPrice: 20,
+          subtotal: 20,
+          product: product,
+          itemType: 'product',
+        ),
+      ];
+
+      when(
+        () => salesRepo.updateSale('sale-3', any()),
+      ).thenAnswer((_) async => Right(voided));
+      when(
+        () => membershipRepo.updateStatusBySaleId(
+          'sale-3',
+          MemberMembershipStatus.voided,
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(() => salesRepo.getSaleItems('sale-3'))
+          .thenAnswer((_) async => Right(items));
+
+      final result = await voidSaleWithSideEffects(
+        salesRepo: salesRepo,
+        memberMembershipRepo: membershipRepo,
+        lotRepo: lotRepo,
+        productRepo: productRepo,
+        saleId: 'sale-3',
+      );
+
+      expect(result.isRight(), isTrue);
+      verifyNever(() => productRepo.incrementQuantity(any(), any()));
+      verifyNever(() => lotRepo.incrementQuantity(any(), any()));
     });
 
     test('returns failure when sale update fails', () async {

@@ -73,6 +73,8 @@ CartItem buildCartItem({
   Product? product,
   num quantity = 1,
   num? customPrice,
+  String? productLotId,
+  String? lotNumber,
 }) {
   return CartItem(
     id: id,
@@ -80,6 +82,8 @@ CartItem buildCartItem({
     product: product ?? buildProduct(id: productId),
     quantity: quantity,
     customPrice: customPrice,
+    productLotId: productLotId,
+    lotNumber: lotNumber,
   );
 }
 

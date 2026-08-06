@@ -559,6 +559,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 6 | POS non-lot stock decrement | Cashier checkout now decreases `products.quantity` for `trackStock` products without lots; void restores the same. Lot-tracked path unchanged. |
 | Aug 6 | Sales status filters | Sales search fields dialog toggles Paid / Voided / Awaiting Payment; list refreshes with PocketBase status filter |
 | Aug 6 | Sale receipt reprint | Sale detail Print Receipt opens the receipt dialog (thermal + PDF); reprint skips auto-print and includes line items |
 | Aug 5 | Profile change password | Profile page can change own password with current + new + confirm (PocketBase `oldPassword`) |

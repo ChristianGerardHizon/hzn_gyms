@@ -1,0 +1,19 @@
+﻿product_id,name,system_qty,non_voided_sold_qty,sale_line_count,hint_qty_if_never_decremented,notes
+ihr5kcfr9oqmy3i,"tshirt 220",10,43,34,-33,DO_NOT_AUTO_CORRECT_physical_count_required
+dm5knsz6puldfzv,"CREATINE",0,585,495,-585,DO_NOT_AUTO_CORRECT_physical_count_required
+vdo7pgostymp8rp,"Whey Core Protein",0,599,494,-599,DO_NOT_AUTO_CORRECT_physical_count_required
+5uy7mvravx4mo89,"tshirt 250",11,0,0,11,verify_with_physical_count
+xjhr9anpx89gwjt,"GYM TOWEL",36,65,64,-29,DO_NOT_AUTO_CORRECT_physical_count_required
+ovl73iqcsdg9zb9,"Mass Extreme Gainer",0,663,496,-663,DO_NOT_AUTO_CORRECT_physical_count_required
+aam21jkn95tvdoy,"ISO Definition",0,702,493,-702,DO_NOT_AUTO_CORRECT_physical_count_required
+3nqmakvza9nmczq,"tshirt 290",22,45,40,-23,DO_NOT_AUTO_CORRECT_physical_count_required
+9pl2b773bl2g2g3,"tshirt 220",10,0,0,10,verify_with_physical_count
+sq23jyhsdagssd9,"CREATINE",0,0,0,0,verify_with_physical_count
+xmtxqppqk7yk4k1,"Whey Core Protein",0,0,0,0,verify_with_physical_count
+xangpj5ki5t2rwg,"tshirt 250",11,0,0,11,verify_with_physical_count
+p2dc6oro2et9zd4,"GYM TOWEL",36,1,1,35,verify_with_physical_count
+xjtpiz7fcpcckee,"Mass Extreme Gainer",0,0,0,0,verify_with_physical_count
+ff8rmolm9erfhed,"ISO Definition",0,0,0,0,verify_with_physical_count
+429t33pwfi328qu,"tshirt 290",22,0,0,22,verify_with_physical_count
+934ppj5avh3t9p1,"pandanon 500ml",106,8,8,98,verify_with_physical_count
+byd43kbrlemf3tj,"pandanon 1000ml",41,9,8,32,verify_with_physical_count
