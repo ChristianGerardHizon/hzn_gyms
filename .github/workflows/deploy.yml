@@ -1,10 +1,10 @@
 name: Deploy System
 
-# Show environment in the Actions run list (version is in release/PR titles once known).
+# Production runs show the PR title (version only, e.g. v1.2.3). Staging keeps an env prefix.
 run-name: >-
   ${{
     github.event_name == 'workflow_dispatch' && format('Deploy to Staging (manual {0})', inputs.version_bump)
-    || (github.event.pull_request.base.ref == 'main' && (github.event.pull_request.title || 'Deploy to Production'))
+    || (github.event.pull_request.base.ref == 'main' && (github.event.pull_request.title || 'Production'))
     || (github.event.pull_request.base.ref == 'staging' && format('Deploy to Staging — {0}', github.event.pull_request.title))
     || 'Deploy System'
   }}
@@ -529,7 +529,7 @@ jobs:
         with:
           tag_name: v${{ needs.deploy-production.outputs.prod_ver }}
           target_commitish: ${{ needs.deploy-production.outputs.commit_sha }}
-          name: Deploy ${{ needs.deploy-production.outputs.prod_ver }} to Production
+          name: v${{ needs.deploy-production.outputs.prod_ver }}
           files: app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -540,7 +540,7 @@ jobs:
         with:
           tag_name: v${{ needs.deploy-production.outputs.prod_ver }}
           target_commitish: ${{ needs.deploy-production.outputs.commit_sha }}
-          name: Deploy ${{ needs.deploy-production.outputs.prod_ver }} to Production (web-only)
+          name: v${{ needs.deploy-production.outputs.prod_ver }} (web-only)
           body: "Web-only production deploy — Android APK was skipped."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
