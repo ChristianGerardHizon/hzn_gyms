@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -34,6 +35,10 @@ final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 /// Configured with auth redirects and error handling.
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
+  // On web refresh, capture the browser URL before auth forces splash so
+  // [RouterUtils.redirect] can restore it even if the first match is /splash.
+  _stashWebDeepLinkIfNeeded();
+
   final router = GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: SplashRoute.path,
@@ -82,12 +87,15 @@ GoRouter router(Ref ref) {
         final location = RouterUtils.currentLocation(router);
         if (location.isEmpty) return;
 
-        if (isAuthenticated &&
-            (location == LoginRoute.path || location == SplashRoute.path)) {
-          final pendingUrl = ref
-              .read(pendingRedirectProvider.notifier)
-              .consume();
+        if (isAuthenticated && location == LoginRoute.path) {
+          // Login success: restore deep link or go home.
+          final pendingUrl =
+              ref.read(pendingRedirectProvider.notifier).consume();
           router.go(pendingUrl ?? DashboardRoute.path);
+        } else if (isAuthenticated && location == SplashRoute.path) {
+          // Do not router.go(Dashboard) here — that races redirect restore and
+          // can wipe a pending deep link. Let [RouterUtils.redirect] step 3
+          // run via refresh() below.
         } else if (!isAuthenticated &&
             !RouterUtils.ignoredRoutes.any(
               (route) => location.startsWith(route),
@@ -104,5 +112,23 @@ GoRouter router(Ref ref) {
     router.refresh();
   });
 
+  // Auth may finish during GoRouter construction (before listeners attach).
+  // Re-run redirects so splash can restore a stashed web deep link.
+  Future.microtask(router.refresh);
+
   return router;
+}
+
+void _stashWebDeepLinkIfNeeded() {
+  if (!kIsWeb) return;
+
+  final platform = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+  final uri = Uri.tryParse(platform);
+  final path = uri?.path ?? platform;
+  if (path.isEmpty || path == '/') return;
+  if (RouterUtils.ignoredRoutes.any((route) => path.startsWith(route))) {
+    return;
+  }
+
+  PendingRedirect.stash(uri?.toString() ?? platform);
 }

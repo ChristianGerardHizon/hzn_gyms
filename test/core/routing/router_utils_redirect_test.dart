@@ -53,6 +53,7 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
 
   ref.listen(authControllerProvider, (_, _) => router.refresh());
   ref.listen(currentUserPermissionsProvider, (_, _) => router.refresh());
+  Future.microtask(router.refresh);
 
   return router;
 });
@@ -168,6 +169,67 @@ void main() {
         );
         expect(RouterUtils.currentLocation(router), '/splash');
         expect(find.text('splash'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'restores stashed deep link from splash after auth resolves',
+      (tester) async {
+        PendingRedirect.stash('/system/printers');
+        final container = ProviderContainer(
+          overrides: [
+            authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+            currentUserPermissionsProvider.overrideWith(
+              (ref) async => const CurrentUserPermissions(
+                permissions: {Permissions.systemAdmin},
+                isAdmin: true,
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await container.read(authControllerProvider.future);
+
+        // Call redirect the same way GoRouter does once auth is settled on splash.
+        late final Ref redirectRef;
+        container.read(Provider((ref) {
+          redirectRef = ref;
+          return null;
+        }));
+
+        final probeRouter = GoRouter(
+          routes: [
+            GoRoute(path: '/', builder: (_, _) => const SizedBox()),
+            GoRoute(path: '/splash', builder: (_, _) => const SizedBox()),
+            GoRoute(
+              path: '/system/printers',
+              builder: (_, _) => const SizedBox(),
+            ),
+            GoRoute(path: '/login', builder: (_, _) => const SizedBox()),
+          ],
+        );
+        final state = GoRouterState(
+          probeRouter.configuration,
+          uri: Uri.parse('/splash'),
+          matchedLocation: '/splash',
+          fullPath: '/splash',
+          pathParameters: const {},
+          pageKey: const ValueKey('splash'),
+        );
+
+        await tester.pumpWidget(
+          const MaterialApp(home: SizedBox()),
+        );
+        final context = tester.element(find.byType(MaterialApp));
+
+        final result = RouterUtils.redirect(context, state, redirectRef);
+
+        expect(result, '/system/printers');
+        expect(
+          container.read(pendingRedirectProvider.notifier).peek(),
+          isNull,
+        );
       },
     );
   });

@@ -70,10 +70,10 @@ void main() {
   testWidgets('shows branch info when viewing all branches', (tester) async {
     await pumpDetail(tester, viewingAll: true);
 
-    expect(find.textContaining('Branch:'), findsOneWidget);
     expect(find.byType(BranchCodePill), findsOneWidget);
     expect(find.text('BCD'), findsOneWidget);
     expect(find.text('Bacolod Branch'), findsOneWidget);
+    expect(find.textContaining('Branch:'), findsNothing);
   });
 
   testWidgets('hides branch info when a single branch is selected', (
@@ -81,7 +81,7 @@ void main() {
   ) async {
     await pumpDetail(tester, viewingAll: false);
 
-    expect(find.textContaining('Branch:'), findsNothing);
     expect(find.byType(BranchCodePill), findsNothing);
+    expect(find.text('Bacolod Branch'), findsNothing);
   });
 }

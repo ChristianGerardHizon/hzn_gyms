@@ -89,11 +89,12 @@ abstract class RouterUtils {
         // peek() includes eager stash if provider set has not run yet
         final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
         if (pendingUrl != null) {
-          Future(() {
-            ref.read(pendingRedirectProvider.notifier).clear();
-          });
+          // Clear synchronously so a racing auth listener cannot also consume
+          // (or miss and default to dashboard).
+          ref.read(pendingRedirectProvider.notifier).clear();
+          return pendingUrl;
         }
-        return pendingUrl ?? '/';
+        return '/';
       }
       return LoginRoute.path;
     }
@@ -103,11 +104,10 @@ abstract class RouterUtils {
       if (isAuthenticated) {
         final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
         if (pendingUrl != null) {
-          Future(() {
-            ref.read(pendingRedirectProvider.notifier).clear();
-          });
+          ref.read(pendingRedirectProvider.notifier).clear();
+          return pendingUrl;
         }
-        return pendingUrl ?? '/';
+        return '/';
       }
       return null;
     }

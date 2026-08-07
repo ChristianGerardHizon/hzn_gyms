@@ -108,6 +108,8 @@ void main() {
     expect(find.byType(BranchCodePill), findsNWidgets(2));
     expect(find.text('BCD'), findsOneWidget);
     expect(find.text('TAL'), findsOneWidget);
+    // Leading receipt avatars removed.
+    expect(find.byIcon(Icons.receipt), findsNothing);
   });
 
   testWidgets('hides branch code pills when a single branch is selected', (

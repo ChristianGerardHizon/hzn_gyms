@@ -169,14 +169,14 @@ class SaleListPanel extends HookConsumerWidget {
                   final hasDescriptor =
                       sale.descriptor != null &&
                       sale.descriptor!.trim().isNotEmpty;
-                  final subtitle = [
+                  final subtitleParts = [
                     if (hasDescriptor) sale.shortReceiptNumber,
                     sale.customerDisplay,
                     sale.created != null
                         ? dateFormat.format(sale.created!)
                         : 'Unknown',
                     sale.isPaid ? 'Paid' : 'Unpaid',
-                  ].join(' • ');
+                  ];
                   final branchPill = viewingAll
                       ? BranchCodePill.fromBranches(
                           branchId: sale.branchId,
@@ -186,17 +186,6 @@ class SaleListPanel extends HookConsumerWidget {
                       : null;
 
                   return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.receipt,
-                        color: isSelected
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
                     title: Text(
                       sale.listTitle,
                       maxLines: 1,
@@ -206,14 +195,24 @@ class SaleListPanel extends HookConsumerWidget {
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
-                    subtitle: Text(subtitle),
+                    subtitle: branchPill == null
+                        ? Text(subtitleParts.join(' • '))
+                        : Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  subtitleParts.join(' • '),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              branchPill,
+                            ],
+                          ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (branchPill != null) ...[
-                          branchPill,
-                          const SizedBox(width: 8),
-                        ],
                         Text(
                           currencyFormat.format(sale.totalAmount),
                           style: theme.textTheme.titleSmall?.copyWith(

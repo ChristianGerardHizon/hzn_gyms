@@ -169,6 +169,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Column(
@@ -201,6 +202,13 @@ class _SaleDetailContent extends HookConsumerWidget {
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
+                                if (viewingAll) ...[
+                                  const SizedBox(height: 8),
+                                  _BranchSubtitle(
+                                    branchId: sale.branchId,
+                                    branches: branches,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -212,11 +220,6 @@ class _SaleDetailContent extends HookConsumerWidget {
                         customerName: sale.customerDisplay,
                         customerId: sale.customerId,
                       ),
-                      if (viewingAll)
-                        _BranchInfoRow(
-                          branchId: sale.branchId,
-                          branches: branches,
-                        ),
                       if (sale.notes != null && sale.notes!.isNotEmpty)
                         _InfoRow(
                           icon: Icons.note,
@@ -1039,9 +1042,9 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-/// Branch info row shown when viewing All Branches.
-class _BranchInfoRow extends StatelessWidget {
-  const _BranchInfoRow({
+/// Compact branch pill + name under the sale header when viewing All Branches.
+class _BranchSubtitle extends StatelessWidget {
+  const _BranchSubtitle({
     required this.branchId,
     required this.branches,
   });
@@ -1066,34 +1069,23 @@ class _BranchInfoRow extends StatelessWidget {
       dense: true,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(
-            Icons.storefront_outlined,
-            size: 20,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+    return Row(
+      children: [
+        if (pill != null) ...[
+          pill,
           const SizedBox(width: 8),
-          Text(
-            'Branch: ',
+        ],
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          if (pill != null) ...[
-            pill,
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: Text(
-              name,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
