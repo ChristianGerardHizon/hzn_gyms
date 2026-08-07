@@ -51,6 +51,49 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('lays out many branch chips in a narrow row without error', (
+    tester,
+  ) async {
+    final member = buildMember(name: 'Jane Doe', mobileNumber: '09123456789');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: MemberListTile(
+              member: member,
+              onTap: () {},
+              activity: const MemberBranchActivity(
+                branchIds: {'b1', 'b2', 'b3', 'b4'},
+              ),
+              // Extra unused branch so activity is not treated as "All".
+              branchCodeById: const {
+                'b1': 'BCD',
+                'b2': 'MNL',
+                'b3': 'CEB',
+                'b4': 'DVO',
+                'b5': 'ILO',
+              },
+              branchNameById: const {
+                'b1': 'Bacolod',
+                'b2': 'Manila',
+                'b3': 'Cebu',
+                'b4': 'Davao',
+                'b5': 'Iloilo',
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.text('BCD'), findsOneWidget);
+    expect(find.text('+1'), findsOneWidget);
+  });
+
   testWidgets('hides activity chips when showBranchActivity is false', (
     tester,
   ) async {

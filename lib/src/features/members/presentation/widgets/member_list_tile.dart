@@ -89,14 +89,18 @@ class MemberListTile extends StatelessWidget {
               ),
               if (showBranchActivity) ...[
                 const SizedBox(width: 8),
-                MemberBranchActivityChips(
-                  activity: activity,
-                  branchCodeById: branchCodeById,
-                  branchNameById: branchNameById,
-                  branchColorById: branchColorById,
-                  currentBranchId: currentBranchId,
-                  isLoading: isActivityLoading,
-                  dense: true,
+                // Flexible so Wrap chips get bounded width inside Row
+                // (unbounded Wrap layout can crash during scheduler passes).
+                Flexible(
+                  child: MemberBranchActivityChips(
+                    activity: activity,
+                    branchCodeById: branchCodeById,
+                    branchNameById: branchNameById,
+                    branchColorById: branchColorById,
+                    currentBranchId: currentBranchId,
+                    isLoading: isActivityLoading,
+                    dense: true,
+                  ),
                 ),
               ],
               if (member.isPendingSync) ...[
