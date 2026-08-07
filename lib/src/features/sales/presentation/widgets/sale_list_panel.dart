@@ -9,9 +9,12 @@ import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/utils/list_search_field.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/paginated_sales_controller.dart';
 import '../controllers/sale_search_controller.dart';
 import '../controllers/sale_sort_controller.dart';
@@ -52,6 +55,8 @@ class SaleListPanel extends HookConsumerWidget {
     final paginatedController =
         ref.read(paginatedSalesControllerProvider.notifier);
     final sortConfig = ref.watch(saleSortControllerProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
 
     // Seed from keepAlive controller so tab remount restores input + clear.
     final initialQuery =
@@ -172,6 +177,13 @@ class SaleListPanel extends HookConsumerWidget {
                         : 'Unknown',
                     sale.isPaid ? 'Paid' : 'Unpaid',
                   ].join(' • ');
+                  final branchPill = viewingAll
+                      ? BranchCodePill.fromBranches(
+                          branchId: sale.branchId,
+                          branches: branches,
+                          dense: true,
+                        )
+                      : null;
 
                   return ListTile(
                     leading: CircleAvatar(
@@ -198,6 +210,10 @@ class SaleListPanel extends HookConsumerWidget {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (branchPill != null) ...[
+                          branchPill,
+                          const SizedBox(width: 8),
+                        ],
                         Text(
                           currencyFormat.format(sale.totalAmount),
                           style: theme.textTheme.titleSmall?.copyWith(

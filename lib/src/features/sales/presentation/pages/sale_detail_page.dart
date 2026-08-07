@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/breakpoints.dart';
@@ -21,6 +22,9 @@ import '../../../pos/presentation/payments_controller.dart';
 import '../../../products/data/repositories/product_adjustment_repository.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
+import '../../../settings/domain/branch.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 import '../../data/sale_side_effects.dart';
 import '../controllers/sale_items_provider.dart';
@@ -101,6 +105,8 @@ class _SaleDetailContent extends HookConsumerWidget {
     final theme = Theme.of(context);
     final saleItemsAsync = ref.watch(saleItemsProvider(sale.id));
     final paymentsAsync = ref.watch(salePaymentsProvider(sale.id));
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
     final currencyFormat = NumberFormat.currency(symbol: '₱');
     final headline = sale.detailTitle;
@@ -206,6 +212,11 @@ class _SaleDetailContent extends HookConsumerWidget {
                         customerName: sale.customerDisplay,
                         customerId: sale.customerId,
                       ),
+                      if (viewingAll)
+                        _BranchInfoRow(
+                          branchId: sale.branchId,
+                          branches: branches,
+                        ),
                       if (sale.notes != null && sale.notes!.isNotEmpty)
                         _InfoRow(
                           icon: Icons.note,
@@ -1019,6 +1030,65 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Branch info row shown when viewing All Branches.
+class _BranchInfoRow extends StatelessWidget {
+  const _BranchInfoRow({
+    required this.branchId,
+    required this.branches,
+  });
+
+  final String branchId;
+  final List<Branch> branches;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Branch? match;
+    for (final branch in branches) {
+      if (branch.id == branchId) {
+        match = branch;
+        break;
+      }
+    }
+    final name = match?.name ?? branchId;
+    final pill = BranchCodePill.fromBranches(
+      branchId: branchId,
+      branches: branches,
+      dense: true,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.storefront_outlined,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Branch: ',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (pill != null) ...[
+            pill,
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Text(
+              name,
               style: theme.textTheme.bodyMedium,
             ),
           ),

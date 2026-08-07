@@ -434,10 +434,15 @@ Stock adjustment records.
 | `productStock` | String (FK) | Conditional | FK to ProductStock (if type=productStock) |
 | `productLot` | String (FK) | Conditional | FK to ProductLot (lot adjustments) |
 | `sale` | String (FK) | No | FK to Sale when caused by POS sale/void |
+| `isVoided` | bool | No | True when this adjustment has been voided |
+| `voidsAdjustment` | String (FK) | No | FK to the adjustment this reverse row voids |
+| `voidedBy` | String (FK) | No | FK to User who voided the adjustment |
 
 **Collection:** `productAdjustments`
 
 **Enum:** `ProductAdjustmentType { product, productStock }`
+
+Manual adjustments can be voided from the product Adjustments tab (requires `inventory.adjust`). Sale-linked rows must be voided via the sale.
 
 ---
 

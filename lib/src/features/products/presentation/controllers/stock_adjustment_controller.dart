@@ -1,8 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/foundation/type_defs.dart';
 import '../../data/repositories/product_adjustment_repository.dart';
 import '../../data/repositories/product_lot_repository.dart';
 import '../../data/repositories/product_repository.dart';
+import '../../data/void_stock_adjustment.dart';
 import '../../domain/product.dart';
 import '../../domain/product_adjustment.dart';
 import '../../domain/product_adjustment_type.dart';
@@ -107,6 +109,36 @@ class StockAdjustmentController extends _$StockAdjustmentController {
       (failure) => null,
       (adjustment) => adjustment,
     );
+  }
+
+  /// Voids a manual stock adjustment (reverses quantity and writes audit row).
+  FutureEither<ProductAdjustment> voidAdjustment({
+    required ProductAdjustment adjustment,
+    String? voidedById,
+    String? reason,
+  }) async {
+    final result = await voidStockAdjustmentWithSideEffects(
+      adjustmentRepo: ref.read(productAdjustmentRepositoryProvider),
+      productRepo: ref.read(productRepositoryProvider),
+      lotRepo: ref.read(productLotRepositoryProvider),
+      adjustment: adjustment,
+      voidedById: voidedById,
+      reason: reason,
+    );
+
+    if (ref.mounted && result.isRight()) {
+      final productId = adjustment.productId;
+      if (productId != null && productId.isNotEmpty) {
+        ref.invalidate(productProvider(productId));
+        ref.invalidate(productAdjustmentsControllerProvider(productId));
+        if (adjustment.type == ProductAdjustmentType.productStock) {
+          ref.invalidate(productLotsControllerProvider(productId));
+          ref.invalidate(productLotsTotalProvider(productId));
+        }
+      }
+    }
+
+    return result;
   }
 
   /// Syncs a product's quantity field with the total of all its lots.
