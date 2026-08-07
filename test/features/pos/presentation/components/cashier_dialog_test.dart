@@ -68,5 +68,36 @@ void main() {
         findsWidgets,
       );
     });
+
+    testWidgets('mobile layout shows sticky cart bar instead of side cart', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            cartControllerProvider.overrideWith(_TestCartController.new),
+            posGroupsControllerProvider.overrideWith(
+              _TestPosGroupsController.new,
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: CashierDialog(),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cart is empty'), findsOneWidget);
+      expect(find.text('Add products above'), findsOneWidget);
+      expect(find.text('Member optional at checkout'), findsOneWidget);
+    });
   });
 }

@@ -123,6 +123,9 @@ Complete POS system for processing product sales.
 
 - **Features**:
   - **Customizable Cashier Layout** (POS Groups): Create named groups of products per branch to define the cashier page layout. Groups display as scrollable sections with sticky headers. Falls back to default product grid when no groups are configured.
+  - Responsive product grid (max-extent tiles) with denser cards and readable Out/Low stock chips
+  - **Mobile**: full-width product pane + sticky cart bar; cart opens as a bottom sheet for review/checkout
+  - **Tablet/Desktop**: side-by-side products + cart (shared `CashierBody` for `/cashier` and dashboard dialog)
   - Product grid with search and category filtering
   - Search dropdown overlay (grouped mode)
   - Shopping cart with product items
@@ -133,6 +136,9 @@ Complete POS system for processing product sales.
   - **Walk-in / day pass**: Dashboard **Walk-in** sells plans marked **Membership not required** (name + plan + optional add-ons → sale only). Dashboard **Cashier** opens product POS in a dialog; checkout member remains optional
   - Receipt generation and printing
 - **Components**:
+  - `CashierBody` - Shared responsive products + cart layout
+  - `CashierProductCard` - Shared product tile (flat + grouped modes)
+  - `CashierCartBar` - Mobile sticky cart summary / bottom sheet
   - `ProductGrid` - Product selection (default mode)
   - `GroupedCashierView` - Scrollable grouped sections (grouped mode)
   - `CashierSearchDropdown` - Search overlay for grouped mode
@@ -561,6 +567,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Cashier responsive redesign | Shared CashierBody for web/mobile; denser product tiles with Out/Low chips; mobile sticky cart bar + bottom sheet |
 | Aug 7 | Member list row redesign | Members/picker rows use avatar + name/phone on the left and dense branch-activity chips on the right; empty activity uses a muted None chip |
 | Aug 7 | Branch pill color presets | Branches can pick a pill color (teal/blue/indigo/purple/pink/orange/green/cyan); used on BranchCodePill and membership/member branch chips |
 | Aug 7 | Branch detail + required fields | Branch detail shows all edit fields (incl. code); create/edit only requires Name and Code, with helper text for the pill code |
