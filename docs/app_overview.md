@@ -561,6 +561,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Sale list row redesign | Sales/dashboard rows use a three-zone layout (title+short subtitle, aligned branch pill, fixed amount + status) for better mobile readability |
 | Aug 7 | Void stock adjustment | Product Adjustments tab can void manual adjustments (reverse qty + audit row); sale-linked rows stay sale-only; requires `inventory.adjust` |
 | Aug 7 | Inventory alerts layout | Dashboard inventory alerts are side-by-side on tablet+ and single-column on mobile |
 | Aug 7 | Inventory alerts split | Dashboard inventory alerts separate **Out of Stock** (qty ≤ 0) from **Low Stock** (qty below threshold) |

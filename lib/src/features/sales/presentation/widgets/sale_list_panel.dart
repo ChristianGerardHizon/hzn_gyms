@@ -19,7 +19,7 @@ import '../controllers/paginated_sales_controller.dart';
 import '../controllers/sale_search_controller.dart';
 import '../controllers/sale_sort_controller.dart';
 import '../../domain/sale_status_filter.dart';
-import 'sale_status_chip.dart';
+import 'sale_list_tile.dart';
 import 'dialogs/sale_search_fields_dialog.dart';
 
 /// Sale list panel with search header and infinite scroll.
@@ -105,7 +105,6 @@ class SaleListPanel extends HookConsumerWidget {
       isLoading: paginatedState.isLoadingMore,
     );
 
-    final currencyFormat = NumberFormat.currency(symbol: '₱');
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return Scaffold(
@@ -166,17 +165,6 @@ class SaleListPanel extends HookConsumerWidget {
 
                   final sale = paginatedState.items[index];
                   final isSelected = sale.id == selectedId;
-                  final hasDescriptor =
-                      sale.descriptor != null &&
-                      sale.descriptor!.trim().isNotEmpty;
-                  final subtitleParts = [
-                    if (hasDescriptor) sale.shortReceiptNumber,
-                    sale.customerDisplay,
-                    sale.created != null
-                        ? dateFormat.format(sale.created!)
-                        : 'Unknown',
-                    sale.isPaid ? 'Paid' : 'Unpaid',
-                  ];
                   final branchPill = viewingAll
                       ? BranchCodePill.fromBranches(
                           branchId: sale.branchId,
@@ -185,46 +173,11 @@ class SaleListPanel extends HookConsumerWidget {
                         )
                       : null;
 
-                  return ListTile(
-                    title: Text(
-                      sale.listTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: branchPill == null
-                        ? Text(subtitleParts.join(' • '))
-                        : Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  subtitleParts.join(' • '),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              branchPill,
-                            ],
-                          ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          currencyFormat.format(sale.totalAmount),
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SaleStatusChip(status: sale.status),
-                      ],
-                    ),
-                    selected: isSelected,
-                    selectedTileColor: theme.colorScheme.primaryContainer,
+                  return SaleListTile(
+                    sale: sale,
+                    isSelected: isSelected,
+                    dateFormat: dateFormat,
+                    branchPill: branchPill,
                     onTap: () => onSaleTap(sale),
                   );
                 },

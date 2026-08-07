@@ -94,6 +94,7 @@ void main() {
           branchId: 'branch-a',
           descriptor: 'Sale A',
           totalAmount: 100,
+          created: DateTime(2026, 7, 14),
         ),
         buildSale(
           id: 'sale-2',
@@ -101,6 +102,7 @@ void main() {
           branchId: 'branch-b',
           descriptor: 'Sale B',
           totalAmount: 200,
+          created: DateTime(2026, 7, 14),
         ),
       ],
     );
@@ -125,10 +127,38 @@ void main() {
           branchId: 'branch-a',
           descriptor: 'Sale A',
           totalAmount: 100,
+          created: DateTime(2026, 7, 14),
         ),
       ],
     );
 
     expect(find.byType(BranchCodePill), findsNothing);
+  });
+
+  testWidgets('subtitle shows receipt and date without Paid label', (
+    tester,
+  ) async {
+    await pumpPanel(
+      tester,
+      viewingAll: false,
+      sales: [
+        buildSale(
+          id: 'sale-1',
+          receiptNumber: 'S-250101-9PP8',
+          branchId: 'branch-a',
+          descriptor: 'Walk-in · blitz 450',
+          totalAmount: 450,
+          isPaid: true,
+          status: 'completed',
+          created: DateTime(2026, 7, 14),
+        ),
+      ],
+    );
+
+    expect(find.text('Walk-in · blitz 450'), findsOneWidget);
+    expect(find.text('#9PP8 · Jul 14, 2026'), findsOneWidget);
+    expect(find.textContaining('450'), findsWidgets);
+    expect(find.text('Paid'), findsNothing);
+    expect(find.textContaining('Unpaid'), findsNothing);
   });
 }

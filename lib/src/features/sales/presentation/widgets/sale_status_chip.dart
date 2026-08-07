@@ -5,23 +5,29 @@ class SaleStatusChip extends StatelessWidget {
   const SaleStatusChip({
     super.key,
     required this.status,
+    this.dense = false,
   });
 
   final String status;
 
+  /// Smaller padding/icon for list trailing rows.
+  final bool dense;
+
   @override
   Widget build(BuildContext context) {
     final (color, icon) = _getStatusStyle(status);
+    final padding = dense ? 4.0 : 8.0;
+    final iconSize = dense ? 16.0 : 18.0;
 
     return Tooltip(
       message: _formatStatus(status),
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 18),
+        child: Icon(icon, color: color, size: iconSize),
       ),
     );
   }
