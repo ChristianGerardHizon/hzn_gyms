@@ -134,8 +134,9 @@ Business branches or locations.
 | `id` | String | Yes | PocketBase record ID |
 | `name` | String | Yes | Full branch name (e.g. "Bacolod Branch") |
 | `code` | String | Yes | Short pill label, max 5 alphanumeric (e.g. `BCD`, `TAL`); unique |
-| `address` | String | Yes | Branch address |
-| `contactNumber` | String | Yes | Branch contact number |
+| `color` | String | No | Pill accent preset id (`teal`, `blue`, `indigo`, `purple`, `pink`, `orange`, `green`, `cyan`) |
+| `address` | String | No | Branch address |
+| `contactNumber` | String | No | Branch contact number |
 | `operatingHours` | String | No | Operating hours text |
 | `cutOffTime` | String | No | Daily cut-off time |
 | `isDeleted` | bool | Yes | Soft delete flag |

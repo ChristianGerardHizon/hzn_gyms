@@ -60,6 +60,12 @@ class BranchDtoMapper extends ClassMapperBase<BranchDto> {
     _$cutOffTime,
     opt: true,
   );
+  static String? _$color(BranchDto v) => v.color;
+  static const Field<BranchDto, String> _f$color = Field(
+    'color',
+    _$color,
+    opt: true,
+  );
   static bool _$isDeleted(BranchDto v) => v.isDeleted;
   static const Field<BranchDto, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -91,6 +97,7 @@ class BranchDtoMapper extends ClassMapperBase<BranchDto> {
     #contactNumber: _f$contactNumber,
     #operatingHours: _f$operatingHours,
     #cutOffTime: _f$cutOffTime,
+    #color: _f$color,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -107,6 +114,7 @@ class BranchDtoMapper extends ClassMapperBase<BranchDto> {
       contactNumber: data.dec(_f$contactNumber),
       operatingHours: data.dec(_f$operatingHours),
       cutOffTime: data.dec(_f$cutOffTime),
+      color: data.dec(_f$color),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -182,6 +190,7 @@ abstract class BranchDtoCopyWith<$R, $In extends BranchDto, $Out>
     String? contactNumber,
     String? operatingHours,
     String? cutOffTime,
+    String? color,
     bool? isDeleted,
     String? created,
     String? updated,
@@ -208,6 +217,7 @@ class _BranchDtoCopyWithImpl<$R, $Out>
     String? contactNumber,
     Object? operatingHours = $none,
     Object? cutOffTime = $none,
+    Object? color = $none,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -222,6 +232,7 @@ class _BranchDtoCopyWithImpl<$R, $Out>
       if (contactNumber != null) #contactNumber: contactNumber,
       if (operatingHours != $none) #operatingHours: operatingHours,
       if (cutOffTime != $none) #cutOffTime: cutOffTime,
+      if (color != $none) #color: color,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -238,6 +249,7 @@ class _BranchDtoCopyWithImpl<$R, $Out>
     contactNumber: data.get(#contactNumber, or: $value.contactNumber),
     operatingHours: data.get(#operatingHours, or: $value.operatingHours),
     cutOffTime: data.get(#cutOffTime, or: $value.cutOffTime),
+    color: data.get(#color, or: $value.color),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

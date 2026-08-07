@@ -15,6 +15,7 @@ class Branch with BranchMappable {
     required this.contactNumber,
     this.operatingHours,
     this.cutOffTime,
+    this.color,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -41,6 +42,9 @@ class Branch with BranchMappable {
   /// Cut-off time for daily operations (e.g., "10:00 PM").
   final String? cutOffTime;
 
+  /// Pill accent preset id (e.g. `teal`, `indigo`). See [BranchColorPreset].
+  final String? color;
+
   /// Soft delete flag.
   final bool isDeleted;
 
@@ -56,6 +60,12 @@ class Branch with BranchMappable {
     if (trimmed.isNotEmpty) return trimmed.toUpperCase();
     return _fallbackPillLabel(name);
   }
+}
+
+/// Display value for optional branch fields on detail screens.
+String branchDetailValue(String? value) {
+  final trimmed = value?.trim() ?? '';
+  return trimmed.isEmpty ? '—' : trimmed;
 }
 
 /// Fallback when [Branch.code] is missing: strip trailing "Branch" and truncate.

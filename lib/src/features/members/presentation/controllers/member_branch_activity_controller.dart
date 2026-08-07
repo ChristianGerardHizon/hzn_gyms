@@ -13,16 +13,19 @@ class MemberBranchActivityState {
     required this.activityByMemberId,
     required this.branchCodeById,
     required this.branchNameById,
+    this.branchColorById = const {},
   });
 
   final Map<String, MemberBranchActivity> activityByMemberId;
   final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
+  final Map<String, String> branchColorById;
 
   static const empty = MemberBranchActivityState(
     activityByMemberId: {},
     branchCodeById: {},
     branchNameById: {},
+    branchColorById: {},
   );
 }
 
@@ -44,6 +47,10 @@ Future<MemberBranchActivityState> _loadMemberBranchActivity(
   final allBranchIds = branches.map((b) => b.id).toList();
   final branchCodeById = {for (final b in branches) b.id: b.pillLabel};
   final branchNameById = {for (final b in branches) b.id: b.name};
+  final branchColorById = {
+    for (final b in branches)
+      if (b.color != null && b.color!.trim().isNotEmpty) b.id: b.color!,
+  };
 
   final result = await ref
       .read(memberMembershipRepositoryProvider)
@@ -56,6 +63,7 @@ Future<MemberBranchActivityState> _loadMemberBranchActivity(
       },
       branchCodeById: branchCodeById,
       branchNameById: branchNameById,
+      branchColorById: branchColorById,
     ),
     (byMember) => MemberBranchActivityState(
       activityByMemberId: {
@@ -67,6 +75,7 @@ Future<MemberBranchActivityState> _loadMemberBranchActivity(
       },
       branchCodeById: branchCodeById,
       branchNameById: branchNameById,
+      branchColorById: branchColorById,
     ),
   );
 }

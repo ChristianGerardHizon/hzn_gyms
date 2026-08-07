@@ -163,8 +163,14 @@ Member buildMember({
   String id = 'member-1',
   String name = 'Jane Doe',
   String? rfidCardId,
+  String? mobileNumber,
 }) {
-  return Member(id: id, name: name, rfidCardId: rfidCardId);
+  return Member(
+    id: id,
+    name: name,
+    rfidCardId: rfidCardId,
+    mobileNumber: mobileNumber,
+  );
 }
 
 MemberCard buildMemberCard({

@@ -168,6 +168,10 @@ class MemberQuickViewDialog extends ConsumerWidget {
                           data: (state) => state.branchNameById,
                           orElse: () => const {},
                         ),
+                        branchColorById: activityAsync.maybeWhen(
+                          data: (state) => state.branchColorById,
+                          orElse: () => const {},
+                        ),
                         activityLoading: activityAsync.isLoading,
                       ),
                     ),
@@ -352,6 +356,7 @@ class _MembershipSummary extends StatelessWidget {
     this.branchActivity,
     this.branchCodeById = const {},
     this.branchNameById = const {},
+    this.branchColorById = const {},
     this.activityLoading = false,
   });
 
@@ -362,6 +367,7 @@ class _MembershipSummary extends StatelessWidget {
   final MemberBranchActivity? branchActivity;
   final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
+  final Map<String, String> branchColorById;
   final bool activityLoading;
 
   @override
@@ -436,6 +442,7 @@ class _MembershipSummary extends StatelessWidget {
                 activity: branchActivity,
                 branchCodeById: branchCodeById,
                 branchNameById: branchNameById,
+                branchColorById: branchColorById,
                 currentBranchId: branchId,
                 isLoading: activityLoading,
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/settings/domain/branch.dart';
+import '../../features/settings/domain/branch_color_preset.dart';
 
 /// Compact branch-code pill (e.g. `BCD`) with full name as tooltip.
 class BranchCodePill extends StatelessWidget {
@@ -27,6 +28,7 @@ class BranchCodePill extends StatelessWidget {
   /// Resolves a [BranchCodePill] from a branch id and branch list.
   ///
   /// Returns null when [branchId] is empty.
+  /// Uses the branch's color preset when [color] override is omitted.
   static BranchCodePill? fromBranches({
     required String? branchId,
     required List<Branch> branches,
@@ -43,10 +45,15 @@ class BranchCodePill extends StatelessWidget {
       }
     }
 
+    final resolvedColor = color ??
+        (match != null
+            ? BranchColorPreset.byId(match.color)?.color
+            : null);
+
     return BranchCodePill(
       label: match?.pillLabel ?? branchId,
       tooltip: match?.name ?? branchId,
-      color: color,
+      color: resolvedColor,
       dense: dense,
     );
   }
@@ -88,12 +95,18 @@ class BranchCodePill extends StatelessWidget {
   }
 }
 
-/// Builds `id → pillLabel` and `id → name` maps from [branches].
-({Map<String, String> codeById, Map<String, String> nameById}) branchLabelMaps(
-  List<Branch> branches,
-) {
+/// Builds label and color maps from [branches].
+({
+  Map<String, String> codeById,
+  Map<String, String> nameById,
+  Map<String, String> colorById,
+}) branchLabelMaps(List<Branch> branches) {
   return (
     codeById: {for (final b in branches) b.id: b.pillLabel},
     nameById: {for (final b in branches) b.id: b.name},
+    colorById: {
+      for (final b in branches)
+        if (b.color != null && b.color!.trim().isNotEmpty) b.id: b.color!,
+    },
   );
 }

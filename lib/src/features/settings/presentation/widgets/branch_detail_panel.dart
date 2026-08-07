@@ -3,8 +3,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/organization.routes.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../domain/branch.dart';
+import '../../domain/branch_color_preset.dart';
 import '../controllers/branches_controller.dart';
 import 'dialogs/branch_form_dialog.dart';
 
@@ -195,32 +197,40 @@ class _BranchDetailsBody extends StatelessWidget {
                   _DetailRow(
                     icon: Icons.tag,
                     label: 'Code',
-                    value: branch.pillLabel,
+                    valueWidget: BranchCodePill(
+                      label: branch.pillLabel,
+                      tooltip: branch.name,
+                      color: BranchColorPreset.resolveColor(
+                        branch.color,
+                        fallback: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                  ),
+                  _DetailRow(
+                    icon: Icons.palette_outlined,
+                    label: 'Pill color',
+                    value: BranchColorPreset.byId(branch.color)?.label ?? '—',
                   ),
                   _DetailRow(
                     icon: Icons.location_on,
                     label: 'Address',
-                    value: branch.address,
+                    value: branchDetailValue(branch.address),
                   ),
                   _DetailRow(
                     icon: Icons.phone,
                     label: 'Contact Number',
-                    value: branch.contactNumber,
+                    value: branchDetailValue(branch.contactNumber),
                   ),
-                  if (branch.operatingHours != null &&
-                      branch.operatingHours!.isNotEmpty)
-                    _DetailRow(
-                      icon: Icons.schedule,
-                      label: 'Operating Hours',
-                      value: branch.operatingHours!,
-                    ),
-                  if (branch.cutOffTime != null &&
-                      branch.cutOffTime!.isNotEmpty)
-                    _DetailRow(
-                      icon: Icons.timer_off,
-                      label: 'Cut-off Time',
-                      value: branch.cutOffTime!,
-                    ),
+                  _DetailRow(
+                    icon: Icons.schedule,
+                    label: 'Operating Hours',
+                    value: branchDetailValue(branch.operatingHours),
+                  ),
+                  _DetailRow(
+                    icon: Icons.timer_off,
+                    label: 'Cut-off Time',
+                    value: branchDetailValue(branch.cutOffTime),
+                  ),
                   if (branch.created != null)
                     _DetailRow(
                       icon: Icons.calendar_today,
@@ -248,12 +258,14 @@ class _DetailRow extends StatelessWidget {
   const _DetailRow({
     required this.icon,
     required this.label,
-    required this.value,
-  });
+    this.value,
+    this.valueWidget,
+  }) : assert(value != null || valueWidget != null);
 
   final IconData icon;
   final String label;
-  final String value;
+  final String? value;
+  final Widget? valueWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -277,10 +289,11 @@ class _DetailRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                valueWidget ??
+                    Text(
+                      value!,
+                      style: theme.textTheme.bodyMedium,
+                    ),
               ],
             ),
           ),

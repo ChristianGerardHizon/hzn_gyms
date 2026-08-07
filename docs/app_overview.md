@@ -183,7 +183,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 **Modes:**
 - **Users** (`/organization/users`) - User CRUD, role assignment, branch association
 - **Roles** (`/organization/roles`) - Role and permission management (Admin, Staff, Cashier)
-- **Branches** (`/organization/branches`) - Multi-location support with address and contact info
+- **Branches** (`/organization/branches`) - Multi-location support with name, code (pill label), optional pill color preset, address, contact, operating hours, and cut-off time (only name + code required)
 
 #### Profile (`/profile`)
 Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
@@ -561,6 +561,9 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Member list row redesign | Members/picker rows use avatar + name/phone on the left and dense branch-activity chips on the right; empty activity uses a muted None chip |
+| Aug 7 | Branch pill color presets | Branches can pick a pill color (teal/blue/indigo/purple/pink/orange/green/cyan); used on BranchCodePill and membership/member branch chips |
+| Aug 7 | Branch detail + required fields | Branch detail shows all edit fields (incl. code); create/edit only requires Name and Code, with helper text for the pill code |
 | Aug 7 | Sale list row redesign | Sales/dashboard rows use a three-zone layout (title+short subtitle, aligned branch pill, fixed amount + status) for better mobile readability |
 | Aug 7 | Void stock adjustment | Product Adjustments tab can void manual adjustments (reverse qty + audit row); sale-linked rows stay sale-only; requires `inventory.adjust` |
 | Aug 7 | Inventory alerts layout | Dashboard inventory alerts are side-by-side on tablet+ and single-column on mobile |

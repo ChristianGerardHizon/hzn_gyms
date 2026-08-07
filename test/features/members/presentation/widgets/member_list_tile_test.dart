@@ -1,0 +1,123 @@
+import 'package:ebe_gym/src/core/sync/sync_status.dart';
+import 'package:ebe_gym/src/features/members/domain/member.dart';
+import 'package:ebe_gym/src/features/members/presentation/widgets/member_list_tile.dart';
+import 'package:ebe_gym/src/features/memberships/domain/member_branch_activity.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../../../helpers/fixtures.dart';
+
+void main() {
+  testWidgets('renders name, phone, and empty activity chip', (tester) async {
+    final member = buildMember(
+      name: 'Ace Christian Erwin Honao',
+      mobileNumber: '09810779830',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MemberListTile(
+            member: member,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Ace Christian Erwin Honao'), findsOneWidget);
+    expect(find.text('09810779830'), findsOneWidget);
+    expect(find.text('None'), findsOneWidget);
+  });
+
+  testWidgets('invokes onTap when pressed', (tester) async {
+    var tapped = false;
+    final member = buildMember(name: 'Jane Doe', mobileNumber: '09123456789');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MemberListTile(
+            member: member,
+            onTap: () => tapped = true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(MemberListTile));
+    await tester.pump();
+
+    expect(tapped, isTrue);
+  });
+
+  testWidgets('hides activity chips when showBranchActivity is false', (
+    tester,
+  ) async {
+    final member = buildMember(name: 'Jane Doe', mobileNumber: '09123456789');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MemberListTile(
+            member: member,
+            showBranchActivity: false,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('None'), findsNothing);
+    expect(find.text('Jane Doe'), findsOneWidget);
+  });
+
+  testWidgets('shows pending sync icon when sync is pending', (tester) async {
+    final member = Member(
+      id: 'member-1',
+      name: 'Jane Doe',
+      mobileNumber: '09123456789',
+      syncStatus: SyncStatus.pending,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MemberListTile(
+            member: member,
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.cloud_upload_outlined), findsOneWidget);
+  });
+
+  testWidgets('shows branch activity labels when activity is present', (
+    tester,
+  ) async {
+    final member = buildMember(name: 'Jane Doe', mobileNumber: '09123456789');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MemberListTile(
+            member: member,
+            activity: const MemberBranchActivity(branchIds: {'b1'}),
+            branchCodeById: const {'b1': 'BCD', 'b2': 'TAL'},
+            branchNameById: const {
+              'b1': 'Bacolod Branch',
+              'b2': 'Talisay Branch',
+            },
+            onTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('BCD'), findsOneWidget);
+    expect(find.text('None'), findsNothing);
+    expect(find.text('All'), findsNothing);
+  });
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../settings/domain/branch_color_preset.dart';
 import '../../domain/membership.dart';
 
 /// Compact chips showing which branches a membership plan applies to.
@@ -12,6 +13,7 @@ class MembershipValidBranchesChips extends StatelessWidget {
     required this.membership,
     required this.branchCodeById,
     required this.branchNameById,
+    this.branchColorById = const {},
     this.currentBranchId,
     this.maxVisible = 3,
   });
@@ -19,6 +21,7 @@ class MembershipValidBranchesChips extends StatelessWidget {
   final Membership membership;
   final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
+  final Map<String, String> branchColorById;
   final String? currentBranchId;
   final int maxVisible;
 
@@ -29,6 +32,13 @@ class MembershipValidBranchesChips extends StatelessWidget {
 
   String _tooltip(String branchId) =>
       branchNameById[branchId] ?? branchCodeById[branchId] ?? branchId;
+
+  Color _colorFor(BuildContext context, String branchId) {
+    return BranchColorPreset.resolveColor(
+      branchColorById[branchId],
+      fallback: Theme.of(context).colorScheme.tertiary,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +64,6 @@ class MembershipValidBranchesChips extends StatelessWidget {
 
     final visibleIds = sortedIds.take(maxVisible).toList();
     final hiddenIds = sortedIds.skip(maxVisible).toList();
-    final color = theme.colorScheme.tertiary;
 
     return Wrap(
       spacing: 6,
@@ -64,7 +73,7 @@ class MembershipValidBranchesChips extends StatelessWidget {
           _BranchChip(
             label: _pillLabel(branchId),
             tooltip: _tooltip(branchId),
-            color: color,
+            color: _colorFor(context, branchId),
             icon: Icons.storefront_outlined,
             emphasized: branchId == currentBranchId,
           ),
@@ -72,7 +81,7 @@ class MembershipValidBranchesChips extends StatelessWidget {
           _BranchChip(
             label: '+${hiddenIds.length}',
             tooltip: hiddenIds.map(_tooltip).join(', '),
-            color: color,
+            color: theme.colorScheme.tertiary,
             icon: Icons.more_horiz,
             emphasized: false,
           ),

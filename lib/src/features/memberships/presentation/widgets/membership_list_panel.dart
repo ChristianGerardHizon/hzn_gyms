@@ -148,6 +148,11 @@ class _MembershipListTile extends ConsumerWidget {
       for (final branch in branchesAsync.value ?? const [])
         branch.id: branch.name,
     };
+    final branchColorById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        if (branch.color != null && branch.color!.trim().isNotEmpty)
+          branch.id: branch.color!,
+    };
 
     Future<void> toggleFavorite() async {
       final updated = membership.copyWith(isFavorite: !membership.isFavorite);
@@ -197,6 +202,7 @@ class _MembershipListTile extends ConsumerWidget {
             membership: membership,
             branchCodeById: branchCodeById,
             branchNameById: branchNamesById,
+            branchColorById: branchColorById,
             currentBranchId: writeBranchId,
           ),
         ],

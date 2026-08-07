@@ -25,4 +25,17 @@ void main() {
       expect(branch.pillLabel, 'BACOL');
     });
   });
+
+  group('branchDetailValue', () {
+    test('returns em dash for null or blank', () {
+      expect(branchDetailValue(null), '—');
+      expect(branchDetailValue(''), '—');
+      expect(branchDetailValue('   '), '—');
+    });
+
+    test('returns trimmed value when present', () {
+      expect(branchDetailValue('Main St'), 'Main St');
+      expect(branchDetailValue('  9am-5pm  '), '9am-5pm');
+    });
+  });
 }

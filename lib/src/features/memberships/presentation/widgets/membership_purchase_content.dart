@@ -96,6 +96,11 @@ class MembershipPurchaseContent extends HookConsumerWidget {
       for (final branch in branchesAsync.value ?? const [])
         branch.id: branch.name,
     };
+    final branchColorById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        if (branch.color != null && branch.color!.trim().isNotEmpty)
+          branch.id: branch.color!,
+    };
 
     // Use external notifiers in collect-only mode, local state otherwise.
     final localMembership = useState<Membership?>(null);
@@ -784,6 +789,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                       membership: plan,
                                       branchCodeById: branchCodeById,
                                       branchNameById: branchNamesById,
+                                      branchColorById: branchColorById,
                                       currentBranchId: writeBranchId,
                                     ),
                                   ],
