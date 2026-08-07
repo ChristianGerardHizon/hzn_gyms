@@ -100,4 +100,34 @@ void main() {
       );
     });
   });
+
+  group('formatValidBranchLabels', () {
+    test('empty list means all branches', () {
+      expect(formatValidBranchLabels(const [], const {}), ['All branches']);
+      expect(
+        buildMembership(validBranches: const []).validBranchLabels(const {}),
+        ['All branches'],
+      );
+    });
+
+    test('returns one label per branch', () {
+      expect(
+        formatValidBranchLabels(
+          const ['b1', 'b2'],
+          const {'b1': 'Main', 'b2': 'Annex'},
+        ),
+        ['Main', 'Annex'],
+      );
+    });
+
+    test('falls back to id when name is missing', () {
+      expect(
+        formatValidBranchLabels(
+          const ['b1', 'missing'],
+          const {'b1': 'Main'},
+        ),
+        ['Main', 'missing'],
+      );
+    });
+  });
 }

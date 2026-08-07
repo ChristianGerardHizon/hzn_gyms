@@ -6,6 +6,7 @@ import 'package:ebe_gym/src/features/member_cards/data/repositories/member_card_
 import 'package:ebe_gym/src/features/members/data/local/member_local_data_source.dart';
 import 'package:ebe_gym/src/features/members/data/repositories/member_repository.dart';
 import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:ebe_gym/src/features/memberships/data/repositories/membership_repository.dart';
 import 'package:ebe_gym/src/features/pos/data/repositories/cart_repository.dart';
 import 'package:ebe_gym/src/features/pos/data/repositories/payment_repository.dart';
 import 'package:ebe_gym/src/features/pos/data/repositories/sales_repository.dart';
@@ -23,6 +24,8 @@ class MockMemberLocalDataSource extends Mock implements MemberLocalDataSource {}
 
 class MockMemberMembershipRepository extends Mock
     implements MemberMembershipRepository {}
+
+class MockMembershipRepository extends Mock implements MembershipRepository {}
 
 class MockSalesRepository extends Mock implements SalesRepository {}
 

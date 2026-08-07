@@ -21,12 +21,14 @@ void main() {
     const branchA = Branch(
       id: 'branch-a',
       name: 'Branch A',
+      code: 'BRA',
       address: 'x',
       contactNumber: '1',
     );
     const branchB = Branch(
       id: 'branch-b',
       name: 'Branch B',
+      code: 'BRB',
       address: 'y',
       contactNumber: '2',
     );

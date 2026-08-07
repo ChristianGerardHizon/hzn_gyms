@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/permissions/current_user_permissions.dart';
+import '../../../../../core/widgets/form_feedback.dart';
 import '../../../../../core/widgets/state/error_state.dart';
+import '../../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../domain/product.dart';
 import '../../../domain/product_adjustment.dart';
 import '../../../domain/product_adjustment_type.dart';
 import '../../controllers/product_adjustments_controller.dart';
+import '../../controllers/stock_adjustment_controller.dart';
 
 /// Adjustments tab for product detail page.
 ///
@@ -96,13 +100,18 @@ class _AdjustmentsListContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Calculate totals
-    final totalIncrease = adjustments
+    final summaryAdjustments =
+        adjustments.where((a) => a.countsTowardSummary).toList();
+    final totalIncrease = summaryAdjustments
         .where((a) => a.isIncrease)
         .fold<num>(0, (sum, a) => sum + a.delta);
-    final totalDecrease = adjustments
+    final totalDecrease = summaryAdjustments
         .where((a) => a.isDecrease)
         .fold<num>(0, (sum, a) => sum + a.delta.abs());
+
+    final canVoid = ref.watch(currentUserPermissionsProvider).value
+            ?.canAdjustInventory ??
+        false;
 
     return Column(
       children: [
@@ -115,7 +124,7 @@ class _AdjustmentsListContent extends ConsumerWidget {
                 child: _SummaryCard(
                   icon: Icons.history,
                   label: 'Total',
-                  value: adjustments.length.toString(),
+                  value: summaryAdjustments.length.toString(),
                 ),
               ),
               const SizedBox(width: 12),
@@ -153,12 +162,70 @@ class _AdjustmentsListContent extends ConsumerWidget {
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final adjustment = adjustments[index];
-                return _AdjustmentListTile(adjustment: adjustment);
+                return _AdjustmentListTile(
+                  adjustment: adjustment,
+                  canVoid: canVoid && adjustment.canVoid,
+                  onVoid: () => _voidAdjustment(context, ref, adjustment),
+                );
               },
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _voidAdjustment(
+    BuildContext context,
+    WidgetRef ref,
+    ProductAdjustment adjustment,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Void Adjustment?'),
+        content: Text(
+          'This will reverse ${adjustment.deltaDisplay} from current stock '
+          'and cannot be undone.\n\n'
+          '${adjustment.oldValueDisplay} → ${adjustment.newValueDisplay}'
+          '${adjustment.reason != null && adjustment.reason!.isNotEmpty ? '\nReason: ${adjustment.reason}' : ''}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Void'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref
+        .read(stockAdjustmentControllerProvider.notifier)
+        .voidAdjustment(
+          adjustment: adjustment,
+          voidedById: ref.read(currentAuthProvider)?.user.id,
+        );
+
+    if (!context.mounted) return;
+
+    result.fold(
+      (failure) => showErrorSnackBar(
+        context,
+        message: failure.messageString,
+      ),
+      (_) => showSuccessSnackBar(
+        context,
+        message: 'Adjustment voided',
+      ),
     );
   }
 }
@@ -211,9 +278,13 @@ class _SummaryCard extends StatelessWidget {
 class _AdjustmentListTile extends StatelessWidget {
   const _AdjustmentListTile({
     required this.adjustment,
+    required this.canVoid,
+    required this.onVoid,
   });
 
   final ProductAdjustment adjustment;
+  final bool canVoid;
+  final VoidCallback onVoid;
 
   @override
   Widget build(BuildContext context) {
@@ -221,12 +292,26 @@ class _AdjustmentListTile extends StatelessWidget {
     final dateFormat = DateFormat.yMMMd();
     final timeFormat = DateFormat.Hm();
 
-    // Determine colors based on increase/decrease
+    final bool isVoided = adjustment.isVoided;
+    final bool isVoidRecord = adjustment.isVoidRecord;
     final bool isIncrease = adjustment.isIncrease;
-    final Color avatarColor =
-        isIncrease ? Colors.green.shade100 : Colors.red.shade100;
-    final Color iconColor = isIncrease ? Colors.green : Colors.red;
-    final IconData icon = isIncrease ? Icons.add_circle : Icons.remove_circle;
+    final Color avatarColor = isVoided || isVoidRecord
+        ? theme.colorScheme.surfaceContainerHighest
+        : isIncrease
+            ? Colors.green.shade100
+            : Colors.red.shade100;
+    final Color iconColor = isVoided || isVoidRecord
+        ? theme.colorScheme.outline
+        : isIncrease
+            ? Colors.green
+            : Colors.red;
+    final IconData icon = isVoided
+        ? Icons.block
+        : isVoidRecord
+            ? Icons.undo
+            : isIncrease
+                ? Icons.add_circle
+                : Icons.remove_circle;
 
     return ListTile(
       leading: CircleAvatar(
@@ -239,9 +324,11 @@ class _AdjustmentListTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: isIncrease
-                  ? Colors.green.withValues(alpha: 0.15)
-                  : Colors.red.withValues(alpha: 0.15),
+              color: isVoided || isVoidRecord
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : isIncrease
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : Colors.red.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -249,17 +336,51 @@ class _AdjustmentListTile extends StatelessWidget {
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: iconColor,
+                decoration: isVoided ? TextDecoration.lineThrough : null,
               ),
             ),
           ),
           const SizedBox(width: 12),
           // Value change
-          Text(
-            '${adjustment.oldValueDisplay} → ${adjustment.newValueDisplay}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          Expanded(
+            child: Text(
+              '${adjustment.oldValueDisplay} → ${adjustment.newValueDisplay}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                decoration: isVoided ? TextDecoration.lineThrough : null,
+              ),
             ),
           ),
+          if (isVoided)
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Voided',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+              ),
+            )
+          else if (isVoidRecord)
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'Void',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
         ],
       ),
       subtitle: Column(
@@ -283,6 +404,20 @@ class _AdjustmentListTile extends StatelessWidget {
                   color: theme.colorScheme.outline,
                 ),
               ),
+              if (adjustment.isSaleLinked) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '•',
+                  style: TextStyle(color: theme.colorScheme.outline),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Sale',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
               Text(
                 '•',
@@ -311,6 +446,29 @@ class _AdjustmentListTile extends StatelessWidget {
           ],
         ],
       ),
+      trailing: canVoid
+          ? PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              tooltip: 'Adjustment actions',
+              onSelected: (value) {
+                if (value == 'void') onVoid();
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'void',
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.cancel,
+                      color: theme.colorScheme.error,
+                    ),
+                    title: const Text('Void Adjustment'),
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+            )
+          : null,
       isThreeLine: adjustment.reason != null && adjustment.reason!.isNotEmpty,
     );
   }

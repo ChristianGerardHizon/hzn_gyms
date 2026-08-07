@@ -44,7 +44,9 @@ void main() {
                 activityByMemberId: {
                   'member-1': MemberBranchActivity(branchIds: {'branch-1'}),
                 },
+                branchCodeById: {'branch-1': 'MAIN'},
                 branchNameById: {'branch-1': 'Main Branch'},
+                branchColorById: {'branch-1': 'teal'},
               ),
             ),
           ],
@@ -94,7 +96,9 @@ void main() {
                 activityByMemberId: {
                   'member-1': MemberBranchActivity(branchIds: {'branch-1'}),
                 },
+                branchCodeById: {'branch-1': 'MAIN'},
                 branchNameById: {'branch-1': 'Main Branch'},
+                branchColorById: {'branch-1': 'teal'},
               ),
             ),
           ],

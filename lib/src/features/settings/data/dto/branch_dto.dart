@@ -14,10 +14,12 @@ class BranchDto with BranchDtoMappable {
   final String collectionId;
   final String collectionName;
   final String name;
+  final String code;
   final String address;
   final String contactNumber;
   final String? operatingHours;
   final String? cutOffTime;
+  final String? color;
   final bool isDeleted;
   final String? created;
   final String? updated;
@@ -27,10 +29,12 @@ class BranchDto with BranchDtoMappable {
     required this.collectionId,
     required this.collectionName,
     required this.name,
+    required this.code,
     required this.address,
     required this.contactNumber,
     this.operatingHours,
     this.cutOffTime,
+    this.color,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -45,10 +49,12 @@ class BranchDto with BranchDtoMappable {
       collectionId: json['collectionId'] as String? ?? '',
       collectionName: json['collectionName'] as String? ?? '',
       name: json['name'] as String? ?? '',
+      code: json['code'] as String? ?? '',
       address: json['address'] as String? ?? '',
       contactNumber: json['contactNumber'] as String? ?? '',
       operatingHours: json['operatingHours'] as String?,
       cutOffTime: json['cutOffTime'] as String?,
+      color: json['color'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
@@ -60,10 +66,12 @@ class BranchDto with BranchDtoMappable {
     return Branch(
       id: id,
       name: name,
+      code: code,
       address: address,
       contactNumber: contactNumber,
       operatingHours: operatingHours,
       cutOffTime: cutOffTime,
+      color: color,
       isDeleted: isDeleted,
       created: created != null ? DateTime.tryParse(created!) : null,
       updated: updated != null ? DateTime.tryParse(updated!) : null,

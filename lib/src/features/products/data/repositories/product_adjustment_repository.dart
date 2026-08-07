@@ -31,6 +31,14 @@ abstract class ProductAdjustmentRepository {
     String? productStockId,
     String? productLotId,
     String? saleId,
+    String? voidsAdjustmentId,
+    String? voidedById,
+  });
+
+  /// Marks an adjustment as voided.
+  FutureEither<ProductAdjustment> markVoided({
+    required String id,
+    String? voidedById,
   });
 }
 
@@ -106,6 +114,8 @@ class ProductAdjustmentRepositoryImpl implements ProductAdjustmentRepository {
     String? productStockId,
     String? productLotId,
     String? saleId,
+    String? voidsAdjustmentId,
+    String? voidedById,
   }) async {
     return TaskEither.tryCatch(
       () async {
@@ -118,9 +128,30 @@ class ProductAdjustmentRepositoryImpl implements ProductAdjustmentRepository {
           productStockId: productStockId,
           productLotId: productLotId,
           saleId: saleId,
+          voidsAdjustmentId: voidsAdjustmentId,
+          voidedById: voidedById,
         );
 
         final record = await _collection.create(body: body);
+        return _toEntity(record);
+      },
+      Failure.handle,
+    ).run();
+  }
+
+  @override
+  FutureEither<ProductAdjustment> markVoided({
+    required String id,
+    String? voidedById,
+  }) async {
+    return TaskEither.tryCatch(
+      () async {
+        final body = <String, dynamic>{
+          'isVoided': true,
+          if (voidedById != null && voidedById.isNotEmpty)
+            'voidedBy': voidedById,
+        };
+        final record = await _collection.update(id, body: body);
         return _toEntity(record);
       },
       Failure.handle,

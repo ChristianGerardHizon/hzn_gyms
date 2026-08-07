@@ -163,8 +163,14 @@ Member buildMember({
   String id = 'member-1',
   String name = 'Jane Doe',
   String? rfidCardId,
+  String? mobileNumber,
 }) {
-  return Member(id: id, name: name, rfidCardId: rfidCardId);
+  return Member(
+    id: id,
+    name: name,
+    rfidCardId: rfidCardId,
+    mobileNumber: mobileNumber,
+  );
 }
 
 MemberCard buildMemberCard({
@@ -217,6 +223,7 @@ Sale buildSale({
   String? customerName,
   String? descriptor,
   String? idempotencyKey,
+  DateTime? created,
 }) {
   return Sale(
     id: id,
@@ -230,6 +237,7 @@ Sale buildSale({
     customerName: customerName,
     descriptor: descriptor,
     idempotencyKey: idempotencyKey,
+    created: created,
   );
 }
 

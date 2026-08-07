@@ -6,7 +6,9 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../data/repositories/product_lot_repository.dart';
 import '../../data/repositories/product_repository.dart';
 import '../../domain/product.dart';
+import '../../domain/product_stock_status_filter.dart';
 import 'product_sort_controller.dart';
+import 'product_stock_status_filter_controller.dart';
 
 part 'paginated_products_controller.g.dart';
 
@@ -25,8 +27,13 @@ class PaginatedProductsController extends _$PaginatedProductsController {
   String get _currentSort =>
       ref.read(productSortControllerProvider).toSortString();
 
-  /// Gets the current branch filter.
-  String? get _branchFilter => ref.read(currentBranchFilterProvider);
+  /// Combined branch + stock-status PocketBase filter.
+  String? get _listFilter => combineProductListFilters([
+        ref.read(currentBranchFilterProvider),
+        buildProductStockStatusFilter(
+          ref.read(productStockStatusFilterProvider),
+        ),
+      ]);
 
   @override
   Future<PaginatedState<Product>> build() async {
@@ -43,11 +50,16 @@ class PaginatedProductsController extends _$PaginatedProductsController {
       refresh();
     });
 
+    // Listen to stock-status filter changes and refresh
+    ref.listen(productStockStatusFilterProvider, (_, __) {
+      refresh();
+    });
+
     final result = await _repository.fetchPaginated(
       page: 1,
       perPage: Pagination.defaultPageSize,
       sort: _currentSort,
-      filter: _branchFilter,
+      filter: _listFilter,
     );
 
     final paginated = result.fold(
@@ -125,13 +137,13 @@ class PaginatedProductsController extends _$PaginatedProductsController {
             page: nextPage,
             perPage: Pagination.defaultPageSize,
             sort: _currentSort,
-            filter: _branchFilter,
+            filter: _listFilter,
           )
         : await _repository.fetchPaginated(
             page: nextPage,
             perPage: Pagination.defaultPageSize,
             sort: _currentSort,
-            filter: _branchFilter,
+            filter: _listFilter,
           );
 
     await result.fold(
@@ -153,7 +165,7 @@ class PaginatedProductsController extends _$PaginatedProductsController {
     );
   }
 
-  /// Refreshes the list (respects current search, sort, and branch filter).
+  /// Refreshes the list (respects current search, sort, branch, and stock filter).
   Future<void> refresh() async {
     // Avoid wiping previous data so list UIs (and search inputs) stay mounted.
     if (!state.hasValue) {
@@ -167,13 +179,13 @@ class PaginatedProductsController extends _$PaginatedProductsController {
             page: 1,
             perPage: Pagination.defaultPageSize,
             sort: _currentSort,
-            filter: _branchFilter,
+            filter: _listFilter,
           )
         : await _repository.fetchPaginated(
             page: 1,
             perPage: Pagination.defaultPageSize,
             sort: _currentSort,
-            filter: _branchFilter,
+            filter: _listFilter,
           );
 
     await result.fold(
@@ -210,7 +222,7 @@ class PaginatedProductsController extends _$PaginatedProductsController {
       page: 1,
       perPage: Pagination.defaultPageSize,
       sort: _currentSort,
-      filter: _branchFilter,
+      filter: _listFilter,
     );
 
     await result.fold(

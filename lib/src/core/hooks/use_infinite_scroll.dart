@@ -29,6 +29,10 @@ ScrollController useInfiniteScroll({
       if (!scrollController.hasClients) return;
 
       final position = scrollController.position;
+      // Post-frame / early listeners can run before dimensions attach;
+      // maxScrollExtent uses `!` and throws (EBEGYM-4 / EBEGYM-9).
+      if (!position.hasContentDimensions) return;
+
       final remaining = position.maxScrollExtent - position.pixels;
 
       if (remaining <= threshold) {
@@ -41,7 +45,10 @@ ScrollController useInfiniteScroll({
     scrollController.addListener(listener);
 
     // When the first page does not fill the viewport, no scroll events fire.
-    WidgetsBinding.instance.addPostFrameCallback((_) => checkAndLoad());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scrollController.hasClients) return;
+      checkAndLoad();
+    });
 
     return () => scrollController.removeListener(listener);
   }, [hasMore, isLoading, itemCount]);

@@ -9,14 +9,17 @@ import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/utils/list_search_field.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/paginated_sales_controller.dart';
 import '../controllers/sale_search_controller.dart';
 import '../controllers/sale_sort_controller.dart';
 import '../../domain/sale_status_filter.dart';
-import 'sale_status_chip.dart';
+import 'sale_list_tile.dart';
 import 'dialogs/sale_search_fields_dialog.dart';
 
 /// Sale list panel with search header and infinite scroll.
@@ -52,6 +55,8 @@ class SaleListPanel extends HookConsumerWidget {
     final paginatedController =
         ref.read(paginatedSalesControllerProvider.notifier);
     final sortConfig = ref.watch(saleSortControllerProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
 
     // Seed from keepAlive controller so tab remount restores input + clear.
     final initialQuery =
@@ -100,8 +105,8 @@ class SaleListPanel extends HookConsumerWidget {
       isLoading: paginatedState.isLoadingMore,
     );
 
-    final currencyFormat = NumberFormat.currency(symbol: '₱');
-    final dateFormat = DateFormat('MMM dd, yyyy');
+    // Compact list date; year still shown for historical sales.
+    final dateFormat = DateFormat('MMM d, yyyy');
 
     return Scaffold(
       body: Column(
@@ -161,55 +166,19 @@ class SaleListPanel extends HookConsumerWidget {
 
                   final sale = paginatedState.items[index];
                   final isSelected = sale.id == selectedId;
-                  final hasDescriptor =
-                      sale.descriptor != null &&
-                      sale.descriptor!.trim().isNotEmpty;
-                  final subtitle = [
-                    if (hasDescriptor) sale.shortReceiptNumber,
-                    sale.customerDisplay,
-                    sale.created != null
-                        ? dateFormat.format(sale.created!)
-                        : 'Unknown',
-                    sale.isPaid ? 'Paid' : 'Unpaid',
-                  ].join(' • ');
+                  final branchPill = viewingAll
+                      ? BranchCodePill.fromBranches(
+                          branchId: sale.branchId,
+                          branches: branches,
+                          dense: true,
+                        )
+                      : null;
 
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.receipt,
-                        color: isSelected
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    title: Text(
-                      sale.listTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text(subtitle),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          currencyFormat.format(sale.totalAmount),
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SaleStatusChip(status: sale.status),
-                      ],
-                    ),
-                    selected: isSelected,
-                    selectedTileColor: theme.colorScheme.primaryContainer,
+                  return SaleListTile(
+                    sale: sale,
+                    isSelected: isSelected,
+                    dateFormat: dateFormat,
+                    branchPill: branchPill,
                     onTap: () => onSaleTap(sale),
                   );
                 },

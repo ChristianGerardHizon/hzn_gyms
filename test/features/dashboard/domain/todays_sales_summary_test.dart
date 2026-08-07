@@ -7,23 +7,39 @@ void main() {
       final summary = aggregateTodaysSalesSummary(const []);
       expect(summary.count, 0);
       expect(summary.total, 0);
+      expect(summary.byBranch, isEmpty);
     });
 
     test('returns single branch row as-is', () {
       final summary = aggregateTodaysSalesSummary(const [
-        TodaysSalesBranchRow(transactionCount: 3, totalRevenue: 450),
+        TodaysSalesBranchRow(
+          branchId: 'branch-a',
+          transactionCount: 3,
+          totalRevenue: 450,
+        ),
       ]);
       expect(summary.count, 3);
       expect(summary.total, 450);
+      expect(summary.byBranch, hasLength(1));
+      expect(summary.byBranch.first.branchId, 'branch-a');
     });
 
     test('sums all branch rows for All branches', () {
       final summary = aggregateTodaysSalesSummary(const [
-        TodaysSalesBranchRow(transactionCount: 2, totalRevenue: 200),
-        TodaysSalesBranchRow(transactionCount: 5, totalRevenue: 800.5),
+        TodaysSalesBranchRow(
+          branchId: 'branch-a',
+          transactionCount: 2,
+          totalRevenue: 200,
+        ),
+        TodaysSalesBranchRow(
+          branchId: 'branch-b',
+          transactionCount: 5,
+          totalRevenue: 800.5,
+        ),
       ]);
       expect(summary.count, 7);
       expect(summary.total, 1000.5);
+      expect(summary.byBranch.map((r) => r.branchId), ['branch-a', 'branch-b']);
     });
   });
 }

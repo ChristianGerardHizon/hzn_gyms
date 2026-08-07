@@ -44,8 +44,9 @@ class ActivityLogsPage extends ConsumerWidget {
 
               return NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  if (notification.metrics.pixels >=
-                          notification.metrics.maxScrollExtent - 200 &&
+                  final metrics = notification.metrics;
+                  if (!metrics.hasContentDimensions) return false;
+                  if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
                       state.hasMore &&
                       !state.isLoadingMore) {
                     controller.loadMore();

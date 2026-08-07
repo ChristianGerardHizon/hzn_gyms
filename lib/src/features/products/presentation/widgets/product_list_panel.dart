@@ -12,9 +12,11 @@ import '../../../../core/utils/list_search_field.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../domain/product.dart';
+import '../../domain/product_status.dart';
 import '../controllers/paginated_products_controller.dart';
 import '../controllers/product_search_controller.dart';
 import '../controllers/product_sort_controller.dart';
+import '../controllers/product_stock_status_filter_controller.dart';
 import 'product_image.dart';
 import 'product_stock_badge.dart';
 import 'dialogs/create_product_dialog.dart';
@@ -48,6 +50,7 @@ class ProductListPanel extends HookConsumerWidget {
     final paginatedController =
         ref.read(paginatedProductsControllerProvider.notifier);
     final sortConfig = ref.watch(productSortControllerProvider);
+    final stockStatusFilter = ref.watch(productStockStatusFilterProvider);
 
     // Seed from keepAlive controller so tab remount restores input + clear.
     final initialQuery =
@@ -131,6 +134,43 @@ class ProductListPanel extends HookConsumerWidget {
                 isSearchActive: paginatedController.isSearchActive,
               ),
               onSortPressed: () => _showSortDialog(context, ref),
+            ),
+          ),
+
+          // Stock status filter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('All'),
+                    selected: stockStatusFilter == null,
+                    onSelected: (_) {
+                      ref
+                          .read(productStockStatusFilterProvider.notifier)
+                          .clear();
+                    },
+                  ),
+                  for (final status in const [
+                    ProductStatus.outOfStock,
+                    ProductStatus.lowStock,
+                    ProductStatus.noThreshold,
+                  ]) ...[
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text(status.displayName),
+                      selected: stockStatusFilter == status,
+                      onSelected: (_) {
+                        ref
+                            .read(productStockStatusFilterProvider.notifier)
+                            .setStatus(status);
+                      },
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
 

@@ -53,7 +53,7 @@ class MemberListSkeleton extends StatelessWidget {
           ),
         ),
 
-        // Skeleton rows
+        // Skeleton rows (mirrors MemberListTile)
         Expanded(
           child: Skeletonizer(
             enabled: true,
@@ -61,17 +61,26 @@ class MemberListSkeleton extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: itemCount,
               itemBuilder: (context, index) {
-                return const ListTile(
-                  leading: CircleAvatar(radius: 20),
-                  title: Text('Member name placeholder'),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
                     children: [
-                      Text('0912 345 6789'),
-                      SizedBox(height: 4),
+                      CircleAvatar(radius: 22),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Member name placeholder'),
+                            SizedBox(height: 2),
+                            Text('0912 345 6789'),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8),
                       SizedBox(
-                        height: 22,
-                        width: 72,
+                        height: 18,
+                        width: 56,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             color: Color(0x14000000),

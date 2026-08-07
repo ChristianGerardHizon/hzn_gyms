@@ -92,10 +92,12 @@ class BranchRepositoryImpl implements BranchRepository {
       () async {
         final body = <String, dynamic>{
           'name': branch.name,
+          'code': branch.code,
           'address': branch.address,
           'contactNumber': branch.contactNumber,
           'operatingHours': branch.operatingHours,
           'cutOffTime': branch.cutOffTime,
+          'color': branch.color,
           'isDeleted': false,
         };
 
@@ -120,10 +122,12 @@ class BranchRepositoryImpl implements BranchRepository {
 
         final body = <String, dynamic>{
           'name': branch.name,
+          'code': branch.code,
           'address': branch.address,
           'contactNumber': branch.contactNumber,
           'operatingHours': branch.operatingHours,
           'cutOffTime': branch.cutOffTime,
+          'color': branch.color,
         };
 
         final record = await _collection.update(branch.id, body: body);

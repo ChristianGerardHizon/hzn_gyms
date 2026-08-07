@@ -107,4 +107,4 @@ final class TodaySalesSummaryProvider
   }
 }
 
-String _$todaySalesSummaryHash() => r'3e2af7c0b88e85603879f867702fab3085ca34cd';
+String _$todaySalesSummaryHash() => r'158389571e6815d807a59ae4668b6609fef4adcc';

@@ -60,7 +60,7 @@ final class MemberCardsControllerProvider
 }
 
 String _$memberCardsControllerHash() =>
-    r'1f7e68470ab36942430ef4b4cbac814c8882ecd8';
+    r'f13d1509ebdcca770e1f683028b295f128242789';
 
 /// Controller for managing a member's physical ID cards.
 ///

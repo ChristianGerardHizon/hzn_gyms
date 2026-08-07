@@ -81,6 +81,10 @@ class Membership with MembershipMappable {
   String validBranchesDisplay(Map<String, String> branchNamesById) =>
       formatValidBranchesDisplay(validBranches, branchNamesById);
 
+  /// Labels for branch chips: `All branches`, or one name/id per valid branch.
+  List<String> validBranchLabels(Map<String, String> branchNamesById) =>
+      formatValidBranchLabels(validBranches, branchNamesById);
+
   /// Display string for duration, e.g. `"1 month"` / `"3 weeks"`.
   String get durationDisplay => durationUnit.label(durationValue);
 
@@ -116,4 +120,17 @@ String formatValidBranchesDisplay(
 ) {
   if (validBranchIds.isEmpty) return 'All branches';
   return validBranchIds.map((id) => branchNamesById[id] ?? id).join(', ');
+}
+
+/// Chip labels for [validBranchIds].
+///
+/// Empty list → a single `"All branches"` label. Otherwise one label per id.
+List<String> formatValidBranchLabels(
+  List<String> validBranchIds,
+  Map<String, String> branchNamesById,
+) {
+  if (validBranchIds.isEmpty) return const ['All branches'];
+  return [
+    for (final id in validBranchIds) branchNamesById[id] ?? id,
+  ];
 }

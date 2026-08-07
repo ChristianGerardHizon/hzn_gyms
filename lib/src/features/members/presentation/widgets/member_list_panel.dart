@@ -8,7 +8,6 @@ import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/list_search_field.dart';
-import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
 import '../../../../core/widgets/sort/sort_dialog.dart';
 import '../../domain/member.dart';
@@ -20,8 +19,8 @@ import '../controllers/paginated_members_controller.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import 'dialogs/member_search_fields_dialog.dart';
-import 'member_branch_activity_chips.dart';
 import 'member_form_dialog.dart';
+import 'member_list_tile.dart';
 
 /// List panel for displaying members with search, sort, filter, and infinite scroll.
 class MemberListPanel extends HookConsumerWidget {
@@ -164,14 +163,17 @@ class MemberListPanel extends HookConsumerWidget {
                     ),
                     for (final branch in branches) ...[
                       const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: Text(branch.name),
-                        selected: activeBranchFilter == branch.id,
-                        onSelected: (_) {
-                          ref
-                              .read(memberActiveBranchFilterProvider.notifier)
-                              .setBranchId(branch.id);
-                        },
+                      Tooltip(
+                        message: branch.name,
+                        child: ChoiceChip(
+                          label: Text(branch.pillLabel),
+                          selected: activeBranchFilter == branch.id,
+                          onSelected: (_) {
+                            ref
+                                .read(memberActiveBranchFilterProvider.notifier)
+                                .setBranchId(branch.id);
+                          },
+                        ),
                       ),
                     ],
                   ],
@@ -202,55 +204,19 @@ class MemberListPanel extends HookConsumerWidget {
                   final isSelected = member.id == selectedMemberId;
                   final branchActivityState = branchActivityAsync.value;
 
-                  return ListTile(
-                    leading: CachedAvatar(
-                      imageUrl: member.photo,
-                      radius: 20,
-                      thumbSize: 80,
-                    ),
-                    title: Text(
-                      member.name,
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (member.mobileNumber != null &&
-                            member.mobileNumber!.isNotEmpty)
-                          Text(
-                            member.mobileNumber!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        if (member.mobileNumber != null &&
-                            member.mobileNumber!.isNotEmpty)
-                          const SizedBox(height: 4),
-                        MemberBranchActivityChips(
-                          activity:
-                              branchActivityState?.activityByMemberId[member.id],
-                          branchNameById:
-                              branchActivityState?.branchNameById ?? const {},
-                          currentBranchId: currentBranchId,
-                          isLoading: branchActivityAsync.isLoading,
-                        ),
-                      ],
-                    ),
-                    trailing: member.isPendingSync
-                        ? Tooltip(
-                            message: 'Pending sync',
-                            child: Icon(
-                              Icons.cloud_upload_outlined,
-                              size: 18,
-                              color: theme.colorScheme.primary,
-                            ),
-                          )
-                        : null,
-                    selected: isSelected,
-                    selectedTileColor: theme.colorScheme.primaryContainer,
+                  return MemberListTile(
+                    member: member,
+                    isSelected: isSelected,
+                    activity:
+                        branchActivityState?.activityByMemberId[member.id],
+                    branchCodeById:
+                        branchActivityState?.branchCodeById ?? const {},
+                    branchNameById:
+                        branchActivityState?.branchNameById ?? const {},
+                    branchColorById:
+                        branchActivityState?.branchColorById ?? const {},
+                    currentBranchId: currentBranchId,
+                    isActivityLoading: branchActivityAsync.isLoading,
                     onTap: () =>
                         MemberDetailRoute(id: member.id).go(context),
                   );

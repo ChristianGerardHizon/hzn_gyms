@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/breakpoints.dart';
@@ -21,6 +22,9 @@ import '../../../pos/presentation/payments_controller.dart';
 import '../../../products/data/repositories/product_adjustment_repository.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
+import '../../../settings/domain/branch.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 import '../../data/sale_side_effects.dart';
 import '../controllers/sale_items_provider.dart';
@@ -101,6 +105,8 @@ class _SaleDetailContent extends HookConsumerWidget {
     final theme = Theme.of(context);
     final saleItemsAsync = ref.watch(saleItemsProvider(sale.id));
     final paymentsAsync = ref.watch(salePaymentsProvider(sale.id));
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
     final currencyFormat = NumberFormat.currency(symbol: '₱');
     final headline = sale.detailTitle;
@@ -163,6 +169,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Column(
@@ -195,6 +202,13 @@ class _SaleDetailContent extends HookConsumerWidget {
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
+                                if (viewingAll) ...[
+                                  const SizedBox(height: 8),
+                                  _BranchSubtitle(
+                                    branchId: sale.branchId,
+                                    branches: branches,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -1024,6 +1038,54 @@ class _InfoRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Compact branch pill + name under the sale header when viewing All Branches.
+class _BranchSubtitle extends StatelessWidget {
+  const _BranchSubtitle({
+    required this.branchId,
+    required this.branches,
+  });
+
+  final String branchId;
+  final List<Branch> branches;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Branch? match;
+    for (final branch in branches) {
+      if (branch.id == branchId) {
+        match = branch;
+        break;
+      }
+    }
+    final name = match?.name ?? branchId;
+    final pill = BranchCodePill.fromBranches(
+      branchId: branchId,
+      branches: branches,
+      dense: true,
+    );
+
+    return Row(
+      children: [
+        if (pill != null) ...[
+          pill,
+          const SizedBox(width: 8),
+        ],
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

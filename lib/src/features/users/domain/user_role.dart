@@ -379,7 +379,7 @@ abstract class Permissions {
         key: inventoryAdjust,
         name: 'Adjust Inventory',
         category: 'Inventory',
-        description: 'Make inventory adjustments',
+        description: 'Make inventory adjustments and void manual stock adjustments',
         icon: Icons.tune,
       ),
       // Sales
