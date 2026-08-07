@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../../core/widgets/branch_switcher.dart';
 import '../../../../core/widgets/scroll_to_top_button.dart';
 import '../../../check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
@@ -42,8 +41,6 @@ class TabletDashboardLayout extends HookConsumerWidget {
         ),
       );
     }
-
-    final selection = branchAsync.value;
 
     return Stack(
       children: [
@@ -94,29 +91,6 @@ class TabletDashboardLayout extends HookConsumerWidget {
                               ),
                             ],
                           ),
-                          if (selection != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: selection.isAll
-                                  ? const BranchSwitcher(compact: true)
-                                  : Row(
-                                      children: [
-                                        Icon(
-                                          Icons.store,
-                                          size: 16,
-                                          color: theme.colorScheme.outline,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          selection.branch?.name ?? '',
-                                          style:
-                                              theme.textTheme.bodyMedium?.copyWith(
-                                            color: theme.colorScheme.outline,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                            ),
                           const SizedBox(height: 24),
                           const KpiSummarySection(),
                           const SizedBox(height: 24),
@@ -125,6 +99,8 @@ class TabletDashboardLayout extends HookConsumerWidget {
                           const UnpaidSalesQueueSection(),
                           const SizedBox(height: 8),
                           const RecentTransactionsSection(),
+                          const SizedBox(height: 24),
+                          const InventoryAlertsSection(),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -136,15 +112,13 @@ class TabletDashboardLayout extends HookConsumerWidget {
               // Members Section (virtualized slivers)
               const DashboardMembersSection(),
 
-              // Inventory Alerts + Footer
+              // Footer
               SliverPadding(
                 padding: const EdgeInsets.all(16),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
-                      SizedBox(height: 24),
-                      InventoryAlertsSection(),
                       SizedBox(height: 24),
                       DashboardFooter(),
                     ],

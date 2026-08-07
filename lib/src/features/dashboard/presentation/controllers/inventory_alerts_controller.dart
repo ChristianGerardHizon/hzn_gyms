@@ -14,6 +14,9 @@ part 'inventory_alerts_controller.g.dart';
 /// - vw_low_stock_lot_products (lot-tracked)
 /// - vw_expired_lots
 /// - vw_near_expiration_lots
+///
+/// Low-stock view rows are split into low stock (qty > 0, ≤ threshold) and
+/// out of stock (qty ≤ 0).
 @riverpod
 Future<InventoryAlertsSummary> inventoryAlertsSummary(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
@@ -43,31 +46,53 @@ Future<InventoryAlertsSummary> inventoryAlertsSummary(Ref ref) async {
   final nearExpirationLotRecords = results[3];
 
   final lowStockAlerts = <InventoryAlert>[];
+  final outOfStockAlerts = <InventoryAlert>[];
   final nearExpirationAlerts = <InventoryAlert>[];
   final expiredAlerts = <InventoryAlert>[];
 
+  void addStockAlert({
+    required String productId,
+    required String productName,
+    required bool isLotTracked,
+    required num quantity,
+    required num threshold,
+  }) {
+    final alertType = stockAlertTypeForQuantity(quantity);
+    final alert = InventoryAlert(
+      productId: productId,
+      productName: productName,
+      alertType: alertType,
+      isLotTracked: isLotTracked,
+      currentQuantity: quantity,
+      threshold: threshold,
+    );
+    if (alertType == InventoryAlertType.outOfStock) {
+      outOfStockAlerts.add(alert);
+    } else {
+      lowStockAlerts.add(alert);
+    }
+  }
+
   // Process non-lot-tracked low stock products
   for (final record in lowStockRecords) {
-    lowStockAlerts.add(InventoryAlert(
+    addStockAlert(
       productId: record.id,
       productName: record.getStringValue('name'),
-      alertType: InventoryAlertType.lowStock,
       isLotTracked: false,
-      currentQuantity: record.getDoubleValue('quantity'),
+      quantity: record.getDoubleValue('quantity'),
       threshold: record.getDoubleValue('stockThreshold'),
-    ));
+    );
   }
 
   // Process lot-tracked low stock products
   for (final record in lowStockLotRecords) {
-    lowStockAlerts.add(InventoryAlert(
+    addStockAlert(
       productId: record.id,
       productName: record.getStringValue('name'),
-      alertType: InventoryAlertType.lowStock,
       isLotTracked: true,
-      currentQuantity: record.getDoubleValue('total_quantity'),
+      quantity: record.getDoubleValue('total_quantity'),
       threshold: record.getDoubleValue('stockThreshold'),
-    ));
+    );
   }
 
   // Process expired lots
@@ -113,6 +138,8 @@ Future<InventoryAlertsSummary> inventoryAlertsSummary(Ref ref) async {
   }
 
   // Sort alerts by severity/urgency
+  outOfStockAlerts.sort(
+      (a, b) => (a.currentQuantity ?? 0).compareTo(b.currentQuantity ?? 0));
   lowStockAlerts.sort(
       (a, b) => (a.currentQuantity ?? 0).compareTo(b.currentQuantity ?? 0));
   nearExpirationAlerts.sort((a, b) =>
@@ -122,16 +149,24 @@ Future<InventoryAlertsSummary> inventoryAlertsSummary(Ref ref) async {
 
   return InventoryAlertsSummary(
     lowStockAlerts: lowStockAlerts,
+    outOfStockAlerts: outOfStockAlerts,
     nearExpirationAlerts: nearExpirationAlerts,
     expiredAlerts: expiredAlerts,
   );
 }
 
-/// Count of low stock products (including lot-tracked).
+/// Count of low stock products (qty > 0 and ≤ threshold).
 @riverpod
 Future<int> lowStockAlertsCount(Ref ref) async {
   final summary = await ref.watch(inventoryAlertsSummaryProvider.future);
   return summary.lowStockCount;
+}
+
+/// Count of out-of-stock products (qty ≤ 0).
+@riverpod
+Future<int> outOfStockAlertsCount(Ref ref) async {
+  final summary = await ref.watch(inventoryAlertsSummaryProvider.future);
+  return summary.outOfStockCount;
 }
 
 /// Count of products/lots near expiration.
@@ -153,6 +188,13 @@ Future<int> expiredAlertsCount(Ref ref) async {
 Future<List<InventoryAlert>> lowStockAlerts(Ref ref) async {
   final summary = await ref.watch(inventoryAlertsSummaryProvider.future);
   return summary.lowStockAlerts;
+}
+
+/// List of out-of-stock alerts for display.
+@riverpod
+Future<List<InventoryAlert>> outOfStockAlerts(Ref ref) async {
+  final summary = await ref.watch(inventoryAlertsSummaryProvider.future);
+  return summary.outOfStockAlerts;
 }
 
 /// List of near expiration alerts for display.

@@ -11,14 +11,17 @@ part 'member_branch_activity_controller.g.dart';
 class MemberBranchActivityState {
   const MemberBranchActivityState({
     required this.activityByMemberId,
+    required this.branchCodeById,
     required this.branchNameById,
   });
 
   final Map<String, MemberBranchActivity> activityByMemberId;
+  final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
 
   static const empty = MemberBranchActivityState(
     activityByMemberId: {},
+    branchCodeById: {},
     branchNameById: {},
   );
 }
@@ -39,6 +42,7 @@ Future<MemberBranchActivityState> _loadMemberBranchActivity(
 
   final branches = await ref.watch(branchesControllerProvider.future);
   final allBranchIds = branches.map((b) => b.id).toList();
+  final branchCodeById = {for (final b in branches) b.id: b.pillLabel};
   final branchNameById = {for (final b in branches) b.id: b.name};
 
   final result = await ref
@@ -50,6 +54,7 @@ Future<MemberBranchActivityState> _loadMemberBranchActivity(
       activityByMemberId: {
         for (final id in memberIds) id: const MemberBranchActivity(branchIds: {}),
       },
+      branchCodeById: branchCodeById,
       branchNameById: branchNameById,
     ),
     (byMember) => MemberBranchActivityState(
@@ -60,6 +65,7 @@ Future<MemberBranchActivityState> _loadMemberBranchActivity(
             allBranchIds: allBranchIds,
           ),
       },
+      branchCodeById: branchCodeById,
       branchNameById: branchNameById,
     ),
   );

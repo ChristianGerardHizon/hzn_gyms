@@ -35,7 +35,7 @@ Home screen with gym metrics and quick actions.
 - Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's transactions dialog
 - Members grid: tap a member for a quick-view dialog (details + membership summary, Renew / Purchase, Show full details)
 - Expiring memberships section (memberships expiring within 7 days)
-- Inventory alerts (low stock, expiring products)
+- Inventory alerts (out of stock, low stock below threshold, expiring products)
 - Pull-to-refresh invalidates all dashboard data
 - RFID keyboard-wedge listener (same as Check-In); NFC icon is green when active, red when inactive
 
@@ -561,6 +561,11 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Inventory alerts layout | Dashboard inventory alerts are side-by-side on tablet+ and single-column on mobile |
+| Aug 7 | Inventory alerts split | Dashboard inventory alerts separate **Out of Stock** (qty ≤ 0) from **Low Stock** (qty below threshold) |
+| Aug 7 | All-branches KPI pills | When viewing All branches, KPI breakdown dialogs and recent transactions show branch code pills (e.g. BCD); cards stay aggregate-only |
+| Aug 7 | Branch codes for pills | Branches have a unique `code` (max 5, e.g. BCD/TAL) used on membership/member branch pills; full name stays on tooltip/admin |
+| Aug 7 | Cross-branch membership purchase | Purchase/renew/new-member plan picker has **Show all memberships**; sale stays on the selling branch while check-in follows the plan's `validBranches` |
 | Aug 7 | Out-of-stock continue warning | Cashier warns when adding an out-of-stock product; Continue still adds it, with optional Don't warn again until tomorrow |
 | Aug 7 | Edit product quantity permission | New `products.editQuantity`; Edit Product quantity is read-only without it (admins included via `system.admin`). Prefer Stock Adjustment otherwise. |
 | Aug 7 | POS sale stock adjustments | Checkout writes `productAdjustments` linked to the sale UUID; void restores qty and writes a reverse adjustment on the same sale |

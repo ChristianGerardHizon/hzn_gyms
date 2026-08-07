@@ -54,7 +54,7 @@ final class ActiveMembersCountProvider
 }
 
 String _$activeMembersCountHash() =>
-    r'a84b6fbe5a2b71bf5894ec0d23cb6aaba9fef09d';
+    r'56f395f756d827933034781db892109673aed6e7';
 
 /// Active memberships for the current branch (KPI breakdown list).
 ///
@@ -106,4 +106,4 @@ final class ActiveMembersListProvider
   }
 }
 
-String _$activeMembersListHash() => r'4fe3c971b3eada0dcbea86f030175c9f6e4318b3';
+String _$activeMembersListHash() => r'519a7e497572d434f3378ffc8ba41e46b12ffec2';

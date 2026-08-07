@@ -294,6 +294,10 @@ class MemberPickerDialog extends HookConsumerWidget {
                         data: (state) => state.activityByMemberId[member.id],
                         orElse: () => null,
                       );
+                      final branchCodeById = activityAsync?.maybeWhen(
+                        data: (state) => state.branchCodeById,
+                        orElse: () => const <String, String>{},
+                      ) ?? const <String, String>{};
                       final branchNameById = activityAsync?.maybeWhen(
                         data: (state) => state.branchNameById,
                         orElse: () => const <String, String>{},
@@ -320,6 +324,7 @@ class MemberPickerDialog extends HookConsumerWidget {
                                 const SizedBox(height: 6),
                               MemberBranchActivityChips(
                                 activity: activity,
+                                branchCodeById: branchCodeById,
                                 branchNameById: branchNameById,
                                 currentBranchId: currentBranchId,
                                 isLoading: activityLoading,

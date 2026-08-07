@@ -15,7 +15,6 @@ import '../../../features/dashboard/presentation/widgets/tablet_dashboard_layout
 import '../../../features/dashboard/presentation/widgets/dashboard_footer.dart';
 import '../../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../../utils/breakpoints.dart';
-import '../../widgets/branch_switcher.dart';
 import '../../widgets/scroll_to_top_button.dart';
 
 part 'dashboard.routes.g.dart';
@@ -117,6 +116,8 @@ class DashboardPage extends HookConsumerWidget {
                               SizedBox(height: 24),
                               RecentTransactionsSection(),
                               SizedBox(height: 24),
+                              InventoryAlertsSection(),
+                              SizedBox(height: 24),
                             ],
                           ),
                         ),
@@ -127,15 +128,13 @@ class DashboardPage extends HookConsumerWidget {
                   // Members Section (virtualized slivers)
                   const DashboardMembersSection(),
 
-                  // Inventory Alerts + Footer
+                  // Footer
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     sliver: SliverToBoxAdapter(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
-                          SizedBox(height: 24),
-                          InventoryAlertsSection(),
                           SizedBox(height: 24),
                           DashboardFooter(),
                           SizedBox(height: 16),
@@ -164,57 +163,29 @@ class _MobileDashboardHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final selection = ref.watch(currentBranchControllerProvider).value;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.dashboard,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Dashboard Overview',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              const RfidListenerStatusIcon(),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh',
-                onPressed: () => refreshDashboard(ref),
-              ),
-            ],
+          Icon(
+            Icons.dashboard,
+            color: theme.colorScheme.primary,
           ),
-          if (selection != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: selection.isAll
-                  ? const BranchSwitcher(compact: true)
-                  : Row(
-                      children: [
-                        Icon(
-                          Icons.store,
-                          size: 16,
-                          color: theme.colorScheme.outline,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          selection.branch?.name ?? '',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.outline,
-                          ),
-                        ),
-                      ],
-                    ),
+          const SizedBox(width: 8),
+          Text(
+            'Dashboard Overview',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          const Spacer(),
+          const RfidListenerStatusIcon(),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: () => refreshDashboard(ref),
+          ),
         ],
       ),
     );

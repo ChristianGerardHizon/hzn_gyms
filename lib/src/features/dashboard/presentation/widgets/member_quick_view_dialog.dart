@@ -160,6 +160,10 @@ class MemberQuickViewDialog extends ConsumerWidget {
                               state.activityByMemberId[memberId],
                           orElse: () => null,
                         ),
+                        branchCodeById: activityAsync.maybeWhen(
+                          data: (state) => state.branchCodeById,
+                          orElse: () => const {},
+                        ),
                         branchNameById: activityAsync.maybeWhen(
                           data: (state) => state.branchNameById,
                           orElse: () => const {},
@@ -346,6 +350,7 @@ class _MembershipSummary extends StatelessWidget {
     this.dashboardMember,
     this.branchId,
     this.branchActivity,
+    this.branchCodeById = const {},
     this.branchNameById = const {},
     this.activityLoading = false,
   });
@@ -355,6 +360,7 @@ class _MembershipSummary extends StatelessWidget {
   final DashboardMember? dashboardMember;
   final String? branchId;
   final MemberBranchActivity? branchActivity;
+  final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
   final bool activityLoading;
 
@@ -428,6 +434,7 @@ class _MembershipSummary extends StatelessWidget {
               const SizedBox(height: 12),
               MemberBranchActivityChips(
                 activity: branchActivity,
+                branchCodeById: branchCodeById,
                 branchNameById: branchNameById,
                 currentBranchId: branchId,
                 isLoading: activityLoading,

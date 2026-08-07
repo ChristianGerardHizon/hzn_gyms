@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../check_in/domain/check_in.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
@@ -11,8 +12,9 @@ import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../pos/domain/sale.dart';
-import '../controllers/active_members_count_controller.dart';
-import '../controllers/new_members_controller.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../controllers/active_members_count_controller.dart';import '../controllers/new_members_controller.dart';
 import '../controllers/todays_sales_controller.dart';
 import 'kpi_breakdown_dialog.dart';
 import 'sale_quick_view_dialog.dart';
@@ -39,15 +41,26 @@ Future<void> showTodaysSalesBreakdownDialog(BuildContext context) {
 
 Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
   final salesAsync = ref.watch(todaySalesProvider);
+  final summaryAsync = ref.watch(todaySalesSummaryProvider);
   final currency = NumberFormat.currency(symbol: '₱', decimalDigits: 2);
+  final viewingAll = ref.watch(viewingAllBranchesProvider);
+  final branches = ref.watch(branchesControllerProvider).value ?? const [];
+  final labels = branchLabelMaps(branches);
+  final summary = summaryAsync.value;
 
   return KpiBreakdownListBody<Sale>(
     asyncValue: salesAsync,
     emptyMessage: 'No sales today',
     emptyIcon: Icons.point_of_sale_outlined,
-    onRetry: () => ref.invalidate(todaySalesProvider),
+    onRetry: () {
+      ref.invalidate(todaySalesProvider);
+      ref.invalidate(todaySalesSummaryProvider);
+    },
     summaryBuilder: (sales) {
-      final total = sales.fold<num>(0, (sum, s) => sum + s.totalAmount);
+      // Prefer server aggregate for totals; list is capped at 50.
+      final total = summary?.total ??
+          sales.fold<num>(0, (sum, s) => sum + s.totalAmount);
+      final txnCount = summary?.count ?? sales.length;
       final paid = sales.where((s) => s.isPaid).length;
       final unpaid = sales.length - paid;
       return [
@@ -58,7 +71,7 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
         ),
         KpiSummaryChipData(
           label: 'Transactions',
-          value: sales.length.toString(),
+          value: txnCount.toString(),
           color: Colors.green.shade700,
         ),
         KpiSummaryChipData(
@@ -71,16 +84,29 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
           value: unpaid.toString(),
           color: Colors.orange,
         ),
+        if (viewingAll)
+          ..._branchSalesChips(
+            rows: summary?.byBranch ?? const [],
+            codeById: labels.codeById,
+            nameById: labels.nameById,
+            fallbackBranchIds: sales.map((s) => s.branchId),
+          ),
       ];
     },
-    itemBuilder: (context, sale) => TodaySaleListTile(
-      sale: sale,
-      onTap: () => showSaleQuickViewDialog(
-        context,
-        saleId: sale.id,
-        fallbackSale: sale,
-      ),
-    ),
+    itemBuilder: (context, sale) {
+      final code = viewingAll ? labels.codeById[sale.branchId] : null;
+      final name = viewingAll ? labels.nameById[sale.branchId] : null;
+      return TodaySaleListTile(
+        sale: sale,
+        branchLabel: code ?? (viewingAll ? sale.branchId : null),
+        branchTooltip: name,
+        onTap: () => showSaleQuickViewDialog(
+          context,
+          saleId: sale.id,
+          fallbackSale: sale,
+        ),
+      );
+    },
   );
 }
 
@@ -93,6 +119,9 @@ Future<void> showTodaysCheckInsBreakdownDialog(BuildContext context) {
     bodyBuilder: (context, ref) {
       final checkInsAsync = ref.watch(checkInControllerProvider);
       final timeFormat = DateFormat('hh:mm a');
+      final viewingAll = ref.watch(viewingAllBranchesProvider);
+      final branches = ref.watch(branchesControllerProvider).value ?? const [];
+      final labels = branchLabelMaps(branches);
 
       return KpiBreakdownListBody<CheckIn>(
         asyncValue: checkInsAsync,
@@ -122,10 +151,24 @@ Future<void> showTodaysCheckInsBreakdownDialog(BuildContext context) {
               value: rfid.toString(),
               color: Colors.teal.shade700,
             ),
+            if (viewingAll)
+              ..._branchCountChips(
+                branchIds: checkIns.map((c) => c.branchId),
+                codeById: labels.codeById,
+                nameById: labels.nameById,
+                color: Colors.indigo,
+              ),
           ];
         },
         itemBuilder: (context, checkIn) {
           final theme = Theme.of(context);
+          final branchPill = viewingAll
+              ? BranchCodePill.fromBranches(
+                  branchId: checkIn.branchId,
+                  branches: branches,
+                  dense: true,
+                )
+              : null;
           return Consumer(
             builder: (context, ref, _) {
               final memberAsync = ref.watch(memberProvider(checkIn.memberId));
@@ -142,6 +185,7 @@ Future<void> showTodaysCheckInsBreakdownDialog(BuildContext context) {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                trailing: branchPill,
                 onTap: () {
                   Navigator.of(context).pop();
                   MemberDetailRoute(id: checkIn.memberId).go(context);
@@ -164,6 +208,9 @@ Future<void> showActiveMembersBreakdownDialog(BuildContext context) {
     bodyBuilder: (context, ref) {
       final listAsync = ref.watch(activeMembersListProvider);
       final dateFormat = DateFormat.MMMd();
+      final viewingAll = ref.watch(viewingAllBranchesProvider);
+      final branches = ref.watch(branchesControllerProvider).value ?? const [];
+      final labels = branchLabelMaps(branches);
 
       return KpiBreakdownListBody<MemberMembership>(
         asyncValue: listAsync,
@@ -197,11 +244,25 @@ Future<void> showActiveMembersBreakdownDialog(BuildContext context) {
               color: Colors.purple.shade700,
             ),
             ...planChips,
+            if (viewingAll)
+              ..._branchCountChips(
+                branchIds: memberships.map((m) => m.branchId),
+                codeById: labels.codeById,
+                nameById: labels.nameById,
+                color: Colors.indigo,
+              ),
           ];
         },
         itemBuilder: (context, membership) {
           final theme = Theme.of(context);
           final days = membership.daysRemaining;
+          final branchPill = viewingAll
+              ? BranchCodePill.fromBranches(
+                  branchId: membership.branchId,
+                  branches: branches,
+                  dense: true,
+                )
+              : null;
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: Colors.purple.withValues(alpha: 0.15),
@@ -226,6 +287,7 @@ Future<void> showActiveMembersBreakdownDialog(BuildContext context) {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            trailing: branchPill,
             onTap: () {
               Navigator.of(context).pop();
               MemberDetailRoute(id: membership.memberId).go(context);
@@ -246,6 +308,9 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
     bodyBuilder: (context, ref) {
       final listAsync = ref.watch(todaysNewMembersListProvider);
       final timeFormat = DateFormat('hh:mm a');
+      final viewingAll = ref.watch(viewingAllBranchesProvider);
+      final branches = ref.watch(branchesControllerProvider).value ?? const [];
+      final labels = branchLabelMaps(branches);
 
       return KpiBreakdownListBody<Member>(
         asyncValue: listAsync,
@@ -258,6 +323,16 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
             value: members.length.toString(),
             color: Colors.blue,
           ),
+          if (viewingAll)
+            ..._branchCountChips(
+              branchIds: members
+                  .map((m) => m.branch)
+                  .whereType<String>()
+                  .where((id) => id.isNotEmpty),
+              codeById: labels.codeById,
+              nameById: labels.nameById,
+              color: Colors.indigo,
+            ),
         ],
         itemBuilder: (context, member) {
           final theme = Theme.of(context);
@@ -269,6 +344,13 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
               member.mobileNumber!,
             if (registeredAt != null) registeredAt,
           ];
+          final branchPill = viewingAll
+              ? BranchCodePill.fromBranches(
+                  branchId: member.branch,
+                  branches: branches,
+                  dense: true,
+                )
+              : null;
 
           return ListTile(
             leading: CircleAvatar(
@@ -290,6 +372,7 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+            trailing: branchPill,
             onTap: () {
               Navigator.of(context).pop();
               MemberDetailRoute(id: member.id).go(context);
@@ -299,4 +382,62 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
       );
     },
   );
+}
+
+List<KpiSummaryChipData> _branchSalesChips({
+  required List<TodaysSalesBranchRow> rows,
+  required Map<String, String> codeById,
+  required Map<String, String> nameById,
+  required Iterable<String> fallbackBranchIds,
+}) {
+  if (rows.isNotEmpty) {
+    final sorted = [...rows]
+      ..sort((a, b) => b.transactionCount.compareTo(a.transactionCount));
+    return [
+      for (final row in sorted)
+        KpiSummaryChipData(
+          label: codeById[row.branchId] ?? nameById[row.branchId] ?? row.branchId,
+          value: row.transactionCount.toString(),
+          color: Colors.indigo,
+        ),
+    ];
+  }
+  return _branchCountChips(
+    branchIds: fallbackBranchIds,
+    codeById: codeById,
+    nameById: nameById,
+    color: Colors.indigo,
+  );
+}
+
+List<KpiSummaryChipData> _branchCountChips({
+  required Iterable<String> branchIds,
+  required Map<String, String> codeById,
+  required Map<String, String> nameById,
+  required Color color,
+}) {
+  final counts = <String, int>{};
+  for (final id in branchIds) {
+    if (id.isEmpty) continue;
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  if (counts.isEmpty) return const [];
+
+  final entries = counts.entries.toList()
+    ..sort((a, b) {
+      final byCount = b.value.compareTo(a.value);
+      if (byCount != 0) return byCount;
+      final aLabel = codeById[a.key] ?? nameById[a.key] ?? a.key;
+      final bLabel = codeById[b.key] ?? nameById[b.key] ?? b.key;
+      return aLabel.compareTo(bLabel);
+    });
+
+  return [
+    for (final e in entries)
+      KpiSummaryChipData(
+        label: codeById[e.key] ?? nameById[e.key] ?? e.key,
+        value: e.value.toString(),
+        color: color,
+      ),
+  ];
 }

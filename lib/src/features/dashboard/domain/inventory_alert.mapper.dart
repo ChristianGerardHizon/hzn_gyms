@@ -270,6 +270,15 @@ class InventoryAlertsSummaryMapper
     opt: true,
     def: const [],
   );
+  static List<InventoryAlert> _$outOfStockAlerts(InventoryAlertsSummary v) =>
+      v.outOfStockAlerts;
+  static const Field<InventoryAlertsSummary, List<InventoryAlert>>
+  _f$outOfStockAlerts = Field(
+    'outOfStockAlerts',
+    _$outOfStockAlerts,
+    opt: true,
+    def: const [],
+  );
   static List<InventoryAlert> _$nearExpirationAlerts(
     InventoryAlertsSummary v,
   ) => v.nearExpirationAlerts;
@@ -293,6 +302,7 @@ class InventoryAlertsSummaryMapper
   @override
   final MappableFields<InventoryAlertsSummary> fields = const {
     #lowStockAlerts: _f$lowStockAlerts,
+    #outOfStockAlerts: _f$outOfStockAlerts,
     #nearExpirationAlerts: _f$nearExpirationAlerts,
     #expiredAlerts: _f$expiredAlerts,
   };
@@ -300,6 +310,7 @@ class InventoryAlertsSummaryMapper
   static InventoryAlertsSummary _instantiate(DecodingData data) {
     return InventoryAlertsSummary(
       lowStockAlerts: data.dec(_f$lowStockAlerts),
+      outOfStockAlerts: data.dec(_f$outOfStockAlerts),
       nearExpirationAlerts: data.dec(_f$nearExpirationAlerts),
       expiredAlerts: data.dec(_f$expiredAlerts),
     );
@@ -386,6 +397,12 @@ abstract class InventoryAlertsSummaryCopyWith<
     InventoryAlert,
     InventoryAlertCopyWith<$R, InventoryAlert, InventoryAlert>
   >
+  get outOfStockAlerts;
+  ListCopyWith<
+    $R,
+    InventoryAlert,
+    InventoryAlertCopyWith<$R, InventoryAlert, InventoryAlert>
+  >
   get nearExpirationAlerts;
   ListCopyWith<
     $R,
@@ -395,6 +412,7 @@ abstract class InventoryAlertsSummaryCopyWith<
   get expiredAlerts;
   $R call({
     List<InventoryAlert>? lowStockAlerts,
+    List<InventoryAlert>? outOfStockAlerts,
     List<InventoryAlert>? nearExpirationAlerts,
     List<InventoryAlert>? expiredAlerts,
   });
@@ -429,6 +447,17 @@ class _InventoryAlertsSummaryCopyWithImpl<$R, $Out>
     InventoryAlert,
     InventoryAlertCopyWith<$R, InventoryAlert, InventoryAlert>
   >
+  get outOfStockAlerts => ListCopyWith(
+    $value.outOfStockAlerts,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(outOfStockAlerts: v),
+  );
+  @override
+  ListCopyWith<
+    $R,
+    InventoryAlert,
+    InventoryAlertCopyWith<$R, InventoryAlert, InventoryAlert>
+  >
   get nearExpirationAlerts => ListCopyWith(
     $value.nearExpirationAlerts,
     (v, t) => v.copyWith.$chain(t),
@@ -448,11 +477,13 @@ class _InventoryAlertsSummaryCopyWithImpl<$R, $Out>
   @override
   $R call({
     List<InventoryAlert>? lowStockAlerts,
+    List<InventoryAlert>? outOfStockAlerts,
     List<InventoryAlert>? nearExpirationAlerts,
     List<InventoryAlert>? expiredAlerts,
   }) => $apply(
     FieldCopyWithData({
       if (lowStockAlerts != null) #lowStockAlerts: lowStockAlerts,
+      if (outOfStockAlerts != null) #outOfStockAlerts: outOfStockAlerts,
       if (nearExpirationAlerts != null)
         #nearExpirationAlerts: nearExpirationAlerts,
       if (expiredAlerts != null) #expiredAlerts: expiredAlerts,
@@ -461,6 +492,7 @@ class _InventoryAlertsSummaryCopyWithImpl<$R, $Out>
   @override
   InventoryAlertsSummary $make(CopyWithData data) => InventoryAlertsSummary(
     lowStockAlerts: data.get(#lowStockAlerts, or: $value.lowStockAlerts),
+    outOfStockAlerts: data.get(#outOfStockAlerts, or: $value.outOfStockAlerts),
     nearExpirationAlerts: data.get(
       #nearExpirationAlerts,
       or: $value.nearExpirationAlerts,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -29,6 +30,7 @@ class BranchFormDialog extends HookConsumerWidget {
       initialValues: isEditing
           ? {
               'name': branch!.name,
+              'code': branch!.code,
               'address': branch!.address,
               'contactNumber': branch!.contactNumber,
               'operatingHours': branch!.operatingHours ?? '',
@@ -60,6 +62,7 @@ class BranchFormDialog extends HookConsumerWidget {
       final branchData = Branch(
         id: branch?.id ?? '',
         name: (values['name'] as String).trim(),
+        code: (values['code'] as String).trim().toUpperCase(),
         address: (values['address'] as String).trim(),
         contactNumber: (values['contactNumber'] as String).trim(),
         operatingHours: _nullIfEmpty(values['operatingHours'] as String?),
@@ -110,13 +113,12 @@ class BranchFormDialog extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Name field
           FormBuilderTextField(
             name: 'name',
             initialValue: branch?.name,
             decoration: const InputDecoration(
               labelText: 'Name *',
-              hintText: 'Enter branch name (internal)',
+              hintText: 'Enter branch name (e.g. Bacolod Branch)',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.store),
             ),
@@ -127,8 +129,39 @@ class BranchFormDialog extends HookConsumerWidget {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
-
-          // Address field
+          FormBuilderTextField(
+            name: 'code',
+            initialValue: branch?.code,
+            decoration: const InputDecoration(
+              labelText: 'Code *',
+              hintText: 'e.g. BCD, TAL',
+              helperText: 'Short label for pills (max 5 letters/numbers)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.tag),
+              counterText: '',
+            ),
+            enabled: !isSaving.value,
+            maxLength: 5,
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+              _UpperCaseTextFormatter(),
+            ],
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(errorText: 'Code is required'),
+              FormBuilderValidators.minLength(1, errorText: 'Code is required'),
+              FormBuilderValidators.maxLength(
+                5,
+                errorText: 'Code must be at most 5 characters',
+              ),
+              FormBuilderValidators.match(
+                RegExp(r'^[A-Za-z0-9]+$'),
+                errorText: 'Letters and numbers only',
+              ),
+            ]),
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 16),
           FormBuilderTextField(
             name: 'address',
             initialValue: branch?.address,
@@ -146,8 +179,6 @@ class BranchFormDialog extends HookConsumerWidget {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
-
-          // Contact number field
           FormBuilderTextField(
             name: 'contactNumber',
             initialValue: branch?.contactNumber,
@@ -165,8 +196,6 @@ class BranchFormDialog extends HookConsumerWidget {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
-
-          // Operating hours field
           FormBuilderTextField(
             name: 'operatingHours',
             initialValue: branch?.operatingHours,
@@ -180,8 +209,6 @@ class BranchFormDialog extends HookConsumerWidget {
             textInputAction: TextInputAction.next,
           ),
           const SizedBox(height: 16),
-
-          // Cut-off time field
           FormBuilderTextField(
             name: 'cutOffTime',
             initialValue: branch?.cutOffTime,
@@ -201,6 +228,7 @@ class BranchFormDialog extends HookConsumerWidget {
 
   static const _fieldLabels = {
     'name': 'Name',
+    'code': 'Code',
     'address': 'Address',
     'contactNumber': 'Contact Number',
     'operatingHours': 'Operating Hours',
@@ -210,6 +238,16 @@ class BranchFormDialog extends HookConsumerWidget {
   String? _nullIfEmpty(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     return value.trim();
+  }
+}
+
+class _UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return newValue.copyWith(text: newValue.text.toUpperCase());
   }
 }
 

@@ -164,14 +164,17 @@ class MemberListPanel extends HookConsumerWidget {
                     ),
                     for (final branch in branches) ...[
                       const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: Text(branch.name),
-                        selected: activeBranchFilter == branch.id,
-                        onSelected: (_) {
-                          ref
-                              .read(memberActiveBranchFilterProvider.notifier)
-                              .setBranchId(branch.id);
-                        },
+                      Tooltip(
+                        message: branch.name,
+                        child: ChoiceChip(
+                          label: Text(branch.pillLabel),
+                          selected: activeBranchFilter == branch.id,
+                          onSelected: (_) {
+                            ref
+                                .read(memberActiveBranchFilterProvider.notifier)
+                                .setBranchId(branch.id);
+                          },
+                        ),
                       ),
                     ],
                   ],
@@ -232,6 +235,8 @@ class MemberListPanel extends HookConsumerWidget {
                         MemberBranchActivityChips(
                           activity:
                               branchActivityState?.activityByMemberId[member.id],
+                          branchCodeById:
+                              branchActivityState?.branchCodeById ?? const {},
                           branchNameById:
                               branchActivityState?.branchNameById ?? const {},
                           currentBranchId: currentBranchId,

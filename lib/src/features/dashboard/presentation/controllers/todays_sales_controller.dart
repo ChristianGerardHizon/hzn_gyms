@@ -51,6 +51,7 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
 
   final rows = records.map(
     (record) => TodaysSalesBranchRow(
+      branchId: record.getStringValue('branch'),
       transactionCount: record.getIntValue('transaction_count'),
       totalRevenue: record.getDoubleValue('total_revenue'),
     ),

@@ -132,7 +132,12 @@ Business branches or locations.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Branch name |
+| `name` | String | Yes | Full branch name (e.g. "Bacolod Branch") |
+| `code` | String | Yes | Short pill label, max 5 alphanumeric (e.g. `BCD`, `TAL`); unique |
+| `address` | String | Yes | Branch address |
+| `contactNumber` | String | Yes | Branch contact number |
+| `operatingHours` | String | No | Operating hours text |
+| `cutOffTime` | String | No | Daily cut-off time |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |

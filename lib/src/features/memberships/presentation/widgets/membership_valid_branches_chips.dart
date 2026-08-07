@@ -1,77 +1,50 @@
 import 'package:flutter/material.dart';
 
-import '../../../memberships/domain/member_branch_activity.dart';
+import '../../domain/membership.dart';
 
-/// Noticeable branch-activity chips for a member in list views.
+/// Compact chips showing which branches a membership plan applies to.
 ///
 /// Pill text uses [branchCodeById] (e.g. `BCD`); [branchNameById] is the
-/// tooltip (full name).
-class MemberBranchActivityChips extends StatelessWidget {
-  const MemberBranchActivityChips({
+/// tooltip (full name like `Bacolod Branch`).
+class MembershipValidBranchesChips extends StatelessWidget {
+  const MembershipValidBranchesChips({
     super.key,
-    required this.activity,
+    required this.membership,
     required this.branchCodeById,
     required this.branchNameById,
     this.currentBranchId,
-    this.isLoading = false,
+    this.maxVisible = 3,
   });
 
-  final MemberBranchActivity? activity;
+  final Membership membership;
   final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
   final String? currentBranchId;
-  final bool isLoading;
-
-  static const _maxVisibleChips = 3;
+  final int maxVisible;
 
   String _pillLabel(String branchId) =>
-      branchCodeById[branchId] ?? branchNameById[branchId] ?? branchId;
+      branchCodeById[branchId] ??
+      branchNameById[branchId] ??
+      branchId;
 
   String _tooltip(String branchId) =>
       branchNameById[branchId] ?? branchCodeById[branchId] ?? branchId;
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const SizedBox(
-        height: 22,
-        width: 72,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Color(0x14000000),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-        ),
-      );
-    }
+    final theme = Theme.of(context);
 
-    final resolved = activity ?? const MemberBranchActivity(branchIds: {});
-    final allBranchIds = {
-      ...branchCodeById.keys,
-      ...branchNameById.keys,
-    }.toList();
-
-    if (resolved.isEmpty) {
-      return const _ActivityChip(
-        label: 'None',
-        tooltip: 'No active branch',
-        color: Color(0xFFEF6C00),
-        icon: Icons.location_off_outlined,
-        emphasized: true,
-      );
-    }
-
-    if (resolved.coversAllBranches(allBranchIds)) {
-      return const _ActivityChip(
+    if (membership.validBranches.isEmpty) {
+      return _BranchChip(
         label: 'All',
         tooltip: 'All branches',
-        color: Color(0xFF2E7D32),
+        color: theme.colorScheme.primary,
         icon: Icons.storefront_outlined,
         emphasized: true,
       );
     }
 
-    final sortedBranchIds = resolved.branchIds.toList()
+    final sortedIds = List<String>.from(membership.validBranches)
       ..sort((a, b) {
         final aCurrent = a == currentBranchId;
         final bCurrent = b == currentBranchId;
@@ -79,26 +52,27 @@ class MemberBranchActivityChips extends StatelessWidget {
         return _pillLabel(a).compareTo(_pillLabel(b));
       });
 
-    final visibleIds = sortedBranchIds.take(_maxVisibleChips).toList();
-    final hiddenIds = sortedBranchIds.skip(_maxVisibleChips).toList();
+    final visibleIds = sortedIds.take(maxVisible).toList();
+    final hiddenIds = sortedIds.skip(maxVisible).toList();
+    final color = theme.colorScheme.tertiary;
 
     return Wrap(
       spacing: 6,
       runSpacing: 4,
       children: [
         for (final branchId in visibleIds)
-          _ActivityChip(
+          _BranchChip(
             label: _pillLabel(branchId),
             tooltip: _tooltip(branchId),
-            color: Colors.green.shade700,
+            color: color,
             icon: Icons.storefront_outlined,
             emphasized: branchId == currentBranchId,
           ),
         if (hiddenIds.isNotEmpty)
-          _ActivityChip(
+          _BranchChip(
             label: '+${hiddenIds.length}',
             tooltip: hiddenIds.map(_tooltip).join(', '),
-            color: Colors.green.shade700,
+            color: color,
             icon: Icons.more_horiz,
             emphasized: false,
           ),
@@ -107,8 +81,8 @@ class MemberBranchActivityChips extends StatelessWidget {
   }
 }
 
-class _ActivityChip extends StatelessWidget {
-  const _ActivityChip({
+class _BranchChip extends StatelessWidget {
+  const _BranchChip({
     required this.label,
     required this.tooltip,
     required this.color,

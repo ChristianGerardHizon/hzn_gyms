@@ -26,6 +26,8 @@ class BranchMapper extends ClassMapperBase<Branch> {
   static const Field<Branch, String> _f$id = Field('id', _$id);
   static String _$name(Branch v) => v.name;
   static const Field<Branch, String> _f$name = Field('name', _$name);
+  static String _$code(Branch v) => v.code;
+  static const Field<Branch, String> _f$code = Field('code', _$code);
   static String _$address(Branch v) => v.address;
   static const Field<Branch, String> _f$address = Field('address', _$address);
   static String _$contactNumber(Branch v) => v.contactNumber;
@@ -69,6 +71,7 @@ class BranchMapper extends ClassMapperBase<Branch> {
   final MappableFields<Branch> fields = const {
     #id: _f$id,
     #name: _f$name,
+    #code: _f$code,
     #address: _f$address,
     #contactNumber: _f$contactNumber,
     #operatingHours: _f$operatingHours,
@@ -82,6 +85,7 @@ class BranchMapper extends ClassMapperBase<Branch> {
     return Branch(
       id: data.dec(_f$id),
       name: data.dec(_f$name),
+      code: data.dec(_f$code),
       address: data.dec(_f$address),
       contactNumber: data.dec(_f$contactNumber),
       operatingHours: data.dec(_f$operatingHours),
@@ -141,6 +145,7 @@ abstract class BranchCopyWith<$R, $In extends Branch, $Out>
   $R call({
     String? id,
     String? name,
+    String? code,
     String? address,
     String? contactNumber,
     String? operatingHours,
@@ -162,6 +167,7 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
   $R call({
     String? id,
     String? name,
+    String? code,
     String? address,
     String? contactNumber,
     Object? operatingHours = $none,
@@ -173,6 +179,7 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
     FieldCopyWithData({
       if (id != null) #id: id,
       if (name != null) #name: name,
+      if (code != null) #code: code,
       if (address != null) #address: address,
       if (contactNumber != null) #contactNumber: contactNumber,
       if (operatingHours != $none) #operatingHours: operatingHours,
@@ -186,6 +193,7 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
   Branch $make(CopyWithData data) => Branch(
     id: data.get(#id, or: $value.id),
     name: data.get(#name, or: $value.name),
+    code: data.get(#code, or: $value.code),
     address: data.get(#address, or: $value.address),
     contactNumber: data.get(#contactNumber, or: $value.contactNumber),
     operatingHours: data.get(#operatingHours, or: $value.operatingHours),

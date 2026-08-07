@@ -11,6 +11,7 @@ import '../../../../core/widgets/state/error_state.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../sales/presentation/widgets/unpaid_sale_flow.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/membership_purchase_orchestrator.dart';
 import '../../data/membership_sale_helper.dart';
@@ -21,8 +22,9 @@ import '../../domain/member_membership.dart';
 import '../../domain/membership.dart';
 import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
-import '../controllers/memberships_controller.dart';
+import '../controllers/membership_purchase_catalog_provider.dart';
 import 'active_membership_warning_dialog.dart';
+import 'membership_valid_branches_chips.dart';
 
 /// Reusable membership plan selection + add-on content.
 ///
@@ -80,7 +82,20 @@ class MembershipPurchaseContent extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final membershipsAsync = ref.watch(membershipsControllerProvider);
+    final showAllBranches = useState(false);
+    final membershipsAsync = ref.watch(
+      membershipPurchaseCatalogProvider(showAllBranches.value),
+    );
+    final branchesAsync = ref.watch(branchesControllerProvider);
+    final writeBranchId = ref.watch(effectiveBranchIdForWriteProvider);
+    final branchCodeById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        branch.id: branch.pillLabel,
+    };
+    final branchNamesById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        branch.id: branch.name,
+    };
 
     // Use external notifiers in collect-only mode, local state otherwise.
     final localMembership = useState<Membership?>(null);
@@ -118,14 +133,14 @@ class MembershipPurchaseContent extends HookConsumerWidget {
     }, [guestNameController, guestMode]);
 
     // Load latest active membership end date for stacking.
+    // Unfiltered so renewals at another branch still stack on existing periods.
     useEffect(() {
       if (guestMode || memberId.isEmpty) return null;
       var cancelled = false;
       Future<void> loadActive() async {
-        final branchId = ref.read(effectiveBranchIdForWriteProvider);
         final result = await ref
             .read(memberMembershipRepositoryProvider)
-            .fetchActive(memberId, validAtBranchId: branchId);
+            .fetchActive(memberId);
         if (cancelled) return;
         result.fold((_) => latestActiveEndDate.value = null, (memberships) {
           latestActiveEndDate.value = memberships.isNotEmpty
@@ -626,34 +641,58 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                 : null,
                           ),
                         ),
-                        if (hasInactive) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: FilterChip(
-                              selected: showInactive.value,
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            FilterChip(
+                              selected: showAllBranches.value,
                               showCheckmark: false,
                               avatar: Icon(
-                                showInactive.value
-                                    ? Icons.visibility
-                                    : Icons.visibility_off_outlined,
+                                showAllBranches.value
+                                    ? Icons.account_tree
+                                    : Icons.account_tree_outlined,
                                 size: 16,
                               ),
                               label: Text(
-                                showInactive.value
-                                    ? 'Including inactive'
-                                    : 'Include inactive',
+                                showAllBranches.value
+                                    ? 'Showing all memberships'
+                                    : 'Show all memberships',
                               ),
                               labelStyle: theme.textTheme.labelMedium,
                               visualDensity: VisualDensity.compact,
                               materialTapTargetSize:
                                   MaterialTapTargetSize.shrinkWrap,
                               onSelected: (selected) {
-                                showInactive.value = selected;
+                                showAllBranches.value = selected;
                               },
                             ),
-                          ),
-                        ],
+                            if (hasInactive)
+                              FilterChip(
+                                selected: showInactive.value,
+                                showCheckmark: false,
+                                avatar: Icon(
+                                  showInactive.value
+                                      ? Icons.visibility
+                                      : Icons.visibility_off_outlined,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  showInactive.value
+                                      ? 'Including inactive'
+                                      : 'Include inactive',
+                                ),
+                                labelStyle: theme.textTheme.labelMedium,
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onSelected: (selected) {
+                                  showInactive.value = selected;
+                                },
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -682,6 +721,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                           ...filteredPlans.map((plan) {
                             final isSelected =
                                 membershipState.value?.id == plan.id;
+                            final priceLine =
+                                '${plan.durationDisplay} - ${plan.price.toCurrency()}';
 
                             return Card(
                               elevation: isSelected ? 2 : 0,
@@ -689,6 +730,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                   ? theme.colorScheme.primaryContainer
                                   : null,
                               child: ListTile(
+                                isThreeLine: true,
                                 leading: CircleAvatar(
                                   backgroundColor: isSelected
                                       ? theme.colorScheme.primary
@@ -733,8 +775,18 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                                     ],
                                   ],
                                 ),
-                                subtitle: Text(
-                                  '${plan.durationDisplay} - ${plan.price.toCurrency()}',
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(priceLine),
+                                    const SizedBox(height: 4),
+                                    MembershipValidBranchesChips(
+                                      membership: plan,
+                                      branchCodeById: branchCodeById,
+                                      branchNameById: branchNamesById,
+                                      currentBranchId: writeBranchId,
+                                    ),
+                                  ],
                                 ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -776,7 +828,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
             error: (error, _) => ErrorState.fromError(
               error,
               compact: true,
-              onRetry: () => ref.invalidate(membershipsControllerProvider),
+              onRetry: () => ref.invalidate(
+                membershipPurchaseCatalogProvider(showAllBranches.value),
+              ),
             ),
           ),
         ),

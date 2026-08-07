@@ -8,6 +8,7 @@ class KpiCard extends StatelessWidget {
     required this.value,
     required this.icon,
     this.subtitle,
+    this.footer,
     this.color,
     this.onTap,
     this.width,
@@ -25,6 +26,9 @@ class KpiCard extends StatelessWidget {
 
   /// Optional subtitle text below the value.
   final String? subtitle;
+
+  /// Optional content below the subtitle (e.g. branch code pills).
+  final Widget? footer;
 
   /// Optional accent color for the card.
   final Color? color;
@@ -114,6 +118,10 @@ class KpiCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
+              if (footer != null) ...[
+                const SizedBox(height: 6),
+                footer!,
+              ],
             ],
           ),
         ),
@@ -180,6 +188,10 @@ class KpiCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ],
+              if (footer != null) ...[
+                const SizedBox(height: 8),
+                footer!,
               ],
               // Navigation indicator
               if (onTap != null) ...[

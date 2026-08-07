@@ -193,6 +193,11 @@ class _BranchDetailsBody extends StatelessWidget {
                     value: branch.name,
                   ),
                   _DetailRow(
+                    icon: Icons.tag,
+                    label: 'Code',
+                    value: branch.pillLabel,
+                  ),
+                  _DetailRow(
                     icon: Icons.location_on,
                     label: 'Address',
                     value: branch.address,
