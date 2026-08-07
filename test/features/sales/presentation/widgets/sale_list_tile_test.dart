@@ -93,4 +93,40 @@ void main() {
     expect(find.byType(SaleStatusChip), findsOneWidget);
     expect(find.text('Paid'), findsNothing);
   });
+
+  testWidgets('shows full list title in tooltip', (tester) async {
+    const longTitle = 'Walk-in - blitz 450 membership day pass';
+    final sale = buildSale(
+      descriptor: longTitle,
+      receiptNumber: 'S-250101-9PP8',
+      totalAmount: 450,
+      status: 'completed',
+      created: DateTime(2026, 8, 7),
+    );
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 280,
+              child: SaleListTile(
+                sale: sale,
+                onTap: () {},
+                dateFormat: dateFormat,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final tooltip = tester.widget<Tooltip>(
+      find.ancestor(
+        of: find.textContaining('Walk-in'),
+        matching: find.byType(Tooltip),
+      ),
+    );
+    expect(tooltip.message, longTitle);
+  });
 }

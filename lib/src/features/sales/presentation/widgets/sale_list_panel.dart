@@ -105,7 +105,8 @@ class SaleListPanel extends HookConsumerWidget {
       isLoading: paginatedState.isLoadingMore,
     );
 
-    final dateFormat = DateFormat('MMM dd, yyyy');
+    // Compact list date; year still shown for historical sales.
+    final dateFormat = DateFormat('MMM d, yyyy');
 
     return Scaffold(
       body: Column(

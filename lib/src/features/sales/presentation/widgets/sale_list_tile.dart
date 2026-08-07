@@ -7,7 +7,7 @@ import 'sale_status_chip.dart';
 
 /// Shared sale row for sales history and dashboard lists.
 ///
-/// Layout: title/subtitle (flex) | optional branch pill | fixed amount | status.
+/// Layout: title/subtitle+branch (flex) | fixed amount | status.
 class SaleListTile extends StatelessWidget {
   const SaleListTile({
     super.key,
@@ -59,6 +59,7 @@ class SaleListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '₱');
     final effectiveDateFormat = dateFormat ?? DateFormat('MMM dd, yyyy');
+    final title = sale.listTitle;
     final subtitle = buildSubtitle(sale, effectiveDateFormat);
 
     final resolvedBranch = branchPill ??
@@ -78,53 +79,60 @@ class SaleListTile extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      sale.listTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
+                    Tooltip(
+                      message: title,
+                      waitDuration: const Duration(milliseconds: 350),
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        if (resolvedBranch != null) ...[
+                          const SizedBox(width: 6),
+                          resolvedBranch,
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ),
-              if (resolvedBranch != null) ...[
-                const SizedBox(width: 8),
-                resolvedBranch,
-              ],
               const SizedBox(width: 8),
-              SizedBox(
-                width: 92,
-                child: Text(
-                  currencyFormat.format(sale.totalAmount),
-                  textAlign: TextAlign.right,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              Text(
+                currencyFormat.format(sale.totalAmount),
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               SaleStatusChip(status: sale.status, dense: true),
             ],
           ),

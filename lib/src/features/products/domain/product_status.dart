@@ -20,7 +20,7 @@ enum ProductStatus {
       case ProductStatus.lowStock:
         return 'Low Stock';
       case ProductStatus.noThreshold:
-        return 'No Threshold';
+        return 'Not Tracked';
     }
   }
 }

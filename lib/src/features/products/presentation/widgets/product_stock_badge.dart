@@ -18,7 +18,10 @@ class ProductStockBadge extends StatelessWidget {
     final (color, icon) = _getStatusStyle(context);
 
     if (!showLabel) {
-      return Icon(icon, color: color, size: 16);
+      return Tooltip(
+        message: status.displayName,
+        child: Icon(icon, color: color, size: 16),
+      );
     }
 
     return Container(

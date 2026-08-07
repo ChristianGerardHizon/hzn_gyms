@@ -1,3 +1,4 @@
+import 'package:ebe_gym/src/features/products/domain/product_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -54,6 +55,12 @@ void main() {
   });
 
   group('Product stockStatus and display', () {
+    test('displayName uses Not Tracked for noThreshold', () {
+      expect(ProductStatus.noThreshold.displayName, 'Not Tracked');
+      expect(ProductStatus.outOfStock.displayName, 'Out of Stock');
+      expect(ProductStatus.lowStock.displayName, 'Low Stock');
+    });
+
     test('stockStatus for tracked products', () {
       expect(
         buildProduct(quantity: 0, stockThreshold: 5).stockStatus.name,

@@ -567,6 +567,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 7 | Product stock status pills | Products list filters by Out of Stock / Low Stock / Not Tracked under search; trailing icons show status tooltips |
 | Aug 7 | Cashier responsive redesign | Shared CashierBody for web/mobile; denser product tiles with Out/Low chips; mobile sticky cart bar + bottom sheet |
 | Aug 7 | Member list row redesign | Members/picker rows use avatar + name/phone on the left and dense branch-activity chips on the right; empty activity uses a muted None chip |
 | Aug 7 | Branch pill color presets | Branches can pick a pill color (teal/blue/indigo/purple/pink/orange/green/cyan); used on BranchCodePill and membership/member branch chips |
