@@ -569,6 +569,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 8 | Member card disable | Member cards use Disable (not Deactivate); Report Lost removed; disable confirm explains check-in impact |
 | Aug 8 | Membership exclude-from-sales permission | `memberships.excludeFromSales` gates no-sale membership assign/renew/create; available for new purchases (not renewals only) |
 | Aug 8 | Update-created admin API | Superuser-only `POST /api/ebe/update-created` backdates `created` on members/sales; see [docs/update_created_endpoint.md](update_created_endpoint.md) |
 | Aug 7 | Product stock status pills | Products list filters by Out of Stock / Low Stock / Not Tracked under search; trailing icons show status tooltips |

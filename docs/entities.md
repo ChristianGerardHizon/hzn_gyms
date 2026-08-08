@@ -311,7 +311,7 @@ Physical ID cards linked to gym members for RFID/barcode check-in. Members can h
 | `cardValue` | String | Yes | Unique identifier on the physical card |
 | `label` | String | No | Human-readable name (e.g., "Primary Card") |
 | `status` | MemberCardStatus | Yes | Current card status |
-| `deactivatedAt` | DateTime | No | When card was deactivated/reported lost |
+| `deactivatedAt` | DateTime | No | When card was disabled (or historically reported lost) |
 | `notes` | String | No | Optional notes |
 | `created` | DateTime | No | Creation timestamp (also serves as issued date) |
 | `updated` | DateTime | No | Last update timestamp |
