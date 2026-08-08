@@ -4,13 +4,28 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../cart_controller.dart';
 import 'checkout_dialog.dart';
 import 'variable_price_dialog.dart';
 
+const _checkoutNeedsBranchMessage =
+    'Checkout cannot be done while viewing all branches. '
+    'Select a branch first.';
+
 class CartView extends ConsumerWidget {
   const CartView({super.key});
+
+  Future<void> _openCheckout(BuildContext context, WidgetRef ref) async {
+    final hasBranch = await ensureWritableBranch(
+      context,
+      ref,
+      message: _checkoutNeedsBranchMessage,
+    );
+    if (!hasBranch || !context.mounted) return;
+    await showCheckoutDialog(context);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -190,7 +205,7 @@ class CartView extends ConsumerWidget {
                         child: FilledButton.icon(
                           onPressed: isEmpty || isSyncing
                               ? null
-                              : () => showCheckoutDialog(context),
+                              : () => _openCheckout(context, ref),
                           icon: const Icon(Icons.shopping_cart_checkout),
                           label: const Text('Checkout'),
                         ),

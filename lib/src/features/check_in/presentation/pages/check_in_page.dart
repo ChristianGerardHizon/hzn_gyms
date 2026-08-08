@@ -8,6 +8,7 @@ import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
@@ -28,6 +29,10 @@ import '../widgets/check_in_success_dialog.dart';
 import '../widgets/last_check_in_panel.dart';
 import '../widgets/recent_check_ins_list.dart';
 import '../widgets/rfid_listener_status_icon.dart';
+
+const _checkInNeedsBranchMessage =
+    'Check-in cannot be done while viewing all branches. '
+    'Select a branch first.';
 
 /// Main check-in page.
 ///
@@ -121,16 +126,28 @@ class CheckInPage extends HookConsumerWidget {
       final member = selectedMember.value;
       if (member == null) return;
 
+      final hasBranch = await ensureWritableBranch(
+        context,
+        ref,
+        message: _checkInNeedsBranchMessage,
+      );
+      if (!hasBranch || !context.mounted) return;
+
+      // Re-resolve membership after switching off "All branches".
+      if (activeMembership.value == null ||
+          checkInBlockReason.value != null) {
+        await selectMember(member);
+        if (!context.mounted) return;
+      }
+
       if (activeMembership.value == null) {
-        if (context.mounted) {
-          final reason =
-              checkInBlockReason.value ?? CheckInBlockReason.noActiveMembership;
-          await showCheckInErrorDialog(
-            context,
-            title: checkInBlockTitle(reason),
-            message: checkInBlockMessage(reason, member.name),
-          );
-        }
+        final reason =
+            checkInBlockReason.value ?? CheckInBlockReason.noActiveMembership;
+        await showCheckInErrorDialog(
+          context,
+          title: checkInBlockTitle(reason),
+          message: checkInBlockMessage(reason, member.name),
+        );
         return;
       }
 
@@ -184,6 +201,16 @@ class CheckInPage extends HookConsumerWidget {
       // Member already selected from search — check them in.
       if (selectedMember.value != null) {
         await handleCheckIn();
+        return;
+      }
+
+      final hasBranch = await ensureWritableBranch(
+        context,
+        ref,
+        message: _checkInNeedsBranchMessage,
+      );
+      if (!hasBranch || !context.mounted) {
+        readyForNextScan();
         return;
       }
 
@@ -256,14 +283,16 @@ class CheckInPage extends HookConsumerWidget {
           readyForNextScan();
           return;
         case CardCheckInNoBranch():
-          await showCheckInErrorDialog(
+          final switched = await ensureWritableBranch(
             context,
-            title: 'Select a Branch',
-            message:
-                'Choose a specific branch before checking in. '
-                '"All branches" cannot be used for check-in.',
+            ref,
+            message: _checkInNeedsBranchMessage,
           );
-          readyForNextScan();
+          if (switched && context.mounted) {
+            await handleSubmit(trimmed);
+          } else {
+            readyForNextScan();
+          }
           return;
         case CardCheckInFailed():
           await showCheckInErrorDialog(
@@ -297,6 +326,7 @@ class CheckInPage extends HookConsumerWidget {
     // Shared check-in form widgets
     Widget buildCheckInForm() {
       final isBusy = isCardCheckingIn.value || isCheckingIn.value;
+      final viewingAll = ref.watch(viewingAllBranchesProvider);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -395,8 +425,9 @@ class CheckInPage extends HookConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Check-in button
-            if (activeMembership.value == null)
+            // Check-in button (still shown on "All branches" — press prompts
+            // for a concrete branch, then resolves membership and checks in).
+            if (!viewingAll && activeMembership.value == null)
               Card(
                 color: Colors.red.shade50,
                 child: Padding(
