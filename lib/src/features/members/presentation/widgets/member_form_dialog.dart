@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/photo_capture_support.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -69,11 +70,13 @@ class MemberFormResult {
 ///
 /// Default is to create a sale (and open record payment). Checking
 /// "Exclude from sales" skips the sale while still creating the membership.
+/// Requires [canExcludeFromSales] so the opt-out only applies with permission.
 bool shouldCreateNewMemberSale({
   required bool hasSelectedMembership,
   required bool excludeFromSales,
+  required bool canExcludeFromSales,
 }) =>
-    hasSelectedMembership && !excludeFromSales;
+    hasSelectedMembership && !(excludeFromSales && canExcludeFromSales);
 
 /// Choice from the existing-member match gate shown after Details → Next.
 enum ExistingMemberMatchGateAction {
@@ -345,6 +348,10 @@ class _MemberCreateWizard extends HookConsumerWidget {
     final selectedAddOns = useState<Set<MembershipAddOn>>({});
     // Default: create a sale + open record payment. Opt out via Review checkbox.
     final excludeFromSales = useState(false);
+    final canExcludeFromSales =
+        ref.watch(currentUserPermissionsProvider).value
+            ?.canExcludeMembershipFromSales ??
+        false;
     // One key for this wizard session so Save retries reuse sale/membership rows.
     final membershipIdempotencyKey = useMemoized(generateIdempotencyKey);
 
@@ -437,6 +444,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
         final createSale = shouldCreateNewMemberSale(
           hasSelectedMembership: true,
           excludeFromSales: excludeFromSales.value,
+          canExcludeFromSales: canExcludeFromSales,
         );
 
         // 2a. Create a Sale record unless excluded from sales
@@ -698,6 +706,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
                             selectedMembership: selectedMembership,
                             selectedAddOns: selectedAddOns,
                             excludeFromSales: excludeFromSales,
+                            canExcludeFromSales: canExcludeFromSales,
                             isSaving: isSaving.value,
                             onSave: handleFinish,
                             onBack: () => currentStep.value = 3,
@@ -1210,6 +1219,7 @@ class _ReviewStep extends HookWidget {
     required this.selectedMembership,
     required this.selectedAddOns,
     required this.excludeFromSales,
+    required this.canExcludeFromSales,
     required this.isSaving,
     required this.onSave,
     required this.onBack,
@@ -1222,6 +1232,7 @@ class _ReviewStep extends HookWidget {
   final ValueNotifier<Membership?> selectedMembership;
   final ValueNotifier<Set<MembershipAddOn>> selectedAddOns;
   final ValueNotifier<bool> excludeFromSales;
+  final bool canExcludeFromSales;
   final bool isSaving;
   final VoidCallback onSave;
   final VoidCallback onBack;
@@ -1442,24 +1453,25 @@ class _ReviewStep extends HookWidget {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  CheckboxListTile(
-                    value: excludeFromSales.value,
-                    onChanged: isSaving
-                        ? null
-                        : (checked) {
-                            excludeFromSales.value = checked ?? false;
-                          },
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    title: const Text('Exclude from sales'),
-                    subtitle: Text(
-                      'Create membership without a sale or payment',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                  if (canExcludeFromSales)
+                    CheckboxListTile(
+                      value: excludeFromSales.value,
+                      onChanged: isSaving
+                          ? null
+                          : (checked) {
+                              excludeFromSales.value = checked ?? false;
+                            },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('Exclude from sales'),
+                      subtitle: Text(
+                        'Create membership without a sale or payment',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
                 ] else
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1506,7 +1518,9 @@ class _ReviewStep extends HookWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
-                        plan != null && excludeFromSales.value
+                        plan != null &&
+                                excludeFromSales.value &&
+                                canExcludeFromSales
                             ? 'Save (no sale)'
                             : 'Save',
                       ),

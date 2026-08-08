@@ -57,8 +57,8 @@ class MemberCardsController extends _$MemberCardsController {
     );
   }
 
-  /// Deactivates a card.
-  Future<bool> deactivateCard(String cardId) async {
+  /// Disables a card (status remains stored as deactivated).
+  Future<bool> disableCard(String cardId) async {
     final result =
         await _repository.updateStatus(cardId, MemberCardStatus.deactivated);
     return result.fold(
@@ -71,6 +71,9 @@ class MemberCardsController extends _$MemberCardsController {
   }
 
   /// Reports a card as lost.
+  ///
+  /// Kept for existing lost cards / API callers; the member UI no longer
+  /// offers this action.
   Future<bool> reportLost(String cardId) async {
     final result =
         await _repository.updateStatus(cardId, MemberCardStatus.lost);
@@ -83,7 +86,7 @@ class MemberCardsController extends _$MemberCardsController {
     );
   }
 
-  /// Reactivates a deactivated or lost card.
+  /// Enables a disabled or lost card.
   Future<bool> reactivateCard(String cardId) async {
     final result =
         await _repository.updateStatus(cardId, MemberCardStatus.active);

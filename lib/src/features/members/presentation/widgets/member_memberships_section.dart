@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_membership.dart';
@@ -145,11 +146,7 @@ class _MembershipsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final branchesAsync = ref.watch(branchesControllerProvider);
-    final branchNamesById = <String, String>{
-      for (final branch in branchesAsync.value ?? const [])
-        branch.id: branch.name,
-    };
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
 
     return ListView.separated(
       shrinkWrap: true,
@@ -164,9 +161,11 @@ class _MembershipsList extends ConsumerWidget {
           mm.status,
           effectiveExpired: effectiveExpired,
         );
-        final branchLabel = mm.branchId.isEmpty
-            ? null
-            : (branchNamesById[mm.branchId] ?? mm.branchId);
+        final branchPill = BranchCodePill.fromBranches(
+          branchId: mm.branchId,
+          branches: branches,
+          dense: true,
+        );
 
         return ListTile(
           contentPadding: EdgeInsets.zero,
@@ -192,16 +191,13 @@ class _MembershipsList extends ConsumerWidget {
                 '${dateFormat.format(mm.startDate)} - ${dateFormat.format(mm.endDate)}',
                 style: theme.textTheme.bodySmall,
               ),
-              if (branchLabel != null)
-                Text(
-                  branchLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+              if (branchPill != null) ...[
+                const SizedBox(height: 4),
+                branchPill,
+              ],
             ],
           ),
-          isThreeLine: branchLabel != null,
+          isThreeLine: branchPill != null,
           trailing: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,

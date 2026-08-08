@@ -1,0 +1,100 @@
+import 'package:ebe_gym/src/core/widgets/branch_code_pill.dart';
+import 'package:ebe_gym/src/features/dashboard/presentation/controllers/new_members_controller.dart';
+import 'package:ebe_gym/src/features/dashboard/presentation/widgets/kpi_breakdown_dialogs.dart';
+import 'package:ebe_gym/src/features/members/domain/member.dart';
+import 'package:ebe_gym/src/features/settings/domain/branch.dart';
+import 'package:ebe_gym/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+class _FakeBranchesController extends BranchesController {
+  _FakeBranchesController(this._branches);
+  final List<Branch> _branches;
+
+  @override
+  Future<List<Branch>> build() async => _branches;
+}
+
+void main() {
+  const branchA = Branch(
+    id: 'branch-a',
+    name: 'Bacolod Branch',
+    code: 'BCD',
+    address: 'x',
+    contactNumber: '1',
+  );
+  const branchB = Branch(
+    id: 'branch-b',
+    name: 'Talisay Branch',
+    code: 'TAL',
+    address: 'y',
+    contactNumber: '2',
+  );
+
+  final entries = [
+    const NewMemberEntry(
+      member: Member(id: 'member-1', name: 'Alice', branch: 'branch-a'),
+    ),
+    const NewMemberEntry(
+      member: Member(id: 'member-2', name: 'Bob', branch: 'branch-b'),
+    ),
+  ];
+
+  Future<void> pumpAndOpenDialog(
+    WidgetTester tester, {
+    required bool viewingAll,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todaysNewMembersListProvider.overrideWith((ref) async => entries),
+          branchesControllerProvider.overrideWith(
+            () => _FakeBranchesController(const [branchA, branchB]),
+          ),
+          viewingAllBranchesProvider.overrideWithValue(viewingAll),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showNewMembersBreakdownDialog(context),
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'shows a branch code pill per member when viewing all branches',
+    (tester) async {
+      await pumpAndOpenDialog(tester, viewingAll: true);
+
+      final pills = find.byType(BranchCodePill);
+      expect(pills, findsNWidgets(2));
+      expect(
+        find.descendant(of: pills, matching: find.text('BCD')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: pills, matching: find.text('TAL')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'hides branch code pills when a single branch is selected',
+    (tester) async {
+      await pumpAndOpenDialog(tester, viewingAll: false);
+
+      expect(find.byType(BranchCodePill), findsNothing);
+    },
+  );
+}

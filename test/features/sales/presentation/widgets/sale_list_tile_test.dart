@@ -60,7 +60,7 @@ void main() {
     });
   });
 
-  testWidgets('renders title, amount, status, and optional branch pill', (
+  testWidgets('renders description title, reference subtitle, amount, status', (
     tester,
   ) async {
     final sale = buildSale(
@@ -90,8 +90,10 @@ void main() {
     expect(find.text('#WXYZ · Jul 14, 2026'), findsOneWidget);
     expect(find.textContaining('450'), findsOneWidget);
     expect(find.text('BCD'), findsOneWidget);
+    expect(find.byIcon(Icons.receipt_long), findsOneWidget);
     expect(find.byType(SaleStatusChip), findsOneWidget);
-    expect(find.text('Paid'), findsNothing);
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right), findsNothing);
   });
 
   testWidgets('shows full list title in tooltip', (tester) async {

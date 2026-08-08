@@ -276,6 +276,32 @@ void main() {
       const admin = CurrentUserPermissions(isAdmin: true);
       expect(admin.canEditMemberships, isTrue);
     });
+
+    test(
+      'canExcludeMembershipFromSales follows memberships.excludeFromSales',
+      () {
+        final withPerm = CurrentUserPermissions.fromRole(
+          const UserRole(
+            id: '1',
+            name: 'Manager',
+            permissions: [Permissions.membershipsExcludeFromSales],
+          ),
+        );
+        expect(withPerm.canExcludeMembershipFromSales, isTrue);
+
+        final withoutPerm = CurrentUserPermissions.fromRole(
+          const UserRole(
+            id: '2',
+            name: 'Staff',
+            permissions: [Permissions.membershipsCreate],
+          ),
+        );
+        expect(withoutPerm.canExcludeMembershipFromSales, isFalse);
+
+        const admin = CurrentUserPermissions(isAdmin: true);
+        expect(admin.canExcludeMembershipFromSales, isTrue);
+      },
+    );
   });
 
   group('selectedNavIndexForPath', () {

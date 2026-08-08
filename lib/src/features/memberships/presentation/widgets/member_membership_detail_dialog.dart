@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/currency_format.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -66,15 +67,12 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
     final addOnsAsync = ref.watch(
       memberMembershipAddOnsProvider(memberMembership.id),
     );
-    final branchesAsync = ref.watch(branchesControllerProvider);
-    final branchNamesById = <String, String>{
-      for (final branch in branchesAsync.value ?? const [])
-        branch.id: branch.name,
-    };
-    final branchLabel = memberMembership.branchId.isEmpty
-        ? null
-        : (branchNamesById[memberMembership.branchId] ??
-              memberMembership.branchId);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
+    final branchPill = BranchCodePill.fromBranches(
+      branchId: memberMembership.branchId,
+      branches: branches,
+      dense: true,
+    );
     final canEdit =
         ref.watch(currentUserPermissionsProvider).value?.canEditMemberships ??
         false;
@@ -159,10 +157,13 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                     label: 'Plan',
                     value: memberMembership.membershipName ?? 'Membership',
                   ),
-                  if (branchLabel != null)
+                  if (branchPill != null)
                     _InfoRow(
                       label: 'Branch',
-                      value: branchLabel,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: branchPill,
+                      ),
                     ),
                   _InfoRow(
                     label: 'Start Date',
@@ -379,10 +380,16 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value, this.valueColor});
+  const _InfoRow({
+    required this.label,
+    this.value,
+    this.child,
+    this.valueColor,
+  }) : assert(value != null || child != null);
 
   final String label;
-  final String value;
+  final String? value;
+  final Widget? child;
   final Color? valueColor;
 
   @override
@@ -404,13 +411,14 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: valueColor,
-                fontWeight: valueColor != null ? FontWeight.w600 : null,
-              ),
-            ),
+            child: child ??
+                Text(
+                  value!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: valueColor,
+                    fontWeight: valueColor != null ? FontWeight.w600 : null,
+                  ),
+                ),
           ),
         ],
       ),

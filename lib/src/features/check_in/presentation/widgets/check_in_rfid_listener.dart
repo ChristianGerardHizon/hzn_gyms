@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in_block_reason.dart';
 import '../../domain/editable_text_focus.dart';
@@ -13,6 +14,10 @@ import '../controllers/check_in_controller.dart';
 import '../controllers/rfid_listener_status.dart';
 import 'check_in_error_dialog.dart';
 import 'check_in_success_dialog.dart';
+
+const _rfidNeedsBranchMessage =
+    'Check-in cannot be done while viewing all branches. '
+    'Select a branch first.';
 
 /// Listens for HID keyboard-wedge RFID/barcode scans on Check-In.
 ///
@@ -202,13 +207,20 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
     _isProcessing = true;
 
     try {
+      _dialogOpen = true;
+      final hasBranch = await ensureWritableBranch(
+        context,
+        ref,
+        message: _rfidNeedsBranchMessage,
+      );
+      if (!hasBranch || !mounted) return;
+
       final result = await ref
           .read(checkInControllerProvider.notifier)
           .cardCheckIn(cardValue: cardValue);
 
       if (!mounted) return;
 
-      _dialogOpen = true;
       switch (result) {
         case CardCheckInSuccess(
           :final memberName,
@@ -262,13 +274,8 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
             ),
           );
         case CardCheckInNoBranch():
-          await showCheckInErrorDialog(
-            context,
-            title: 'Select a Branch',
-            message:
-                'Choose a specific branch before checking in with RFID. '
-                '"All branches" cannot be used for check-in.',
-          );
+          // User already dismissed or race while switching — do nothing.
+          break;
         case CardCheckInFailed():
           await showCheckInErrorDialog(
             context,

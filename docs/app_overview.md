@@ -460,6 +460,8 @@ Destinations are filtered by role permissions. Staff typically see Dashboard thr
 
 **Sales permissions:** `sales.view` (sales history), `sales.create` (cashier/POS), `sales.void` (void sales and payments — assign explicitly under the Sales category in Roles).
 
+**Membership no-sale assignment:** `memberships.excludeFromSales` shows “Exclude from sales” on purchase/renew and new-member create so privileged staff can attach an active membership without a sale/receipt (e.g. migration recovery). Admins (`system.admin`) have it by default.
+
 **Product quantity:** `products.editQuantity` is required to change on-hand quantity in Edit Product. Admins (`system.admin`) have it by default; other roles should use Stock Adjustment unless this permission is assigned.
 
 ---
@@ -567,6 +569,8 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 8 | Member card disable | Member cards use Disable (not Deactivate); Report Lost removed; disable confirm explains check-in impact |
+| Aug 8 | Membership exclude-from-sales permission | `memberships.excludeFromSales` gates no-sale membership assign/renew/create; available for new purchases (not renewals only) |
 | Aug 8 | Update-created admin API | Superuser-only `POST /api/ebe/update-created` backdates `created` on members/sales; see [docs/update_created_endpoint.md](update_created_endpoint.md) |
 | Aug 7 | Product stock status pills | Products list filters by Out of Stock / Low Stock / Not Tracked under search; trailing icons show status tooltips |
 | Aug 7 | Cashier responsive redesign | Shared CashierBody for web/mobile; denser product tiles with Out/Low chips; mobile sticky cart bar + bottom sheet |

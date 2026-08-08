@@ -95,6 +95,7 @@ abstract class Permissions {
   static const membershipsCreate = 'memberships.create';
   static const membershipsEdit = 'memberships.edit';
   static const membershipsDelete = 'memberships.delete';
+  static const membershipsExcludeFromSales = 'memberships.excludeFromSales';
 
   // Check-in permissions
   static const checkInsView = 'checkIns.view';
@@ -158,6 +159,7 @@ abstract class Permissions {
       membershipsCreate,
       membershipsEdit,
       membershipsDelete,
+      membershipsExcludeFromSales,
     ],
     'Check-In': [checkInsView, checkInsCreate],
     'Member Cards': [
@@ -277,6 +279,14 @@ abstract class Permissions {
         category: 'Memberships',
         description: 'Remove membership plans (soft delete)',
         icon: Icons.delete,
+      ),
+      const Permission(
+        key: membershipsExcludeFromSales,
+        name: 'Exclude Membership from Sales',
+        category: 'Memberships',
+        description:
+            'Assign or renew memberships without creating a sale or receipt',
+        icon: Icons.receipt_long_outlined,
       ),
       // Check-In
       const Permission(

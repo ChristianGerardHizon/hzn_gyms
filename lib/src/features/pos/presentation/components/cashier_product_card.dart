@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../../products/domain/product.dart';
 import '../../../products/domain/product_status.dart';
 import '../cart_controller.dart';
@@ -10,6 +11,10 @@ import '../providers/pos_product_stock_provider.dart';
 import 'lot_selection_dialog.dart';
 import 'out_of_stock_continue_dialog.dart';
 import 'variable_price_dialog.dart';
+
+const _cashierNeedsBranchMessage =
+    'Checkout cannot be done while viewing all branches. '
+    'Select a branch first.';
 
 /// Shared POS product tile used by the flat grid and grouped cashier sections.
 class CashierProductCard extends ConsumerWidget {
@@ -65,11 +70,20 @@ class CashierProductCard extends ConsumerWidget {
 }
 
 /// Adds [product] to the cart, prompting for lot / variable price as needed.
+///
+/// When viewing all branches, prompts to pick a concrete branch first.
 Future<void> addProductToCart(
   BuildContext context,
   WidgetRef ref,
   Product product,
 ) async {
+  final hasBranch = await ensureWritableBranch(
+    context,
+    ref,
+    message: _cashierNeedsBranchMessage,
+  );
+  if (!hasBranch || !context.mounted) return;
+
   final cartNotifier = ref.read(cartControllerProvider.notifier);
 
   if (product.trackByLot) {

@@ -45,6 +45,43 @@ void main() {
     return container.read(memberCardsControllerProvider(memberId).notifier);
   }
 
+  group('disableCard', () {
+    test('returns true and refreshes on success', () async {
+      final disabledCard = buildMemberCard(
+        id: cardId,
+        memberId: memberId,
+        status: MemberCardStatus.deactivated,
+      );
+      when(() => repo.updateStatus(cardId, MemberCardStatus.deactivated))
+          .thenAnswer((_) async => right(disabledCard));
+      when(() => repo.fetchByMember(memberId)).thenAnswer(
+        (_) async => right([disabledCard]),
+      );
+
+      final controller = await readyController();
+      final success = await controller.disableCard(cardId);
+
+      expect(success, isTrue);
+      verify(() => repo.updateStatus(cardId, MemberCardStatus.deactivated))
+          .called(1);
+      await container.read(memberCardsControllerProvider(memberId).future);
+      final list = container.read(memberCardsControllerProvider(memberId));
+      expect(list.value, [disabledCard]);
+    });
+
+    test('returns false on failure', () async {
+      when(() => repo.updateStatus(cardId, MemberCardStatus.deactivated))
+          .thenAnswer(
+        (_) async => left(const GenericFailure('update failed')),
+      );
+
+      final controller = await readyController();
+      final success = await controller.disableCard(cardId);
+
+      expect(success, isFalse);
+    });
+  });
+
   group('reactivateCard', () {
     test('returns true and refreshes on success', () async {
       final activeCard = buildMemberCard(

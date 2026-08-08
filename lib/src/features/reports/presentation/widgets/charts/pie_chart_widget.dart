@@ -58,13 +58,24 @@ class _PieChartWidgetState extends State<PieChartWidget> {
     if (widget.data.isEmpty) {
       return SizedBox(
         height: widget.height,
-        child: Center(
-          child: Text(
-            'No data available',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.title != null) ...[
+              Text(widget.title!, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+            ],
+            Expanded(
+              child: Center(
+                child: Text(
+                  'No data available',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       );
     }

@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
+import '../../../settings/domain/branch.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
 import 'last_check_in_panel.dart';
@@ -18,6 +22,8 @@ class RecentCheckInsList extends ConsumerWidget {
     final checkInsAsync = ref.watch(checkInControllerProvider);
     final theme = Theme.of(context);
     final timeFormat = DateFormat('hh:mm a');
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
 
     return checkInsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -58,7 +64,12 @@ class RecentCheckInsList extends ConsumerWidget {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final checkIn = checkIns[index];
-              return _CheckInListTile(checkIn: checkIn, timeFormat: timeFormat);
+              return _CheckInListTile(
+                checkIn: checkIn,
+                timeFormat: timeFormat,
+                showBranch: viewingAll,
+                branches: branches,
+              );
             },
           ),
         );
@@ -68,15 +79,29 @@ class RecentCheckInsList extends ConsumerWidget {
 }
 
 class _CheckInListTile extends ConsumerWidget {
-  const _CheckInListTile({required this.checkIn, required this.timeFormat});
+  const _CheckInListTile({
+    required this.checkIn,
+    required this.timeFormat,
+    required this.showBranch,
+    required this.branches,
+  });
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
+  final bool showBranch;
+  final List<Branch> branches;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final memberAsync = ref.watch(memberProvider(checkIn.memberId));
+    final branchPill = showBranch
+        ? BranchCodePill.fromBranches(
+            branchId: checkIn.branchId,
+            branches: branches,
+            dense: true,
+          )
+        : null;
 
     return ListTile(
       leading: CachedAvatar(
@@ -85,11 +110,23 @@ class _CheckInListTile extends ConsumerWidget {
         thumbSize: 80,
       ),
       title: Text(checkIn.memberName ?? 'Unknown Member'),
-      subtitle: Text(
-        '${timeFormat.format(checkIn.checkInTime)} - ${checkIn.method.displayName}',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+      subtitle: Row(
+        children: [
+          Flexible(
+            child: Text(
+              '${timeFormat.format(checkIn.checkInTime)} - ${checkIn.method.displayName}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          if (branchPill != null) ...[
+            const SizedBox(width: 6),
+            branchPill,
+          ],
+        ],
       ),
       onTap: () => showActiveMembershipFromCheckIn(
         context,

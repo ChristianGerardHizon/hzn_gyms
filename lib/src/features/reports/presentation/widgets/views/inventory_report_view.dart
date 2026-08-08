@@ -10,6 +10,7 @@ import '../charts/bar_chart_widget.dart';
 import '../charts/pie_chart_widget.dart';
 import '../report_kpi_card.dart';
 import '../report_kpi_grid.dart';
+import '../report_no_data_card.dart';
 
 /// View displaying the inventory report with charts and tables.
 class InventoryReportView extends ConsumerWidget {
@@ -38,68 +39,88 @@ class InventoryReportView extends ConsumerWidget {
           _buildKpiSection(context, report),
           const SizedBox(height: 24),
 
-          // Charts — stacked on mobile, side-by-side on wider layouts
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < Breakpoints.mobile;
-              final stockStatusChart = Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: PieChartWidget(
-                    title: 'Stock Status',
-                    data: report.stockStatusBreakdown.map(
-                      (k, v) => MapEntry(k, v),
-                    ),
-                    height: 220,
-                    colors: const [
-                      Color(0xFF4CAF50), // In Stock - Green
-                      Color(0xFFFBC02D), // Low Stock - Yellow
-                      Color(0xFFF44336), // Out of Stock - Red
-                    ],
-                  ),
-                ),
-              );
-              final productsByCategoryChart = Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: BarChartWidget(
-                    title: 'Products by Category',
-                    data: report.productsByCategory.map(
-                      (k, v) => MapEntry(k, v),
-                    ),
-                    height: 220,
-                    barColor: Colors.deepPurple,
-                  ),
-                ),
-              );
-
-              if (isMobile) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    stockStatusChart,
-                    const SizedBox(height: 16),
-                    productsByCategoryChart,
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: stockStatusChart),
-                  const SizedBox(width: 16),
-                  Expanded(child: productsByCategoryChart),
-                ],
-              );
-            },
-          ),
+          _buildCharts(context, report),
           const SizedBox(height: 24),
 
           // Low Stock Items Table
           _buildLowStockTable(context, report),
         ],
       ),
+    );
+  }
+
+  Widget _buildCharts(BuildContext context, InventoryReport report) {
+    final stockStatusData = Map<String, num>.fromEntries(
+      report.stockStatusBreakdown.entries.where((e) => e.value > 0),
+    );
+    final categoryData = Map<String, num>.fromEntries(
+      report.productsByCategory.entries.where((e) => e.value > 0),
+    );
+
+    final charts = <Widget>[
+      if (hasReportChartData(stockStatusData))
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: PieChartWidget(
+              title: 'Stock Status',
+              data: stockStatusData,
+              height: 220,
+              colors: const [
+                Color(0xFF4CAF50), // In Stock - Green
+                Color(0xFFFBC02D), // Low Stock - Yellow
+                Color(0xFFF44336), // Out of Stock - Red
+              ],
+            ),
+          ),
+        ),
+      if (hasReportChartData(categoryData))
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: BarChartWidget(
+              title: 'Products by Category',
+              data: categoryData,
+              height: 220,
+              barColor: Colors.deepPurple,
+            ),
+          ),
+        ),
+    ];
+
+    if (charts.isEmpty) {
+      return const ReportNoDataCard(
+        title: 'No inventory data',
+        subtitle: 'Add products to see stock and category breakdowns.',
+        icon: Icons.inventory_2_outlined,
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < Breakpoints.mobile;
+        if (isMobile || charts.length == 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < charts.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
+                charts[i],
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < charts.length; i++) ...[
+              if (i > 0) const SizedBox(width: 16),
+              Expanded(child: charts[i]),
+            ],
+          ],
+        );
+      },
     );
   }
 

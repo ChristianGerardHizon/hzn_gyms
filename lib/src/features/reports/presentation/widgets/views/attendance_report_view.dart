@@ -13,6 +13,7 @@ import '../charts/line_chart_widget.dart';
 import '../charts/pie_chart_widget.dart';
 import '../report_kpi_card.dart';
 import '../report_kpi_grid.dart';
+import '../report_no_data_card.dart';
 
 /// View displaying the attendance / check-ins report.
 class AttendanceReportView extends ConsumerWidget {
@@ -78,78 +79,116 @@ class AttendanceReportView extends ConsumerWidget {
           ),
           if (showTrend) ...[
             const SizedBox(height: 24),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: LineChartWidget(
-                  title: 'Check-ins Trend',
-                  spots: report.checkInsTrend.asMap().entries.map((entry) {
-                    return FlSpot(
-                      entry.key.toDouble(),
-                      entry.value.value.toDouble(),
-                    );
-                  }).toList(),
-                  xLabels: report.checkInsTrend.map((r) => r.label).toList(),
-                  height: 250,
-                ),
-              ),
-            ),
+            _buildTrendChart(report),
           ],
           const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < Breakpoints.mobile;
-              final methodChart = Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: PieChartWidget(
-                    title: 'Check-ins by Method',
-                    data: report.checkInsByMethod,
-                    height: 220,
-                  ),
-                ),
-              );
-              final hourChart = showPeakHours
-                  ? Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: BarChartWidget(
-                          title: 'Peak Hours',
-                          data: report.checkInsByHour,
-                          height: 220,
-                          barColor: Colors.indigo,
-                        ),
-                      ),
-                    )
-                  : null;
-
-              if (!showPeakHours) {
-                return methodChart;
-              }
-
-              if (isMobile) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    methodChart,
-                    const SizedBox(height: 16),
-                    hourChart!,
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: methodChart),
-                  const SizedBox(width: 16),
-                  Expanded(child: hourChart!),
-                ],
-              );
-            },
+          _buildDistributionCharts(
+            report,
+            showPeakHours: showPeakHours,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTrendChart(AttendanceReport report) {
+    final spots = report.checkInsTrend.asMap().entries.map((entry) {
+      return FlSpot(entry.key.toDouble(), entry.value.value.toDouble());
+    }).toList();
+
+    if (spots.isEmpty || spots.every((s) => s.y <= 0)) {
+      return const ReportNoDataCard(
+        title: 'No check-in trend',
+        subtitle: 'There were no check-ins in this period.',
+        icon: Icons.show_chart,
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: LineChartWidget(
+          title: 'Check-ins Trend',
+          spots: spots,
+          xLabels: report.checkInsTrend.map((r) => r.label).toList(),
+          height: 250,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDistributionCharts(
+    AttendanceReport report, {
+    required bool showPeakHours,
+  }) {
+    final methodData = Map<String, num>.fromEntries(
+      report.checkInsByMethod.entries.where((e) => e.value > 0),
+    );
+    final hourData = showPeakHours
+        ? Map<String, num>.fromEntries(
+            report.checkInsByHour.entries.where((e) => e.value > 0),
+          )
+        : const <String, num>{};
+
+    final charts = <Widget>[
+      if (hasReportChartData(methodData))
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: PieChartWidget(
+              title: 'Check-ins by Method',
+              data: methodData,
+              height: 220,
+            ),
+          ),
+        ),
+      if (hasReportChartData(hourData))
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: BarChartWidget(
+              title: 'Peak Hours',
+              data: hourData,
+              height: 220,
+              barColor: Colors.indigo,
+            ),
+          ),
+        ),
+    ];
+
+    if (charts.isEmpty) {
+      return const ReportNoDataCard(
+        title: 'No check-in data',
+        subtitle: 'There were no check-ins in this period.',
+        icon: Icons.login,
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < Breakpoints.mobile;
+        if (isMobile || charts.length == 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < charts.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
+                charts[i],
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < charts.length; i++) ...[
+              if (i > 0) const SizedBox(width: 16),
+              Expanded(child: charts[i]),
+            ],
+          ],
+        );
+      },
     );
   }
 }

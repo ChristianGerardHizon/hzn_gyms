@@ -1,3 +1,4 @@
+import 'package:ebe_gym/src/core/widgets/branch_code_pill.dart';
 import 'package:ebe_gym/src/features/members/presentation/widgets/member_memberships_section.dart';
 import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
@@ -120,7 +121,7 @@ void main() {
       expect(find.text('Show other memberships (1)'), findsOneWidget);
     });
 
-    testWidgets('shows sold-at branch name for each membership', (
+    testWidgets('shows sold-at branch code pill for each membership', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -153,7 +154,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Active Plan'), findsOneWidget);
-      expect(find.text('Main Branch'), findsOneWidget);
+      expect(find.text('MAIN'), findsOneWidget);
+      expect(find.text('Main Branch'), findsNothing);
+      expect(find.byType(BranchCodePill), findsOneWidget);
     });
   });
 }

@@ -777,22 +777,10 @@ class _MemberCardsSection extends ConsumerWidget {
                           _handleCardAction(context, ref, value, card),
                       itemBuilder: (context) => [
                         const PopupMenuItem(
-                          value: 'deactivate',
+                          value: 'disable',
                           child: ListTile(
                             leading: Icon(Icons.block),
-                            title: Text('Deactivate'),
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'lost',
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.report_problem,
-                              color: Colors.orange,
-                            ),
-                            title: Text('Report Lost'),
+                            title: Text('Disable'),
                             dense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -814,10 +802,10 @@ class _MemberCardsSection extends ConsumerWidget {
                           _handleCardAction(context, ref, value, card),
                       itemBuilder: (context) => [
                         const PopupMenuItem(
-                          value: 'reactivate',
+                          value: 'enable',
                           child: ListTile(
                             leading: Icon(Icons.refresh),
-                            title: Text('Reactivate'),
+                            title: Text('Enable'),
                             dense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -860,11 +848,12 @@ class _MemberCardsSection extends ConsumerWidget {
     required String confirmLabel,
     bool isDestructive = false,
   }) async {
+    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
-        content: Text(content),
+        content: Text(content, style: theme.textTheme.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -874,7 +863,7 @@ class _MemberCardsSection extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(true),
             style: isDestructive
                 ? FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
+                    backgroundColor: theme.colorScheme.error,
                   )
                 : null,
             child: Text(confirmLabel),
@@ -896,57 +885,45 @@ class _MemberCardsSection extends ConsumerWidget {
     );
 
     switch (action) {
-      case 'deactivate':
+      case 'disable':
         final confirmed = await _confirmCardAction(
           context: context,
-          title: 'Deactivate Card',
+          title: 'Disable Card',
           content:
-              'Deactivate this card? It will no longer work for check-in.',
-          confirmLabel: 'Deactivate',
+              'Disable this card?\n\n'
+              'When disabled:\n'
+              '• The card can no longer be used for check-in\n'
+              '• It stays linked to this member\n'
+              '• You can enable it again later\n'
+              '• The card record is not deleted\n\n'
+              'Use this when the card should temporarily stop working.',
+          confirmLabel: 'Disable',
         );
         if (!confirmed) return;
-        final success = await controller.deactivateCard(card.id);
+        final success = await controller.disableCard(card.id);
         if (context.mounted) {
           if (success) {
-            showSuccessSnackBar(context, message: 'Card deactivated');
+            showSuccessSnackBar(context, message: 'Card disabled');
           } else {
-            showErrorSnackBar(context, message: 'Failed to deactivate card');
+            showErrorSnackBar(context, message: 'Failed to disable card');
           }
         }
-      case 'lost':
+      case 'enable':
         final confirmed = await _confirmCardAction(
           context: context,
-          title: 'Report Lost Card',
+          title: 'Enable Card',
           content:
-              'Mark this card as lost? It will no longer work for check-in.',
-          confirmLabel: 'Report Lost',
-        );
-        if (!confirmed) return;
-        final success = await controller.reportLost(card.id);
-        if (context.mounted) {
-          if (success) {
-            showSuccessSnackBar(context, message: 'Card reported as lost');
-          } else {
-            showErrorSnackBar(
-              context,
-              message: 'Failed to report card as lost',
-            );
-          }
-        }
-      case 'reactivate':
-        final confirmed = await _confirmCardAction(
-          context: context,
-          title: 'Reactivate Card',
-          content: 'Reactivate this card? It will work for check-in again.',
-          confirmLabel: 'Reactivate',
+              'Enable this card?\n\n'
+              'When enabled, the card can be used for check-in again.',
+          confirmLabel: 'Enable',
         );
         if (!confirmed) return;
         final success = await controller.reactivateCard(card.id);
         if (context.mounted) {
           if (success) {
-            showSuccessSnackBar(context, message: 'Card reactivated');
+            showSuccessSnackBar(context, message: 'Card enabled');
           } else {
-            showErrorSnackBar(context, message: 'Failed to reactivate card');
+            showErrorSnackBar(context, message: 'Failed to enable card');
           }
         }
       case 'delete':

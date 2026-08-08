@@ -16,7 +16,7 @@ enum MemberCardStatus {
       case MemberCardStatus.lost:
         return 'Lost';
       case MemberCardStatus.deactivated:
-        return 'Deactivated';
+        return 'Disabled';
     }
   }
 }
