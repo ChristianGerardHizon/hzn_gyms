@@ -567,6 +567,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 8 | Update-created admin API | Superuser-only `POST /api/ebe/update-created` backdates `created` on members/sales; see [docs/update_created_endpoint.md](update_created_endpoint.md) |
 | Aug 7 | Product stock status pills | Products list filters by Out of Stock / Low Stock / Not Tracked under search; trailing icons show status tooltips |
 | Aug 7 | Cashier responsive redesign | Shared CashierBody for web/mobile; denser product tiles with Out/Low chips; mobile sticky cart bar + bottom sheet |
 | Aug 7 | Member list row redesign | Members/picker rows use avatar + name/phone on the left and dense branch-activity chips on the right; empty activity uses a muted None chip |

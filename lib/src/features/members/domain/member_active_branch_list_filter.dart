@@ -15,7 +15,8 @@ const activeBranchMembersSortableFields = {'name', 'mobileNumber'};
 ///
 /// Returns `null` when [planIds] is empty — callers should return an empty page.
 ///
-/// Always requires `expirationDate >= start of today` (active / non-expired).
+/// Always requires `membershipStatus = 'active'` and
+/// `expirationDate >= start of today` (active / non-expired).
 String? buildActiveMembersAtBranchViewFilter({
   required Iterable<String> planIds,
   DateTime? now,
@@ -34,6 +35,8 @@ String? buildActiveMembersAtBranchViewFilter({
       .map((id) => 'membershipId = "${PBFilter.escape(id)}"')
       .join(' || ');
   filter.raw('($orClause)');
+
+  filter.equals('membershipStatus', 'active');
 
   final effectiveNow = now ?? DateTime.now();
   final startOfToday = DateTime(
