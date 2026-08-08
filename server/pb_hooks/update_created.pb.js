@@ -13,7 +13,7 @@
 // Single:
 //   { "collection": "members"|"sales", "id": "...", "created": "2024-01-15 08:00:00.000Z" }
 //
-// Batch:
+// Batch (atomic — all succeed or none are committed):
 //   { "updates": [ { "collection": "...", "id": "...", "created": "..." }, ... ] }
 
 routerAdd(
@@ -30,9 +30,12 @@ routerAdd(
         }
 
         const results = []
-        for (let i = 0; i < updates.length; i++) {
-            results.push(applyUpdate(updates[i] || {}))
-        }
+        // Single transaction so a mid-batch failure rolls back earlier saves.
+        e.app.runInTransaction((txApp) => {
+            for (let i = 0; i < updates.length; i++) {
+                results.push(applyUpdate(txApp, updates[i] || {}))
+            }
+        })
 
         return e.json(200, {
             success: true,

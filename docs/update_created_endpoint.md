@@ -81,6 +81,8 @@ Invoke-RestMethod -Method POST -Uri "$base/api/ebe/update-created" `
 
 ## 3. Batch update
 
+All items in `updates` run in a **single DB transaction**. If any item fails (bad id, invalid date, etc.), **none** of the changes are committed.
+
 ```json
 {
   "updates": [
