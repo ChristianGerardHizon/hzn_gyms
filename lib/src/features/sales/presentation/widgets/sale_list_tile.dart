@@ -7,7 +7,7 @@ import 'sale_status_chip.dart';
 
 /// Shared sale row for sales history and dashboard lists.
 ///
-/// Layout: title/subtitle+branch (flex) | fixed amount | status.
+/// Layout: receipt avatar | short description / reference+date | amount+status.
 class SaleListTile extends StatelessWidget {
   const SaleListTile({
     super.key,
@@ -82,6 +82,16 @@ class SaleListTile extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Icon(
+                  Icons.receipt_long,
+                  size: 20,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,17 +133,26 @@ class SaleListTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                currencyFormat.format(sale.totalAmount),
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    currencyFormat.format(sale.totalAmount),
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  SaleStatusChip(
+                    status: sale.status,
+                    dense: true,
+                    showLabel: true,
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              SaleStatusChip(status: sale.status, dense: true),
             ],
           ),
         ),
