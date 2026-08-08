@@ -8,18 +8,31 @@ void main() {
         shouldCreateNewMemberSale(
           hasSelectedMembership: true,
           excludeFromSales: false,
+          canExcludeFromSales: true,
         ),
         isTrue,
       );
     });
 
-    test('skips sale when excludeFromSales is checked', () {
+    test('skips sale when excludeFromSales is checked with permission', () {
       expect(
         shouldCreateNewMemberSale(
           hasSelectedMembership: true,
           excludeFromSales: true,
+          canExcludeFromSales: true,
         ),
         isFalse,
+      );
+    });
+
+    test('creates sale when checked but permission is missing', () {
+      expect(
+        shouldCreateNewMemberSale(
+          hasSelectedMembership: true,
+          excludeFromSales: true,
+          canExcludeFromSales: false,
+        ),
+        isTrue,
       );
     });
 
@@ -28,6 +41,7 @@ void main() {
         shouldCreateNewMemberSale(
           hasSelectedMembership: false,
           excludeFromSales: false,
+          canExcludeFromSales: true,
         ),
         isFalse,
       );
@@ -35,6 +49,7 @@ void main() {
         shouldCreateNewMemberSale(
           hasSelectedMembership: false,
           excludeFromSales: true,
+          canExcludeFromSales: true,
         ),
         isFalse,
       );

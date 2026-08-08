@@ -52,6 +52,18 @@ void main() {
         'Sales',
       );
     });
+
+    test('Memberships category includes excludeFromSales permission', () {
+      final membershipPermissions = Permissions.allByCategory['Memberships']!;
+      expect(
+        membershipPermissions,
+        contains(Permissions.membershipsExcludeFromSales),
+      );
+      expect(
+        Permissions.getByKey(Permissions.membershipsExcludeFromSales)?.category,
+        'Memberships',
+      );
+    });
   });
 
   group('Permission', () {

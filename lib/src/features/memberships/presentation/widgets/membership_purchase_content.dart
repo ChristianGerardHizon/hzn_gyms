@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/utils/idempotency.dart';
@@ -25,6 +26,17 @@ import '../controllers/membership_add_ons_controller.dart';
 import '../controllers/membership_purchase_catalog_provider.dart';
 import 'active_membership_warning_dialog.dart';
 import 'membership_valid_branches_chips.dart';
+
+/// Whether to create a membership without a sale/receipt.
+///
+/// Requires [canExcludeFromSales] so staff without the permission cannot skip
+/// sales even if the UI checkbox was somehow checked.
+bool shouldSkipMembershipSale({
+  required bool guestMode,
+  required bool excludeFromSales,
+  required bool canExcludeFromSales,
+}) =>
+    !guestMode && excludeFromSales && canExcludeFromSales;
 
 /// Reusable membership plan selection + add-on content.
 ///
@@ -57,7 +69,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
 
   /// Called after a successful purchase (standalone mode only).
   ///
-  /// [sale] is null when the renewal was excluded from sales (no receipt).
+  /// [sale] is null when the purchase/renewal was excluded from sales (no receipt).
   final void Function(Sale? sale, num totalPrice, {bool queuedOffline})?
   onPurchased;
 
@@ -107,6 +119,10 @@ class MembershipPurchaseContent extends HookConsumerWidget {
     final localAddOns = useState<Set<MembershipAddOn>>({});
     final isPurchasing = useState(false);
     final excludeFromSales = useState(false);
+    final canExcludeFromSales =
+        ref.watch(currentUserPermissionsProvider).value
+            ?.canExcludeMembershipFromSales ??
+        false;
     final searchController = useTextEditingController();
     final searchQuery = useState('');
     final showInactive = useState(false);
@@ -269,7 +285,11 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         return;
       }
 
-      final skipSale = !guestMode && isRenewal && excludeFromSales.value;
+      final skipSale = shouldSkipMembershipSale(
+        guestMode: guestMode,
+        excludeFromSales: excludeFromSales.value,
+        canExcludeFromSales: canExcludeFromSales,
+      );
 
       // Prevent silent redo when an unpaid sale already exists.
       if (!skipSale) {
@@ -363,7 +383,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
               final message = guestMode
                   ? 'Sale queued — will sync when online'
                   : skipSale
-                  ? 'Membership renewal queued (excluded from sales) — will sync when online'
+                  ? (isRenewal
+                        ? 'Membership renewal queued (excluded from sales) — will sync when online'
+                        : 'Membership assignment queued (excluded from sales) — will sync when online')
                   : isRenewal
                   ? 'Membership renewal queued — will sync when online'
                   : 'Membership purchase queued — will sync when online';
@@ -467,7 +489,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
           showErrorSnackBar(
             context,
             message: skipSale
-                ? 'Failed to renew membership'
+                ? (isRenewal
+                      ? 'Failed to renew membership'
+                      : 'Failed to assign membership')
                 : 'Failed to purchase membership',
             useRootMessenger: false,
           );
@@ -494,7 +518,9 @@ class MembershipPurchaseContent extends HookConsumerWidget {
         showSuccessSnackBar(
           context,
           message: skipSale
-              ? 'Membership renewed for $memberName (excluded from sales)'
+              ? (isRenewal
+                    ? 'Membership renewed for $memberName (excluded from sales)'
+                    : 'Membership assigned for $memberName (excluded from sales)')
               : 'Membership purchased for $memberName',
           useRootMessenger: false,
         );
@@ -966,7 +992,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                 ],
-                if (!guestMode && isRenewal)
+                if (!guestMode && canExcludeFromSales)
                   CheckboxListTile(
                     value: excludeFromSales.value,
                     onChanged: isPurchasing.value
@@ -979,13 +1005,15 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                     dense: true,
                     title: const Text('Exclude from sales'),
                     subtitle: Text(
-                      'Renew without creating a sale or receipt',
+                      isRenewal
+                          ? 'Renew without creating a sale or receipt'
+                          : 'Assign without creating a sale or receipt',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
-                if (!guestMode && isRenewal) const SizedBox(height: 8),
+                if (!guestMode && canExcludeFromSales) const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
@@ -1015,8 +1043,8 @@ class MembershipPurchaseContent extends HookConsumerWidget {
                       membershipState.value != null
                           ? guestMode
                                 ? 'Sell ${membershipState.value!.name} - ${totalPrice.toCurrency()}'
-                                : excludeFromSales.value && isRenewal
-                                ? 'Renew ${membershipState.value!.name} (no sale)'
+                                : excludeFromSales.value && canExcludeFromSales
+                                ? '${isRenewal ? 'Renew' : 'Purchase'} ${membershipState.value!.name} (no sale)'
                                 : '${isRenewal ? 'Renew' : 'Purchase'} ${membershipState.value!.name} - ${totalPrice.toCurrency()}'
                           : guestMode
                           ? 'Select a walk-in plan'
