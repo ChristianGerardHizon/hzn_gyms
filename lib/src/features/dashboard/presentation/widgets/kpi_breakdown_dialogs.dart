@@ -7,7 +7,6 @@ import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../check_in/domain/check_in.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
-import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_membership.dart';
@@ -312,21 +311,21 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
       final branches = ref.watch(branchesControllerProvider).value ?? const [];
       final labels = branchLabelMaps(branches);
 
-      return KpiBreakdownListBody<Member>(
+      return KpiBreakdownListBody<NewMemberEntry>(
         asyncValue: listAsync,
         emptyMessage: 'No new members today',
         emptyIcon: Icons.person_add_outlined,
         onRetry: () => ref.invalidate(todaysNewMembersListProvider),
-        summaryBuilder: (members) => [
+        summaryBuilder: (entries) => [
           KpiSummaryChipData(
             label: 'Registered today',
-            value: members.length.toString(),
+            value: entries.length.toString(),
             color: Colors.blue,
           ),
           if (viewingAll)
             ..._branchCountChips(
-              branchIds: members
-                  .map((m) => m.branch)
+              branchIds: entries
+                  .map((e) => e.effectiveBranchId)
                   .whereType<String>()
                   .where((id) => id.isNotEmpty),
               codeById: labels.codeById,
@@ -334,7 +333,8 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
               color: Colors.indigo,
             ),
         ],
-        itemBuilder: (context, member) {
+        itemBuilder: (context, entry) {
+          final member = entry.member;
           final theme = Theme.of(context);
           final registeredAt = member.created != null
               ? timeFormat.format(member.created!)
@@ -344,9 +344,10 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
               member.mobileNumber!,
             if (registeredAt != null) registeredAt,
           ];
+          final planName = entry.membership?.membershipName;
           final branchPill = viewingAll
               ? BranchCodePill.fromBranches(
-                  branchId: member.branch,
+                  branchId: entry.effectiveBranchId,
                   branches: branches,
                   dense: true,
                 )
@@ -372,7 +373,21 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-            trailing: branchPill,
+            trailing: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (planName != null && planName.isNotEmpty)
+                  Text(
+                    planName,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.blue.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                if (branchPill != null) branchPill,
+              ],
+            ),
             onTap: () {
               Navigator.of(context).pop();
               MemberDetailRoute(id: member.id).go(context);

@@ -6,6 +6,9 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../members/data/dto/member_dto.dart';
 import '../../../members/domain/member.dart';
+import '../../../memberships/data/dto/member_membership_dto.dart';
+import '../../../memberships/domain/member_membership.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 
 part 'new_members_controller.g.dart';
 
@@ -15,30 +18,40 @@ PBFilter _todaysNewMembersFilter() {
   return PBFilter().after('created', startOfToday);
 }
 
-/// Count of new members registered today.
+/// Count of new members registered today at the current branch.
 ///
-/// Queries the members collection with a date filter on `created`.
-/// Members are global (no branch filter).
+/// Derived from [todaysNewMembersList] so the card and breakdown dialog
+/// never disagree.
 @riverpod
 Future<int> todaysNewMembersCount(Ref ref) async {
-  final pb = ref.read(pocketbaseProvider);
-
-  final result = await pb
-      .collection(PocketBaseCollections.members)
-      .getList(
-        page: 1,
-        perPage: 1,
-        filter: _todaysNewMembersFilter().buildOrEmpty(),
-      );
-
-  return result.totalItems;
+  final entries = await ref.watch(todaysNewMembersListProvider.future);
+  return entries.length;
 }
 
-/// Members registered today (KPI breakdown list).
+/// A member registered today, paired with the membership plan they enrolled
+/// in (their earliest membership record), if any.
+class NewMemberEntry {
+  const NewMemberEntry({required this.member, this.membership});
+
+  final Member member;
+  final MemberMembership? membership;
+
+  /// Branch this member is attributed to.
+  ///
+  /// Prefers the branch of their enrolled membership — always populated —
+  /// over the member's own `branch` field, which is optional and can be
+  /// unset for members registered without immediately buying a plan.
+  String? get effectiveBranchId => membership?.branchId ?? member.branch;
+}
+
+/// Members registered today (KPI breakdown list), each paired with the
+/// membership plan they signed up for, filtered to the current branch.
 ///
-/// Same filter as [todaysNewMembersCount]; sorted newest first.
+/// Members are attributed to a branch via [NewMemberEntry.effectiveBranchId].
+/// Unfiltered when viewing all branches. Sorted newest first.
 @riverpod
-Future<List<Member>> todaysNewMembersList(Ref ref) async {
+Future<List<NewMemberEntry>> todaysNewMembersList(Ref ref) async {
+  final branchId = ref.watch(currentBranchIdProvider);
   final pb = ref.read(pocketbaseProvider);
 
   final records = await pb
@@ -48,10 +61,54 @@ Future<List<Member>> todaysNewMembersList(Ref ref) async {
         sort: '-created',
       );
 
-  return records
+  final members = records
       .map(
         (RecordModel r) =>
             MemberDto.fromRecord(r).toEntity(baseUrl: pb.baseURL),
       )
       .toList();
+
+  if (members.isEmpty) return const [];
+
+  final membershipByMember = await _fetchEnrolledMemberships(
+    pb,
+    members.map((m) => m.id),
+  );
+
+  final entries = [
+    for (final member in members)
+      NewMemberEntry(
+        member: member,
+        membership: membershipByMember[member.id],
+      ),
+  ];
+
+  if (branchId == null) return entries;
+  return entries.where((e) => e.effectiveBranchId == branchId).toList();
+}
+
+/// Fetches each member's earliest membership record — the plan they enrolled
+/// in at registration — keyed by member ID.
+Future<Map<String, MemberMembership>> _fetchEnrolledMemberships(
+  PocketBase pb,
+  Iterable<String> memberIds,
+) async {
+  final filter = PBFilter().relationAny('member', memberIds);
+  if (filter.isEmpty) return const {};
+
+  final records = await pb
+      .collection(PocketBaseCollections.memberMemberships)
+      .getFullList(
+        filter: filter.buildOrEmpty(),
+        sort: 'created',
+        expand: 'membership',
+      );
+
+  final result = <String, MemberMembership>{};
+  for (final record in records) {
+    final membership = MemberMembershipDto.fromRecord(record).toEntity();
+    // Keep the first (earliest, since sorted ascending) membership per member.
+    result.putIfAbsent(membership.memberId, () => membership);
+  }
+  return result;
 }
