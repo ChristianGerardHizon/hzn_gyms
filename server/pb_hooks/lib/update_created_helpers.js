@@ -24,7 +24,11 @@ function normalizeCreated(value) {
     return dt.string()
 }
 
-function applyUpdate(item) {
+/**
+ * @param {core.App} app - Use the transactional app inside runInTransaction.
+ * @param {object} item
+ */
+function applyUpdate(app, item) {
     const collection = (item.collection || "").toString().trim()
     const id = (item.id || "").toString().trim()
     const created = normalizeCreated(item.created)
@@ -38,11 +42,11 @@ function applyUpdate(item) {
         throw new BadRequestError("id is required")
     }
 
-    const record = $app.findRecordById(collection, id)
+    const record = app.findRecordById(collection, id)
     const previous = record.getString("created")
 
     record.setRaw("created", created)
-    $app.save(record)
+    app.save(record)
 
     return {
         collection: collection,
