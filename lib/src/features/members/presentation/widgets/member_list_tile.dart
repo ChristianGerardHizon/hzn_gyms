@@ -100,23 +100,26 @@ class MemberListTile extends StatelessWidget {
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                            )
-                          else
-                            const Spacer(),
+                            ),
                           if (showBranchActivity) ...[
-                            const SizedBox(width: 6),
-                            // Bound Wrap width so it does not get unbounded
-                            // Row constraints.
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 160),
-                              child: MemberBranchActivityChips(
-                                activity: activity,
-                                branchCodeById: branchCodeById,
-                                branchNameById: branchNameById,
-                                branchColorById: branchColorById,
-                                currentBranchId: currentBranchId,
-                                isLoading: isActivityLoading,
-                                dense: true,
+                            if (subtitle != null) const SizedBox(width: 6),
+                            // Flexible so the chip block can shrink below 160 on
+                            // narrow rows instead of overflowing the subtitle Row.
+                            Flexible(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 160),
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: MemberBranchActivityChips(
+                                    activity: activity,
+                                    branchCodeById: branchCodeById,
+                                    branchNameById: branchNameById,
+                                    branchColorById: branchColorById,
+                                    currentBranchId: currentBranchId,
+                                    isLoading: isActivityLoading,
+                                    dense: true,
+                                  ),
+                                ),
                               ),
                             ),
                           ],

@@ -142,6 +142,47 @@ void main() {
     expect(find.text('+1'), findsOneWidget);
   });
 
+  testWidgets('phone and chips share a narrow row without overflow', (
+    tester,
+  ) async {
+    final member = buildMember(
+      name: 'Jane Doe',
+      mobileNumber: '091234567890123',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 280,
+            child: MemberListTile(
+              member: member,
+              onTap: () {},
+              activity: const MemberBranchActivity(
+                branchIds: {'b1', 'b2', 'b3'},
+              ),
+              branchCodeById: const {
+                'b1': 'BCD',
+                'b2': 'MNL',
+                'b3': 'CEB',
+                'b4': 'DVO',
+              },
+              branchNameById: const {
+                'b1': 'Bacolod',
+                'b2': 'Manila',
+                'b3': 'Cebu',
+                'b4': 'Davao',
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('hides activity chips when showBranchActivity is false', (
     tester,
   ) async {
