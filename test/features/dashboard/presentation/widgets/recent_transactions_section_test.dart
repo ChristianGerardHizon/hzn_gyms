@@ -1,5 +1,4 @@
 import 'package:ebe_gym/src/core/widgets/branch_code_pill.dart';
-import 'package:ebe_gym/src/features/dashboard/domain/todays_sales_summary.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/controllers/todays_sales_controller.dart';
 import 'package:ebe_gym/src/features/dashboard/presentation/widgets/recent_transactions_section.dart';
 import 'package:ebe_gym/src/features/pos/domain/sale.dart';

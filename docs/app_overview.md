@@ -25,6 +25,7 @@ A comprehensive Flutter multi-platform gym management system supporting Android,
 #### Dashboard (`/`)
 Home screen with gym metrics and quick actions.
 
+- Header greets the signed-in user by time of day (`Good Morning/Noon/Afternoon/Evening`) with app version under the title; RFID status + refresh stay on the right
 - Responsive layout (single column mobile, single-pane tablet)
 - KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
 - Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member
@@ -569,6 +570,8 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 9 | Dashboard greeting header | Shared mobile/tablet header shows time-of-day greeting + user name and app version; RFID + refresh actions unchanged |
+| Aug 9 | Member list row layout | Member rows match sales list structure: avatar, name tooltip, phone + branch activity in the subtitle row, pending sync trailing |
 | Aug 8 | Member card disable | Member cards use Disable (not Deactivate); Report Lost removed; disable confirm explains check-in impact |
 | Aug 8 | Membership exclude-from-sales permission | `memberships.excludeFromSales` gates no-sale membership assign/renew/create; available for new purchases (not renewals only) |
 | Aug 8 | Update-created admin API | Superuser-only `POST /api/ebe/update-created` backdates `created` on members/sales; see [docs/update_created_endpoint.md](update_created_endpoint.md) |

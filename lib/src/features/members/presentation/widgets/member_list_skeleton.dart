@@ -62,10 +62,10 @@ class MemberListSkeleton extends StatelessWidget {
               itemCount: itemCount,
               itemBuilder: (context, index) {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: Row(
                     children: [
-                      CircleAvatar(radius: 22),
+                      CircleAvatar(radius: 20),
                       SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -73,21 +73,25 @@ class MemberListSkeleton extends StatelessWidget {
                           children: [
                             Text('Member name placeholder'),
                             SizedBox(height: 2),
-                            Text('0912 345 6789'),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      SizedBox(
-                        height: 18,
-                        width: 56,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Color(0x14000000),
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(12),
+                            Row(
+                              children: [
+                                Expanded(child: Text('0912 345 6789')),
+                                SizedBox(width: 6),
+                                SizedBox(
+                                  height: 18,
+                                  width: 56,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: Color(0x14000000),
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ],
