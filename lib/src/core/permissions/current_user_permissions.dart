@@ -1,10 +1,16 @@
+import 'dart:async';
+
+import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/users/data/repositories/user_role_repository.dart';
 import '../../features/users/domain/user_role.dart';
-import '../../features/users/presentation/controllers/user_role_provider.dart';
 
 part 'current_user_permissions.g.dart';
+
+/// How often to silently re-fetch the signed-in user's role permissions.
+const currentUserPermissionsPollInterval = Duration(minutes: 1);
 
 /// Resolved permission set for the signed-in user.
 class CurrentUserPermissions {
@@ -41,19 +47,116 @@ class CurrentUserPermissions {
   bool get canAdjustInventory => has(Permissions.inventoryAdjust);
   bool get canManageSystem => has(Permissions.systemAdmin);
   bool get canViewActivityLog => canManageSystem;
-}
 
-/// Loads the current user's role permissions from PocketBase.
-@Riverpod(keepAlive: true)
-Future<CurrentUserPermissions> currentUserPermissions(Ref ref) async {
-  final auth = ref.watch(currentAuthProvider);
-  if (auth == null) return CurrentUserPermissions.empty;
-
-  final roleId = auth.user.roleId;
-  if (roleId == null || roleId.isEmpty) {
-    return CurrentUserPermissions.empty;
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! CurrentUserPermissions) return false;
+    return isAdmin == other.isAdmin &&
+        permissions.length == other.permissions.length &&
+        permissions.containsAll(other.permissions);
   }
 
-  final role = await ref.watch(userRoleProvider(roleId).future);
-  return CurrentUserPermissions.fromRole(role);
+  @override
+  int get hashCode => Object.hash(
+        isAdmin,
+        Object.hashAllUnordered(permissions),
+      );
+}
+
+/// Loads and silently refreshes the current user's role permissions.
+///
+/// Keeps the last known permissions visible while re-fetching in the
+/// background (realtime role updates + periodic poll).
+@Riverpod(keepAlive: true, name: 'currentUserPermissionsProvider')
+class CurrentUserPermissionsController
+    extends _$CurrentUserPermissionsController {
+  /// Invalidates in-flight [refreshInBackground] calls after auth changes.
+  int _refreshGeneration = 0;
+
+  UserRoleRepository get _repository => ref.read(userRoleRepositoryProvider);
+
+  @override
+  Future<CurrentUserPermissions> build() async {
+    final auth = ref.watch(currentAuthProvider);
+    if (auth == null) return CurrentUserPermissions.empty;
+
+    final roleId = auth.user.roleId;
+    if (roleId == null || roleId.isEmpty) {
+      return CurrentUserPermissions.empty;
+    }
+
+    var disposed = false;
+    Timer? pollTimer;
+    Timer? debounce;
+    UnsubscribeFunc? unsubscribe;
+
+    ref.onDispose(() {
+      disposed = true;
+      _refreshGeneration++;
+      pollTimer?.cancel();
+      debounce?.cancel();
+      final unsub = unsubscribe;
+      if (unsub != null) {
+        unawaited(unsub());
+      }
+    });
+
+    unawaited(
+      _repository
+          .subscribeOne(
+            roleId,
+            onEvent: (_) {
+              if (disposed) return;
+              debounce?.cancel();
+              debounce = Timer(const Duration(milliseconds: 250), () {
+                if (!disposed) {
+                  unawaited(refreshInBackground());
+                }
+              });
+            },
+          )
+          .then((unsub) {
+            if (disposed) {
+              unawaited(unsub());
+            } else {
+              unsubscribe = unsub;
+            }
+          }),
+    );
+
+    pollTimer = Timer.periodic(currentUserPermissionsPollInterval, (_) {
+      if (!disposed) {
+        unawaited(refreshInBackground());
+      }
+    });
+
+    final result = await _repository.fetchOne(roleId);
+    return result.fold(
+      (_) => CurrentUserPermissions.empty,
+      CurrentUserPermissions.fromRole,
+    );
+  }
+
+  /// Silently re-fetches role permissions without showing a loading state.
+  Future<void> refreshInBackground() async {
+    final auth = ref.read(currentAuthProvider);
+    final roleId = auth?.user.roleId;
+    if (roleId == null || roleId.isEmpty) return;
+
+    final generation = _refreshGeneration;
+    final result = await _repository.fetchOne(roleId);
+    if (!ref.mounted || generation != _refreshGeneration) return;
+
+    result.fold(
+      (_) {
+        // Keep last known permissions on failure (offline / transient errors).
+      },
+      (role) {
+        final next = CurrentUserPermissions.fromRole(role);
+        if (state.value == next) return;
+        state = AsyncData(next);
+      },
+    );
+  }
 }
