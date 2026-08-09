@@ -102,44 +102,59 @@ class CurrentUserPermissionsController
       }
     });
 
-    unawaited(
-      _repository
-          .subscribeOne(
-            roleId,
-            onEvent: (_) {
-              if (disposed) return;
-              debounce?.cancel();
-              debounce = Timer(const Duration(milliseconds: 250), () {
-                if (!disposed) {
-                  unawaited(refreshInBackground());
-                }
-              });
-            },
-          )
-          .then((unsub) {
-            if (disposed) {
-              unawaited(unsub());
-            } else {
-              unsubscribe = unsub;
-            }
-          }),
-    );
-
-    pollTimer = Timer.periodic(currentUserPermissionsPollInterval, (_) {
-      if (!disposed) {
-        unawaited(refreshInBackground());
-      }
-    });
-
+    // Fetch first. Starting listeners before this finishes lets a background
+    // refresh write AsyncData that Riverpod then overwrites with this return.
     final result = await _repository.fetchOne(roleId);
-    return result.fold(
+    final permissions = result.fold(
       (_) => CurrentUserPermissions.empty,
       CurrentUserPermissions.fromRole,
     );
+
+    if (disposed) return permissions;
+
+    // Defer listeners until after Riverpod commits this build result.
+    scheduleMicrotask(() {
+      if (disposed || !ref.mounted) return;
+
+      unawaited(
+        _repository
+            .subscribeOne(
+              roleId,
+              onEvent: (_) {
+                if (disposed) return;
+                debounce?.cancel();
+                debounce = Timer(const Duration(milliseconds: 250), () {
+                  if (!disposed) {
+                    unawaited(refreshInBackground());
+                  }
+                });
+              },
+            )
+            .then((unsub) {
+              if (disposed) {
+                unawaited(unsub());
+              } else {
+                unsubscribe = unsub;
+              }
+            }),
+      );
+
+      pollTimer = Timer.periodic(currentUserPermissionsPollInterval, (_) {
+        if (!disposed) {
+          unawaited(refreshInBackground());
+        }
+      });
+    });
+
+    return permissions;
   }
 
   /// Silently re-fetches role permissions without showing a loading state.
   Future<void> refreshInBackground() async {
+    // Skip while the initial build is still loading — applying AsyncData here
+    // would be overwritten when build() returns.
+    if (!state.hasValue) return;
+
     final auth = ref.read(currentAuthProvider);
     final roleId = auth?.user.roleId;
     if (roleId == null || roleId.isEmpty) return;
@@ -147,6 +162,7 @@ class CurrentUserPermissionsController
     final generation = _refreshGeneration;
     final result = await _repository.fetchOne(roleId);
     if (!ref.mounted || generation != _refreshGeneration) return;
+    if (!state.hasValue) return;
 
     result.fold(
       (_) {

@@ -195,6 +195,8 @@ void main() {
       addTearDown(container.dispose);
 
       await container.read(currentUserPermissionsProvider.future);
+      // Listeners are scheduled after the initial build commits.
+      await Future<void>.delayed(Duration.zero);
 
       final captured = verify(
         () => repo.subscribeOne(
@@ -207,5 +209,67 @@ void main() {
           captured.captured.single as void Function(RecordSubscriptionEvent);
       expect(onEvent, isNotNull);
     });
+
+    test('does not subscribe until the initial fetch completes', () async {
+      final fetchStarted = Completer<void>();
+      final allowFetch = Completer<void>();
+      when(() => repo.fetchOne('role-1')).thenAnswer((_) async {
+        if (!fetchStarted.isCompleted) fetchStarted.complete();
+        await allowFetch.future;
+        return right(staffRole);
+      });
+
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final future = container.read(currentUserPermissionsProvider.future);
+      await fetchStarted.future;
+
+      verifyNever(
+        () => repo.subscribeOne(
+          any(),
+          onEvent: any(named: 'onEvent'),
+        ),
+      );
+
+      allowFetch.complete();
+      await future;
+      await Future<void>.delayed(Duration.zero);
+
+      verify(
+        () => repo.subscribeOne(
+          'role-1',
+          onEvent: any(named: 'onEvent'),
+        ),
+      ).called(1);
+    });
+
+    test(
+      'refreshInBackground is a no-op while initial build is still loading',
+      () async {
+        final allowFetch = Completer<void>();
+        when(() => repo.fetchOne('role-1')).thenAnswer((_) async {
+          await allowFetch.future;
+          return right(staffRole);
+        });
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final future = container.read(currentUserPermissionsProvider.future);
+        expect(container.read(currentUserPermissionsProvider).hasValue, isFalse);
+
+        await container
+            .read(currentUserPermissionsProvider.notifier)
+            .refreshInBackground();
+
+        // Still only the in-flight initial fetch — no extra fetch from refresh.
+        verify(() => repo.fetchOne('role-1')).called(1);
+
+        allowFetch.complete();
+        final perms = await future;
+        expect(perms.has(Permissions.membershipsCreate), isTrue);
+      },
+    );
   });
 }
