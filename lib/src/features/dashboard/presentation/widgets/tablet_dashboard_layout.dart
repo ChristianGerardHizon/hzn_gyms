@@ -3,10 +3,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/widgets/scroll_to_top_button.dart';
-import '../../../check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_refresh.dart';
 import 'dashboard_footer.dart';
+import 'dashboard_header.dart';
 import 'dashboard_members_section.dart';
 import 'inventory_alerts_section.dart';
 import 'kpi_summary_section.dart';
@@ -23,7 +23,6 @@ class TabletDashboardLayout extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final scrollController = useScrollController();
     final overviewKey = useMemoized(GlobalKey.new);
     final branchAsync = ref.watch(currentBranchControllerProvider);
@@ -66,42 +65,21 @@ class TabletDashboardLayout extends HookConsumerWidget {
                     child: Padding(
                       key: overviewKey,
                       padding: const EdgeInsets.all(16),
-                      child: Column(
+                      child: const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.dashboard,
-                                color: theme.colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Dashboard Overview',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              const RfidListenerStatusIcon(),
-                              IconButton(
-                                icon: const Icon(Icons.refresh),
-                                tooltip: 'Refresh',
-                                onPressed: () => refreshDashboard(ref),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          const KpiSummarySection(),
-                          const SizedBox(height: 24),
-                          const QuickActionsSection(),
-                          const SizedBox(height: 16),
-                          const UnpaidSalesQueueSection(),
-                          const SizedBox(height: 8),
-                          const RecentTransactionsSection(),
-                          const SizedBox(height: 24),
-                          const InventoryAlertsSection(),
-                          const SizedBox(height: 24),
+                          DashboardHeader(padding: EdgeInsets.zero),
+                          SizedBox(height: 24),
+                          KpiSummarySection(),
+                          SizedBox(height: 24),
+                          QuickActionsSection(),
+                          SizedBox(height: 16),
+                          UnpaidSalesQueueSection(),
+                          SizedBox(height: 8),
+                          RecentTransactionsSection(),
+                          SizedBox(height: 24),
+                          InventoryAlertsSection(),
+                          SizedBox(height: 24),
                         ],
                       ),
                     ),
