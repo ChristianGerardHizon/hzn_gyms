@@ -6,12 +6,24 @@ import 'package:ebe_gym/src/features/memberships/domain/member_membership_add_on
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_membership_add_ons_provider.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/controllers/membership_provider.dart';
 import 'package:ebe_gym/src/features/memberships/presentation/widgets/member_membership_detail_dialog.dart';
+import 'package:ebe_gym/src/features/sales/presentation/controllers/sale_provider.dart';
+import 'package:ebe_gym/src/features/sales/presentation/widgets/sale_status_chip.dart';
 import 'package:ebe_gym/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/fixtures.dart';
+
+class _FakeCurrentUserPermissionsController
+    extends CurrentUserPermissionsController {
+  _FakeCurrentUserPermissionsController(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
 
 void main() {
   group('MemberMembershipDetailDialog', () {
@@ -31,6 +43,7 @@ void main() {
       bool showPhoto = false,
     }) async {
       final mm = membershipOverride ?? membership;
+      final saleId = mm.saleId?.trim();
 
       // Desktop-sized surface — matches where the tall empty dialog was reported.
       tester.view.physicalSize = const Size(1280, 800);
@@ -42,7 +55,7 @@ void main() {
         ProviderScope(
           overrides: [
             currentUserPermissionsProvider.overrideWith(
-              (ref) async => permissions,
+              () => _FakeCurrentUserPermissionsController(permissions),
             ),
             membershipProvider(mm.membershipId).overrideWith(
               (ref) async => buildMembership(price: 900),
@@ -64,6 +77,16 @@ void main() {
                 name: 'GEROME AMAR',
               ).copyWith(photo: 'https://example.com/photo.jpg'),
             ),
+            if (saleId != null && saleId.isNotEmpty)
+              saleProvider(saleId).overrideWith(
+                (ref) async => buildSale(
+                  id: saleId,
+                  receiptNumber: 'RCP-1001',
+                  totalAmount: 900,
+                  status: 'paid',
+                  isPaid: true,
+                ),
+              ),
           ],
           child: MaterialApp(
             home: Builder(
@@ -100,6 +123,7 @@ void main() {
       expect(find.text('(ORIGINAL) Monthly Membership'), findsOneWidget);
       expect(find.text('Membership Fee'), findsOneWidget);
       expect(find.text('Close'), findsOneWidget);
+      expect(find.text('Sale'), findsNothing);
       expect(find.byType(CachedAvatar), findsNothing);
 
       // One Dialog from showConstrainedDialog — not a nested inner Dialog.
@@ -122,6 +146,21 @@ void main() {
       expect(contentSize.height, lessThan(600));
       expect(find.text('Edit Dates'), findsNothing);
       expect(find.text('Cancel'), findsNothing);
+    });
+
+    testWidgets('shows linked sale when membership has a saleId', (
+      tester,
+    ) async {
+      await openDialog(
+        tester,
+        membershipOverride: membership.copyWith(saleId: 'sale-linked-1'),
+      );
+
+      expect(find.text('Sale'), findsOneWidget);
+      expect(find.text('RCP-1001'), findsOneWidget);
+      expect(find.text('₱900.00'), findsWidgets);
+      expect(find.byType(SaleStatusChip), findsOneWidget);
+      expect(find.text('Paid'), findsOneWidget);
     });
 
     testWidgets('shows member photo when showPhoto is true', (tester) async {

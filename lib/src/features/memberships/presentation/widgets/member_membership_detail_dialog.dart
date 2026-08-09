@@ -8,7 +8,11 @@ import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../dashboard/presentation/widgets/sale_quick_view_dialog.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
+import '../../../pos/domain/sale.dart';
+import '../../../sales/presentation/controllers/sale_provider.dart';
+import '../../../sales/presentation/widgets/sale_status_chip.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../domain/days_remaining_label.dart';
 import '../../domain/member_membership.dart';
@@ -201,6 +205,8 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),
                   ),
+                  if (_hasLinkedSale(memberMembership.saleId))
+                    _LinkedSaleSection(saleId: memberMembership.saleId!),
                   addOnsAsync.when(
                     data: (addOns) {
                       if (addOns.isEmpty) return const SizedBox.shrink();
@@ -422,6 +428,141 @@ class _InfoRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+bool _hasLinkedSale(String? saleId) {
+  final id = saleId?.trim();
+  return id != null && id.isNotEmpty;
+}
+
+/// Loads and displays the sale linked to a membership, if any.
+class _LinkedSaleSection extends ConsumerWidget {
+  const _LinkedSaleSection({required this.saleId});
+
+  final String saleId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final saleAsync = ref.watch(saleProvider(saleId));
+
+    return _InfoRow(
+      label: 'Sale',
+      child: saleAsync.when(
+        loading: () => Text(
+          'Loading…',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        error: (_, __) => _LinkedSaleTapTarget(
+          onTap: () => showSaleQuickViewDialog(context, saleId: saleId),
+          child: Text(
+            'View linked sale',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        data: (sale) {
+          if (sale == null) {
+            return Text(
+              'Sale unavailable',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            );
+          }
+
+          return _LinkedSaleTapTarget(
+            onTap: () => showSaleQuickViewDialog(
+              context,
+              saleId: saleId,
+              fallbackSale: sale,
+            ),
+            child: _LinkedSaleSummary(sale: sale),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LinkedSaleTapTarget extends StatelessWidget {
+  const _LinkedSaleTapTarget({
+    required this.onTap,
+    required this.child,
+  });
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _LinkedSaleSummary extends StatelessWidget {
+  const _LinkedSaleSummary({required this.sale});
+
+  final Sale sale;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Icon(
+          Icons.receipt_long,
+          size: 18,
+          color: theme.colorScheme.primary,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                sale.receiptNumber.isNotEmpty
+                    ? sale.receiptNumber
+                    : sale.shortReceiptNumber,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                sale.totalAmount.toCurrency(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SaleStatusChip(status: sale.status, dense: true, showLabel: true),
+        const SizedBox(width: 4),
+        Icon(
+          Icons.chevron_right,
+          size: 20,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ],
     );
   }
 }
