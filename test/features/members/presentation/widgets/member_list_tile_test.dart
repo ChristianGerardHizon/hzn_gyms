@@ -8,6 +8,24 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../../helpers/fixtures.dart';
 
 void main() {
+  group('MemberListTile.buildSubtitle', () {
+    test('returns trimmed phone when present', () {
+      final member = buildMember(mobileNumber: ' 09810779830 ');
+      expect(MemberListTile.buildSubtitle(member), '09810779830');
+    });
+
+    test('returns null when phone is missing or blank', () {
+      expect(
+        MemberListTile.buildSubtitle(buildMember(mobileNumber: null)),
+        isNull,
+      );
+      expect(
+        MemberListTile.buildSubtitle(buildMember(mobileNumber: '   ')),
+        isNull,
+      );
+    });
+  });
+
   testWidgets('renders name, phone, and empty activity chip', (tester) async {
     final member = buildMember(
       name: 'Ace Christian Erwin Honao',
@@ -28,6 +46,36 @@ void main() {
     expect(find.text('Ace Christian Erwin Honao'), findsOneWidget);
     expect(find.text('09810779830'), findsOneWidget);
     expect(find.text('None'), findsOneWidget);
+  });
+
+  testWidgets('shows full name in tooltip', (tester) async {
+    const longName = 'Ace Christian Erwin Honao Extremely Long Name';
+    final member = buildMember(
+      name: longName,
+      mobileNumber: '09810779830',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 280,
+            child: MemberListTile(
+              member: member,
+              onTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final tooltip = tester.widget<Tooltip>(
+      find.ancestor(
+        of: find.textContaining('Ace Christian'),
+        matching: find.byType(Tooltip),
+      ),
+    );
+    expect(tooltip.message, longName);
   });
 
   testWidgets('invokes onTap when pressed', (tester) async {

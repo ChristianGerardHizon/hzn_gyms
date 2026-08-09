@@ -7,7 +7,8 @@ import 'member_branch_activity_chips.dart';
 
 /// Shared member row for the members list and member picker.
 ///
-/// Layout: avatar + name/phone (flex) | branch activity chips | optional sync.
+/// Layout mirrors [SaleListTile]:
+/// avatar | name / phone + branch activity | pending sync.
 class MemberListTile extends StatelessWidget {
   const MemberListTile({
     super.key,
@@ -36,11 +37,19 @@ class MemberListTile extends StatelessWidget {
   final bool isActivityLoading;
   final EdgeInsetsGeometry? contentPadding;
 
+  /// Compact subtitle: phone number when present.
+  static String? buildSubtitle(Member member) {
+    final phone = member.mobileNumber?.trim();
+    if (phone == null || phone.isEmpty) return null;
+    return phone;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final phone = member.mobileNumber?.trim();
-    final hasPhone = phone != null && phone.isNotEmpty;
+    final title = member.name;
+    final subtitle = buildSubtitle(member);
+    final showSubtitleRow = subtitle != null || showBranchActivity;
 
     return Material(
       color: isSelected
@@ -50,59 +59,73 @@ class MemberListTile extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             children: [
               CachedAvatar(
                 imageUrl: member.photo,
-                radius: 22,
-                thumbSize: 88,
+                radius: 20,
+                thumbSize: 80,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      member.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                      ),
-                    ),
-                    if (hasPhone) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        phone,
+                    Tooltip(
+                      message: title,
+                      waitDuration: const Duration(milliseconds: 350),
+                      child: Text(
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
+                      ),
+                    ),
+                    if (showSubtitleRow) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          if (subtitle != null)
+                            Flexible(
+                              child: Text(
+                                subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            )
+                          else
+                            const Spacer(),
+                          if (showBranchActivity) ...[
+                            const SizedBox(width: 6),
+                            // Bound Wrap width so it does not get unbounded
+                            // Row constraints.
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 160),
+                              child: MemberBranchActivityChips(
+                                activity: activity,
+                                branchCodeById: branchCodeById,
+                                branchNameById: branchNameById,
+                                branchColorById: branchColorById,
+                                currentBranchId: currentBranchId,
+                                isLoading: isActivityLoading,
+                                dense: true,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ],
                 ),
               ),
-              if (showBranchActivity) ...[
-                const SizedBox(width: 8),
-                // Flexible so Wrap chips get bounded width inside Row
-                // (unbounded Wrap layout can crash during scheduler passes).
-                Flexible(
-                  child: MemberBranchActivityChips(
-                    activity: activity,
-                    branchCodeById: branchCodeById,
-                    branchNameById: branchNameById,
-                    branchColorById: branchColorById,
-                    currentBranchId: currentBranchId,
-                    isLoading: isActivityLoading,
-                    dense: true,
-                  ),
-                ),
-              ],
               if (member.isPendingSync) ...[
                 const SizedBox(width: 8),
                 Tooltip(
