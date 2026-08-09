@@ -12,6 +12,7 @@ import 'package:ebe_gym/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../helpers/fixtures.dart';
 
@@ -161,6 +162,85 @@ void main() {
       expect(find.text('₱900.00'), findsWidgets);
       expect(find.byType(SaleStatusChip), findsOneWidget);
       expect(find.text('Paid'), findsOneWidget);
+    });
+
+    testWidgets('tapping linked sale closes dialog and opens sale detail', (
+      tester,
+    ) async {
+      late final GoRouter router;
+      router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => showMemberMembershipDetailDialog(
+                    context,
+                    memberMembership: membership.copyWith(
+                      saleId: 'sale-linked-1',
+                    ),
+                    memberId: membership.memberId,
+                    memberName: 'GEROME AMAR',
+                  ),
+                  child: const Text('Open'),
+                ),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/sales/:id',
+            builder: (context, state) => Scaffold(
+              body: Text('Sale detail ${state.pathParameters['id']}'),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserPermissionsProvider.overrideWith(
+              () => _FakeCurrentUserPermissionsController(
+                CurrentUserPermissions.empty,
+              ),
+            ),
+            membershipProvider(membership.membershipId).overrideWith(
+              (ref) async => buildMembership(price: 900),
+            ),
+            memberMembershipAddOnsProvider(membership.id).overrideWith(
+              (ref) async => <MemberMembershipAddOn>[],
+            ),
+            saleProvider('sale-linked-1').overrideWith(
+              (ref) async => buildSale(
+                id: 'sale-linked-1',
+                receiptNumber: 'RCP-1001',
+                totalAmount: 900,
+                status: 'paid',
+                isPaid: true,
+              ),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Membership Details'), findsOneWidget);
+      await tester.tap(find.text('RCP-1001'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Membership Details'), findsNothing);
+      expect(find.text('Sale detail sale-linked-1'), findsOneWidget);
     });
 
     testWidgets('shows member photo when showPhoto is true', (tester) async {

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/permissions/current_user_permissions.dart';
+import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form_feedback.dart';
-import '../../../dashboard/presentation/widgets/sale_quick_view_dialog.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../sales/presentation/controllers/sale_provider.dart';
@@ -443,6 +444,13 @@ class _LinkedSaleSection extends ConsumerWidget {
 
   final String saleId;
 
+  void _openSale(BuildContext context) {
+    final router = GoRouter.of(context);
+    final location = SaleDetailRoute(id: saleId).location;
+    Navigator.of(context).pop();
+    router.push(location);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -458,7 +466,7 @@ class _LinkedSaleSection extends ConsumerWidget {
           ),
         ),
         error: (_, __) => _LinkedSaleTapTarget(
-          onTap: () => showSaleQuickViewDialog(context, saleId: saleId),
+          onTap: () => _openSale(context),
           child: Text(
             'View linked sale',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -478,11 +486,7 @@ class _LinkedSaleSection extends ConsumerWidget {
           }
 
           return _LinkedSaleTapTarget(
-            onTap: () => showSaleQuickViewDialog(
-              context,
-              saleId: saleId,
-              fallbackSale: sale,
-            ),
+            onTap: () => _openSale(context),
             child: _LinkedSaleSummary(sale: sale),
           );
         },
