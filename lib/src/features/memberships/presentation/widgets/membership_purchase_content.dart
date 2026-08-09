@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/currency_format.dart';
@@ -25,6 +24,7 @@ import '../../domain/membership_add_on.dart';
 import '../controllers/membership_add_ons_controller.dart';
 import '../controllers/membership_purchase_catalog_provider.dart';
 import 'active_membership_warning_dialog.dart';
+import 'membership_period_preview.dart';
 import 'membership_valid_branches_chips.dart';
 
 /// Whether to create a membership without a sale/receipt.
@@ -203,14 +203,17 @@ class MembershipPurchaseContent extends HookConsumerWidget {
             durationUnit: selectedPlan.durationUnit,
             bonusDays: bonusDays,
           );
+    final defaultEnd = selectedPlan == null
+        ? null
+        : computeMembershipEndDate(
+            startDate: defaultStart,
+            durationValue: selectedPlan.durationValue,
+            durationUnit: selectedPlan.durationUnit,
+            bonusDays: bonusDays,
+          );
     final isStacking =
         latestActiveEndDate.value != null &&
         !isBeforeToday(latestActiveEndDate.value!);
-    final isUsingStackedDefault =
-        previewStart != null &&
-        toLocalDateOnly(previewStart) == toLocalDateOnly(defaultStart) &&
-        isStacking;
-    final dateFormat = useMemoized(() => DateFormat.yMMMd());
 
     Future<void> pickStartDate() async {
       final initial = previewStart ?? DateTime.now();
@@ -876,119 +879,20 @@ class MembershipPurchaseContent extends HookConsumerWidget {
               children: [
                 if (!guestMode &&
                     previewStart != null &&
-                    previewEnd != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isUsingStackedDefault
-                              ? 'Starts after current membership'
-                              : 'Membership period',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: isPurchasing.value ? null : pickStartDate,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.event,
-                                  size: 20,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Start date',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                      ),
-                                      Text(
-                                        dateFormat.format(previewStart),
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  'Change',
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Ends ${dateFormat.format(previewEnd)}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (bonusDays > 0) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Includes ${bonusDays == 1 ? '1 extra day' : '$bonusDays extra days'} from add-ons',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                        if (isStacking &&
-                            latestActiveEndDate.value != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Current ends ${dateFormat.format(latestActiveEndDate.value!)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                        if (startDateManuallySet.value && isStacking) ...[
-                          const SizedBox(height: 4),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton(
-                              onPressed: isPurchasing.value
-                                  ? null
-                                  : resetStartDateToDefault,
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                visualDensity: VisualDensity.compact,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Use day after current membership',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                    previewEnd != null &&
+                    defaultEnd != null) ...[
+                  MembershipPeriodPreview(
+                    startDate: previewStart,
+                    endDate: previewEnd,
+                    defaultStartDate: defaultStart,
+                    defaultEndDate: defaultEnd,
+                    isDateCustomized: startDateManuallySet.value,
+                    isStacking: isStacking,
+                    currentMembershipEndDate: latestActiveEndDate.value,
+                    bonusDays: bonusDays,
+                    enabled: !isPurchasing.value,
+                    onChangeStartDate: pickStartDate,
+                    onResetToDefault: resetStartDateToDefault,
                   ),
                   const SizedBox(height: 12),
                 ],
