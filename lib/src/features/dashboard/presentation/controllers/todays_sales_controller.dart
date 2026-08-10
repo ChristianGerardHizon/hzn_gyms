@@ -52,17 +52,24 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
     branchId: branchId,
   );
 
-  final results = await Future.wait([
-    pb.collection(PocketBaseCollections.vwTodaysSales).getFullList(
-      filter: branchId != null ? 'branch = "$branchId"' : null,
-    ),
-    pb.collection(PocketBaseCollections.vwRevenueByItemType).getFullList(
-      filter: itemTypeFilter,
-    ),
-  ]);
+  final salesFuture = pb
+      .collection(PocketBaseCollections.vwTodaysSales)
+      .getFullList(
+        filter: branchId != null ? 'branch = "$branchId"' : null,
+      );
+  // Soft-fail: item-type chips are additive; don't fail the core sales KPI.
+  final itemTypeFuture = () async {
+    try {
+      return await pb
+          .collection(PocketBaseCollections.vwRevenueByItemType)
+          .getFullList(filter: itemTypeFilter);
+    } catch (_) {
+      return [];
+    }
+  }();
 
-  final salesRecords = results[0];
-  final itemTypeRecords = results[1];
+  final salesRecords = await salesFuture;
+  final itemTypeRecords = await itemTypeFuture;
 
   final rows = salesRecords.map(
     (record) => TodaysSalesBranchRow(
