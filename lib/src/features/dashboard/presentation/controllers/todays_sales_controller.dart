@@ -83,6 +83,7 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
       (record) => TodaysItemTypeRevenueRow(
         itemType: record.getStringValue('itemType'),
         totalRevenue: record.getDoubleValue('total_revenue'),
+        transactionCount: record.getIntValue('transaction_count'),
       ),
     ),
   );
@@ -90,5 +91,7 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
     rows,
     membershipTotal: itemTypeTotals.membershipTotal,
     walkInTotal: itemTypeTotals.walkInTotal,
+    membershipCount: itemTypeTotals.membershipCount,
+    walkInCount: itemTypeTotals.walkInCount,
   );
 }

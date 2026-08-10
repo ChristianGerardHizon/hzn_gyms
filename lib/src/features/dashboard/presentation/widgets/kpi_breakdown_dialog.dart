@@ -174,16 +174,30 @@ class KpiBreakdownListBody<T> extends StatelessWidget {
     required this.asyncValue,
     required this.emptyMessage,
     required this.emptyIcon,
-    required this.summaryBuilder,
     required this.itemBuilder,
+    this.summaryBuilder,
+    this.summaryHeaderBuilder,
+    this.listHeader,
     this.onRetry,
     this.separatorBuilder,
-  });
+  }) : assert(
+          summaryBuilder != null || summaryHeaderBuilder != null,
+          'Provide summaryBuilder and/or summaryHeaderBuilder',
+        );
 
   final AsyncValue<List<T>> asyncValue;
   final String emptyMessage;
   final IconData emptyIcon;
-  final List<KpiSummaryChipData> Function(List<T> items) summaryBuilder;
+
+  /// Horizontal chip strip (used when [summaryHeaderBuilder] is null).
+  final List<KpiSummaryChipData> Function(List<T> items)? summaryBuilder;
+
+  /// Custom summary header; takes precedence over [summaryBuilder].
+  final Widget Function(List<T> items)? summaryHeaderBuilder;
+
+  /// Optional label/row above the scrollable list (e.g. "Transactions").
+  final Widget? listHeader;
+
   final Widget Function(BuildContext context, T item) itemBuilder;
   final VoidCallback? onRetry;
   final Widget Function(BuildContext context, int index)? separatorBuilder;
@@ -251,12 +265,16 @@ class KpiBreakdownListBody<T> extends StatelessWidget {
           );
         }
 
-        final chips = summaryBuilder(items);
+        final summary = summaryHeaderBuilder != null
+            ? summaryHeaderBuilder!(items)
+            : KpiSummaryChipRow(chips: summaryBuilder!(items));
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            KpiSummaryChipRow(chips: chips),
+            summary,
             const Divider(height: 1),
+            if (listHeader != null) listHeader!,
             Expanded(
               child: ListView.separated(
                 itemCount: items.length,

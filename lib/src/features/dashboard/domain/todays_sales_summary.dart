@@ -8,7 +8,10 @@ class TodaySalesSummary {
     this.byBranch = const [],
     this.membershipTotal = 0,
     this.walkInTotal = 0,
-  });
+    int membershipCount = 0,
+    int walkInCount = 0,
+  })  : _membershipCount = membershipCount,
+        _walkInCount = walkInCount;
 
   final int count;
   final num total;
@@ -21,6 +24,17 @@ class TodaySalesSummary {
 
   /// Line-item revenue for `walkIn` from `vw_revenue_by_item_type`.
   final num walkInTotal;
+
+  // Stored as nullable so hot-reloaded in-memory instances (created before
+  // these fields existed) read as 0 instead of throwing on web/DDC.
+  final int? _membershipCount;
+  final int? _walkInCount;
+
+  /// Distinct sales with `membership` lines today.
+  int get membershipCount => _membershipCount ?? 0;
+
+  /// Distinct sales with `walkIn` lines today.
+  int get walkInCount => _walkInCount ?? 0;
 }
 
 /// One per-branch row from `vw_todays_sales`.
@@ -41,10 +55,16 @@ class TodaysItemTypeRevenueRow {
   const TodaysItemTypeRevenueRow({
     required this.itemType,
     required this.totalRevenue,
-  });
+    int transactionCount = 0,
+  }) : _transactionCount = transactionCount;
 
   final String itemType;
   final num totalRevenue;
+
+  // Nullable storage: hot-reloaded rows created before this field existed.
+  final int? _transactionCount;
+
+  int get transactionCount => _transactionCount ?? 0;
 }
 
 /// Sums all branch rows. Used when viewing All branches (and is a no-op for a
@@ -53,6 +73,8 @@ TodaySalesSummary aggregateTodaysSalesSummary(
   Iterable<TodaysSalesBranchRow> rows, {
   num membershipTotal = 0,
   num walkInTotal = 0,
+  int membershipCount = 0,
+  int walkInCount = 0,
 }) {
   final byBranch = rows.toList();
   var count = 0;
@@ -67,22 +89,37 @@ TodaySalesSummary aggregateTodaysSalesSummary(
     byBranch: byBranch,
     membershipTotal: membershipTotal,
     walkInTotal: walkInTotal,
+    membershipCount: membershipCount,
+    walkInCount: walkInCount,
   );
 }
 
-/// Sums membership and walk-in line revenue from item-type view rows.
-({num membershipTotal, num walkInTotal}) aggregateTodaysItemTypeRevenue(
-  Iterable<TodaysItemTypeRevenueRow> rows,
-) {
+/// Sums membership and walk-in line revenue + transaction counts.
+({
+  num membershipTotal,
+  num walkInTotal,
+  int membershipCount,
+  int walkInCount,
+})
+aggregateTodaysItemTypeRevenue(Iterable<TodaysItemTypeRevenueRow> rows) {
   num membershipTotal = 0;
   num walkInTotal = 0;
+  var membershipCount = 0;
+  var walkInCount = 0;
   for (final row in rows) {
     final type = normalizeSalesItemType(row.itemType);
     if (type == 'membership') {
       membershipTotal += row.totalRevenue;
+      membershipCount += row.transactionCount;
     } else if (type == 'walkIn') {
       walkInTotal += row.totalRevenue;
+      walkInCount += row.transactionCount;
     }
   }
-  return (membershipTotal: membershipTotal, walkInTotal: walkInTotal);
+  return (
+    membershipTotal: membershipTotal,
+    walkInTotal: walkInTotal,
+    membershipCount: membershipCount,
+    walkInCount: walkInCount,
+  );
 }

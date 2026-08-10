@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
 /// Handles keyboard escape key for dialog dismissal.
 ///
 /// Wraps dialog content to intercept Escape key presses and either:
 /// - Close immediately (if [onClose] is null or returns true)
 /// - Show confirmation dialog (if [onClose] returns false initially)
+///
+/// Uses [Navigator.maybePop] (not go_router `context.pop`) so overlay dialogs
+/// close reliably even when the shell route cannot pop.
 ///
 /// Usage with dirty guard:
 /// ```dart
@@ -45,6 +47,17 @@ class DialogCloseHandler extends StatelessWidget {
   /// Whether escape key handling is enabled.
   final bool enabled;
 
+  Future<void> _handleDismiss(BuildContext context) async {
+    if (onClose != null) {
+      final shouldClose = await onClose!(context);
+      if (shouldClose && context.mounted) {
+        await Navigator.of(context).maybePop();
+      }
+      return;
+    }
+    await Navigator.of(context).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!enabled) return child;
@@ -56,21 +69,25 @@ class DialogCloseHandler extends StatelessWidget {
       child: Actions(
         actions: {
           DismissIntent: CallbackAction<DismissIntent>(
-            onInvoke: (_) async {
-              if (onClose != null) {
-                final shouldClose = await onClose!(context);
-                if (shouldClose && context.mounted) {
-                  context.pop();
-                }
-              } else {
-                context.pop();
-              }
+            onInvoke: (_) {
+              _handleDismiss(context);
               return null;
             },
           ),
         },
+        // Also handle Escape via focus bubbling so it still works when a
+        // TextField (e.g. member search on Renew) has primary focus.
         child: Focus(
           autofocus: true,
+          onKeyEvent: (node, event) {
+            if (!enabled) return KeyEventResult.ignored;
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            if (event.logicalKey != LogicalKeyboardKey.escape) {
+              return KeyEventResult.ignored;
+            }
+            _handleDismiss(context);
+            return KeyEventResult.handled;
+          },
           child: child,
         ),
       ),
