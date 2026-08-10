@@ -161,7 +161,7 @@ class MemberPickerDialog extends HookConsumerWidget {
         initialName: query.isEmpty ? null : query,
       );
       if (context.mounted) {
-        await handleMemberFormPaymentResult(context, ref, result);
+        await handleMemberFormPaymentResult(context, result);
       }
     }
 

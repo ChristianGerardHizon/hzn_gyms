@@ -34,13 +34,19 @@ void refreshSalesDataOnContainer(ProviderContainer container) {
 
 /// Invalidates membership/sales dashboard cards after create or renew.
 void refreshDashboardAfterMemberChange(WidgetRef ref) {
-  refreshSalesData(ref);
-  ref.invalidate(activeMembersCountProvider);
-  ref.invalidate(activeMembersListProvider);
-  ref.invalidate(todaysNewMembersCountProvider);
-  ref.invalidate(todaysNewMembersListProvider);
-  ref.invalidate(expiringMembershipsProvider);
-  ref.invalidate(dashboardMembersPageProvider);
+  refreshDashboardAfterMemberChangeOnContainer(ref.container);
+}
+
+/// Same as [refreshDashboardAfterMemberChange] using a [ProviderContainer]
+/// (safe after async gaps / dialog dispose).
+void refreshDashboardAfterMemberChangeOnContainer(ProviderContainer container) {
+  refreshSalesDataOnContainer(container);
+  container.invalidate(activeMembersCountProvider);
+  container.invalidate(activeMembersListProvider);
+  container.invalidate(todaysNewMembersCountProvider);
+  container.invalidate(todaysNewMembersListProvider);
+  container.invalidate(expiringMembershipsProvider);
+  container.invalidate(dashboardMembersPageProvider);
 }
 
 /// Invalidates all dashboard data providers so KPI, members, sales, and alerts

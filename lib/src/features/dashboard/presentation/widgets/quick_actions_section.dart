@@ -70,7 +70,7 @@ class QuickActionsSection extends ConsumerWidget {
                   icon: Icons.directions_walk,
                   label: 'Walk-in',
                   color: Colors.indigo,
-                  onTap: () => sellWalkInAndRecordPayment(context, ref),
+                  onTap: () => sellWalkInAndRecordPayment(context),
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(
@@ -87,7 +87,6 @@ class QuickActionsSection extends ConsumerWidget {
 
                     await purchaseMembershipAndRecordPayment(
                       context,
-                      ref,
                       memberId: member.id,
                       memberName: member.name,
                       isRenewal: true,
@@ -109,7 +108,7 @@ class QuickActionsSection extends ConsumerWidget {
                   onTap: () async {
                     final result = await showMemberFormDialog(context);
                     if (context.mounted) {
-                      await handleMemberFormPaymentResult(context, ref, result);
+                      await handleMemberFormPaymentResult(context, result);
                     }
                   },
                 ),

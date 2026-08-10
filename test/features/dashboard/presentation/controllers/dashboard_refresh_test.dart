@@ -198,4 +198,89 @@ void main() {
       expect(paginated.refreshCount, 1);
     },
   );
+
+  testWidgets(
+    'refreshDashboardAfterMemberChangeOnContainer works after consumer dispose',
+    (tester) async {
+      var salesBuilds = 0;
+      var activeBuilds = 0;
+      final paginated = _TrackingPaginatedSalesController();
+      late ProviderContainer container;
+      var showConsumer = true;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            todaySalesProvider.overrideWith((ref) async {
+              salesBuilds++;
+              return const [];
+            }),
+            todaySalesSummaryProvider.overrideWith((ref) async {
+              return const TodaySalesSummary(count: 0, total: 0);
+            }),
+            paginatedSalesControllerProvider.overrideWith(() => paginated),
+            activeMembersCountProvider.overrideWith((ref) async {
+              activeBuilds++;
+              return 0;
+            }),
+            todaysNewMembersCountProvider.overrideWith((ref) async {
+              return 0;
+            }),
+            dashboardMembersPageProvider.overrideWith((ref, args) async {
+              return const DashboardMembersPage(
+                items: [],
+                totalItems: 0,
+                page: 1,
+                totalPages: 0,
+              );
+            }),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: StatefulBuilder(
+                builder: (context, setState) {
+                  return Column(
+                    children: [
+                      if (showConsumer)
+                        Consumer(
+                          builder: (context, ref, _) {
+                            container = ProviderScope.containerOf(context);
+                            ref.watch(todaySalesProvider);
+                            ref.watch(activeMembersCountProvider);
+                            return TextButton(
+                              onPressed: () =>
+                                  setState(() => showConsumer = false),
+                              child: const Text('Dispose'),
+                            );
+                          },
+                        ),
+                      TextButton(
+                        onPressed: () =>
+                            refreshDashboardAfterMemberChangeOnContainer(
+                              container,
+                            ),
+                        child: const Text('Refresh'),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(salesBuilds, 1);
+      expect(activeBuilds, 1);
+
+      // Simulate renew flow: parent dialog consumer unmounts first.
+      await tester.tap(find.text('Dispose'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Refresh'));
+      await tester.pumpAndSettle();
+
+      expect(paginated.refreshCount, 1);
+    },
+  );
 }

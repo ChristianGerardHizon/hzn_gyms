@@ -110,7 +110,6 @@ class ExistingMemberMatchGateResult {
 /// Handles post-create wizard results: renew an existing match, or record payment.
 Future<void> handleMemberFormPaymentResult(
   BuildContext context,
-  WidgetRef ref,
   MemberFormResult? result,
 ) async {
   final renewMember = result?.renewExistingMember;
@@ -118,7 +117,6 @@ Future<void> handleMemberFormPaymentResult(
     if (!context.mounted) return;
     await purchaseMembershipAndRecordPayment(
       context,
-      ref,
       memberId: renewMember.id,
       memberName: renewMember.name,
       isRenewal: true,

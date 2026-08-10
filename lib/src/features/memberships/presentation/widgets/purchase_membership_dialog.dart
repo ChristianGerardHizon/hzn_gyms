@@ -81,14 +81,19 @@ bool shouldOpenRecordPaymentAfterPurchase({
 /// Opens the purchase (or renew) flow and records payment when complete.
 ///
 /// Returns `true` when a membership was saved (including renewals).
+///
+/// Callers that close a parent dialog first must pass a still-mounted
+/// [context] (e.g. [NavigatorState.context]).
 Future<bool> purchaseMembershipAndRecordPayment(
-  BuildContext context,
-  WidgetRef ref, {
+  BuildContext context, {
   required String memberId,
   required String memberName,
   String? preselectedMembershipId,
   bool isRenewal = false,
 }) async {
+  // Capture before any await — renew callers often pop a parent dialog first.
+  final container = ProviderScope.containerOf(context);
+
   final result = await showPurchaseMembershipDialog(
     context,
     memberId: memberId,
@@ -99,8 +104,8 @@ Future<bool> purchaseMembershipAndRecordPayment(
 
   if (result == null) return false;
 
-  ref.invalidate(memberMembershipsControllerProvider(memberId));
-  refreshDashboardAfterMemberChange(ref);
+  container.invalidate(memberMembershipsControllerProvider(memberId));
+  refreshDashboardAfterMemberChangeOnContainer(container);
 
   if (result.excludedFromSales) {
     if (isRenewal && context.mounted) {
@@ -137,20 +142,19 @@ Future<bool> purchaseMembershipAndRecordPayment(
   if (context.mounted) {
     await recordPaymentWithDisposition(
       context,
-      ref,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
-    if (context.mounted) refreshDashboardAfterMemberChange(ref);
+    if (context.mounted) {
+      refreshDashboardAfterMemberChangeOnContainer(container);
+    }
   }
   return true;
 }
 
 /// Opens walk-in sale flow and records payment when complete.
-Future<void> sellWalkInAndRecordPayment(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> sellWalkInAndRecordPayment(BuildContext context) async {
+  final container = ProviderScope.containerOf(context);
   final result = await showWalkInSaleDialog(context);
   if (result == null || !context.mounted) return;
 
@@ -164,15 +168,14 @@ Future<void> sellWalkInAndRecordPayment(
 
   if (result.sale != null) {
     // Show the new walk-in on Recent Transactions and Sales list before payment.
-    refreshSalesData(ref);
+    refreshSalesDataOnContainer(container);
     await recordPaymentWithDisposition(
       context,
-      ref,
       sale: result.sale!,
       balanceDue: result.totalPrice,
     );
     // Refresh again so paid status / KPI totals match the payment.
-    if (context.mounted) refreshSalesData(ref);
+    if (context.mounted) refreshSalesDataOnContainer(container);
   }
 }
 

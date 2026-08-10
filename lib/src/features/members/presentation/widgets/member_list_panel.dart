@@ -234,7 +234,7 @@ class MemberListPanel extends HookConsumerWidget {
     if (result == null || !context.mounted) return;
 
     ref.read(paginatedMembersControllerProvider.notifier).refresh();
-    await handleMemberFormPaymentResult(context, ref, result);
+    await handleMemberFormPaymentResult(context, result);
   }
 }
 

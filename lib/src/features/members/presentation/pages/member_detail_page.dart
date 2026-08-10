@@ -227,7 +227,6 @@ class MemberDetailPage extends HookConsumerWidget {
                           FilledButton.tonalIcon(
                             onPressed: () => purchaseMembershipAndRecordPayment(
                               context,
-                              ref,
                               memberId: memberId,
                               memberName: member.name,
                             ),
