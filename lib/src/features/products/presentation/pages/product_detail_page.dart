@@ -65,8 +65,23 @@ class ProductDetailPage extends HookConsumerWidget {
       if (mismatchDialogShown.value) return null;
       mismatchDialogShown.value = true;
 
+      var cancelled = false;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!context.mounted) return;
+
+        // Re-read providers: branch may have changed before this frame runs.
+        final latestProduct =
+            ref.read(productProvider(productId)).asData?.value;
+        final proceed = shouldProceedWithBranchMismatchRedirect(
+          cancelled: cancelled,
+          productBranchId: latestProduct?.branch,
+          currentBranchId: ref.read(currentBranchIdProvider),
+          viewingAllBranches: ref.read(viewingAllBranchesProvider),
+        );
+        if (!proceed) {
+          mismatchDialogShown.value = false;
+          return;
+        }
 
         await showDialog<void>(
           context: context,
@@ -90,7 +105,12 @@ class ProductDetailPage extends HookConsumerWidget {
         }
       });
 
-      return null;
+      return () {
+        cancelled = true;
+        // Allow a later mismatch (or the same one after a brief visible
+        // window) to schedule again if this callback never ran.
+        mismatchDialogShown.value = false;
+      };
     }, [product?.id, productBranchId, currentBranchId, viewingAllBranches]);
 
     return productAsync.when(

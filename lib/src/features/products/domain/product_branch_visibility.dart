@@ -10,3 +10,21 @@ bool isProductVisibleForBranch({
   if (viewingAllBranches || currentBranchId == null) return true;
   return productBranchId == currentBranchId;
 }
+
+/// Whether a deferred branch-mismatch dialog/redirect should still run.
+///
+/// Use after a post-frame callback so a branch switch that happened before the
+/// callback fires can cancel a stale redirect.
+bool shouldProceedWithBranchMismatchRedirect({
+  required bool cancelled,
+  required String? productBranchId,
+  required String? currentBranchId,
+  required bool viewingAllBranches,
+}) {
+  if (cancelled) return false;
+  return !isProductVisibleForBranch(
+    productBranchId: productBranchId,
+    currentBranchId: currentBranchId,
+    viewingAllBranches: viewingAllBranches,
+  );
+}

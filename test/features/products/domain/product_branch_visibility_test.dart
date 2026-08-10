@@ -59,4 +59,42 @@ void main() {
       );
     });
   });
+
+  group('shouldProceedWithBranchMismatchRedirect', () {
+    test('false when cancelled even if still hidden', () {
+      expect(
+        shouldProceedWithBranchMismatchRedirect(
+          cancelled: true,
+          productBranchId: 'branch-a',
+          currentBranchId: 'branch-b',
+          viewingAllBranches: false,
+        ),
+        isFalse,
+      );
+    });
+
+    test('false when product became visible before callback', () {
+      expect(
+        shouldProceedWithBranchMismatchRedirect(
+          cancelled: false,
+          productBranchId: 'branch-a',
+          currentBranchId: 'branch-a',
+          viewingAllBranches: false,
+        ),
+        isFalse,
+      );
+    });
+
+    test('true when still hidden and not cancelled', () {
+      expect(
+        shouldProceedWithBranchMismatchRedirect(
+          cancelled: false,
+          productBranchId: 'branch-a',
+          currentBranchId: 'branch-b',
+          viewingAllBranches: false,
+        ),
+        isTrue,
+      );
+    });
+  });
 }
