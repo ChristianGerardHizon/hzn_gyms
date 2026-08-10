@@ -290,6 +290,61 @@ void main() {
     );
   });
 
+  test(
+    'cooldown uses newer server check-in when today list is stale',
+    () async {
+      final staleLocal = buildCheckIn(
+        id: 'ci-old',
+        checkInTime: DateTime.now().subtract(const Duration(minutes: 10)),
+      );
+      final recentRemote = buildCheckIn(
+        id: 'ci-new',
+        checkInTime: DateTime.now().subtract(const Duration(seconds: 5)),
+      );
+
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      when(
+        () => checkInRepo.fetchTodaysCheckIns(any()),
+      ).thenAnswer((_) async => right([staleLocal]));
+      when(
+        () => cardRepo.findByCardValue(any()),
+      ).thenAnswer((_) async => right(buildMemberCard()));
+      when(
+        () => mmRepo.fetchActive('member-1'),
+      ).thenAnswer((_) async => right([buildMemberMembership()]));
+      when(
+        () => checkInRepo.fetchLatestForMember(
+          memberId: 'member-1',
+          branchId: 'branch-1',
+        ),
+      ).thenAnswer((_) async => right(recentRemote));
+
+      await container.read(checkInControllerProvider.future);
+
+      final result = await container
+          .read(checkInControllerProvider.notifier)
+          .cardCheckIn(cardValue: 'RFID123');
+
+      expect(result, isA<CardCheckInCooldown>());
+      verify(
+        () => checkInRepo.fetchLatestForMember(
+          memberId: 'member-1',
+          branchId: 'branch-1',
+        ),
+      ).called(1);
+      verifyNever(
+        () => checkInRepo.checkIn(
+          memberId: any(named: 'memberId'),
+          branchId: any(named: 'branchId'),
+          method: any(named: 'method'),
+          memberMembershipId: any(named: 'memberMembershipId'),
+        ),
+      );
+    },
+  );
+
   test('voidCheckIn patches when permission granted', () async {
     final container = createContainer(
       permissions: const CurrentUserPermissions(

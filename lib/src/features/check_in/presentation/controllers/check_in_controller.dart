@@ -104,14 +104,23 @@ class CheckInController extends _$CheckInController {
   }
 
   /// Remaining cooldown for [memberId] at [branchId], or null if clear.
+  ///
+  /// Always consults the server latest so another terminal's recent check-in
+  /// is not skipped when today's in-memory list is stale. Also considers the
+  /// local today list (e.g. just recorded here before realtime catches up).
   Future<Duration?> _cooldownRemaining({
     required String memberId,
     required String branchId,
   }) async {
     CheckIn? latest;
 
-    final today = state.asData?.value;
+    final result = await _repository.fetchLatestForMember(
+      memberId: memberId,
+      branchId: branchId,
+    );
+    latest = result.fold((_) => null, (checkIn) => checkIn);
 
+    final today = state.asData?.value;
     if (today != null) {
       for (final checkIn in today) {
         if (checkIn.memberId != memberId) continue;
@@ -121,14 +130,6 @@ class CheckInController extends _$CheckInController {
           latest = checkIn;
         }
       }
-    }
-
-    if (latest == null) {
-      final result = await _repository.fetchLatestForMember(
-        memberId: memberId,
-        branchId: branchId,
-      );
-      latest = result.fold((_) => null, (checkIn) => checkIn);
     }
 
     if (latest == null) return null;
