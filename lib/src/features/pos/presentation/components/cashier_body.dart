@@ -20,6 +20,7 @@ class CashierBody extends StatelessWidget {
     this.isMobile = false,
     this.compactSearch = false,
     this.bottomPaddingForNav = false,
+    this.showCheckIn = true,
   });
 
   final bool hasGroups;
@@ -34,6 +35,9 @@ class CashierBody extends StatelessWidget {
   /// Extra bottom padding so the product grid clears mobile bottom nav.
   final bool bottomPaddingForNav;
 
+  /// When false, hides the member check-in strip (e.g. dashboard cashier).
+  final bool showCheckIn;
+
   @override
   Widget build(BuildContext context) {
     if (isMobile) {
@@ -42,12 +46,14 @@ class CashierBody extends StatelessWidget {
         groups: groups,
         compactSearch: compactSearch,
         bottomPaddingForNav: bottomPaddingForNav,
+        showCheckIn: showCheckIn,
       );
     }
     return _DesktopCashierBody(
       hasGroups: hasGroups,
       groups: groups,
       compactSearch: compactSearch,
+      showCheckIn: showCheckIn,
     );
   }
 }
@@ -57,11 +63,13 @@ class _DesktopCashierBody extends StatelessWidget {
     required this.hasGroups,
     required this.groups,
     required this.compactSearch,
+    required this.showCheckIn,
   });
 
   final bool hasGroups;
   final List<PosGroup> groups;
   final bool compactSearch;
+  final bool showCheckIn;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +86,7 @@ class _DesktopCashierBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CashierCheckInStrip(dense: compactSearch),
+              if (showCheckIn) CashierCheckInStrip(dense: compactSearch),
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   compactSearch ? 8 : 12,
@@ -116,19 +124,21 @@ class _MobileCashierBody extends StatelessWidget {
     required this.groups,
     required this.compactSearch,
     required this.bottomPaddingForNav,
+    required this.showCheckIn,
   });
 
   final bool hasGroups;
   final List<PosGroup> groups;
   final bool compactSearch;
   final bool bottomPaddingForNav;
+  final bool showCheckIn;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CashierCheckInStrip(dense: compactSearch),
+        if (showCheckIn) CashierCheckInStrip(dense: compactSearch),
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
           child: CashierSearchDropdown(isDense: compactSearch),
