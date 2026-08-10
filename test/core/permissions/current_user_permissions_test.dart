@@ -47,6 +47,20 @@ void main() {
       expect(perms.isAdmin, isTrue);
       expect(perms.canExcludeMembershipFromSales, isTrue);
     });
+
+    test('canVoidCheckIns requires explicit permission like canVoidSales', () {
+      const adminOnly = CurrentUserPermissions(
+        permissions: {Permissions.systemAdmin},
+        isAdmin: true,
+      );
+      expect(adminOnly.canVoidCheckIns, isFalse);
+      expect(adminOnly.canVoidSales, isFalse);
+
+      const withVoid = CurrentUserPermissions(
+        permissions: {Permissions.checkInsVoid},
+      );
+      expect(withVoid.canVoidCheckIns, isTrue);
+    });
   });
 
   group('CurrentUserPermissionsController', () {
@@ -66,10 +80,7 @@ void main() {
     const staffRole = UserRole(
       id: 'role-1',
       name: 'Staff',
-      permissions: [
-        Permissions.membershipsView,
-        Permissions.membershipsCreate,
-      ],
+      permissions: [Permissions.membershipsView, Permissions.membershipsCreate],
     );
 
     const staffRoleWithExclude = UserRole(
@@ -85,10 +96,7 @@ void main() {
     setUp(() {
       repo = MockUserRoleRepository();
       when(
-        () => repo.subscribeOne(
-          any(),
-          onEvent: any(named: 'onEvent'),
-        ),
+        () => repo.subscribeOne(any(), onEvent: any(named: 'onEvent')),
       ).thenAnswer((_) async => () async {});
     });
 
@@ -105,9 +113,9 @@ void main() {
     }
 
     test('loads permissions from the signed-in user role', () async {
-      when(() => repo.fetchOne('role-1')).thenAnswer(
-        (_) async => right(staffRole),
-      );
+      when(
+        () => repo.fetchOne('role-1'),
+      ).thenAnswer((_) async => right(staffRole));
 
       final container = createContainer();
       addTearDown(container.dispose);
@@ -124,16 +132,15 @@ void main() {
         var fetchCount = 0;
         when(() => repo.fetchOne('role-1')).thenAnswer((_) async {
           fetchCount++;
-          return right(
-            fetchCount == 1 ? staffRole : staffRoleWithExclude,
-          );
+          return right(fetchCount == 1 ? staffRole : staffRoleWithExclude);
         });
 
         final container = createContainer();
         addTearDown(container.dispose);
 
-        final initial =
-            await container.read(currentUserPermissionsProvider.future);
+        final initial = await container.read(
+          currentUserPermissionsProvider.future,
+        );
         expect(initial.canExcludeMembershipFromSales, isFalse);
 
         await container
@@ -150,15 +157,16 @@ void main() {
     );
 
     test('refreshInBackground keeps prior permissions on failure', () async {
-      when(() => repo.fetchOne('role-1')).thenAnswer(
-        (_) async => right(staffRoleWithExclude),
-      );
+      when(
+        () => repo.fetchOne('role-1'),
+      ).thenAnswer((_) async => right(staffRoleWithExclude));
 
       final container = createContainer();
       addTearDown(container.dispose);
 
-      final initial =
-          await container.read(currentUserPermissionsProvider.future);
+      final initial = await container.read(
+        currentUserPermissionsProvider.future,
+      );
       expect(initial.canExcludeMembershipFromSales, isTrue);
 
       when(() => repo.fetchOne('role-1')).thenAnswer(
@@ -170,7 +178,9 @@ void main() {
           .refreshInBackground();
 
       expect(
-        container.read(currentUserPermissionsProvider).value
+        container
+            .read(currentUserPermissionsProvider)
+            .value
             ?.canExcludeMembershipFromSales,
         isTrue,
       );
@@ -187,9 +197,9 @@ void main() {
     });
 
     test('subscribes to the signed-in role for realtime updates', () async {
-      when(() => repo.fetchOne('role-1')).thenAnswer(
-        (_) async => right(staffRole),
-      );
+      when(
+        () => repo.fetchOne('role-1'),
+      ).thenAnswer((_) async => right(staffRole));
 
       final container = createContainer();
       addTearDown(container.dispose);
@@ -199,10 +209,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       final captured = verify(
-        () => repo.subscribeOne(
-          'role-1',
-          onEvent: captureAny(named: 'onEvent'),
-        ),
+        () =>
+            repo.subscribeOne('role-1', onEvent: captureAny(named: 'onEvent')),
       )..called(1);
 
       final onEvent =
@@ -226,10 +234,7 @@ void main() {
       await fetchStarted.future;
 
       verifyNever(
-        () => repo.subscribeOne(
-          any(),
-          onEvent: any(named: 'onEvent'),
-        ),
+        () => repo.subscribeOne(any(), onEvent: any(named: 'onEvent')),
       );
 
       allowFetch.complete();
@@ -237,10 +242,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       verify(
-        () => repo.subscribeOne(
-          'role-1',
-          onEvent: any(named: 'onEvent'),
-        ),
+        () => repo.subscribeOne('role-1', onEvent: any(named: 'onEvent')),
       ).called(1);
     });
 
@@ -257,7 +259,10 @@ void main() {
         addTearDown(container.dispose);
 
         final future = container.read(currentUserPermissionsProvider.future);
-        expect(container.read(currentUserPermissionsProvider).hasValue, isFalse);
+        expect(
+          container.read(currentUserPermissionsProvider).hasValue,
+          isFalse,
+        );
 
         await container
             .read(currentUserPermissionsProvider.notifier)

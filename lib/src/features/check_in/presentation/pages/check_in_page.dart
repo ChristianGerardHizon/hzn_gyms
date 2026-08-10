@@ -19,7 +19,9 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in_block_reason.dart';
 import '../../domain/check_in_chime.dart';
+import '../../domain/check_in_cooldown.dart';
 import '../../domain/check_in_membership_highlight.dart';
+import '../../domain/manual_check_in_result.dart';
 import '../../domain/membership_expiry_label.dart';
 import '../controllers/check_in_controller.dart';
 import '../utils/check_in_sound_player.dart';
@@ -134,8 +136,7 @@ class CheckInPage extends HookConsumerWidget {
       if (!hasBranch || !context.mounted) return;
 
       // Re-resolve membership after switching off "All branches".
-      if (activeMembership.value == null ||
-          checkInBlockReason.value != null) {
+      if (activeMembership.value == null || checkInBlockReason.value != null) {
         await selectMember(member);
         if (!context.mounted) return;
       }
@@ -153,7 +154,7 @@ class CheckInPage extends HookConsumerWidget {
 
       isCheckingIn.value = true;
 
-      final checkIn = await ref
+      final result = await ref
           .read(checkInControllerProvider.notifier)
           .manualCheckIn(
             memberId: member.id,
@@ -162,33 +163,48 @@ class CheckInPage extends HookConsumerWidget {
 
       isCheckingIn.value = false;
 
-      if (checkIn != null && context.mounted) {
-        // Capture before resetting
-        final membership = activeMembership.value;
-        final hadActiveMembership = membership != null;
-        final checkedInMemberName = member.name;
-        final checkedInMemberPhoto = member.photo;
+      if (!context.mounted) return;
 
-        clearSelection();
+      switch (result) {
+        case ManualCheckInSuccess():
+          // Capture before resetting
+          final membership = activeMembership.value;
+          final hadActiveMembership = membership != null;
+          final checkedInMemberName = member.name;
+          final checkedInMemberPhoto = member.photo;
 
-        await showCheckInSuccessDialog(
-          context,
-          memberName: checkedInMemberName,
-          hasActiveMembership: hadActiveMembership,
-          membershipName: membership?.membershipName,
-          membershipEndDate: membership?.endDate,
-          membershipDaysRemaining: membership?.daysRemaining,
-          memberPhotoUrl: checkedInMemberPhoto,
-        );
-        if (context.mounted) {
-          readyForNextScan();
-        }
-      } else if (context.mounted) {
-        await showCheckInErrorDialog(
-          context,
-          title: 'Check-In Failed',
-          message: 'Could not record check-in. Try again.',
-        );
+          clearSelection();
+
+          await showCheckInSuccessDialog(
+            context,
+            memberName: checkedInMemberName,
+            hasActiveMembership: hadActiveMembership,
+            membershipName: membership?.membershipName,
+            membershipEndDate: membership?.endDate,
+            membershipDaysRemaining: membership?.daysRemaining,
+            memberPhotoUrl: checkedInMemberPhoto,
+          );
+          if (context.mounted) {
+            readyForNextScan();
+          }
+        case ManualCheckInCooldown(:final remaining):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Too Soon',
+            message: checkInCooldownMessage(remaining),
+          );
+        case ManualCheckInNoBranch():
+          await showCheckInErrorDialog(
+            context,
+            title: 'Branch Required',
+            message: _checkInNeedsBranchMessage,
+          );
+        case ManualCheckInFailed():
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Failed',
+            message: 'Could not record check-in. Try again.',
+          );
       }
     }
 
@@ -300,6 +316,15 @@ class CheckInPage extends HookConsumerWidget {
             title: 'Check-In Failed',
             message: 'Could not record check-in. Try again.',
           );
+          readyForNextScan();
+          return;
+        case CardCheckInCooldown(:final remaining):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Too Soon',
+            message: checkInCooldownMessage(remaining),
+          );
+          inputController.clear();
           readyForNextScan();
           return;
         case CardCheckInCardNotFound():
@@ -642,11 +667,7 @@ class _SelectedMemberCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CachedAvatar(
-                  imageUrl: member.photo,
-                  radius: 24,
-                  thumbSize: 96,
-                ),
+                CachedAvatar(imageUrl: member.photo, radius: 24, thumbSize: 96),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

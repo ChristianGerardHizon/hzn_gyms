@@ -100,6 +100,7 @@ abstract class Permissions {
   // Check-in permissions
   static const checkInsView = 'checkIns.view';
   static const checkInsCreate = 'checkIns.create';
+  static const checkInsVoid = 'checkIns.void';
 
   // Member card permissions
   static const memberCardsView = 'memberCards.view';
@@ -161,7 +162,7 @@ abstract class Permissions {
       membershipsDelete,
       membershipsExcludeFromSales,
     ],
-    'Check-In': [checkInsView, checkInsCreate],
+    'Check-In': [checkInsView, checkInsCreate, checkInsVoid],
     'Member Cards': [
       memberCardsView,
       memberCardsCreate,
@@ -303,6 +304,13 @@ abstract class Permissions {
         description: 'Process member check-ins',
         icon: Icons.add,
       ),
+      const Permission(
+        key: checkInsVoid,
+        name: 'Void Check-Ins',
+        category: 'Check-In',
+        description: 'Void duplicate or mistaken check-ins',
+        icon: Icons.undo,
+      ),
       // Member Cards
       const Permission(
         key: memberCardsView,
@@ -389,7 +397,8 @@ abstract class Permissions {
         key: inventoryAdjust,
         name: 'Adjust Inventory',
         category: 'Inventory',
-        description: 'Make inventory adjustments and void manual stock adjustments',
+        description:
+            'Make inventory adjustments and void manual stock adjustments',
         icon: Icons.tune,
       ),
       // Sales

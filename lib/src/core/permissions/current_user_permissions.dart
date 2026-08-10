@@ -38,8 +38,12 @@ class CurrentUserPermissions {
   bool get canManageUsers => has(Permissions.usersView);
   bool get canViewReports => has(Permissions.reportsView);
   bool get canViewSettings => has(Permissions.settingsView);
+
   /// Requires explicit [Permissions.salesVoid]; not granted by [isAdmin] alone.
   bool get canVoidSales => permissions.contains(Permissions.salesVoid);
+
+  /// Requires explicit [Permissions.checkInsVoid]; not granted by [isAdmin] alone.
+  bool get canVoidCheckIns => permissions.contains(Permissions.checkInsVoid);
   bool get canEditMemberships => has(Permissions.membershipsEdit);
   bool get canExcludeMembershipFromSales =>
       has(Permissions.membershipsExcludeFromSales);
@@ -58,10 +62,8 @@ class CurrentUserPermissions {
   }
 
   @override
-  int get hashCode => Object.hash(
-        isAdmin,
-        Object.hashAllUnordered(permissions),
-      );
+  int get hashCode =>
+      Object.hash(isAdmin, Object.hashAllUnordered(permissions));
 }
 
 /// Loads and silently refreshes the current user's role permissions.

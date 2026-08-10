@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
@@ -9,6 +10,7 @@ import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../domain/check_in.dart';
 import 'last_check_in_panel.dart';
+import 'void_check_in_dialog.dart';
 
 /// Shows a dialog with check-in details and a link to the member profile.
 Future<void> showCheckInRecordDetailDialog(
@@ -76,10 +78,8 @@ class CheckInRecordDetailDialog extends ConsumerWidget {
                       child: memberAsync.when(
                         loading: () => const CachedAvatar(radius: 36),
                         error: (_, __) => const CachedAvatar(radius: 36),
-                        data: (member) => CachedAvatar(
-                          imageUrl: member?.photo,
-                          radius: 36,
-                        ),
+                        data: (member) =>
+                            CachedAvatar(imageUrl: member?.photo, radius: 36),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -137,6 +137,21 @@ class CheckInRecordDetailDialog extends ConsumerWidget {
                         valueColor: membership == null ? Colors.red : null,
                       ),
                     ),
+                    if (checkIn.isVoided) ...[
+                      _DetailRow(
+                        icon: Icons.block,
+                        label: 'Status',
+                        value: 'Voided',
+                        valueColor: theme.colorScheme.error,
+                      ),
+                      if (checkIn.voidReason != null &&
+                          checkIn.voidReason!.isNotEmpty)
+                        _DetailRow(
+                          icon: Icons.notes,
+                          label: 'Void reason',
+                          value: checkIn.voidReason!,
+                        ),
+                    ],
                     if (checkIn.notes != null && checkIn.notes!.isNotEmpty)
                       _DetailRow(
                         icon: Icons.notes,
@@ -152,6 +167,28 @@ class CheckInRecordDetailDialog extends ConsumerWidget {
                       icon: const Icon(Icons.person_outline),
                       label: const Text('View Member Details'),
                     ),
+                    if (!checkIn.isVoided &&
+                        (ref
+                                .watch(currentUserPermissionsProvider)
+                                .value
+                                ?.canVoidCheckIns ??
+                            false)) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final ok = await showVoidCheckInDialog(
+                            context,
+                            ref,
+                            checkIn: checkIn,
+                          );
+                          if (ok && context.mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        icon: const Icon(Icons.undo),
+                        label: const Text('Void Check-In'),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -64,6 +64,31 @@ class CheckInDtoMapper extends ClassMapperBase<CheckInDto> {
     _$notes,
     opt: true,
   );
+  static bool _$isVoided(CheckInDto v) => v.isVoided;
+  static const Field<CheckInDto, bool> _f$isVoided = Field(
+    'isVoided',
+    _$isVoided,
+    opt: true,
+    def: false,
+  );
+  static String? _$voidedAt(CheckInDto v) => v.voidedAt;
+  static const Field<CheckInDto, String> _f$voidedAt = Field(
+    'voidedAt',
+    _$voidedAt,
+    opt: true,
+  );
+  static String? _$voidedBy(CheckInDto v) => v.voidedBy;
+  static const Field<CheckInDto, String> _f$voidedBy = Field(
+    'voidedBy',
+    _$voidedBy,
+    opt: true,
+  );
+  static String? _$voidReason(CheckInDto v) => v.voidReason;
+  static const Field<CheckInDto, String> _f$voidReason = Field(
+    'voidReason',
+    _$voidReason,
+    opt: true,
+  );
   static String? _$created(CheckInDto v) => v.created;
   static const Field<CheckInDto, String> _f$created = Field(
     'created',
@@ -95,6 +120,10 @@ class CheckInDtoMapper extends ClassMapperBase<CheckInDto> {
     #checkedInBy: _f$checkedInBy,
     #memberMembership: _f$memberMembership,
     #notes: _f$notes,
+    #isVoided: _f$isVoided,
+    #voidedAt: _f$voidedAt,
+    #voidedBy: _f$voidedBy,
+    #voidReason: _f$voidReason,
     #created: _f$created,
     #updated: _f$updated,
     #memberName: _f$memberName,
@@ -112,6 +141,10 @@ class CheckInDtoMapper extends ClassMapperBase<CheckInDto> {
       checkedInBy: data.dec(_f$checkedInBy),
       memberMembership: data.dec(_f$memberMembership),
       notes: data.dec(_f$notes),
+      isVoided: data.dec(_f$isVoided),
+      voidedAt: data.dec(_f$voidedAt),
+      voidedBy: data.dec(_f$voidedBy),
+      voidReason: data.dec(_f$voidReason),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
       memberName: data.dec(_f$memberName),
@@ -189,6 +222,10 @@ abstract class CheckInDtoCopyWith<$R, $In extends CheckInDto, $Out>
     String? checkedInBy,
     String? memberMembership,
     String? notes,
+    bool? isVoided,
+    String? voidedAt,
+    String? voidedBy,
+    String? voidReason,
     String? created,
     String? updated,
     String? memberName,
@@ -216,6 +253,10 @@ class _CheckInDtoCopyWithImpl<$R, $Out>
     Object? checkedInBy = $none,
     Object? memberMembership = $none,
     Object? notes = $none,
+    bool? isVoided,
+    Object? voidedAt = $none,
+    Object? voidedBy = $none,
+    Object? voidReason = $none,
     Object? created = $none,
     Object? updated = $none,
     Object? memberName = $none,
@@ -231,6 +272,10 @@ class _CheckInDtoCopyWithImpl<$R, $Out>
       if (checkedInBy != $none) #checkedInBy: checkedInBy,
       if (memberMembership != $none) #memberMembership: memberMembership,
       if (notes != $none) #notes: notes,
+      if (isVoided != null) #isVoided: isVoided,
+      if (voidedAt != $none) #voidedAt: voidedAt,
+      if (voidedBy != $none) #voidedBy: voidedBy,
+      if (voidReason != $none) #voidReason: voidReason,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
       if (memberName != $none) #memberName: memberName,
@@ -248,6 +293,10 @@ class _CheckInDtoCopyWithImpl<$R, $Out>
     checkedInBy: data.get(#checkedInBy, or: $value.checkedInBy),
     memberMembership: data.get(#memberMembership, or: $value.memberMembership),
     notes: data.get(#notes, or: $value.notes),
+    isVoided: data.get(#isVoided, or: $value.isVoided),
+    voidedAt: data.get(#voidedAt, or: $value.voidedAt),
+    voidedBy: data.get(#voidedBy, or: $value.voidedBy),
+    voidReason: data.get(#voidReason, or: $value.voidReason),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
     memberName: data.get(#memberName, or: $value.memberName),

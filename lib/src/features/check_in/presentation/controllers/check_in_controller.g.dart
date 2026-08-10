@@ -45,7 +45,7 @@ final class CheckInControllerProvider
   CheckInController create() => CheckInController();
 }
 
-String _$checkInControllerHash() => r'bfec3af913a1537a6c14998af2774b59bf43bb30';
+String _$checkInControllerHash() => r'3d62e39a2bc5ea5445fd9ac6e5d623825637030f';
 
 /// Controller for performing check-ins and managing today's check-in list.
 ///

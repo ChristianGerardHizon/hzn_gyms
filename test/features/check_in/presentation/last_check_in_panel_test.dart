@@ -13,6 +13,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';
 
+class _FixedPermissions extends CurrentUserPermissionsController {
+  _FixedPermissions(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
+
 void main() {
   group('LastCheckInPanel membership status background', () {
     Future<void> pumpPanel(
@@ -23,26 +32,27 @@ void main() {
         ProviderScope(
           overrides: [
             memberProvider('member-1').overrideWith(
-              (ref) async => buildMember().copyWith(
-                photo: 'https://example.com/jane.jpg',
-              ),
+              (ref) async =>
+                  buildMember().copyWith(photo: 'https://example.com/jane.jpg'),
             ),
-            memberActiveMembershipProvider('member-1').overrideWith(
-              (ref) async => membership,
-            ),
+            memberActiveMembershipProvider(
+              'member-1',
+            ).overrideWith((ref) async => membership),
             memberCheckInsProvider('member-1').overrideWith((ref) async => []),
             currentUserPermissionsProvider.overrideWith(
-              (ref) async => const CurrentUserPermissions(
-                permissions: {Permissions.membershipsView},
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membershipsView},
+                ),
               ),
             ),
             if (membership != null) ...[
-              membershipProvider(membership.membershipId).overrideWith(
-                (ref) async => buildMembership(),
-              ),
-              memberMembershipAddOnsProvider(membership.id).overrideWith(
-                (ref) async => [],
-              ),
+              membershipProvider(
+                membership.membershipId,
+              ).overrideWith((ref) async => buildMembership()),
+              memberMembershipAddOnsProvider(
+                membership.id,
+              ).overrideWith((ref) async => []),
             ],
           ],
           child: MaterialApp(

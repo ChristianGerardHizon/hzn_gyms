@@ -199,6 +199,7 @@ CheckIn buildCheckIn({
   String? memberName,
   DateTime? checkInTime,
   CheckInMethod method = CheckInMethod.rfid,
+  bool isVoided = false,
 }) {
   return CheckIn(
     id: id,
@@ -208,6 +209,7 @@ CheckIn buildCheckIn({
     method: method,
     memberMembershipId: memberMembershipId,
     memberName: memberName,
+    isVoided: isVoided,
   );
 }
 
