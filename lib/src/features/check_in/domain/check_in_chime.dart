@@ -36,7 +36,7 @@ CheckInChime resolveCheckInChime(CardCheckInResult result) {
     CardCheckInUnpaidMembership() ||
     CardCheckInMembershipNotValidAtBranch() ||
     CardCheckInNoBranch() ||
-    CardCheckInFailed() =>
-      CheckInChime.failure,
+    CardCheckInFailed() ||
+    CardCheckInCooldown() => CheckInChime.failure,
   };
 }

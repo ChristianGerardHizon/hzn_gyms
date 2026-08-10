@@ -58,7 +58,8 @@ class CheckInRecordsPage extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: checkInsAsync.whenOrNull(
+                  child:
+                      checkInsAsync.whenOrNull(
                         data: (checkIns) => Text(
                           '${checkIns.length} check-in'
                           '${checkIns.length == 1 ? '' : 's'}',
@@ -254,7 +255,30 @@ class _CheckInRecordTile extends ConsumerWidget {
         radius: 20,
         thumbSize: 80,
       ),
-      title: Text(checkIn.memberName ?? 'Unknown Member'),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              checkIn.memberName ?? 'Unknown Member',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (checkIn.isVoided) ...[
+            const SizedBox(width: 8),
+            Chip(
+              label: const Text('Voided'),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: EdgeInsets.zero,
+              labelStyle: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+              backgroundColor: theme.colorScheme.errorContainer,
+            ),
+          ],
+        ],
+      ),
       subtitle: Row(
         children: [
           Flexible(
@@ -267,10 +291,7 @@ class _CheckInRecordTile extends ConsumerWidget {
               ),
             ),
           ),
-          if (branchPill != null) ...[
-            const SizedBox(width: 6),
-            branchPill,
-          ],
+          if (branchPill != null) ...[const SizedBox(width: 6), branchPill],
         ],
       ),
       trailing: Icon(

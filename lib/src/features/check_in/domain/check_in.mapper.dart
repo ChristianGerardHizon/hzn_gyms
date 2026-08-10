@@ -115,6 +115,31 @@ class CheckInMapper extends ClassMapperBase<CheckIn> {
     _$notes,
     opt: true,
   );
+  static bool _$isVoided(CheckIn v) => v.isVoided;
+  static const Field<CheckIn, bool> _f$isVoided = Field(
+    'isVoided',
+    _$isVoided,
+    opt: true,
+    def: false,
+  );
+  static DateTime? _$voidedAt(CheckIn v) => v.voidedAt;
+  static const Field<CheckIn, DateTime> _f$voidedAt = Field(
+    'voidedAt',
+    _$voidedAt,
+    opt: true,
+  );
+  static String? _$voidedBy(CheckIn v) => v.voidedBy;
+  static const Field<CheckIn, String> _f$voidedBy = Field(
+    'voidedBy',
+    _$voidedBy,
+    opt: true,
+  );
+  static String? _$voidReason(CheckIn v) => v.voidReason;
+  static const Field<CheckIn, String> _f$voidReason = Field(
+    'voidReason',
+    _$voidReason,
+    opt: true,
+  );
   static DateTime? _$created(CheckIn v) => v.created;
   static const Field<CheckIn, DateTime> _f$created = Field(
     'created',
@@ -139,6 +164,10 @@ class CheckInMapper extends ClassMapperBase<CheckIn> {
     #memberMembershipId: _f$memberMembershipId,
     #memberName: _f$memberName,
     #notes: _f$notes,
+    #isVoided: _f$isVoided,
+    #voidedAt: _f$voidedAt,
+    #voidedBy: _f$voidedBy,
+    #voidReason: _f$voidReason,
     #created: _f$created,
     #updated: _f$updated,
   };
@@ -154,6 +183,10 @@ class CheckInMapper extends ClassMapperBase<CheckIn> {
       memberMembershipId: data.dec(_f$memberMembershipId),
       memberName: data.dec(_f$memberName),
       notes: data.dec(_f$notes),
+      isVoided: data.dec(_f$isVoided),
+      voidedAt: data.dec(_f$voidedAt),
+      voidedBy: data.dec(_f$voidedBy),
+      voidReason: data.dec(_f$voidReason),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
     );
@@ -226,6 +259,10 @@ abstract class CheckInCopyWith<$R, $In extends CheckIn, $Out>
     String? memberMembershipId,
     String? memberName,
     String? notes,
+    bool? isVoided,
+    DateTime? voidedAt,
+    String? voidedBy,
+    String? voidReason,
     DateTime? created,
     DateTime? updated,
   });
@@ -251,6 +288,10 @@ class _CheckInCopyWithImpl<$R, $Out>
     Object? memberMembershipId = $none,
     Object? memberName = $none,
     Object? notes = $none,
+    bool? isVoided,
+    Object? voidedAt = $none,
+    Object? voidedBy = $none,
+    Object? voidReason = $none,
     Object? created = $none,
     Object? updated = $none,
   }) => $apply(
@@ -264,6 +305,10 @@ class _CheckInCopyWithImpl<$R, $Out>
       if (memberMembershipId != $none) #memberMembershipId: memberMembershipId,
       if (memberName != $none) #memberName: memberName,
       if (notes != $none) #notes: notes,
+      if (isVoided != null) #isVoided: isVoided,
+      if (voidedAt != $none) #voidedAt: voidedAt,
+      if (voidedBy != $none) #voidedBy: voidedBy,
+      if (voidReason != $none) #voidReason: voidReason,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
     }),
@@ -282,6 +327,10 @@ class _CheckInCopyWithImpl<$R, $Out>
     ),
     memberName: data.get(#memberName, or: $value.memberName),
     notes: data.get(#notes, or: $value.notes),
+    isVoided: data.get(#isVoided, or: $value.isVoided),
+    voidedAt: data.get(#voidedAt, or: $value.voidedAt),
+    voidedBy: data.get(#voidedBy, or: $value.voidedBy),
+    voidReason: data.get(#voidReason, or: $value.voidReason),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
   );

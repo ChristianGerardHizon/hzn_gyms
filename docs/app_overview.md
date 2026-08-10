@@ -30,7 +30,7 @@ Home screen with gym metrics and quick actions.
 - KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
 - Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member
 - Search Member: cross-branch name/phone search with branch-activity chips; opens quick-view to renew or purchase at the current branch, or create a new member when no match
-- Cashier opens the product POS as a dialog (same layout as `/cashier`; member optional at checkout)
+- Cashier opens the product POS as a dialog (same `CashierBody` layout; standalone `/cashier` nav removed and redirects to dashboard; member optional at checkout; optional check-in strip for staff with `checkIns.create`)
 - Walk-in opens a day-pass dialog (customer name + plan with **Membership not required** + optional add-ons); creates a sale only — no member or membership record
 - Renew Membership: pick any member, then choose a plan for the current branch; if they still have an active membership, the new period defaults to the day after it ends (start date can be customized)
 - Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's transactions dialog
@@ -48,11 +48,13 @@ Member check-in system for tracking gym visits.
   - RFID keyboard-wedge on Check-In and Dashboard; auto-listens while the window is focused (NFC icon green = active, red = inactive)
   - Fullscreen "Not in focus" overlay when the Check-In window/app loses OS focus (RFID paused)
   - Today's check-ins update live across devices via PocketBase realtime subscription
+  - 30-second same-member cooldown with an explanatory prompt (avoids accidental duplicates)
+  - Staff with `checkIns.void` can void mistaken/duplicate check-ins (soft void + audit)
   - Member search by name or mobile number
   - Active membership status display
   - Manual check-in with membership validation
   - Warning for members without active membership
-  - Recent check-ins list for today
+  - Recent check-ins list for today (void action when permitted)
   - Success dialog with membership status
   - Audio chimes for check-in outcomes: success, near-expiry (≤7 days), and failure
   - Backward compatibility with legacy `rfidCardId` field on members
@@ -69,6 +71,7 @@ Historical check-in log filtered by calendar date. Opened from Check-In (not a t
   - Date picker with previous/next day and Today shortcuts
   - Lists members who checked in on the selected date (branch-scoped)
   - Shows check-in time and method (Manual / RFID)
+  - Voided check-ins shown with a Voided badge; details include void reason when set
   - Tap a record to open details (date, time, method, membership) with link to member profile
 - **Controllers**:
   - `checkInRecordsDateController` - Selected calendar day
@@ -119,14 +122,16 @@ Inventory and product management with lot tracking.
 
 ### Secondary Features
 
-#### Point of Sale / Cashier (`/cashier`)
+#### Point of Sale / Cashier (Dashboard dialog; `/cashier` redirects home)
 Complete POS system for processing product sales.
 
 - **Features**:
+  - Opened from Dashboard **Cashier** quick action (full-screen dialog); standalone shell Cashier nav removed
+  - Optional check-in strip (member picker / card ID) when user has `checkIns.create` — no nested RFID listener (Dashboard owns RFID)
   - **Customizable Cashier Layout** (POS Groups): Create named groups of products per branch to define the cashier page layout. Groups display as scrollable sections with sticky headers. Falls back to default product grid when no groups are configured.
   - Responsive product grid (max-extent tiles) with denser cards and readable Out/Low stock chips
   - **Mobile**: full-width product pane + sticky cart bar; cart opens as a bottom sheet for review/checkout
-  - **Tablet/Desktop**: side-by-side products + cart (shared `CashierBody` for `/cashier` and dashboard dialog)
+  - **Tablet/Desktop**: side-by-side products + cart (shared `CashierBody` for dashboard dialog)
   - Product grid with search and category filtering
   - Search dropdown overlay (grouped mode)
   - Shopping cart with product items
@@ -138,6 +143,7 @@ Complete POS system for processing product sales.
   - Receipt generation and printing
 - **Components**:
   - `CashierBody` - Shared responsive products + cart layout
+  - `CashierCheckInStrip` - Compact member/card check-in on cashier
   - `CashierProductCard` - Shared product tile (flat + grouped modes)
   - `CashierCartBar` - Mobile sticky cart summary / bottom sheet
   - `ProductGrid` - Product selection (default mode)
@@ -570,6 +576,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 10 | Check-in void, cooldown, cashier consolidation | Soft-void check-ins (`checkIns.void`); 30s same-member cooldown with prompt; cashier check-in strip in dashboard POS dialog; hide standalone Cashier nav (`/cashier` → dashboard) |
 | Aug 9 | Dashboard greeting header | Shared mobile/tablet header shows time-of-day greeting + user name and app version; RFID + refresh actions unchanged |
 | Aug 9 | Member list row layout | Member rows match sales list structure: avatar, name tooltip, phone + branch activity in the subtitle row, pending sync trailing |
 | Aug 8 | Member card disable | Member cards use Disable (not Deactivate); Report Lost removed; disable confirm explains check-in impact |

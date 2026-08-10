@@ -571,7 +571,12 @@ class _ActionButtons extends ConsumerWidget {
           onPressed: !membershipsLoaded || branchId == null
               ? null
               : () async {
-                  final success = await purchaseMembershipAndRecordPayment(
+                  // Close quick-view first so purchase/payment are not stacked
+                  // under the member modal (same pattern as membership detail).
+                  Navigator.of(context).pop();
+                  if (!context.mounted) return;
+
+                  await purchaseMembershipAndRecordPayment(
                     context,
                     ref,
                     memberId: memberId,
@@ -580,9 +585,6 @@ class _ActionButtons extends ConsumerWidget {
                         renewableMembership?.membershipId,
                     isRenewal: hasRenewable,
                   );
-                  if (success && hasRenewable && context.mounted) {
-                    Navigator.of(context).pop();
-                  }
                 },
           icon: Icon(hasRenewable ? Icons.autorenew : Icons.add),
           label: Text(renewLabel),

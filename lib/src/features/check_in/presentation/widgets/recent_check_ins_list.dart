@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/error_state.dart';
@@ -12,6 +13,7 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
 import 'last_check_in_panel.dart';
+import 'void_check_in_dialog.dart';
 
 /// Widget displaying today's recent check-ins.
 class RecentCheckInsList extends ConsumerWidget {
@@ -24,6 +26,9 @@ class RecentCheckInsList extends ConsumerWidget {
     final timeFormat = DateFormat('hh:mm a');
     final viewingAll = ref.watch(viewingAllBranchesProvider);
     final branches = ref.watch(branchesControllerProvider).value ?? const [];
+    final canVoid =
+        ref.watch(currentUserPermissionsProvider).value?.canVoidCheckIns ??
+        false;
 
     return checkInsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -69,6 +74,7 @@ class RecentCheckInsList extends ConsumerWidget {
                 timeFormat: timeFormat,
                 showBranch: viewingAll,
                 branches: branches,
+                canVoid: canVoid,
               );
             },
           ),
@@ -84,12 +90,14 @@ class _CheckInListTile extends ConsumerWidget {
     required this.timeFormat,
     required this.showBranch,
     required this.branches,
+    required this.canVoid,
   });
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
   final bool showBranch;
   final List<Branch> branches;
+  final bool canVoid;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,12 +130,17 @@ class _CheckInListTile extends ConsumerWidget {
               ),
             ),
           ),
-          if (branchPill != null) ...[
-            const SizedBox(width: 6),
-            branchPill,
-          ],
+          if (branchPill != null) ...[const SizedBox(width: 6), branchPill],
         ],
       ),
+      trailing: canVoid
+          ? IconButton(
+              tooltip: 'Void check-in',
+              icon: const Icon(Icons.undo),
+              onPressed: () =>
+                  showVoidCheckInDialog(context, ref, checkIn: checkIn),
+            )
+          : null,
       onTap: () => showActiveMembershipFromCheckIn(
         context,
         ref,

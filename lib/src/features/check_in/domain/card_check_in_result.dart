@@ -67,3 +67,10 @@ class CardCheckInNoBranch extends CardCheckInResult {
 class CardCheckInFailed extends CardCheckInResult {
   const CardCheckInFailed();
 }
+
+/// Blocked because the member checked in within the cooldown window.
+class CardCheckInCooldown extends CardCheckInResult {
+  const CardCheckInCooldown({required this.remaining});
+
+  final Duration remaining;
+}

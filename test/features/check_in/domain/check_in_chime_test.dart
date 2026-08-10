@@ -56,6 +56,7 @@ void main() {
         CardCheckInMembershipNotValidAtBranch(memberName: 'Jane'),
         CardCheckInNoBranch(),
         CardCheckInFailed(),
+        CardCheckInCooldown(remaining: Duration(seconds: 5)),
       ];
       for (final result in denies) {
         expect(resolveCheckInChime(result), CheckInChime.failure);

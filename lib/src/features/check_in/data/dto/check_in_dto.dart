@@ -19,6 +19,10 @@ class CheckInDto with CheckInDtoMappable {
   final String? checkedInBy;
   final String? memberMembership;
   final String? notes;
+  final bool isVoided;
+  final String? voidedAt;
+  final String? voidedBy;
+  final String? voidReason;
   final String? created;
   final String? updated;
 
@@ -36,6 +40,10 @@ class CheckInDto with CheckInDtoMappable {
     this.checkedInBy,
     this.memberMembership,
     this.notes,
+    this.isVoided = false,
+    this.voidedAt,
+    this.voidedBy,
+    this.voidReason,
     this.created,
     this.updated,
     this.memberName,
@@ -56,6 +64,10 @@ class CheckInDto with CheckInDtoMappable {
       checkedInBy: record.getStringValue('checkedInBy'),
       memberMembership: record.getStringValue('memberMembership'),
       notes: record.getStringValue('notes'),
+      isVoided: record.getBoolValue('isVoided'),
+      voidedAt: record.get<String>('voidedAt'),
+      voidedBy: record.getStringValue('voidedBy'),
+      voidReason: record.getStringValue('voidReason'),
       created: record.get<String>('created'),
       updated: record.get<String>('updated'),
       memberName: memberExpand?.getStringValue('name'),
@@ -79,6 +91,12 @@ class CheckInDto with CheckInDtoMappable {
           : null,
       memberName: memberName,
       notes: notes != null && notes!.isNotEmpty ? notes : null,
+      isVoided: isVoided,
+      voidedAt: parseToLocal(voidedAt),
+      voidedBy: voidedBy != null && voidedBy!.isNotEmpty ? voidedBy : null,
+      voidReason: voidReason != null && voidReason!.isNotEmpty
+          ? voidReason
+          : null,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
     );

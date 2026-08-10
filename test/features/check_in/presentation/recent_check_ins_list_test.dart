@@ -28,6 +28,15 @@ class _FakeCheckInController extends CheckInController {
   Future<List<CheckIn>> build() async => _checkIns;
 }
 
+class _FixedPermissions extends CurrentUserPermissionsController {
+  _FixedPermissions(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
+
 class _FakeBranchesController extends BranchesController {
   _FakeBranchesController(this._branches);
 
@@ -72,9 +81,9 @@ void main() {
             ),
             viewingAllBranchesProvider.overrideWithValue(viewingAll),
             for (final checkIn in checkIns)
-              memberActiveMembershipProvider(checkIn.memberId).overrideWith(
-                (ref) async => membership,
-              ),
+              memberActiveMembershipProvider(
+                checkIn.memberId,
+              ).overrideWith((ref) async => membership),
             for (final checkIn in checkIns)
               memberProvider(checkIn.memberId).overrideWith(
                 (ref) async => buildMember(
@@ -83,22 +92,22 @@ void main() {
                 ),
               ),
             currentUserPermissionsProvider.overrideWith(
-              (ref) async => const CurrentUserPermissions(
-                permissions: {Permissions.membershipsView},
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membershipsView},
+                ),
               ),
             ),
             if (membership != null) ...[
-              membershipProvider(membership.membershipId).overrideWith(
-                (ref) async => buildMembership(),
-              ),
-              memberMembershipAddOnsProvider(membership.id).overrideWith(
-                (ref) async => [],
-              ),
+              membershipProvider(
+                membership.membershipId,
+              ).overrideWith((ref) async => buildMembership()),
+              memberMembershipAddOnsProvider(
+                membership.id,
+              ).overrideWith((ref) async => []),
             ],
           ],
-          child: const MaterialApp(
-            home: Scaffold(body: RecentCheckInsList()),
-          ),
+          child: const MaterialApp(home: Scaffold(body: RecentCheckInsList())),
         ),
       );
       await tester.pumpAndSettle();
@@ -107,14 +116,10 @@ void main() {
     testWidgets('opens membership modal when a check-in is tapped', (
       tester,
     ) async {
-      final membership = buildMemberMembership(
-        membershipName: 'Monthly Plan',
-      );
+      final membership = buildMemberMembership(membershipName: 'Monthly Plan');
       await pumpList(
         tester,
-        checkIns: [
-          buildCheckIn(memberId: 'member-1', memberName: 'Jane Doe'),
-        ],
+        checkIns: [buildCheckIn(memberId: 'member-1', memberName: 'Jane Doe')],
         membership: membership,
       );
 
@@ -135,9 +140,7 @@ void main() {
     ) async {
       await pumpList(
         tester,
-        checkIns: [
-          buildCheckIn(memberId: 'member-1', memberName: 'Jane Doe'),
-        ],
+        checkIns: [buildCheckIn(memberId: 'member-1', memberName: 'Jane Doe')],
         membership: null,
       );
 

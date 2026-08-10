@@ -34,6 +34,10 @@ class CheckIn with CheckInMappable {
     this.memberMembershipId,
     this.memberName,
     this.notes,
+    this.isVoided = false,
+    this.voidedAt,
+    this.voidedBy,
+    this.voidReason,
     this.created,
     this.updated,
   });
@@ -64,6 +68,18 @@ class CheckIn with CheckInMappable {
 
   /// Optional notes.
   final String? notes;
+
+  /// Soft-voided duplicate / mistake (kept for audit).
+  final bool isVoided;
+
+  /// When the check-in was voided.
+  final DateTime? voidedAt;
+
+  /// Staff who voided the check-in.
+  final String? voidedBy;
+
+  /// Optional reason for voiding.
+  final String? voidReason;
 
   /// Creation timestamp.
   final DateTime? created;

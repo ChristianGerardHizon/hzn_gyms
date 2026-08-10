@@ -26,6 +26,24 @@ class _LoadingAuth extends AuthController {
   }
 }
 
+class _FixedPermissions extends CurrentUserPermissionsController {
+  _FixedPermissions(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
+
+class _LoadingPermissions extends CurrentUserPermissionsController {
+  _LoadingPermissions(this._completer);
+
+  final Completer<CurrentUserPermissions> _completer;
+
+  @override
+  Future<CurrentUserPermissions> build() => _completer.future;
+}
+
 /// Minimal router that uses [RouterUtils.redirect] like the app.
 final _testRouterProvider = Provider.family<GoRouter, String>((
   ref,
@@ -47,7 +65,11 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
         path: '/organization',
         builder: (_, _) => const Text('organization'),
       ),
-      GoRoute(path: '/check-in/records', builder: (_, _) => const Text('records')),
+      GoRoute(
+        path: '/check-in/records',
+        builder: (_, _) => const Text('records'),
+      ),
+      GoRoute(path: '/cashier', builder: (_, _) => const Text('cashier')),
     ],
   );
 
@@ -70,15 +92,13 @@ void main() {
           overrides: [
             authControllerProvider.overrideWith(_AuthenticatedAuth.new),
             currentUserPermissionsProvider.overrideWith(
-              (ref) => permsCompleter.future,
+              () => _LoadingPermissions(permsCompleter),
             ),
           ],
         );
         addTearDown(container.dispose);
 
-        final router = container.read(
-          _testRouterProvider('/system/printers'),
-        );
+        final router = container.read(_testRouterProvider('/system/printers'));
 
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -114,17 +134,17 @@ void main() {
           overrides: [
             authControllerProvider.overrideWith(_AuthenticatedAuth.new),
             currentUserPermissionsProvider.overrideWith(
-              (ref) async => const CurrentUserPermissions(
-                permissions: {Permissions.membersView},
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membersView},
+                ),
               ),
             ),
           ],
         );
         addTearDown(container.dispose);
 
-        final router = container.read(
-          _testRouterProvider('/system/printers'),
-        );
+        final router = container.read(_testRouterProvider('/system/printers'));
 
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -140,97 +160,122 @@ void main() {
       },
     );
 
-    testWidgets(
-      'stores pending redirect synchronously while auth is loading',
-      (tester) async {
-        final container = ProviderContainer(
-          overrides: [
-            authControllerProvider.overrideWith(_LoadingAuth.new),
-          ],
-        );
-        addTearDown(container.dispose);
+    testWidgets('stores pending redirect synchronously while auth is loading', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [authControllerProvider.overrideWith(_LoadingAuth.new)],
+      );
+      addTearDown(container.dispose);
 
-        final router = container.read(_testRouterProvider('/members'));
+      final router = container.read(_testRouterProvider('/members'));
 
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: MaterialApp.router(routerConfig: router),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pump();
+      // Flush Future(() => pendingRedirect.set(...)) scheduled during redirect.
+      await tester.pump(Duration.zero);
+
+      // Eager stash is set during redirect; peek sees it immediately.
+      expect(
+        container.read(pendingRedirectProvider.notifier).peek(),
+        '/members',
+      );
+      expect(RouterUtils.currentLocation(router), '/splash');
+      expect(find.text('splash'), findsOneWidget);
+    });
+
+    testWidgets('redirects standalone /cashier to dashboard', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(
+                permissions: {Permissions.salesCreate},
+              ),
+            ),
           ),
-        );
-        await tester.pump();
-        // Flush Future(() => pendingRedirect.set(...)) scheduled during redirect.
-        await tester.pump(Duration.zero);
+        ],
+      );
+      addTearDown(container.dispose);
 
-        // Eager stash is set during redirect; peek sees it immediately.
-        expect(
-          container.read(pendingRedirectProvider.notifier).peek(),
-          '/members',
-        );
-        expect(RouterUtils.currentLocation(router), '/splash');
-        expect(find.text('splash'), findsOneWidget);
-      },
-    );
+      final router = container.read(_testRouterProvider('/cashier'));
 
-    testWidgets(
-      'restores stashed deep link from splash after auth resolves',
-      (tester) async {
-        PendingRedirect.stash('/system/printers');
-        final container = ProviderContainer(
-          overrides: [
-            authControllerProvider.overrideWith(_AuthenticatedAuth.new),
-            currentUserPermissionsProvider.overrideWith(
-              (ref) async => const CurrentUserPermissions(
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), '/');
+      expect(find.text('dashboard'), findsOneWidget);
+      expect(find.text('cashier'), findsNothing);
+    });
+
+    testWidgets('restores stashed deep link from splash after auth resolves', (
+      tester,
+    ) async {
+      PendingRedirect.stash('/system/printers');
+      final container = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(
                 permissions: {Permissions.systemAdmin},
                 isAdmin: true,
               ),
             ),
-          ],
-        );
-        addTearDown(container.dispose);
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
 
-        await container.read(authControllerProvider.future);
+      await container.read(authControllerProvider.future);
 
-        // Call redirect the same way GoRouter does once auth is settled on splash.
-        late final Ref redirectRef;
-        container.read(Provider((ref) {
+      // Call redirect the same way GoRouter does once auth is settled on splash.
+      late final Ref redirectRef;
+      container.read(
+        Provider((ref) {
           redirectRef = ref;
           return null;
-        }));
+        }),
+      );
 
-        final probeRouter = GoRouter(
-          routes: [
-            GoRoute(path: '/', builder: (_, _) => const SizedBox()),
-            GoRoute(path: '/splash', builder: (_, _) => const SizedBox()),
-            GoRoute(
-              path: '/system/printers',
-              builder: (_, _) => const SizedBox(),
-            ),
-            GoRoute(path: '/login', builder: (_, _) => const SizedBox()),
-          ],
-        );
-        final state = GoRouterState(
-          probeRouter.configuration,
-          uri: Uri.parse('/splash'),
-          matchedLocation: '/splash',
-          fullPath: '/splash',
-          pathParameters: const {},
-          pageKey: const ValueKey('splash'),
-        );
+      final probeRouter = GoRouter(
+        routes: [
+          GoRoute(path: '/', builder: (_, _) => const SizedBox()),
+          GoRoute(path: '/splash', builder: (_, _) => const SizedBox()),
+          GoRoute(
+            path: '/system/printers',
+            builder: (_, _) => const SizedBox(),
+          ),
+          GoRoute(path: '/login', builder: (_, _) => const SizedBox()),
+        ],
+      );
+      final state = GoRouterState(
+        probeRouter.configuration,
+        uri: Uri.parse('/splash'),
+        matchedLocation: '/splash',
+        fullPath: '/splash',
+        pathParameters: const {},
+        pageKey: const ValueKey('splash'),
+      );
 
-        await tester.pumpWidget(
-          const MaterialApp(home: SizedBox()),
-        );
-        final context = tester.element(find.byType(MaterialApp));
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      final context = tester.element(find.byType(MaterialApp));
 
-        final result = RouterUtils.redirect(context, state, redirectRef);
+      final result = RouterUtils.redirect(context, state, redirectRef);
 
-        expect(result, '/system/printers');
-        expect(
-          container.read(pendingRedirectProvider.notifier).peek(),
-          isNull,
-        );
-      },
-    );
+      expect(result, '/system/printers');
+      expect(container.read(pendingRedirectProvider.notifier).peek(), isNull);
+    });
   });
 }

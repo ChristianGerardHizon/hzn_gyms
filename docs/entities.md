@@ -345,6 +345,10 @@ Member check-in records.
 | `checkedInBy` | String (FK) | No | FK to User (for manual) |
 | `memberMembership` | String (FK) | No | FK to active MemberMembership |
 | `notes` | String | No | Optional notes |
+| `isVoided` | bool | Yes | Soft-voided duplicate/mistake (default false) |
+| `voidedAt` | DateTime | No | When the check-in was voided |
+| `voidedBy` | String (FK) | No | FK to User who voided |
+| `voidReason` | String | No | Optional void reason |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
@@ -353,6 +357,7 @@ Member check-in records.
 **Relationships:**
 - `member` -> Member
 - `branch` -> Branch (optional)
+- `voidedBy` -> User (optional)
 
 **Enum:** `CheckInMethod { manual, rfid }`
 

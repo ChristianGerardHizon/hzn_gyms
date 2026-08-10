@@ -19,6 +19,7 @@ void main() {
       const CardCheckInMembershipNotValidAtBranch(memberName: 'Jane'),
       const CardCheckInNoBranch(),
       const CardCheckInFailed(),
+      const CardCheckInCooldown(remaining: Duration(seconds: 12)),
     ];
 
     expect(results.whereType<CardCheckInSuccess>(), hasLength(1));
@@ -31,5 +32,6 @@ void main() {
     );
     expect(results.whereType<CardCheckInNoBranch>(), hasLength(1));
     expect(results.whereType<CardCheckInFailed>(), hasLength(1));
+    expect(results.whereType<CardCheckInCooldown>(), hasLength(1));
   });
 }

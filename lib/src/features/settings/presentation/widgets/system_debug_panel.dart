@@ -9,6 +9,7 @@ import '../../../../core/packages/sentry/sentry_config.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../check_in/domain/card_check_in_result.dart';
 import '../../../check_in/domain/check_in_block_reason.dart';
+import '../../../check_in/domain/check_in_cooldown.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
 import '../../../check_in/presentation/controllers/rfid_listener_status.dart';
 import '../../../check_in/presentation/widgets/check_in_error_dialog.dart';
@@ -109,6 +110,12 @@ class SystemDebugPanel extends HookConsumerWidget {
               context,
               title: 'Check-In Failed',
               message: 'Could not record check-in. Try again.',
+            );
+          case CardCheckInCooldown(:final remaining):
+            await showCheckInErrorDialog(
+              context,
+              title: 'Check-In Too Soon',
+              message: checkInCooldownMessage(remaining),
             );
         }
       } finally {

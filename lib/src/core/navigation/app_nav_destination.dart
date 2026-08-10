@@ -68,7 +68,9 @@ List<AppNavDestination> visibleAppNavDestinations(
           case AppNavId.checkIn:
             return permissions.has(Permissions.checkInsView);
           case AppNavId.cashier:
-            return permissions.has(Permissions.salesCreate);
+            // Standalone cashier nav removed — POS opens from Dashboard
+            // Quick Action dialog only (avoids duplicate CashierBody surfaces).
+            return false;
           case AppNavId.sales:
             return permissions.has(Permissions.salesView);
           case AppNavId.products:

@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in_block_reason.dart';
+import '../../domain/check_in_cooldown.dart';
 import '../../domain/editable_text_focus.dart';
 import '../../domain/rfid_keyboard_wedge_decoder.dart';
 import '../../domain/rfid_wedge_candidate_key.dart';
@@ -282,6 +283,12 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
             title: 'Check-In Failed',
             message: 'Could not record check-in. Try again.',
           );
+        case CardCheckInCooldown(:final remaining):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Too Soon',
+            message: checkInCooldownMessage(remaining),
+          );
       }
     } finally {
       _dialogOpen = false;
@@ -296,9 +303,7 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
       children: [
         widget.child,
         if (!_windowFocused)
-          Positioned.fill(
-            child: _NotInFocusOverlay(onResume: _requestFocus),
-          ),
+          Positioned.fill(child: _NotInFocusOverlay(onResume: _requestFocus)),
       ],
     );
   }
