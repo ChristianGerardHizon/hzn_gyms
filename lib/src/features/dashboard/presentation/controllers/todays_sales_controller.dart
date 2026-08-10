@@ -4,6 +4,7 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../reports/domain/report_aggregations.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/todays_sales_summary.dart';
 
@@ -38,23 +39,49 @@ Future<List<Sale>> todaySales(Ref ref) async {
 /// Today's sales summary (count and total amount).
 /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
 /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
+/// Membership / walk-in totals come from [PocketBaseCollections.vwRevenueByItemType].
 /// Filtered by the current branch.
 @riverpod
 Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
   final pb = ref.read(pocketbaseProvider);
-  final records = await pb
-      .collection(PocketBaseCollections.vwTodaysSales)
-      .getFullList(
-        filter: branchId != null ? 'branch = "$branchId"' : null,
-      );
+  final today = DateTime.now().toLocal();
+  final itemTypeFilter = buildSaleDateViewFilter(
+    startDate: today,
+    endDate: today,
+    branchId: branchId,
+  );
 
-  final rows = records.map(
+  final results = await Future.wait([
+    pb.collection(PocketBaseCollections.vwTodaysSales).getFullList(
+      filter: branchId != null ? 'branch = "$branchId"' : null,
+    ),
+    pb.collection(PocketBaseCollections.vwRevenueByItemType).getFullList(
+      filter: itemTypeFilter,
+    ),
+  ]);
+
+  final salesRecords = results[0];
+  final itemTypeRecords = results[1];
+
+  final rows = salesRecords.map(
     (record) => TodaysSalesBranchRow(
       branchId: record.getStringValue('branch'),
       transactionCount: record.getIntValue('transaction_count'),
       totalRevenue: record.getDoubleValue('total_revenue'),
     ),
   );
-  return aggregateTodaysSalesSummary(rows);
+  final itemTypeTotals = aggregateTodaysItemTypeRevenue(
+    itemTypeRecords.map(
+      (record) => TodaysItemTypeRevenueRow(
+        itemType: record.getStringValue('itemType'),
+        totalRevenue: record.getDoubleValue('total_revenue'),
+      ),
+    ),
+  );
+  return aggregateTodaysSalesSummary(
+    rows,
+    membershipTotal: itemTypeTotals.membershipTotal,
+    walkInTotal: itemTypeTotals.walkInTotal,
+  );
 }
