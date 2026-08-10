@@ -309,12 +309,15 @@ class MemberMembershipDetailDialog extends ConsumerWidget {
                         Expanded(
                           child: FilledButton.icon(
                             onPressed: () async {
-                              Navigator.of(context).pop();
-                              if (!context.mounted) return;
+                              // Close detail first so renew/payment are not
+                              // stacked under this modal. Use the navigator
+                              // context — this dialog's ref/context die on pop.
+                              final navigator = Navigator.of(context);
+                              navigator.pop();
+                              if (!navigator.mounted) return;
 
                               await purchaseMembershipAndRecordPayment(
-                                context,
-                                ref,
+                                navigator.context,
                                 memberId: memberId,
                                 memberName: memberName,
                                 preselectedMembershipId:

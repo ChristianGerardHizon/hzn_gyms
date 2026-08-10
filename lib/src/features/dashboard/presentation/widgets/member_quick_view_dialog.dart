@@ -573,12 +573,14 @@ class _ActionButtons extends ConsumerWidget {
               : () async {
                   // Close quick-view first so purchase/payment are not stacked
                   // under the member modal (same pattern as membership detail).
-                  Navigator.of(context).pop();
-                  if (!context.mounted) return;
+                  // Use the navigator context — this dialog's ref/context die
+                  // on pop; ProviderContainer is taken from the new context.
+                  final navigator = Navigator.of(context);
+                  navigator.pop();
+                  if (!navigator.mounted) return;
 
                   await purchaseMembershipAndRecordPayment(
-                    context,
-                    ref,
+                    navigator.context,
                     memberId: memberId,
                     memberName: memberName,
                     preselectedMembershipId:

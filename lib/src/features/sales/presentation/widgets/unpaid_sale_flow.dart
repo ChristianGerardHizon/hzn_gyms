@@ -98,8 +98,7 @@ Future<bool> resolveOpenUnpaidBeforeCreate(
 ///
 /// Returns whether the sale ended up paid.
 Future<bool> recordPaymentWithDisposition(
-  BuildContext context,
-  WidgetRef ref, {
+  BuildContext context, {
   required Sale sale,
   required num balanceDue,
 }) async {
@@ -147,14 +146,17 @@ Future<bool> recordPaymentWithDisposition(
         remaining = currentSale.totalAmount;
         continue;
       case PaymentDisposition.voidSale:
-        final salesRepo = ref.read(salesRepositoryProvider);
-        final memberMembershipRepo =
-            ref.read(memberMembershipRepositoryProvider);
-        final lotRepo = ref.read(productLotRepositoryProvider);
-        final productRepo = ref.read(productRepositoryProvider);
-        final adjustmentRepo = ref.read(productAdjustmentRepositoryProvider);
-        final voidedById = ref.read(currentAuthProvider)?.user.id;
+        // Use container from [context] so this stays safe when a parent dialog
+        // was already popped (renew / quick-view flows).
         final voidContainer = ProviderScope.containerOf(context);
+        final salesRepo = voidContainer.read(salesRepositoryProvider);
+        final memberMembershipRepo =
+            voidContainer.read(memberMembershipRepositoryProvider);
+        final lotRepo = voidContainer.read(productLotRepositoryProvider);
+        final productRepo = voidContainer.read(productRepositoryProvider);
+        final adjustmentRepo =
+            voidContainer.read(productAdjustmentRepositoryProvider);
+        final voidedById = voidContainer.read(currentAuthProvider)?.user.id;
 
         await voidSaleWithSideEffects(
           salesRepo: salesRepo,
