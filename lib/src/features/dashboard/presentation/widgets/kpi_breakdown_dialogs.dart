@@ -33,7 +33,7 @@ Future<void> showTodaysSalesBreakdownDialog(BuildContext context) {
   return showKpiBreakdownDialog(
     context: context,
     title: "Today's Sales",
-    subtitle: 'Breakdown by payment status',
+    subtitle: 'Breakdown by payment status and sale type',
     bodyBuilder: _todaysSalesBody,
   );
 }
@@ -67,6 +67,16 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
           label: 'Revenue',
           value: currency.format(total),
           color: Colors.green,
+        ),
+        KpiSummaryChipData(
+          label: 'Memberships',
+          value: currency.format(summary?.membershipTotal ?? 0),
+          color: Colors.purple,
+        ),
+        KpiSummaryChipData(
+          label: 'Walk-ins',
+          value: currency.format(summary?.walkInTotal ?? 0),
+          color: Colors.indigo,
         ),
         KpiSummaryChipData(
           label: 'Transactions',
