@@ -11,6 +11,7 @@ import 'pending_redirect_provider.dart';
 import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
+import 'routes/sales.routes.dart';
 
 /// Utility functions for router configuration.
 abstract class RouterUtils {
@@ -53,6 +54,11 @@ abstract class RouterUtils {
     // Use uri.path: unmatched locations may not set matchedLocation.
     if (state.uri.path == legacyCheckInRecordsPath) {
       return CheckInRecordsRoute.path;
+    }
+
+    // Cashier is dashboard-dialog only — redirect standalone /cashier.
+    if (state.uri.path == SalesRoute.path) {
+      return DashboardRoute.path;
     }
 
     // Check if this route should skip auth check

@@ -24,7 +24,7 @@ void main() {
 
         expect(ids, contains(AppNavId.dashboard));
         expect(ids, contains(AppNavId.checkIn));
-        expect(ids, contains(AppNavId.cashier));
+        expect(ids, isNot(contains(AppNavId.cashier)));
         expect(ids, contains(AppNavId.sales));
         expect(ids, contains(AppNavId.products));
         expect(ids, contains(AppNavId.members));
@@ -99,14 +99,17 @@ void main() {
       expect(canAccessPath('/outbox', staff), isFalse);
     });
 
-    test('allows appearance and camera but not other system tabs for staff', () {
-      expect(canAccessPath('/system', staff), isTrue);
-      expect(canAccessPath('/system/appearance', staff), isTrue);
-      expect(canAccessPath('/system/camera', staff), isTrue);
-      expect(canAccessPath('/system/product-categories', staff), isFalse);
-      expect(canAccessPath('/system/printers', staff), isFalse);
-      expect(canAccessPath('/system/activity-log', staff), isFalse);
-    });
+    test(
+      'allows appearance and camera but not other system tabs for staff',
+      () {
+        expect(canAccessPath('/system', staff), isTrue);
+        expect(canAccessPath('/system/appearance', staff), isTrue);
+        expect(canAccessPath('/system/camera', staff), isTrue);
+        expect(canAccessPath('/system/product-categories', staff), isFalse);
+        expect(canAccessPath('/system/printers', staff), isFalse);
+        expect(canAccessPath('/system/activity-log', staff), isFalse);
+      },
+    );
 
     test('allows appearance and camera without settings.view', () {
       const noSettings = CurrentUserPermissions(
@@ -194,13 +197,16 @@ void main() {
   });
 
   group('CurrentUserPermissions', () {
-    test('isAdmin grants has() checks but not sales void without sales.void', () {
-      const perms = CurrentUserPermissions(isAdmin: true);
-      expect(perms.has(Permissions.salesVoid), isTrue);
-      expect(perms.canVoidSales, isFalse);
-      expect(perms.canEditProductQuantity, isTrue);
-      expect(perms.canViewActivityLog, isTrue);
-    });
+    test(
+      'isAdmin grants has() checks but not sales void without sales.void',
+      () {
+        const perms = CurrentUserPermissions(isAdmin: true);
+        expect(perms.has(Permissions.salesVoid), isTrue);
+        expect(perms.canVoidSales, isFalse);
+        expect(perms.canEditProductQuantity, isTrue);
+        expect(perms.canViewActivityLog, isTrue);
+      },
+    );
 
     test('canEditProductQuantity requires products.editQuantity or admin', () {
       const withPerm = CurrentUserPermissions(

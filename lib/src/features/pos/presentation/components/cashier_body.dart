@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/pos_group.dart';
 import 'cashier_cart_bar.dart';
+import 'cashier_check_in_strip.dart';
 import 'cashier_search_dropdown.dart';
 import 'cart_view.dart';
 import 'grouped_cashier_view.dart';
@@ -77,6 +78,7 @@ class _DesktopCashierBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              CashierCheckInStrip(dense: compactSearch),
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   compactSearch ? 8 : 12,
@@ -126,6 +128,7 @@ class _MobileCashierBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        CashierCheckInStrip(dense: compactSearch),
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
           child: CashierSearchDropdown(isDense: compactSearch),
