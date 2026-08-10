@@ -18,6 +18,7 @@ import '../controllers/todays_sales_controller.dart';
 import 'kpi_breakdown_dialog.dart';
 import 'sale_quick_view_dialog.dart';
 import 'today_sale_list_tile.dart';
+import 'todays_sales_breakdown_header.dart';
 
 /// Opens today's full transactions dialog (View All from Recent Transactions).
 Future<void> showTodaysTransactionsDialog(BuildContext context) {
@@ -33,7 +34,7 @@ Future<void> showTodaysSalesBreakdownDialog(BuildContext context) {
   return showKpiBreakdownDialog(
     context: context,
     title: "Today's Sales",
-    subtitle: 'Breakdown by payment status and sale type',
+    subtitle: 'Revenue by sale type and payment status',
     bodyBuilder: _todaysSalesBody,
   );
 }
@@ -46,6 +47,7 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
   final branches = ref.watch(branchesControllerProvider).value ?? const [];
   final labels = branchLabelMaps(branches);
   final summary = summaryAsync.value;
+  final theme = Theme.of(context);
 
   return KpiBreakdownListBody<Sale>(
     asyncValue: salesAsync,
@@ -55,52 +57,41 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
       ref.invalidate(todaySalesProvider);
       ref.invalidate(todaySalesSummaryProvider);
     },
-    summaryBuilder: (sales) {
+    listHeader: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        'Transactions',
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    summaryHeaderBuilder: (sales) {
       // Prefer server aggregate for totals; list is capped at 50.
       final total = summary?.total ??
           sales.fold<num>(0, (sum, s) => sum + s.totalAmount);
       final txnCount = summary?.count ?? sales.length;
       final paid = sales.where((s) => s.isPaid).length;
       final unpaid = sales.length - paid;
-      return [
-        KpiSummaryChipData(
-          label: 'Revenue',
-          value: currency.format(total),
-          color: Colors.green,
-        ),
-        KpiSummaryChipData(
-          label: 'Memberships',
-          value: currency.format(summary?.membershipTotal ?? 0),
-          color: Colors.purple,
-        ),
-        KpiSummaryChipData(
-          label: 'Walk-ins',
-          value: currency.format(summary?.walkInTotal ?? 0),
-          color: Colors.indigo,
-        ),
-        KpiSummaryChipData(
-          label: 'Transactions',
-          value: txnCount.toString(),
-          color: Colors.green.shade700,
-        ),
-        KpiSummaryChipData(
-          label: 'Paid',
-          value: paid.toString(),
-          color: Colors.teal,
-        ),
-        KpiSummaryChipData(
-          label: 'Unpaid',
-          value: unpaid.toString(),
-          color: Colors.orange,
-        ),
-        if (viewingAll)
-          ..._branchSalesChips(
-            rows: summary?.byBranch ?? const [],
-            codeById: labels.codeById,
-            nameById: labels.nameById,
-            fallbackBranchIds: sales.map((s) => s.branchId),
-          ),
-      ];
+
+      return TodaysSalesBreakdownHeader(
+        revenueLabel: currency.format(total),
+        transactionCount: txnCount,
+        membershipTotalLabel: currency.format(summary?.membershipTotal ?? 0),
+        membershipCount: summary?.membershipCount ?? 0,
+        walkInTotalLabel: currency.format(summary?.walkInTotal ?? 0),
+        walkInCount: summary?.walkInCount ?? 0,
+        paidCount: paid,
+        unpaidCount: unpaid,
+        branchChips: viewingAll
+            ? _branchSalesLabels(
+                rows: summary?.byBranch ?? const [],
+                codeById: labels.codeById,
+                nameById: labels.nameById,
+                fallbackBranchIds: sales.map((s) => s.branchId),
+              )
+            : const [],
+      );
     },
     itemBuilder: (context, sale) {
       final code = viewingAll ? labels.codeById[sale.branchId] : null;
@@ -409,7 +400,7 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
   );
 }
 
-List<KpiSummaryChipData> _branchSalesChips({
+List<String> _branchSalesLabels({
   required List<TodaysSalesBranchRow> rows,
   required Map<String, String> codeById,
   required Map<String, String> nameById,
@@ -420,19 +411,31 @@ List<KpiSummaryChipData> _branchSalesChips({
       ..sort((a, b) => b.transactionCount.compareTo(a.transactionCount));
     return [
       for (final row in sorted)
-        KpiSummaryChipData(
-          label: codeById[row.branchId] ?? nameById[row.branchId] ?? row.branchId,
-          value: row.transactionCount.toString(),
-          color: Colors.indigo,
-        ),
+        '${codeById[row.branchId] ?? nameById[row.branchId] ?? row.branchId}'
+        ' · ${row.transactionCount}',
     ];
   }
-  return _branchCountChips(
-    branchIds: fallbackBranchIds,
-    codeById: codeById,
-    nameById: nameById,
-    color: Colors.indigo,
-  );
+
+  final counts = <String, int>{};
+  for (final id in fallbackBranchIds) {
+    if (id.isEmpty) continue;
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  if (counts.isEmpty) return const [];
+
+  final entries = counts.entries.toList()
+    ..sort((a, b) {
+      final byCount = b.value.compareTo(a.value);
+      if (byCount != 0) return byCount;
+      final aLabel = codeById[a.key] ?? nameById[a.key] ?? a.key;
+      final bLabel = codeById[b.key] ?? nameById[b.key] ?? b.key;
+      return aLabel.compareTo(bLabel);
+    });
+
+  return [
+    for (final e in entries)
+      '${codeById[e.key] ?? nameById[e.key] ?? e.key} · ${e.value}',
+  ];
 }
 
 List<KpiSummaryChipData> _branchCountChips({
