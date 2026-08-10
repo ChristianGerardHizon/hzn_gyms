@@ -17,20 +17,18 @@ void main() {
       );
     }
 
-    test('returns false for renewals even when a sale exists', () {
+    test('returns true when a sale exists (purchase or renew)', () {
       expect(
         shouldOpenRecordPaymentAfterPurchase(
-          isRenewal: true,
           result: result(sale: buildSale()),
         ),
-        isFalse,
+        isTrue,
       );
     });
 
     test('returns false when excluded from sales', () {
       expect(
         shouldOpenRecordPaymentAfterPurchase(
-          isRenewal: false,
           result: result(),
         ),
         isFalse,
@@ -40,27 +38,15 @@ void main() {
     test('returns false when queued offline', () {
       expect(
         shouldOpenRecordPaymentAfterPurchase(
-          isRenewal: false,
           result: result(sale: buildSale(), queuedOffline: true),
         ),
         isFalse,
       );
     });
 
-    test('returns true for a normal purchase with a sale', () {
-      expect(
-        shouldOpenRecordPaymentAfterPurchase(
-          isRenewal: false,
-          result: result(sale: buildSale()),
-        ),
-        isTrue,
-      );
-    });
-
     test('returns false when sale is missing without excluded flag', () {
       expect(
         shouldOpenRecordPaymentAfterPurchase(
-          isRenewal: false,
           result: MembershipPurchaseResult(
             sale: null,
             totalPrice: 100,

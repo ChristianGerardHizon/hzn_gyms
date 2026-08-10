@@ -69,12 +69,10 @@ String membershipRenewalSuccessMessage({
   return 'Membership renewed successfully';
 }
 
-/// Whether the purchase flow should open [showRecordPaymentDialog].
+/// Whether the purchase/renew flow should open [showRecordPaymentDialog].
 bool shouldOpenRecordPaymentAfterPurchase({
-  required bool isRenewal,
   required MembershipPurchaseResult result,
 }) {
-  if (isRenewal) return false;
   if (result.excludedFromSales) return false;
   if (result.queuedOffline) return false;
   return result.sale != null;
@@ -104,20 +102,16 @@ Future<bool> purchaseMembershipAndRecordPayment(
   ref.invalidate(memberMembershipsControllerProvider(memberId));
   refreshDashboardAfterMemberChange(ref);
 
-  if (isRenewal) {
-    if (context.mounted) {
+  if (result.excludedFromSales) {
+    if (isRenewal && context.mounted) {
       showSuccessSnackBar(
         context,
         message: membershipRenewalSuccessMessage(
           queuedOffline: result.queuedOffline,
-          excludedFromSales: result.excludedFromSales,
+          excludedFromSales: true,
         ),
       );
     }
-    return true;
-  }
-
-  if (result.excludedFromSales) {
     return true;
   }
 
@@ -125,13 +119,18 @@ Future<bool> purchaseMembershipAndRecordPayment(
     if (context.mounted) {
       showInfoSnackBar(
         context,
-        message: 'Membership queued — record payment once synced and online.',
+        message: isRenewal
+            ? membershipRenewalSuccessMessage(
+                queuedOffline: true,
+                excludedFromSales: false,
+              )
+            : 'Membership queued — record payment once synced and online.',
       );
     }
     return true;
   }
 
-  if (!shouldOpenRecordPaymentAfterPurchase(isRenewal: isRenewal, result: result)) {
+  if (!shouldOpenRecordPaymentAfterPurchase(result: result)) {
     return true;
   }
 
