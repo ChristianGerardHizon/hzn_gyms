@@ -105,6 +105,7 @@ class CashierDialog extends ConsumerWidget {
                   groups: groups,
                   isMobile: isMobile,
                   compactSearch: true,
+                  showCheckIn: false,
                 ),
               ),
             ],
