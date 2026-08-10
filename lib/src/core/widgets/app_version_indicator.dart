@@ -32,7 +32,7 @@ class AppVersionIndicator extends ConsumerWidget {
       children: [
         // Connectivity status
         connectivityAsync.when(
-          data: (isOnline) => _ConnectivityStatus(isOnline: isOnline),
+          data: (isOnline) => ConnectivityStatusLabel(isOnline: isOnline),
           loading: () => Text(
             'Checking…',
             style: theme.textTheme.bodySmall?.copyWith(
@@ -40,7 +40,7 @@ class AppVersionIndicator extends ConsumerWidget {
               fontSize: 10,
             ),
           ),
-          error: (_, __) => const _ConnectivityStatus(isOnline: false),
+          error: (_, __) => const ConnectivityStatusLabel(isOnline: false),
         ),
         const SizedBox(height: 4),
 
@@ -106,8 +106,9 @@ class AppVersionIndicator extends ConsumerWidget {
   }
 }
 
-class _ConnectivityStatus extends StatelessWidget {
-  const _ConnectivityStatus({required this.isOnline});
+/// Compact online/offline pill used under version labels and in headers.
+class ConnectivityStatusLabel extends StatelessWidget {
+  const ConnectivityStatusLabel({super.key, required this.isOnline});
 
   final bool isOnline;
 
