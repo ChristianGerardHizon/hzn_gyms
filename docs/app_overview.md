@@ -589,6 +589,7 @@ lib/src/
 | Aug 7 | Branch detail + required fields | Branch detail shows all edit fields (incl. code); create/edit only requires Name and Code, with helper text for the pill code |
 | Aug 11 | Sales KPI Products split | Today's Sales dialog and Sales report KPIs/PDF show Walk-ins, Memberships, and Products line revenue (add-ons stay in pie chart only) |
 | Aug 11 | Sales report KPI hierarchy | Sales report features Memberships / Walk-ins / Products as hero cards; cash collected and unpaid metrics sit in a compact secondary row |
+| Aug 12 | Sales report KPI sale counts | Hero Memberships / Walk-ins / Products cards show distinct sale counts; PDF KPIs include count beside amount |
 | Aug 7 | Sale list row redesign | Sales/dashboard rows use a three-zone layout (title+short subtitle, aligned branch pill, fixed amount + status) for better mobile readability |
 | Aug 7 | Void stock adjustment | Product Adjustments tab can void manual adjustments (reverse qty + audit row); sale-linked rows stay sale-only; requires `inventory.adjust` |
 | Aug 7 | Inventory alerts layout | Dashboard inventory alerts are side-by-side on tablet+ and single-column on mobile |

@@ -200,15 +200,17 @@ class ReportsRepositoryImpl implements ReportsRepository {
           .map((r) => r.saleId)
           .toSet();
 
-      final itemRows = itemRecords.map(
-        (item) => (
-          saleId: item.getStringValue('sale'),
-          name: item.getStringValue('productName'),
-          itemType: item.getStringValue('itemType'),
-          quantity: item.getDoubleValue('quantity'),
-          subtotal: item.getDoubleValue('subtotal'),
-        ),
-      );
+      final itemRows = itemRecords
+          .map(
+            (item) => (
+              saleId: item.getStringValue('sale'),
+              name: item.getStringValue('productName'),
+              itemType: item.getStringValue('itemType'),
+              quantity: item.getDoubleValue('quantity'),
+              subtotal: item.getDoubleValue('subtotal'),
+            ),
+          )
+          .toList(growable: false);
 
       final topProducts =
           aggregateTopSellingItems(
@@ -234,12 +236,19 @@ class ReportsRepositoryImpl implements ReportsRepository {
               .take(10)
               .toList();
 
-      final revenueByItemType = aggregateScopedRevenueByItemType(
+      final itemTypeMetrics = aggregateScopedItemTypeMetrics(
         itemRows.map(
-          (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: i.subtotal),
+          (i) => (
+            saleId: i.saleId,
+            itemType: i.itemType,
+            subtotal: i.subtotal,
+          ),
         ),
         reportableSaleIds,
       );
+      final revenueByItemType = itemTypeMetrics.revenueByItemType;
+      final transactionCountByItemType =
+          itemTypeMetrics.transactionCountByItemType;
 
       final avgValue = kpis.transactionCount > 0
           ? kpis.totalRevenue / kpis.transactionCount
@@ -258,6 +267,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByPaymentMethod: kpis.revenueByPaymentMethod,
         topSellingProducts: topProducts,
         revenueByItemType: revenueByItemType,
+        transactionCountByItemType: transactionCountByItemType,
       );
 
       final unpaid = aggregateUnpaidSales(
@@ -404,6 +414,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
               .toList();
 
       final revenueByItemType = <String, num>{};
+      final transactionCountByItemType = <String, int>{};
       for (final record in itemTypeRecords) {
         final type = record.getStringValue('itemType');
         // Historical walk-in rows may still be typed as membership/addon with
@@ -413,6 +424,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByItemType[key] =
             (revenueByItemType[key] ?? 0) +
             record.getDoubleValue('total_revenue');
+        transactionCountByItemType[key] =
+            (transactionCountByItemType[key] ?? 0) +
+            _transactionCountFromViewRecord(record);
       }
 
       final revenueTrend = zeroFillBuckets(
@@ -430,6 +444,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByPaymentMethod: revenueByPaymentMethod,
         topSellingProducts: topProducts.take(10).toList(),
         revenueByItemType: revenueByItemType,
+        transactionCountByItemType: transactionCountByItemType,
       );
     }, Failure.handle).run();
   }
@@ -1059,5 +1074,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
       checkInsByHour: aggregateCheckInsByHour(times),
       withoutActiveMembershipCount: withoutMembership,
     );
+  }
+
+  /// Reads `transaction_count` from a revenue-by-item-type view row.
+  ///
+  /// Prefers int, then falls back to double (SQLite/JSON may surface either).
+  static int _transactionCountFromViewRecord(RecordModel record) {
+    final asInt = record.getIntValue('transaction_count');
+    if (asInt != 0) return asInt;
+    return record.getDoubleValue('transaction_count').round();
   }
 }

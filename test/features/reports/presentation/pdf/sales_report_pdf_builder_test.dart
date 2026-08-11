@@ -91,6 +91,12 @@ void main() {
             'walkIn': 200,
             'addon': 50,
           },
+          transactionCountByItemType: {
+            'product': 4,
+            'membership': 2,
+            'walkIn': 5,
+            'addon': 1,
+          },
         ),
         period: period,
         currencyFormat: currencyFormat,
@@ -98,9 +104,18 @@ void main() {
 
       expect(data.kpiData['Total Revenue'], currencyFormat.format(1500));
       expect(data.kpiData['Transactions'], '3');
-      expect(data.kpiData['Walk-ins'], currencyFormat.format(200));
-      expect(data.kpiData['Memberships'], currencyFormat.format(900));
-      expect(data.kpiData['Products'], currencyFormat.format(400));
+      expect(
+        data.kpiData['Walk-ins'],
+        '${currencyFormat.format(200)} · 5 sales',
+      );
+      expect(
+        data.kpiData['Memberships'],
+        '${currencyFormat.format(900)} · 2 sales',
+      );
+      expect(
+        data.kpiData['Products'],
+        '${currencyFormat.format(400)} · 4 sales',
+      );
       expect(data.kpiData['Unpaid Sales'], '1');
       expect(data.kpiData['Unpaid Balance'], currencyFormat.format(200));
       expect(data.kpiData.keys.take(3).toList(), [
