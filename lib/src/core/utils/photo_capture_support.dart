@@ -98,6 +98,66 @@ CameraDescription selectPreferredCamera(
   return cameras.first;
 }
 
+/// Settle delay after disposing a camera so the OS can release exclusive locks.
+const Duration cameraDisposeSettleDelay = Duration(milliseconds: 350);
+
+/// Max attempts on the same resolution when the camera is busy / aborted.
+const int cameraBusyRetryAttempts = 3;
+
+/// Whether [error] indicates the camera is busy, aborted, or not readable.
+bool isCameraBusyOrAbortError(Object error) {
+  if (error is! CameraException) return false;
+  final code = error.code.toLowerCase();
+  final description = (error.description ?? '').toLowerCase();
+  return code.contains('abort') ||
+      code.contains('notreadable') ||
+      description.contains('abort') ||
+      description.contains('not readable') ||
+      description.contains('prevented the camera') ||
+      description.contains('trackstart');
+}
+
+/// Whether [error] means the requested constraints cannot be satisfied.
+bool isCameraOverconstrainedError(Object error) {
+  if (error is! CameraException) return false;
+  final code = error.code.toLowerCase();
+  final description = (error.description ?? '').toLowerCase();
+  return code.contains('overconstrained') ||
+      description.contains('overconstrained');
+}
+
+/// How to proceed after a failed [CameraController.initialize] attempt.
+enum CameraInitRetryAction {
+  /// Retry the same resolution after dispose + settle.
+  retrySamePreset,
+
+  /// Try the next (usually higher) resolution preset.
+  advancePreset,
+
+  /// Stop trying; surface the error to the caller.
+  fail,
+}
+
+/// Classifies a camera init failure for retry / preset escalation.
+CameraInitRetryAction classifyCameraInitFailure(Object error) {
+  if (isCameraBusyOrAbortError(error)) {
+    return CameraInitRetryAction.retrySamePreset;
+  }
+  if (isCameraOverconstrainedError(error)) {
+    return CameraInitRetryAction.advancePreset;
+  }
+  return CameraInitRetryAction.fail;
+}
+
+/// Disposes [controller] and waits briefly on web for the device lock to clear.
+Future<void> disposeCameraController(CameraController? controller) async {
+  if (controller == null) return;
+  await controller.dispose();
+  if (kIsWeb) {
+    await Future<void>.delayed(cameraDisposeSettleDelay);
+  }
+}
+
 /// User-facing message for camera initialization failures.
 String formatCameraInitError(Object error) {
   if (error is CameraException) {
@@ -108,15 +168,14 @@ String formatCameraInitError(Object error) {
       return 'Camera access was blocked. In Chrome, click the lock icon in the '
           'address bar, set Camera to Allow, then try again.';
     }
-    if (code.contains('notreadable') || description.contains('not readable')) {
-      return 'Camera is in use by another app. Close other apps using the '
-          'camera, then try again.';
+    if (isCameraBusyOrAbortError(error)) {
+      return 'Camera could not start (device busy or interrupted). Close other '
+          'apps/tabs using the camera, then tap Try again.';
     }
     if (code.contains('notfound') || description.contains('not found')) {
       return 'No camera found on this device.';
     }
-    if (code.contains('overconstrained') ||
-        description.contains('overconstrained')) {
+    if (isCameraOverconstrainedError(error)) {
       return 'Could not use this camera at the requested quality. Try again or '
           'upload a photo instead.';
     }
@@ -130,7 +189,11 @@ String formatCameraInitError(Object error) {
       'a photo instead.';
 }
 
-/// Creates and initializes a [CameraController], retrying lower presets on web.
+/// Creates and initializes a [CameraController].
+///
+/// On web, starts at [ResolutionPreset.low] and only advances to higher presets
+/// on overconstrained errors. Busy/abort errors retry the same preset after a
+/// dispose settle delay instead of escalating constraints.
 Future<CameraController> createInitializedCameraController(
   CameraDescription camera, {
   bool enableAudio = false,
@@ -144,18 +207,41 @@ Future<CameraController> createInitializedCameraController(
       : [ResolutionPreset.medium];
 
   Object? lastError;
-  for (final preset in presets) {
-    final controller = CameraController(
-      camera,
-      preset,
-      enableAudio: enableAudio,
-    );
-    try {
-      await controller.initialize();
-      return controller;
-    } catch (error) {
-      lastError = error;
-      await controller.dispose();
+  var presetIndex = 0;
+
+  while (presetIndex < presets.length) {
+    final preset = presets[presetIndex];
+    var busyAttempts = 0;
+
+    while (true) {
+      final controller = CameraController(
+        camera,
+        preset,
+        enableAudio: enableAudio,
+      );
+      try {
+        await controller.initialize();
+        return controller;
+      } catch (error) {
+        lastError = error;
+        await disposeCameraController(controller);
+
+        final action = classifyCameraInitFailure(error);
+        switch (action) {
+          case CameraInitRetryAction.retrySamePreset:
+            busyAttempts++;
+            if (busyAttempts >= cameraBusyRetryAttempts) {
+              Error.throwWithStackTrace(error, StackTrace.current);
+            }
+          case CameraInitRetryAction.advancePreset:
+            presetIndex++;
+          case CameraInitRetryAction.fail:
+            Error.throwWithStackTrace(error, StackTrace.current);
+        }
+        if (action == CameraInitRetryAction.advancePreset) {
+          break;
+        }
+      }
     }
   }
 
