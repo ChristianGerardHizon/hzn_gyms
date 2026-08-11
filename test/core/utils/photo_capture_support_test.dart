@@ -241,12 +241,101 @@ void main() {
     });
   });
 
+  group('isCameraBusyOrAbortError', () {
+    test('is true for abort and notReadable codes', () {
+      expect(
+        isCameraBusyOrAbortError(
+          CameraException('cameraAbort', 'Some problem occurred'),
+        ),
+        isTrue,
+      );
+      expect(
+        isCameraBusyOrAbortError(
+          CameraException('cameraNotReadable', 'not readable'),
+        ),
+        isTrue,
+      );
+    });
+
+    test('is false for permission errors', () {
+      expect(
+        isCameraBusyOrAbortError(
+          CameraException('CameraAccessDenied', 'Permission denied'),
+        ),
+        isFalse,
+      );
+    });
+
+    test('is false for non-CameraException', () {
+      expect(isCameraBusyOrAbortError(Exception('nope')), isFalse);
+    });
+  });
+
+  group('classifyCameraInitFailure', () {
+    test('retries same preset for busy/abort', () {
+      expect(
+        classifyCameraInitFailure(
+          CameraException(
+            'cameraAbort',
+            'Some problem occurred that prevented the camera from being used.',
+          ),
+        ),
+        CameraInitRetryAction.retrySamePreset,
+      );
+    });
+
+    test('advances preset for overconstrained', () {
+      expect(
+        classifyCameraInitFailure(
+          CameraException('cameraOverconstrained', 'overconstrained'),
+        ),
+        CameraInitRetryAction.advancePreset,
+      );
+    });
+
+    test('fails for permission and other errors', () {
+      expect(
+        classifyCameraInitFailure(
+          CameraException('CameraAccessDenied', 'Permission denied'),
+        ),
+        CameraInitRetryAction.fail,
+      );
+      expect(
+        classifyCameraInitFailure(Exception('unknown')),
+        CameraInitRetryAction.fail,
+      );
+    });
+  });
+
   group('formatCameraInitError', () {
     test('maps permission errors to browser guidance', () {
       final error = CameraException('permissionDenied', 'Permission denied');
       expect(
         formatCameraInitError(error),
         contains('lock icon'),
+      );
+    });
+
+    test('maps abort errors to busy/retry guidance', () {
+      final error = CameraException(
+        'cameraAbort',
+        'Some problem occurred that prevented the camera from being used.',
+      );
+      expect(
+        formatCameraInitError(error),
+        contains('device busy or interrupted'),
+      );
+      expect(
+        formatCameraInitError(error),
+        isNot(contains('Some problem occurred')),
+      );
+    });
+
+    test('maps notReadable to busy/retry guidance', () {
+      final error = CameraException('cameraNotReadable', 'not readable');
+      expect(
+        formatCameraInitError(error),
+        contains('device busy or interrupted'),
       );
     });
 

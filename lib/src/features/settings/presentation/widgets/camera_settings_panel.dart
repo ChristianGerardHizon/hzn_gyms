@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/packages/sentry/report_camera_failure.dart';
 import '../../../../core/utils/photo_capture_support.dart';
 import '../controllers/camera_preference_controller.dart';
 
@@ -30,7 +31,8 @@ class CameraSettingsPanel extends HookConsumerWidget {
       camerasError.value = null;
       try {
         cameras.value = await availableCameras();
-      } catch (e) {
+      } catch (e, stackTrace) {
+        await reportCameraFailure(e, stackTrace, phase: 'enumerate');
         camerasError.value = formatCameraInitError(e);
         cameras.value = const [];
       } finally {
