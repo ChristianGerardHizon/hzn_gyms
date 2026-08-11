@@ -69,17 +69,23 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     bool isSessionCancelled() =>
         panelDisposed.value || !isActiveRef.value;
 
+    /// Serializes controller disposal so init always waits for prior releases.
+    Future<void> enqueueControllerDispose(CameraController? controller) {
+      if (controller == null) return releaseChain.value;
+      final release = releaseChain.value
+          .then((_) => disposeCameraController(controller))
+          .catchError((_) {});
+      releaseChain.value = release;
+      return release;
+    }
+
     Future<void> releaseCamera() {
       final generation = ++sessionGeneration.value;
       final controller = cameraController.value;
       cameraController.value = null;
       cameraStarted.value = false;
 
-      final release = () async {
-        await disposeCameraController(controller);
-      }();
-      releaseChain.value = release.catchError((_) {});
-      return releaseChain.value.then((_) {
+      return enqueueControllerDispose(controller).then((_) {
         // Ignore if a newer session already started.
         if (generation != sessionGeneration.value) return;
       });
@@ -129,7 +135,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
           enableAudio: false,
         );
         if (isStale()) {
-          await disposeCameraController(controller);
+          await enqueueControllerDispose(controller);
           return;
         }
 
@@ -275,10 +281,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     }
 
     Future<void> applyCaptured(CapturedPhoto captured) async {
-      final controller = cameraController.value;
-      cameraController.value = null;
-      sessionGeneration.value++;
-      await disposeCameraController(controller);
+      await releaseCamera();
 
       photoBytes.value = captured.bytes;
       selectedPhoto.value = captured.file;
@@ -332,9 +335,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
         final captured = await processPickedOrCapturedImage(image);
         if (captured == null) return;
 
-        cameraController.value = null;
-        sessionGeneration.value++;
-        await disposeCameraController(controller);
+        await releaseCamera();
 
         photoBytes.value = captured.bytes;
         selectedPhoto.value = captured.file;
