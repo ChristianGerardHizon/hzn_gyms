@@ -55,16 +55,22 @@ ReportPdfData buildSalesReportPdfData({
     );
   }
 
-  final typeTotals = primarySalesItemTypeTotals(report.revenueByItemType);
+  final typeTotals = primarySalesItemTypeTotals(
+    report.revenueByItemType,
+    transactionCountByItemType: report.transactionCountByItemType,
+  );
+
+  String typeKpi(num total, int count) =>
+      '${currencyFormat.format(total)} · ${salesCountLabel(count)}';
 
   return ReportPdfData(
     reportTitle: 'Sales Report',
     period: period,
     generatedAt: generated,
     kpiData: {
-      'Memberships': currencyFormat.format(typeTotals.membershipTotal),
-      'Walk-ins': currencyFormat.format(typeTotals.walkInTotal),
-      'Products': currencyFormat.format(typeTotals.productTotal),
+      'Memberships': typeKpi(typeTotals.membershipTotal, typeTotals.membershipCount),
+      'Walk-ins': typeKpi(typeTotals.walkInTotal, typeTotals.walkInCount),
+      'Products': typeKpi(typeTotals.productTotal, typeTotals.productCount),
       'Total Revenue': currencyFormat.format(report.totalRevenue),
       'Transactions': report.transactionCount.toString(),
       'Avg Transaction': currencyFormat.format(report.averageTransactionValue),

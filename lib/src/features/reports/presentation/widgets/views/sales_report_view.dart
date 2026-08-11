@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -21,7 +22,7 @@ import '../report_kpi_grid.dart';
 import '../report_no_data_card.dart';
 
 /// View displaying the sales report with charts and tables.
-class SalesReportView extends ConsumerWidget {
+class SalesReportView extends HookConsumerWidget {
   const SalesReportView({super.key});
 
   static final _currencyFormat = NumberFormat.currency(symbol: '₱');
@@ -31,11 +32,22 @@ class SalesReportView extends ConsumerWidget {
     final reportAsync = ref.watch(salesReportProvider);
     final extrasAsync = ref.watch(salesReportExtrasProvider);
     final period = ref.watch(reportPeriodControllerProvider);
+    final didRefetchForCounts = useRef(false);
 
     return reportAsync.when(
       data: (core) {
         final extras = extrasAsync.value ?? SalesReportExtras.empty;
         final report = core.mergeExtras(extras);
+        // keepAlive can retain a pre-counts report after hot reload; refetch once.
+        final missingCounts = report.transactionCountByItemType == null &&
+            report.revenueByItemType.isNotEmpty;
+        if (missingCounts && !didRefetchForCounts.value) {
+          didRefetchForCounts.value = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.invalidate(scopedSalesReportBundleProvider);
+            ref.invalidate(salesReportProvider);
+          });
+        }
         final extrasLoading = extrasAsync.isLoading;
         return _buildContent(
           context,
@@ -233,7 +245,10 @@ class SalesReportView extends ConsumerWidget {
     SalesReport report, {
     required bool extrasLoading,
   }) {
-    final typeTotals = primarySalesItemTypeTotals(report.revenueByItemType);
+    final typeTotals = primarySalesItemTypeTotals(
+      report.revenueByItemType,
+      transactionCountByItemType: report.transactionCountByItemType,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -247,7 +262,7 @@ class SalesReportView extends ConsumerWidget {
               value: _currencyFormat.format(typeTotals.membershipTotal),
               icon: Icons.card_membership_outlined,
               color: Colors.purple,
-              subtitle: 'Membership line revenue',
+              subtitle: salesCountLabel(typeTotals.membershipCount),
               featured: true,
             ),
             ReportKpiCard(
@@ -255,7 +270,7 @@ class SalesReportView extends ConsumerWidget {
               value: _currencyFormat.format(typeTotals.walkInTotal),
               icon: Icons.directions_walk_outlined,
               color: Colors.indigo,
-              subtitle: 'Day-pass line revenue',
+              subtitle: salesCountLabel(typeTotals.walkInCount),
               featured: true,
             ),
             ReportKpiCard(
@@ -263,7 +278,7 @@ class SalesReportView extends ConsumerWidget {
               value: _currencyFormat.format(typeTotals.productTotal),
               icon: Icons.inventory_2_outlined,
               color: Colors.teal,
-              subtitle: 'Product line revenue',
+              subtitle: salesCountLabel(typeTotals.productCount),
               featured: true,
             ),
           ],

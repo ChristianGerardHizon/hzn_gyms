@@ -292,6 +292,30 @@ void main() {
       expect(totals.productTotal, 425);
       expect(totals.membershipTotal, 900);
       expect(totals.walkInTotal, 200);
+      expect(totals.productCount, 0);
+      expect(totals.membershipCount, 0);
+      expect(totals.walkInCount, 0);
+    });
+
+    test('sums transaction counts with revenue; ignores addon counts', () {
+      final totals = primarySalesItemTypeTotals(
+        {
+          'product': 400,
+          'membership': 900,
+          'walkIn': 200,
+          'addon': 50,
+        },
+        transactionCountByItemType: {
+          'product': 4,
+          'membership': 2,
+          'walkIn': 5,
+          'addon': 9,
+          '': 1,
+        },
+      );
+      expect(totals.productCount, 5);
+      expect(totals.membershipCount, 2);
+      expect(totals.walkInCount, 5);
     });
 
     test('returns zeros for empty map', () {
@@ -299,6 +323,68 @@ void main() {
       expect(totals.productTotal, 0);
       expect(totals.membershipTotal, 0);
       expect(totals.walkInTotal, 0);
+      expect(totals.productCount, 0);
+      expect(totals.membershipCount, 0);
+      expect(totals.walkInCount, 0);
+    });
+
+    test('treats null transaction counts as empty', () {
+      final totals = primarySalesItemTypeTotals(
+        {'membership': 100},
+        transactionCountByItemType: null,
+      );
+      expect(totals.membershipTotal, 100);
+      expect(totals.membershipCount, 0);
+    });
+  });
+
+  group('aggregateScopedTransactionCountByItemType', () {
+    test('counts distinct sales per type within reportable set', () {
+      final counts = aggregateScopedTransactionCountByItemType(
+        [
+          (saleId: 's1', itemType: 'membership'),
+          (saleId: 's1', itemType: 'membership'),
+          (saleId: 's2', itemType: 'walkIn'),
+          (saleId: 's3', itemType: 'product'),
+          (saleId: 's4', itemType: 'product'), // excluded
+          (saleId: 's5', itemType: 'addon'),
+        ],
+        {'s1', 's2', 's3', 's5'},
+      );
+      expect(counts['membership'], 1);
+      expect(counts['walkIn'], 1);
+      expect(counts['product'], 1);
+      expect(counts['addon'], 1);
+    });
+  });
+
+  group('aggregateScopedItemTypeMetrics', () {
+    test('returns matching revenue and distinct sale counts together', () {
+      final metrics = aggregateScopedItemTypeMetrics(
+        [
+          (saleId: 's1', itemType: 'membership', subtotal: 500),
+          (saleId: 's1', itemType: 'membership', subtotal: 100),
+          (saleId: 's2', itemType: 'walkIn', subtotal: 150),
+          (saleId: 's3', itemType: 'product', subtotal: 40),
+          (saleId: 's3', itemType: '', subtotal: 10),
+          (saleId: 's4', itemType: 'product', subtotal: 99), // excluded
+        ],
+        {'s1', 's2', 's3'},
+      );
+      expect(metrics.revenueByItemType['membership'], 600);
+      expect(metrics.revenueByItemType['walkIn'], 150);
+      expect(metrics.revenueByItemType['product'], 50);
+      expect(metrics.transactionCountByItemType['membership'], 1);
+      expect(metrics.transactionCountByItemType['walkIn'], 1);
+      expect(metrics.transactionCountByItemType['product'], 1);
+    });
+  });
+
+  group('salesCountLabel', () {
+    test('singular and plural', () {
+      expect(salesCountLabel(1), '1 sale');
+      expect(salesCountLabel(0), '0 sales');
+      expect(salesCountLabel(12), '12 sales');
     });
   });
 

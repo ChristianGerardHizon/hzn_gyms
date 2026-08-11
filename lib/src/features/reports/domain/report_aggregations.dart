@@ -242,11 +242,27 @@ String normalizeSalesItemType(String? itemType) {
 ///
 /// Sums `product` / `membership` / `walkIn` only (add-ons excluded). Empty or
 /// unknown keys that normalize to `product` count toward products.
-({num productTotal, num membershipTotal, num walkInTotal})
-primarySalesItemTypeTotals(Map<String, num> revenueByItemType) {
+///
+/// When [transactionCountByItemType] is provided, sums matching counts the
+/// same way (add-ons excluded).
+({
+  num productTotal,
+  num membershipTotal,
+  num walkInTotal,
+  int productCount,
+  int membershipCount,
+  int walkInCount,
+})
+primarySalesItemTypeTotals(
+  Map<String, num> revenueByItemType, {
+  Map<String, int>? transactionCountByItemType,
+}) {
   num productTotal = 0;
   num membershipTotal = 0;
   num walkInTotal = 0;
+  var productCount = 0;
+  var membershipCount = 0;
+  var walkInCount = 0;
   for (final entry in revenueByItemType.entries) {
     final type = normalizeSalesItemType(entry.key);
     if (type == 'product') {
@@ -257,12 +273,70 @@ primarySalesItemTypeTotals(Map<String, num> revenueByItemType) {
       walkInTotal += entry.value;
     }
   }
+  for (final entry in (transactionCountByItemType ?? const {}).entries) {
+    final type = normalizeSalesItemType(entry.key);
+    if (type == 'product') {
+      productCount += entry.value;
+    } else if (type == 'membership') {
+      membershipCount += entry.value;
+    } else if (type == 'walkIn') {
+      walkInCount += entry.value;
+    }
+  }
   return (
     productTotal: productTotal,
     membershipTotal: membershipTotal,
     walkInTotal: walkInTotal,
+    productCount: productCount,
+    membershipCount: membershipCount,
+    walkInCount: walkInCount,
   );
 }
+
+/// Distinct reportable sales per item type (for period-scoped fetches).
+Map<String, int> aggregateScopedTransactionCountByItemType(
+  Iterable<({String saleId, String? itemType})> items,
+  Set<String> reportableSaleIds,
+) {
+  return aggregateScopedItemTypeMetrics(
+    items.map(
+      (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: 0),
+    ),
+    reportableSaleIds,
+  ).transactionCountByItemType;
+}
+
+/// Item-type revenue + distinct sale counts from period-scoped sale lines.
+///
+/// Only includes lines on [reportableSaleIds]. Keys are normalized the same
+/// way for both maps (`product` / `membership` / `walkIn` / `addon`).
+({
+  Map<String, num> revenueByItemType,
+  Map<String, int> transactionCountByItemType,
+})
+aggregateScopedItemTypeMetrics(
+  Iterable<({String saleId, String? itemType, num subtotal})> items,
+  Set<String> reportableSaleIds,
+) {
+  final revenueByItemType = <String, num>{};
+  final saleIdsByType = <String, Set<String>>{};
+  for (final item in items) {
+    if (!reportableSaleIds.contains(item.saleId)) continue;
+    final type = normalizeSalesItemType(item.itemType);
+    revenueByItemType[type] = (revenueByItemType[type] ?? 0) + item.subtotal;
+    (saleIdsByType[type] ??= <String>{}).add(item.saleId);
+  }
+  return (
+    revenueByItemType: revenueByItemType,
+    transactionCountByItemType: {
+      for (final entry in saleIdsByType.entries) entry.key: entry.value.length,
+    },
+  );
+}
+
+/// Display label for a sale count (e.g. `1 sale`, `12 sales`).
+String salesCountLabel(int count) =>
+    '$count ${count == 1 ? 'sale' : 'sales'}';
 
 /// Whether Day/Week/Month should fetch period-scoped raw rows instead of
 /// all-history SQL views.
@@ -380,11 +454,8 @@ Map<String, num> aggregateScopedRevenueByItemType(
   Iterable<({String saleId, String? itemType, num subtotal})> items,
   Set<String> reportableSaleIds,
 ) {
-  return aggregateRevenueByItemType(
-    items
-        .where((i) => reportableSaleIds.contains(i.saleId))
-        .map((i) => (itemType: i.itemType, subtotal: i.subtotal)),
-  );
+  return aggregateScopedItemTypeMetrics(items, reportableSaleIds)
+      .revenueByItemType;
 }
 
 /// Counts unpaid / AR sales (excludes voided and legacy refunded).
