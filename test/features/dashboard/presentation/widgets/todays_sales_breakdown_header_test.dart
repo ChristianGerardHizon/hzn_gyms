@@ -16,6 +16,8 @@ void main() {
             membershipCount: 3,
             walkInTotalLabel: '₱0.00',
             walkInCount: 0,
+            productTotalLabel: '₱250.00',
+            productCount: 2,
             paidCount: 3,
             unpaidCount: 0,
             branchChips: ['BCD · 2', 'TAL · 1'],
@@ -29,6 +31,9 @@ void main() {
     expect(find.text('3 sales'), findsNWidgets(2)); // hero + memberships
     expect(find.text('Memberships'), findsOneWidget);
     expect(find.text('Walk-ins'), findsOneWidget);
+    expect(find.text('Products'), findsOneWidget);
+    expect(find.text('₱250.00'), findsOneWidget);
+    expect(find.text('2 sales'), findsOneWidget);
     expect(find.text('0 sales'), findsOneWidget);
     expect(find.text('3 Paid'), findsOneWidget);
     expect(find.text('0 Unpaid'), findsOneWidget);

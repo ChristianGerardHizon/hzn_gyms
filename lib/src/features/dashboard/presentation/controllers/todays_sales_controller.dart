@@ -39,7 +39,7 @@ Future<List<Sale>> todaySales(Ref ref) async {
 /// Today's sales summary (count and total amount).
 /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
 /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
-/// Membership / walk-in totals come from [PocketBaseCollections.vwRevenueByItemType].
+/// Membership / walk-in / product totals come from [PocketBaseCollections.vwRevenueByItemType].
 /// Filtered by the current branch.
 @riverpod
 Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
@@ -91,7 +91,9 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
     rows,
     membershipTotal: itemTypeTotals.membershipTotal,
     walkInTotal: itemTypeTotals.walkInTotal,
+    productTotal: itemTypeTotals.productTotal,
     membershipCount: itemTypeTotals.membershipCount,
     walkInCount: itemTypeTotals.walkInCount,
+    productCount: itemTypeTotals.productCount,
   );
 }

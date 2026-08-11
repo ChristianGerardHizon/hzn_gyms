@@ -176,7 +176,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 **Tabs:**
 - Period selector: **Day** (single calendar date; lists each sale and opens sale detail on tap), **Week** (Mon–Sun From/To), **Month** (calendar months), **Year** (calendar years), **All Time** (years from 2019)
 - Trend charts for Week / Month / Year / All Time (hidden on Day — use peak hours for attendance instead)
-- **Sales** — cash collected, revenue by item type (product / membership / walk-in / add-on), payment methods, top selling items (products + memberships + guest day-pass), unpaid (AR), staff performance
+- **Sales** — cash collected, revenue by item type (product / membership / walk-in / add-on), featured KPI cards for Memberships / Walk-ins / Products with compact cash/AR sub-details, payment methods, top selling items (products + memberships + guest day-pass), unpaid (AR), staff performance
 - **Inventory** — stock status, low stock, expiration alerts, inventory value (via SQL views)
 - **Members & Memberships** — new members, active base, renewals vs new, expiring soon, churn/lapse, plan mix; plan value sold (labeled separately from cash collected); excludes walk-in / guest (`memberNotRequired` / `walkIn`) plans
 - **Attendance** — check-ins trend (non-Day), unique members, method mix; peak hours on Day only
@@ -587,6 +587,8 @@ lib/src/
 | Aug 7 | Member list row redesign | Members/picker rows use avatar + name/phone on the left and dense branch-activity chips on the right; empty activity uses a muted None chip |
 | Aug 7 | Branch pill color presets | Branches can pick a pill color (teal/blue/indigo/purple/pink/orange/green/cyan); used on BranchCodePill and membership/member branch chips |
 | Aug 7 | Branch detail + required fields | Branch detail shows all edit fields (incl. code); create/edit only requires Name and Code, with helper text for the pill code |
+| Aug 11 | Sales KPI Products split | Today's Sales dialog and Sales report KPIs/PDF show Walk-ins, Memberships, and Products line revenue (add-ons stay in pie chart only) |
+| Aug 11 | Sales report KPI hierarchy | Sales report features Memberships / Walk-ins / Products as hero cards; cash collected and unpaid metrics sit in a compact secondary row |
 | Aug 7 | Sale list row redesign | Sales/dashboard rows use a three-zone layout (title+short subtitle, aligned branch pill, fixed amount + status) for better mobile readability |
 | Aug 7 | Void stock adjustment | Product Adjustments tab can void manual adjustments (reverse qty + audit row); sale-linked rows stay sale-only; requires `inventory.adjust` |
 | Aug 7 | Inventory alerts layout | Dashboard inventory alerts are side-by-side on tablet+ and single-column on mobile |

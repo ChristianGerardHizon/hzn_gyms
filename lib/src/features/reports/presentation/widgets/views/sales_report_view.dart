@@ -233,46 +233,89 @@ class SalesReportView extends ConsumerWidget {
     SalesReport report, {
     required bool extrasLoading,
   }) {
-    return ReportKpiGrid(
-      crossAxisCount: 3,
+    final typeTotals = primarySalesItemTypeTotals(report.revenueByItemType);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ReportKpiCard(
-          title: 'Total Revenue',
-          value: _currencyFormat.format(report.totalRevenue),
-          icon: Icons.attach_money,
-          color: Colors.green,
-          subtitle: 'Cash collected (payments)',
-          featured: true,
+        // Primary: line-revenue highlights
+        ReportKpiGrid(
+          crossAxisCount: 3,
+          children: [
+            ReportKpiCard(
+              title: 'Memberships',
+              value: _currencyFormat.format(typeTotals.membershipTotal),
+              icon: Icons.card_membership_outlined,
+              color: Colors.purple,
+              subtitle: 'Membership line revenue',
+              featured: true,
+            ),
+            ReportKpiCard(
+              title: 'Walk-ins',
+              value: _currencyFormat.format(typeTotals.walkInTotal),
+              icon: Icons.directions_walk_outlined,
+              color: Colors.indigo,
+              subtitle: 'Day-pass line revenue',
+              featured: true,
+            ),
+            ReportKpiCard(
+              title: 'Products',
+              value: _currencyFormat.format(typeTotals.productTotal),
+              icon: Icons.inventory_2_outlined,
+              color: Colors.teal,
+              subtitle: 'Product line revenue',
+              featured: true,
+            ),
+          ],
         ),
-        ReportKpiCard(
-          title: 'Transactions',
-          value: report.transactionCount.toString(),
-          icon: Icons.receipt_long_outlined,
-          color: Colors.blue,
-          subtitle: 'Completed sales',
-        ),
-        ReportKpiCard(
-          title: 'Average Transaction',
-          value: _currencyFormat.format(report.averageTransactionValue),
-          icon: Icons.trending_up,
-          color: Colors.orange,
-          subtitle: 'Per transaction',
-        ),
-        ReportKpiCard(
-          title: 'Unpaid Sales',
-          value: extrasLoading ? '…' : report.unpaidSalesCount.toString(),
-          icon: Icons.money_off_outlined,
-          color: Colors.red,
-          subtitle: 'Accounts receivable',
-        ),
-        ReportKpiCard(
-          title: 'Unpaid Balance',
-          value: extrasLoading
-              ? '…'
-              : _currencyFormat.format(report.unpaidBalance),
-          icon: Icons.account_balance_wallet_outlined,
-          color: Colors.deepOrange,
-          subtitle: 'Outstanding total',
+        const SizedBox(height: 12),
+        // Secondary: cash collected + AR details
+        ReportKpiGrid(
+          crossAxisCount: 3,
+          children: [
+            ReportKpiCard(
+              title: 'Total Revenue',
+              value: _currencyFormat.format(report.totalRevenue),
+              icon: Icons.attach_money,
+              color: Colors.green,
+              subtitle: 'Cash collected (payments)',
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: 'Transactions',
+              value: report.transactionCount.toString(),
+              icon: Icons.receipt_long_outlined,
+              color: Colors.blue,
+              subtitle: 'Completed sales',
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: 'Average Transaction',
+              value: _currencyFormat.format(report.averageTransactionValue),
+              icon: Icons.trending_up,
+              color: Colors.orange,
+              subtitle: 'Per transaction',
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: 'Unpaid Sales',
+              value: extrasLoading ? '…' : report.unpaidSalesCount.toString(),
+              icon: Icons.money_off_outlined,
+              color: Colors.red,
+              subtitle: 'Accounts receivable',
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: 'Unpaid Balance',
+              value: extrasLoading
+                  ? '…'
+                  : _currencyFormat.format(report.unpaidBalance),
+              icon: Icons.account_balance_wallet_outlined,
+              color: Colors.deepOrange,
+              subtitle: 'Outstanding total',
+              compact: true,
+            ),
+          ],
         ),
       ],
     );

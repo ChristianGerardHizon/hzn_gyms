@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 ///
 /// Layout:
 /// 1. Hero revenue + transaction count
-/// 2. Memberships / Walk-ins split cards
+/// 2. Memberships / Walk-ins / Products split cards
 /// 3. Paid / Unpaid status row
 /// 4. Optional branch pills when viewing all branches
 class TodaysSalesBreakdownHeader extends StatelessWidget {
@@ -16,6 +16,8 @@ class TodaysSalesBreakdownHeader extends StatelessWidget {
     required this.membershipCount,
     required this.walkInTotalLabel,
     required this.walkInCount,
+    required this.productTotalLabel,
+    required this.productCount,
     required this.paidCount,
     required this.unpaidCount,
     this.branchChips = const [],
@@ -27,6 +29,8 @@ class TodaysSalesBreakdownHeader extends StatelessWidget {
   final int membershipCount;
   final String walkInTotalLabel;
   final int walkInCount;
+  final String productTotalLabel;
+  final int productCount;
   final int paidCount;
   final int unpaidCount;
 
@@ -81,27 +85,53 @@ class TodaysSalesBreakdownHeader extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Sale-type split
-          Row(
-            children: [
-              Expanded(
-                child: _TypeCard(
+          // Sale-type split (wraps on narrow dialog widths)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 10.0;
+              final useRow = constraints.maxWidth >= 420;
+              final cards = [
+                _TypeCard(
                   label: 'Memberships',
                   amount: membershipTotalLabel,
                   count: membershipCount,
                   color: Colors.purple,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _TypeCard(
+                _TypeCard(
                   label: 'Walk-ins',
                   amount: walkInTotalLabel,
                   count: walkInCount,
                   color: Colors.indigo,
                 ),
-              ),
-            ],
+                _TypeCard(
+                  label: 'Products',
+                  amount: productTotalLabel,
+                  count: productCount,
+                  color: Colors.teal,
+                ),
+              ];
+
+              if (useRow) {
+                return Row(
+                  children: [
+                    for (var i = 0; i < cards.length; i++) ...[
+                      if (i > 0) const SizedBox(width: gap),
+                      Expanded(child: cards[i]),
+                    ],
+                  ],
+                );
+              }
+
+              final cardWidth = (constraints.maxWidth - gap) / 2;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  for (final card in cards)
+                    SizedBox(width: cardWidth, child: card),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
 

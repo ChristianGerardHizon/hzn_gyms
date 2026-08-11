@@ -7,6 +7,7 @@ void main() {
       const summary = TodaySalesSummary(count: 1, total: 100);
       expect(summary.membershipCount, 0);
       expect(summary.walkInCount, 0);
+      expect(summary.productCount, 0);
     });
   });
 
@@ -18,8 +19,10 @@ void main() {
       expect(summary.byBranch, isEmpty);
       expect(summary.membershipTotal, 0);
       expect(summary.walkInTotal, 0);
+      expect(summary.productTotal, 0);
       expect(summary.membershipCount, 0);
       expect(summary.walkInCount, 0);
+      expect(summary.productCount, 0);
     });
 
     test('returns single branch row as-is', () {
@@ -54,7 +57,8 @@ void main() {
       expect(summary.byBranch.map((r) => r.branchId), ['branch-a', 'branch-b']);
     });
 
-    test('carries membership and walk-in totals and counts through', () {
+    test('carries membership, walk-in, and product totals and counts through',
+        () {
       final summary = aggregateTodaysSalesSummary(
         const [
           TodaysSalesBranchRow(
@@ -65,13 +69,17 @@ void main() {
         ],
         membershipTotal: 300,
         walkInTotal: 150,
+        productTotal: 50,
         membershipCount: 2,
         walkInCount: 4,
+        productCount: 1,
       );
       expect(summary.membershipTotal, 300);
       expect(summary.walkInTotal, 150);
+      expect(summary.productTotal, 50);
       expect(summary.membershipCount, 2);
       expect(summary.walkInCount, 4);
+      expect(summary.productCount, 1);
     });
   });
 
@@ -80,11 +88,14 @@ void main() {
       final totals = aggregateTodaysItemTypeRevenue(const []);
       expect(totals.membershipTotal, 0);
       expect(totals.walkInTotal, 0);
+      expect(totals.productTotal, 0);
       expect(totals.membershipCount, 0);
       expect(totals.walkInCount, 0);
+      expect(totals.productCount, 0);
     });
 
-    test('sums membership and walkIn revenue and counts separately', () {
+    test('sums membership, walkIn, and product revenue and counts separately',
+        () {
       final totals = aggregateTodaysItemTypeRevenue(const [
         TodaysItemTypeRevenueRow(
           itemType: 'membership',
@@ -97,6 +108,11 @@ void main() {
           transactionCount: 3,
         ),
         TodaysItemTypeRevenueRow(
+          itemType: 'product',
+          totalRevenue: 90,
+          transactionCount: 9,
+        ),
+        TodaysItemTypeRevenueRow(
           itemType: 'membership',
           totalRevenue: 200,
           transactionCount: 1,
@@ -106,14 +122,21 @@ void main() {
           totalRevenue: 80,
           transactionCount: 2,
         ),
+        TodaysItemTypeRevenueRow(
+          itemType: 'product',
+          totalRevenue: 10,
+          transactionCount: 1,
+        ),
       ]);
       expect(totals.membershipTotal, 1000);
       expect(totals.walkInTotal, 200);
+      expect(totals.productTotal, 100);
       expect(totals.membershipCount, 3);
       expect(totals.walkInCount, 5);
+      expect(totals.productCount, 10);
     });
 
-    test('ignores product and addon item types', () {
+    test('sums product including empty item type; ignores addon', () {
       final totals = aggregateTodaysItemTypeRevenue(const [
         TodaysItemTypeRevenueRow(
           itemType: 'membership',
@@ -143,8 +166,10 @@ void main() {
       ]);
       expect(totals.membershipTotal, 500);
       expect(totals.walkInTotal, 100);
+      expect(totals.productTotal, 115);
       expect(totals.membershipCount, 2);
       expect(totals.walkInCount, 4);
+      expect(totals.productCount, 14);
     });
   });
 }

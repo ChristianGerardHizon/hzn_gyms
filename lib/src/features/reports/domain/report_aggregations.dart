@@ -238,6 +238,32 @@ String normalizeSalesItemType(String? itemType) {
   return itemType;
 }
 
+/// Primary sales KPI totals from a `revenueByItemType` map.
+///
+/// Sums `product` / `membership` / `walkIn` only (add-ons excluded). Empty or
+/// unknown keys that normalize to `product` count toward products.
+({num productTotal, num membershipTotal, num walkInTotal})
+primarySalesItemTypeTotals(Map<String, num> revenueByItemType) {
+  num productTotal = 0;
+  num membershipTotal = 0;
+  num walkInTotal = 0;
+  for (final entry in revenueByItemType.entries) {
+    final type = normalizeSalesItemType(entry.key);
+    if (type == 'product') {
+      productTotal += entry.value;
+    } else if (type == 'membership') {
+      membershipTotal += entry.value;
+    } else if (type == 'walkIn') {
+      walkInTotal += entry.value;
+    }
+  }
+  return (
+    productTotal: productTotal,
+    membershipTotal: membershipTotal,
+    walkInTotal: walkInTotal,
+  );
+}
+
 /// Whether Day/Week/Month should fetch period-scoped raw rows instead of
 /// all-history SQL views.
 ///
