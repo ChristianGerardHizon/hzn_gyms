@@ -95,6 +95,8 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       bool Function()? isDisposed,
       String? forceCameraName,
       bool useAutomatic = false,
+      String startTrigger = 'auto',
+      bool hadController = false,
     }) async {
       final generation = ++sessionGeneration.value;
       bool isStale() =>
@@ -109,9 +111,16 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       cameraError.value = null;
 
       String? attemptedCameraName;
+      var enumerateAttempts = 0;
       try {
-        final cameras = await availableCameras();
+        final cameras = await availableCamerasWithRetry(
+          isCancelled: isStale,
+          onAttempt: (attempt) => enumerateAttempts = attempt,
+        );
         if (isStale()) return;
+
+        // Enumerate succeeded — don't attribute its attempts to later failures.
+        enumerateAttempts = 0;
 
         availableCameraList.value = cameras;
 
@@ -151,24 +160,36 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
               .setPreferredCameraName(camera.name);
         }
       } on CameraException catch (e, stackTrace) {
-        await reportCameraFailure(
-          e,
-          stackTrace,
-          phase: 'init',
-          cameraName: attemptedCameraName,
-          exceptionCode: e.code,
-        );
         if (!isStale()) {
+          final reportAttempts =
+              shouldReportCameraRetryAttempts(error: e, attemptsUsed: enumerateAttempts);
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'init',
+            cameraName: attemptedCameraName,
+            exceptionCode: e.code,
+            startTrigger: startTrigger,
+            hadController: hadController,
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           cameraError.value = formatCameraInitError(e);
         }
       } catch (e, stackTrace) {
-        await reportCameraFailure(
-          e,
-          stackTrace,
-          phase: 'init',
-          cameraName: attemptedCameraName,
-        );
         if (!isStale()) {
+          final reportAttempts =
+              shouldReportCameraRetryAttempts(error: e, attemptsUsed: enumerateAttempts);
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'init',
+            cameraName: attemptedCameraName,
+            startTrigger: startTrigger,
+            hadController: hadController,
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           cameraError.value = formatCameraInitError(e);
         }
       } finally {
@@ -194,13 +215,30 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       var disposed = false;
 
       Future<void> loadCameras() async {
+        var enumerateAttempts = 0;
         try {
-          final cameras = await availableCameras();
+          final cameras = await availableCamerasWithRetry(
+            isCancelled: () => disposed || isSessionCancelled(),
+            onAttempt: (attempt) => enumerateAttempts = attempt,
+          );
           if (!disposed && !isSessionCancelled()) {
             availableCameraList.value = cameras;
           }
         } catch (e, stackTrace) {
-          await reportCameraFailure(e, stackTrace, phase: 'enumerate');
+          // Skip cancelled / inactive sessions — not actionable failures.
+          if (disposed || isSessionCancelled()) return;
+          final reportAttempts = shouldReportCameraRetryAttempts(
+            error: e,
+            attemptsUsed: enumerateAttempts,
+          );
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'enumerate',
+            startTrigger: 'auto',
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           // Listing can fail before permission; initCamera will surface errors.
         }
       }
@@ -230,6 +268,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       Future<void> autoInit() async {
         await initCamera(
           isDisposed: () => cancelled || isSessionCancelled(),
+          startTrigger: 'auto',
         );
       }
 
@@ -243,9 +282,14 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
 
     Future<void> startCamera() async {
       if (isSessionCancelled()) return;
+      final hadController = cameraController.value != null;
       await releaseCamera();
       if (isSessionCancelled()) return;
-      await initCamera(isDisposed: isSessionCancelled);
+      await initCamera(
+        isDisposed: isSessionCancelled,
+        startTrigger: 'gesture',
+        hadController: hadController,
+      );
     }
 
     Future<void> restartCamera({
@@ -253,12 +297,15 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       bool useAutomatic = false,
     }) async {
       if (isSessionCancelled()) return;
+      final hadController = cameraController.value != null;
       await releaseCamera();
       if (isSessionCancelled()) return;
       await initCamera(
         isDisposed: isSessionCancelled,
         forceCameraName: forceCameraName,
         useAutomatic: useAutomatic,
+        startTrigger: 'restart',
+        hadController: hadController,
       );
     }
 
@@ -320,7 +367,12 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
         cameraError.value = null;
         await applyCaptured(captured);
       } catch (e, stackTrace) {
-        await reportCameraFailure(e, stackTrace, phase: 'capture');
+        await reportCameraFailure(
+          e,
+          stackTrace,
+          phase: 'capture',
+          startTrigger: 'picker',
+        );
         cameraError.value =
             'Could not open the camera. Try uploading a photo instead.';
       }
@@ -346,6 +398,8 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
           phase: 'capture',
           cameraName: selectedCameraName.value,
           exceptionCode: e.code,
+          startTrigger: 'live',
+          hadController: true,
         );
         cameraError.value = e.description ?? 'Failed to capture photo.';
       }

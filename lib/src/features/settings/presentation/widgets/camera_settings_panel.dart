@@ -29,10 +29,24 @@ class CameraSettingsPanel extends HookConsumerWidget {
     Future<void> loadCameras() async {
       camerasLoading.value = true;
       camerasError.value = null;
+      var enumerateAttempts = 0;
       try {
-        cameras.value = await availableCameras();
+        cameras.value = await availableCamerasWithRetry(
+          onAttempt: (attempt) => enumerateAttempts = attempt,
+        );
       } catch (e, stackTrace) {
-        await reportCameraFailure(e, stackTrace, phase: 'enumerate');
+        final reportAttempts = shouldReportCameraRetryAttempts(
+          error: e,
+          attemptsUsed: enumerateAttempts,
+        );
+        await reportCameraFailure(
+          e,
+          stackTrace,
+          phase: 'enumerate',
+          startTrigger: 'settings',
+          attempt: reportAttempts ? enumerateAttempts : null,
+          maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+        );
         camerasError.value = formatCameraInitError(e);
         cameras.value = const [];
       } finally {
