@@ -280,6 +280,28 @@ void main() {
     });
   });
 
+  group('primarySalesItemTypeTotals', () {
+    test('sums product, membership, and walkIn; ignores addon', () {
+      final totals = primarySalesItemTypeTotals({
+        'product': 400,
+        'membership': 900,
+        'walkIn': 200,
+        'addon': 50,
+        '': 25,
+      });
+      expect(totals.productTotal, 425);
+      expect(totals.membershipTotal, 900);
+      expect(totals.walkInTotal, 200);
+    });
+
+    test('returns zeros for empty map', () {
+      final totals = primarySalesItemTypeTotals(const {});
+      expect(totals.productTotal, 0);
+      expect(totals.membershipTotal, 0);
+      expect(totals.walkInTotal, 0);
+    });
+  });
+
   group('usesPeriodScopedSalesFetch', () {
     test('is true for day, week, and month', () {
       expect(usesPeriodScopedSalesFetch(ReportPeriod.day), isTrue);

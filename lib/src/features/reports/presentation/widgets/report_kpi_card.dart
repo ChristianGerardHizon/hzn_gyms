@@ -11,6 +11,7 @@ class ReportKpiCard extends StatelessWidget {
     required this.color,
     this.subtitle,
     this.featured = false,
+    this.compact = false,
   });
 
   final String title;
@@ -19,8 +20,11 @@ class ReportKpiCard extends StatelessWidget {
   final Color color;
   final String? subtitle;
 
-  /// When true, uses a blue gradient background with white text.
+  /// When true, uses a color gradient background with white text.
   final bool featured;
+
+  /// When true, uses tighter padding and smaller value/icon for sub-details.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,17 @@ class ReportKpiCard extends StatelessWidget {
         ? Colors.white70
         : theme.colorScheme.onSurfaceVariant;
     final accentColor = featured ? Colors.white.withAlpha(60) : color;
+    final padding = compact ? 10.0 : 14.0;
+    final titleGap = compact ? 4.0 : 8.0;
+    final iconPadding = compact ? 6.0 : 8.0;
+    final iconSize = compact ? 16.0 : 20.0;
+    final valueStyle = (compact
+            ? theme.textTheme.titleLarge
+            : theme.textTheme.headlineSmall)
+        ?.copyWith(
+      color: textColor,
+      fontWeight: FontWeight.bold,
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -53,7 +68,7 @@ class ReportKpiCard extends StatelessWidget {
                         ),
                       )
                     : null,
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.all(padding),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -71,13 +86,10 @@ class ReportKpiCard extends StatelessWidget {
                               letterSpacing: 0.5,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: titleGap),
                           Text(
                             value,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              color: textColor,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: valueStyle,
                           ),
                           if (subtitle != null) ...[
                             const SizedBox(height: 4),
@@ -94,7 +106,7 @@ class ReportKpiCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     // Icon bubble
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(iconPadding),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: featured
@@ -103,7 +115,7 @@ class ReportKpiCard extends StatelessWidget {
                       ),
                       child: Icon(
                         icon,
-                        size: 20,
+                        size: iconSize,
                         color: featured ? Colors.white : color,
                       ),
                     ),

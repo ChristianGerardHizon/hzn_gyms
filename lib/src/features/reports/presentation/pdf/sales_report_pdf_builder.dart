@@ -55,11 +55,16 @@ ReportPdfData buildSalesReportPdfData({
     );
   }
 
+  final typeTotals = primarySalesItemTypeTotals(report.revenueByItemType);
+
   return ReportPdfData(
     reportTitle: 'Sales Report',
     period: period,
     generatedAt: generated,
     kpiData: {
+      'Memberships': currencyFormat.format(typeTotals.membershipTotal),
+      'Walk-ins': currencyFormat.format(typeTotals.walkInTotal),
+      'Products': currencyFormat.format(typeTotals.productTotal),
       'Total Revenue': currencyFormat.format(report.totalRevenue),
       'Transactions': report.transactionCount.toString(),
       'Avg Transaction': currencyFormat.format(report.averageTransactionValue),
@@ -70,8 +75,9 @@ ReportPdfData buildSalesReportPdfData({
     tableRows: table.rows,
     tableTitle: salesRows.isNotEmpty ? 'SALES TRANSACTIONS' : null,
     additionalNotes:
-        'Revenue by item type is sale line subtotals (products and memberships). '
-        'Total Revenue is cash collected from payments. Do not sum with Membership plan value.',
+        'Revenue by item type is sale line subtotals (products, memberships, '
+        'and walk-ins). Total Revenue is cash collected from payments. '
+        'Do not sum with Membership plan value.',
     footerDisclaimer: kSalesReportFooterDisclaimer,
   );
 }

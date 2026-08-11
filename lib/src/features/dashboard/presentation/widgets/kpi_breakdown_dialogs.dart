@@ -81,6 +81,8 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
         membershipCount: summary?.membershipCount ?? 0,
         walkInTotalLabel: currency.format(summary?.walkInTotal ?? 0),
         walkInCount: summary?.walkInCount ?? 0,
+        productTotalLabel: currency.format(summary?.productTotal ?? 0),
+        productCount: summary?.productCount ?? 0,
         paidCount: paid,
         unpaidCount: unpaid,
         branchChips: viewingAll

@@ -85,6 +85,12 @@ void main() {
           averageTransactionValue: 500,
           unpaidSalesCount: 1,
           unpaidBalance: 200,
+          revenueByItemType: {
+            'product': 400,
+            'membership': 900,
+            'walkIn': 200,
+            'addon': 50,
+          },
         ),
         period: period,
         currencyFormat: currencyFormat,
@@ -92,8 +98,16 @@ void main() {
 
       expect(data.kpiData['Total Revenue'], currencyFormat.format(1500));
       expect(data.kpiData['Transactions'], '3');
+      expect(data.kpiData['Walk-ins'], currencyFormat.format(200));
+      expect(data.kpiData['Memberships'], currencyFormat.format(900));
+      expect(data.kpiData['Products'], currencyFormat.format(400));
       expect(data.kpiData['Unpaid Sales'], '1');
       expect(data.kpiData['Unpaid Balance'], currencyFormat.format(200));
+      expect(data.kpiData.keys.take(3).toList(), [
+        'Memberships',
+        'Walk-ins',
+        'Products',
+      ]);
     });
 
     test('skips transaction table for non-Day periods even if sales present', () {
