@@ -384,22 +384,21 @@ void main() {
       var calls = 0;
       var cancelled = false;
 
-      await expectLater(
-        () => availableCamerasWithRetry(
-          isCancelled: () => cancelled,
-          enumerate: () async {
-            calls++;
-            if (calls == 1) {
-              cancelled = true;
-              throw CameraException('cameraAbort', 'device busy');
-            }
-            return [frontCamera];
-          },
-        ),
-        throwsA(isA<CameraException>()),
+      final result = await availableCamerasWithRetry(
+        isCancelled: () => cancelled,
+        enumerate: () async {
+          calls++;
+          if (calls == 1) {
+            cancelled = true;
+            throw CameraException('cameraAbort', 'device busy');
+          }
+          return [frontCamera];
+        },
       );
+      expect(result, isEmpty);
       expect(calls, 1);
     });
+
     test('invokes onAttempt before each try', () async {
       final attempts = <int>[];
       await expectLater(
@@ -412,6 +411,45 @@ void main() {
         throwsA(isA<CameraException>()),
       );
       expect(attempts, List.generate(cameraBusyRetryAttempts, (i) => i + 1));
+    });
+  });
+
+  group('shouldReportCameraRetryAttempts', () {
+    test('is true for busy/abort after at least one attempt', () {
+      expect(
+        shouldReportCameraRetryAttempts(
+          error: CameraException('cameraAbort', 'busy'),
+          attemptsUsed: 1,
+        ),
+        isTrue,
+      );
+      expect(
+        shouldReportCameraRetryAttempts(
+          error: CameraException('cameraAbort', 'busy'),
+          attemptsUsed: 3,
+        ),
+        isTrue,
+      );
+    });
+
+    test('is false for non-retry errors even when attemptsUsed is set', () {
+      expect(
+        shouldReportCameraRetryAttempts(
+          error: CameraException('CameraAccessDenied', 'Permission denied'),
+          attemptsUsed: 1,
+        ),
+        isFalse,
+      );
+    });
+
+    test('is false when no attempts were recorded', () {
+      expect(
+        shouldReportCameraRetryAttempts(
+          error: CameraException('cameraAbort', 'busy'),
+          attemptsUsed: 0,
+        ),
+        isFalse,
+      );
     });
   });
 

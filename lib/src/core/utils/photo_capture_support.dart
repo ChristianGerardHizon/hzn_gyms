@@ -158,7 +158,16 @@ Future<void> disposeCameraController(CameraController? controller) async {
   }
 }
 
-/// Wraps [availableCameras] with retry on busy/abort errors.
+/// Whether Sentry should include retry attempt tags for this failure.
+///
+/// Only busy/abort paths go through the retry loop; other errors (e.g.
+/// permission denied) fail on the first try and should not look retried.
+bool shouldReportCameraRetryAttempts({
+  required Object error,
+  required int attemptsUsed,
+}) {
+  return attemptsUsed > 0 && isCameraBusyOrAbortError(error);
+}
 ///
 /// On web, `getUserMedia` can throw `AbortError` when the tab is inactive or
 /// the device is briefly locked by another consumer. This retries up to
@@ -178,9 +187,8 @@ Future<List<CameraDescription>> availableCamerasWithRetry({
 
   for (var attempt = 0; attempt < cameraBusyRetryAttempts; attempt++) {
     if (isCancelled?.call() == true) {
-      if (lastError != null) {
-        Error.throwWithStackTrace(lastError, lastStack ?? StackTrace.current);
-      }
+      // Cancelled mid-flight (panel disposed, step inactive, newer session).
+      // Do not rethrow a prior abort — callers would treat it as a real failure.
       return const [];
     }
 

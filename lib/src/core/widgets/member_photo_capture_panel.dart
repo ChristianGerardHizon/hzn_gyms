@@ -119,6 +119,9 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
         );
         if (isStale()) return;
 
+        // Enumerate succeeded — don't attribute its attempts to later failures.
+        enumerateAttempts = 0;
+
         availableCameraList.value = cameras;
 
         if (cameras.isEmpty) {
@@ -157,32 +160,36 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
               .setPreferredCameraName(camera.name);
         }
       } on CameraException catch (e, stackTrace) {
-        await reportCameraFailure(
-          e,
-          stackTrace,
-          phase: 'init',
-          cameraName: attemptedCameraName,
-          exceptionCode: e.code,
-          startTrigger: startTrigger,
-          hadController: hadController,
-          attempt: enumerateAttempts > 0 ? enumerateAttempts : null,
-          maxAttempts: enumerateAttempts > 0 ? cameraBusyRetryAttempts : null,
-        );
         if (!isStale()) {
+          final reportAttempts =
+              shouldReportCameraRetryAttempts(error: e, attemptsUsed: enumerateAttempts);
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'init',
+            cameraName: attemptedCameraName,
+            exceptionCode: e.code,
+            startTrigger: startTrigger,
+            hadController: hadController,
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           cameraError.value = formatCameraInitError(e);
         }
       } catch (e, stackTrace) {
-        await reportCameraFailure(
-          e,
-          stackTrace,
-          phase: 'init',
-          cameraName: attemptedCameraName,
-          startTrigger: startTrigger,
-          hadController: hadController,
-          attempt: enumerateAttempts > 0 ? enumerateAttempts : null,
-          maxAttempts: enumerateAttempts > 0 ? cameraBusyRetryAttempts : null,
-        );
         if (!isStale()) {
+          final reportAttempts =
+              shouldReportCameraRetryAttempts(error: e, attemptsUsed: enumerateAttempts);
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'init',
+            cameraName: attemptedCameraName,
+            startTrigger: startTrigger,
+            hadController: hadController,
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           cameraError.value = formatCameraInitError(e);
         }
       } finally {
@@ -218,14 +225,19 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
             availableCameraList.value = cameras;
           }
         } catch (e, stackTrace) {
+          // Skip cancelled / inactive sessions — not actionable failures.
+          if (disposed || isSessionCancelled()) return;
+          final reportAttempts = shouldReportCameraRetryAttempts(
+            error: e,
+            attemptsUsed: enumerateAttempts,
+          );
           await reportCameraFailure(
             e,
             stackTrace,
             phase: 'enumerate',
-            startTrigger: needsUserGesture ? 'gesture' : 'auto',
-            attempt: enumerateAttempts > 0 ? enumerateAttempts : null,
-            maxAttempts:
-                enumerateAttempts > 0 ? cameraBusyRetryAttempts : null,
+            startTrigger: 'auto',
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
           );
           // Listing can fail before permission; initCamera will surface errors.
         }

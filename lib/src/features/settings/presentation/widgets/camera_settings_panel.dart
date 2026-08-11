@@ -35,13 +35,17 @@ class CameraSettingsPanel extends HookConsumerWidget {
           onAttempt: (attempt) => enumerateAttempts = attempt,
         );
       } catch (e, stackTrace) {
+        final reportAttempts = shouldReportCameraRetryAttempts(
+          error: e,
+          attemptsUsed: enumerateAttempts,
+        );
         await reportCameraFailure(
           e,
           stackTrace,
           phase: 'enumerate',
           startTrigger: 'settings',
-          attempt: enumerateAttempts > 0 ? enumerateAttempts : null,
-          maxAttempts: enumerateAttempts > 0 ? cameraBusyRetryAttempts : null,
+          attempt: reportAttempts ? enumerateAttempts : null,
+          maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
         );
         camerasError.value = formatCameraInitError(e);
         cameras.value = const [];
