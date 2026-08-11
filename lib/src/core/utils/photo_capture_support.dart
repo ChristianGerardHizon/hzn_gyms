@@ -158,6 +158,51 @@ Future<void> disposeCameraController(CameraController? controller) async {
   }
 }
 
+/// Wraps [availableCameras] with retry on busy/abort errors.
+///
+/// On web, `getUserMedia` can throw `AbortError` when the tab is inactive or
+/// the device is briefly locked by another consumer. This retries up to
+/// [cameraBusyRetryAttempts] times with a [cameraDisposeSettleDelay] pause
+/// between attempts. Non-abort errors and cancellation rethrow immediately.
+///
+/// [enumerate] overrides the camera listing call (for testing).
+/// [onAttempt] is invoked with the 1-based attempt number before each try.
+Future<List<CameraDescription>> availableCamerasWithRetry({
+  bool Function()? isCancelled,
+  Future<List<CameraDescription>> Function()? enumerate,
+  void Function(int attempt)? onAttempt,
+}) async {
+  final listCameras = enumerate ?? availableCameras;
+  Object? lastError;
+  StackTrace? lastStack;
+
+  for (var attempt = 0; attempt < cameraBusyRetryAttempts; attempt++) {
+    if (isCancelled?.call() == true) {
+      if (lastError != null) {
+        Error.throwWithStackTrace(lastError, lastStack ?? StackTrace.current);
+      }
+      return const [];
+    }
+
+    final attemptNumber = attempt + 1;
+    onAttempt?.call(attemptNumber);
+
+    try {
+      return await listCameras();
+    } catch (e, st) {
+      lastError = e;
+      lastStack = st;
+      if (!isCameraBusyOrAbortError(e) || attempt >= cameraBusyRetryAttempts - 1) {
+        rethrow;
+      }
+      await Future<void>.delayed(cameraDisposeSettleDelay);
+    }
+  }
+
+  // Unreachable — the loop always returns or rethrows.
+  Error.throwWithStackTrace(lastError!, lastStack ?? StackTrace.current);
+}
+
 /// User-facing message for camera initialization failures.
 String formatCameraInitError(Object error) {
   if (error is CameraException) {
