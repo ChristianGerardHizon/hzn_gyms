@@ -44,6 +44,7 @@ jobs:
   preflight-staging:
     if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && github.base_ref == 'staging')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       skip: ${{ steps.bump_type.outputs.skip }}
       bump: ${{ steps.bump_type.outputs.bump }}
@@ -92,6 +93,7 @@ jobs:
     needs: preflight-staging
     if: needs.preflight-staging.outputs.skip != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -287,6 +289,7 @@ jobs:
   deploy-production:
     if: github.event.pull_request.merged == true && github.base_ref == 'main'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     environment: Production
     outputs:
       prod_ver: ${{ steps.calc_prod.outputs.prod_ver }}
@@ -514,6 +517,7 @@ jobs:
   release-and-sync:
     needs: deploy-production
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
