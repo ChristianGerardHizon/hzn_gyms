@@ -39,6 +39,16 @@ abstract class ReportsRepository {
     String? branchId,
   });
 
+  /// Sales that include at least one line of [itemType] in [period].
+  ///
+  /// [itemType] is `membership` / `walkIn` / `product`. Year / All Time are
+  /// capped at [kSalesByItemTypeYearCap] (newest first).
+  FutureEither<List<Sale>> getSalesByItemType({
+    required ReportPeriodSelection period,
+    required String itemType,
+    String? branchId,
+  });
+
   FutureEither<InventoryReport> getInventoryReport({String? branchId});
 
   FutureEither<MembershipReport> getMembershipReport({
@@ -312,6 +322,115 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       return ScopedSalesReportBundle(report: report, extras: extras);
     }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<List<Sale>> getSalesByItemType({
+    required ReportPeriodSelection period,
+    required String itemType,
+    String? branchId,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final cap = shouldCapSalesByItemType(period.period)
+          ? kSalesByItemTypeYearCap
+          : null;
+      final saleIds = await _collectSaleIdsByItemType(
+        period: period,
+        itemType: itemType,
+        branchId: branchId,
+        maxSales: cap,
+      );
+      if (saleIds.isEmpty) return const <Sale>[];
+
+      final saleFilters = buildIdOrFilters('id', saleIds);
+      final saleChunks = await Future.wait(
+        saleFilters.map(
+          (f) => _sales.getFullList(
+            filter: f,
+            fields: _daySaleListFields,
+            sort: '-created',
+          ),
+        ),
+      );
+      final sales = saleChunks
+          .expand((e) => e)
+          .map((record) => SaleDto.fromRecord(record).toEntity())
+          .toList();
+      sales.sort((a, b) {
+        final aCreated = a.created ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bCreated = b.created ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bCreated.compareTo(aCreated);
+      });
+      if (cap != null && sales.length > cap) {
+        return sales.sublist(0, cap);
+      }
+      return sales;
+    }, Failure.handle).run();
+  }
+
+  /// Collects distinct sale IDs with a matching primary item type in [period].
+  Future<List<String>> _collectSaleIdsByItemType({
+    required ReportPeriodSelection period,
+    required String itemType,
+    String? branchId,
+    int? maxSales,
+  }) async {
+    final filter = PBFilter()
+        .between('sale.created', period.startDate, period.endDate)
+        .raw(saleItemsRawFilterForPrimaryType(itemType))
+        .raw("(sale.status = 'completed' || sale.status = 'paid')");
+    if (branchId != null) {
+      filter.raw('sale.branch = "$branchId"');
+    }
+    final filterString = filter.build();
+
+    if (maxSales == null) {
+      final records = await _saleItems.getFullList(
+        filter: filterString,
+        fields: 'id,sale,itemType',
+      );
+      return distinctSaleIdsForPrimaryItemType(
+        records.map(
+          (r) => (
+            saleId: r.getStringValue('sale'),
+            itemType: r.getStringValue('itemType'),
+          ),
+        ),
+        itemType,
+      );
+    }
+
+    // Paginate newest-first until we have [maxSales] distinct sale IDs.
+    final ids = <String>[];
+    final seen = <String>{};
+    const pageSize = 100;
+    var page = 1;
+    while (ids.length < maxSales) {
+      final result = await _saleItems.getList(
+        page: page,
+        perPage: pageSize,
+        filter: filterString,
+        sort: '-sale.created',
+        fields: 'id,sale,itemType',
+      );
+      if (result.items.isEmpty) break;
+      for (final record in result.items) {
+        final saleId = record.getStringValue('sale');
+        if (saleId.isEmpty || seen.contains(saleId)) continue;
+        if (!saleItemMatchesPrimaryType(
+          record.getStringValue('itemType'),
+          itemType,
+        )) {
+          continue;
+        }
+        seen.add(saleId);
+        ids.add(saleId);
+        if (ids.length >= maxSales) break;
+      }
+      if (result.items.length < pageSize) break;
+      page++;
+    }
+    return ids;
   }
 
   @override

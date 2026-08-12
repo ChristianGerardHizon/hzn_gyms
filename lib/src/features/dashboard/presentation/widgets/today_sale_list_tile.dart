@@ -13,6 +13,7 @@ class TodaySaleListTile extends StatelessWidget {
     this.showDate = false,
     this.branchLabel,
     this.branchTooltip,
+    this.emphasizeCustomerName = false,
   });
 
   final Sale sale;
@@ -27,6 +28,9 @@ class TodaySaleListTile extends StatelessWidget {
   /// Tooltip for [branchLabel] (typically the full branch name).
   final String? branchTooltip;
 
+  /// Forwarded to [SaleListTile.emphasizeCustomerName].
+  final bool emphasizeCustomerName;
+
   @override
   Widget build(BuildContext context) {
     final timeFormat = showDate
@@ -39,6 +43,7 @@ class TodaySaleListTile extends StatelessWidget {
       dateFormat: timeFormat,
       branchLabel: branchLabel,
       branchTooltip: branchTooltip,
+      emphasizeCustomerName: emphasizeCustomerName,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
     );
   }

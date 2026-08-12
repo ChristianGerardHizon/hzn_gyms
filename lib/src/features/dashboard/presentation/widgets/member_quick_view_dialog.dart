@@ -610,7 +610,10 @@ class _ActionButtons extends ConsumerWidget {
           onPressed: () {
             final router = GoRouter.of(context);
             final location = MemberDetailRoute(id: memberId).location;
-            Navigator.of(context).pop();
+            // Close stacked dialogs (e.g. KPI list + quick view) before leaving.
+            Navigator.of(context, rootNavigator: true).popUntil(
+              (route) => route is! PopupRoute,
+            );
             router.push(location);
           },
           icon: const Icon(Icons.open_in_new),
