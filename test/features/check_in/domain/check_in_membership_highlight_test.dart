@@ -1,4 +1,5 @@
 import 'package:ebe_gym/src/features/check_in/domain/check_in_membership_highlight.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -35,6 +36,40 @@ void main() {
           reason: 'expected nearExpiry for $days days remaining',
         );
       }
+    });
+  });
+
+  group('checkInMembershipHighlightColor', () {
+    test('maps each highlight to the expected color', () {
+      expect(
+        checkInMembershipHighlightColor(CheckInMembershipHighlight.active),
+        Colors.green,
+      );
+      expect(
+        checkInMembershipHighlightColor(CheckInMembershipHighlight.nearExpiry),
+        Colors.orange,
+      );
+      expect(
+        checkInMembershipHighlightColor(CheckInMembershipHighlight.expired),
+        Colors.red,
+      );
+    });
+  });
+
+  group('checkInMembershipHighlightIcon', () {
+    test('maps each highlight to the expected icon', () {
+      expect(
+        checkInMembershipHighlightIcon(CheckInMembershipHighlight.active),
+        Icons.verified,
+      );
+      expect(
+        checkInMembershipHighlightIcon(CheckInMembershipHighlight.nearExpiry),
+        Icons.warning_amber_rounded,
+      );
+      expect(
+        checkInMembershipHighlightIcon(CheckInMembershipHighlight.expired),
+        Icons.cancel_outlined,
+      );
     });
   });
 }

@@ -14,6 +14,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/fixtures.dart';
 
+class _FakeCurrentUserPermissionsController
+    extends CurrentUserPermissionsController {
+  _FakeCurrentUserPermissionsController(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
+
 class _FakeBranchesController extends BranchesController {
   _FakeBranchesController(this._branches);
   final List<Branch> _branches;
@@ -52,7 +62,9 @@ void main() {
           saleItemsProvider(sale.id).overrideWith((ref) async => []),
           salePaymentsProvider(sale.id).overrideWith((ref) async => []),
           currentUserPermissionsProvider.overrideWith(
-            (ref) async => CurrentUserPermissions.empty,
+            () => _FakeCurrentUserPermissionsController(
+              CurrentUserPermissions.empty,
+            ),
           ),
           branchesControllerProvider.overrideWith(
             () => _FakeBranchesController(const [branchA]),
