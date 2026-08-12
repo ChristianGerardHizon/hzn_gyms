@@ -46,6 +46,17 @@ String _withoutTrailingNumber(String normalized) {
   return match?.group(1) ?? normalized;
 }
 
+/// Removes sales whose IDs are in [ignoredIds] (dashboard "Ignore" dismissals).
+///
+/// Does not change the sale on the server — only filters UI lists.
+List<Sale> excludeIgnoredUnpaidSales(
+  Iterable<Sale> sales,
+  Set<String> ignoredIds,
+) {
+  if (ignoredIds.isEmpty) return List<Sale>.from(sales);
+  return sales.where((sale) => !ignoredIds.contains(sale.id)).toList();
+}
+
 /// Finds open unpaid sales for the same member and/or walk-in name.
 ///
 /// [memberId] match takes priority when both are provided.
