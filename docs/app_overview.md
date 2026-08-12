@@ -33,6 +33,7 @@ Home screen with gym metrics and quick actions.
 - Cashier opens the product POS as a dialog (same `CashierBody` layout; standalone `/cashier` nav removed and redirects to dashboard; member optional at checkout; optional check-in strip for staff with `checkIns.create`)
 - Walk-in opens a day-pass dialog (customer name + plan with **Membership not required** + optional add-ons); creates a sale only — no member or membership record
 - Renew Membership: pick any member, then choose a plan for the current branch; if they still have an active membership, the new period defaults to the day after it ends (start date can be customized)
+- Unpaid today: banner of open unpaid sales with Pay / Void / Ignore; tap a row for sale quick view; Ignore hides it for this session (sale stays unpaid; duplicate-sale checks still apply)
 - Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's transactions dialog
 - Members grid: tap a member for a quick-view dialog (details + membership summary, Renew / Purchase, Show full details)
 - Expiring memberships section (memberships expiring within 7 days)
@@ -576,6 +577,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |
 | Aug 10 | Check-in void, cooldown, cashier consolidation | Soft-void check-ins (`checkIns.void`); 30s same-member cooldown with prompt; cashier check-in strip in dashboard POS dialog; hide standalone Cashier nav (`/cashier` → dashboard) |
 | Aug 9 | Dashboard greeting header | Shared mobile/tablet header shows time-of-day greeting + user name and app version; RFID + refresh actions unchanged |
 | Aug 9 | Member list row layout | Member rows match sales list structure: avatar, name tooltip, phone + branch activity in the subtitle row, pending sync trailing |
