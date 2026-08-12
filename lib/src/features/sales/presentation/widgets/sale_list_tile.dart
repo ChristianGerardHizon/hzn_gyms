@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../reports/domain/report_aggregations.dart';
 import 'sale_status_chip.dart';
 
 /// Shared sale row for sales history and dashboard lists.
@@ -19,6 +20,7 @@ class SaleListTile extends StatelessWidget {
     this.branchLabel,
     this.branchTooltip,
     this.contentPadding,
+    this.emphasizeCustomerName = false,
   });
 
   final Sale sale;
@@ -39,6 +41,10 @@ class SaleListTile extends StatelessWidget {
 
   final EdgeInsetsGeometry? contentPadding;
 
+  /// When true and the sale has a customer name, show the name as the bold
+  /// primary title and move plan/receipt details into the subtitle.
+  final bool emphasizeCustomerName;
+
   /// Builds the compact subtitle: receipt/customer + date (no Paid/Unpaid).
   static String buildSubtitle(Sale sale, DateFormat dateFormat) {
     final hasDescriptor =
@@ -54,13 +60,47 @@ class SaleListTile extends StatelessWidget {
     return parts.join(' · ');
   }
 
+  /// Title + subtitle when [emphasizeCustomerName] is enabled.
+  static ({String title, String subtitle}) buildEmphasizedCustomerLabels(
+    Sale sale,
+    DateFormat dateFormat,
+  ) {
+    final name = sale.customerName?.trim();
+    final hasName = name != null &&
+        name.isNotEmpty &&
+        name != Sale.walkInLabel;
+    if (!hasName) {
+      return (
+        title: sale.listTitle,
+        subtitle: buildSubtitle(sale, dateFormat),
+      );
+    }
+
+    final dateLabel = sale.created != null
+        ? dateFormat.format(sale.created!)
+        : 'Unknown';
+    final detail = descriptorDetailAfterCustomerName(sale.descriptor);
+    final parts = <String>[
+      if (detail != null) detail,
+      sale.shortReceiptNumber,
+      dateLabel,
+    ];
+    return (title: name, subtitle: parts.join(' · '));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currencyFormat = NumberFormat.currency(symbol: '₱');
     final effectiveDateFormat = dateFormat ?? DateFormat('MMM dd, yyyy');
-    final title = sale.listTitle;
-    final subtitle = buildSubtitle(sale, effectiveDateFormat);
+    final labels = emphasizeCustomerName
+        ? buildEmphasizedCustomerLabels(sale, effectiveDateFormat)
+        : (
+            title: sale.listTitle,
+            subtitle: buildSubtitle(sale, effectiveDateFormat),
+          );
+    final title = labels.title;
+    final subtitle = labels.subtitle;
 
     final resolvedBranch = branchPill ??
         (branchLabel != null && branchLabel!.isNotEmpty
@@ -104,7 +144,7 @@ class SaleListTile extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: isSelected
+                          fontWeight: emphasizeCustomerName || isSelected
                               ? FontWeight.bold
                               : FontWeight.w500,
                         ),

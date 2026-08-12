@@ -92,4 +92,26 @@ void main() {
     expect(find.text('WALK-INS'), findsOneWidget);
     expect(find.text('₱900.00'), findsOneWidget);
   });
+
+  testWidgets('onTap is invoked when card is tapped', (tester) async {
+    var tapped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReportKpiCard(
+            title: 'Memberships',
+            value: '₱1,000.00',
+            icon: Icons.card_membership_outlined,
+            color: Colors.purple,
+            featured: true,
+            onTap: () => tapped = true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(ReportKpiCard));
+    await tester.pump();
+    expect(tapped, isTrue);
+  });
 }

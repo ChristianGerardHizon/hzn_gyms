@@ -668,6 +668,91 @@ void main() {
     });
   });
 
+  group('saleItemMatchesPrimaryType', () {
+    test('membership and walkIn match exact type', () {
+      expect(saleItemMatchesPrimaryType('membership', 'membership'), isTrue);
+      expect(saleItemMatchesPrimaryType('walkIn', 'walkIn'), isTrue);
+      expect(saleItemMatchesPrimaryType('product', 'membership'), isFalse);
+      expect(saleItemMatchesPrimaryType('addon', 'membership'), isFalse);
+    });
+
+    test('empty/null item type matches product only', () {
+      expect(saleItemMatchesPrimaryType(null, 'product'), isTrue);
+      expect(saleItemMatchesPrimaryType('', 'product'), isTrue);
+      expect(saleItemMatchesPrimaryType('product', 'product'), isTrue);
+      expect(saleItemMatchesPrimaryType('addon', 'product'), isFalse);
+      expect(saleItemMatchesPrimaryType(null, 'membership'), isFalse);
+    });
+  });
+
+  group('saleItemsRawFilterForPrimaryType', () {
+    test('builds expected filters', () {
+      expect(
+        saleItemsRawFilterForPrimaryType('membership'),
+        "itemType = 'membership'",
+      );
+      expect(
+        saleItemsRawFilterForPrimaryType('walkIn'),
+        "itemType = 'walkIn'",
+      );
+      expect(
+        saleItemsRawFilterForPrimaryType('product'),
+        "(itemType = 'product' || itemType = '')",
+      );
+    });
+  });
+
+  group('distinctSaleIdsForPrimaryItemType', () {
+    test('returns distinct matching sale ids', () {
+      final items = [
+        (saleId: 's1', itemType: 'membership'),
+        (saleId: 's1', itemType: 'addon'),
+        (saleId: 's2', itemType: 'product'),
+        (saleId: 's3', itemType: ''),
+        (saleId: 's4', itemType: 'walkIn'),
+        (saleId: '', itemType: 'membership'),
+      ];
+      expect(
+        distinctSaleIdsForPrimaryItemType(items, 'membership'),
+        ['s1'],
+      );
+      expect(
+        distinctSaleIdsForPrimaryItemType(items, 'product'),
+        ['s2', 's3'],
+      );
+      expect(
+        distinctSaleIdsForPrimaryItemType(items, 'walkIn'),
+        ['s4'],
+      );
+    });
+  });
+
+  group('descriptorDetailAfterCustomerName', () {
+    test('returns plan fragment after name', () {
+      expect(
+        descriptorDetailAfterCustomerName('Juan Dela Cruz · Monthly Plan'),
+        'Monthly Plan',
+      );
+      expect(
+        descriptorDetailAfterCustomerName('Juan · Plan · Extra'),
+        'Plan · Extra',
+      );
+      expect(descriptorDetailAfterCustomerName('WATER'), isNull);
+      expect(descriptorDetailAfterCustomerName(null), isNull);
+      expect(descriptorDetailAfterCustomerName(' · Plan'), isNull);
+    });
+  });
+
+  group('shouldCapSalesByItemType', () {
+    test('caps year and allTime only', () {
+      expect(shouldCapSalesByItemType(ReportPeriod.day), isFalse);
+      expect(shouldCapSalesByItemType(ReportPeriod.weekly), isFalse);
+      expect(shouldCapSalesByItemType(ReportPeriod.monthly), isFalse);
+      expect(shouldCapSalesByItemType(ReportPeriod.yearly), isTrue);
+      expect(shouldCapSalesByItemType(ReportPeriod.allTime), isTrue);
+    });
+  });
+
   group('aggregateCheckInsByHour', () {
     test('buckets by hour', () {
       final result = aggregateCheckInsByHour([

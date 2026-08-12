@@ -159,3 +159,101 @@ final class SalesReportExtrasProvider
 }
 
 String _$salesReportExtrasHash() => r'37482ccf8377ef1dfa2a7efbc11b4b5e7753cffe';
+
+/// Sales that include at least one line of [itemType] for the selected period.
+///
+/// [itemType] is `membership` / `walkIn` / `product`. Used by the Sales report
+/// KPI drill-down dialogs.
+
+@ProviderFor(salesByItemType)
+final salesByItemTypeProvider = SalesByItemTypeFamily._();
+
+/// Sales that include at least one line of [itemType] for the selected period.
+///
+/// [itemType] is `membership` / `walkIn` / `product`. Used by the Sales report
+/// KPI drill-down dialogs.
+
+final class SalesByItemTypeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Sale>>,
+          List<Sale>,
+          FutureOr<List<Sale>>
+        >
+    with $FutureModifier<List<Sale>>, $FutureProvider<List<Sale>> {
+  /// Sales that include at least one line of [itemType] for the selected period.
+  ///
+  /// [itemType] is `membership` / `walkIn` / `product`. Used by the Sales report
+  /// KPI drill-down dialogs.
+  SalesByItemTypeProvider._({
+    required SalesByItemTypeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'salesByItemTypeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$salesByItemTypeHash();
+
+  @override
+  String toString() {
+    return r'salesByItemTypeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Sale>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Sale>> create(Ref ref) {
+    final argument = this.argument as String;
+    return salesByItemType(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SalesByItemTypeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$salesByItemTypeHash() => r'042a8fe184684abaefeac4660e34dcf0ea7fd987';
+
+/// Sales that include at least one line of [itemType] for the selected period.
+///
+/// [itemType] is `membership` / `walkIn` / `product`. Used by the Sales report
+/// KPI drill-down dialogs.
+
+final class SalesByItemTypeFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Sale>>, String> {
+  SalesByItemTypeFamily._()
+    : super(
+        retry: null,
+        name: r'salesByItemTypeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Sales that include at least one line of [itemType] for the selected period.
+  ///
+  /// [itemType] is `membership` / `walkIn` / `product`. Used by the Sales report
+  /// KPI drill-down dialogs.
+
+  SalesByItemTypeProvider call(String itemType) =>
+      SalesByItemTypeProvider._(argument: itemType, from: this);
+
+  @override
+  String toString() => r'salesByItemTypeProvider';
+}

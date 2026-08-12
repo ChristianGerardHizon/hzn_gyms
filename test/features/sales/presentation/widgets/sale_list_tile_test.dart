@@ -131,4 +131,71 @@ void main() {
     );
     expect(tooltip.message, longTitle);
   });
+
+  group('emphasizeCustomerName', () {
+    test('buildEmphasizedCustomerLabels puts name first', () {
+      final sale = buildSale(
+        customerName: 'Juan Dela Cruz',
+        descriptor: 'Juan Dela Cruz · Monthly Plan',
+        receiptNumber: 'S-250101-9PP8',
+        created: DateTime(2026, 7, 14, 14, 30),
+      );
+
+      final labels = SaleListTile.buildEmphasizedCustomerLabels(
+        sale,
+        dateFormat,
+      );
+      expect(labels.title, 'Juan Dela Cruz');
+      expect(labels.subtitle, 'Monthly Plan · #9PP8 · Jul 14, 2026');
+    });
+
+    test('falls back to listTitle when no real customer name', () {
+      final sale = buildSale(
+        customerName: 'Walk-in',
+        descriptor: 'Walk-in · Day Pass',
+        receiptNumber: 'S-250101-ABCD',
+        created: DateTime(2026, 7, 14),
+      );
+
+      final labels = SaleListTile.buildEmphasizedCustomerLabels(
+        sale,
+        dateFormat,
+      );
+      expect(labels.title, 'Walk-in · Day Pass');
+    });
+
+    testWidgets('renders member name as bold title', (tester) async {
+      final sale = buildSale(
+        customerName: 'Juan Dela Cruz',
+        descriptor: 'Juan Dela Cruz · Monthly Plan',
+        receiptNumber: 'S-250101-9PP8',
+        totalAmount: 1500,
+        status: 'completed',
+        created: DateTime(2026, 7, 14),
+      );
+
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SaleListTile(
+                sale: sale,
+                onTap: () {},
+                dateFormat: dateFormat,
+                emphasizeCustomerName: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Juan Dela Cruz'), findsOneWidget);
+      expect(
+        find.text('Monthly Plan · #9PP8 · Jul 14, 2026'),
+        findsOneWidget,
+      );
+      final title = tester.widget<Text>(find.text('Juan Dela Cruz'));
+      expect(title.style?.fontWeight, FontWeight.bold);
+    });
+  });
 }

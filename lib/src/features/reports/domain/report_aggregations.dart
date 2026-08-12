@@ -338,6 +338,67 @@ aggregateScopedItemTypeMetrics(
 String salesCountLabel(int count) =>
     '$count ${count == 1 ? 'sale' : 'sales'}';
 
+/// Max transactions returned for Year / All Time KPI drill-down dialogs.
+const kSalesByItemTypeYearCap = 200;
+
+/// Whether [getSalesByItemType] should cap results for this period.
+bool shouldCapSalesByItemType(ReportPeriod period) =>
+    period == ReportPeriod.yearly || period == ReportPeriod.allTime;
+
+/// Whether a sale line matches a primary Sales KPI type.
+///
+/// [targetType] is one of `membership` / `walkIn` / `product`. Add-ons never
+/// match. Empty/null item types match `product` (same as KPI aggregation).
+bool saleItemMatchesPrimaryType(String? itemType, String targetType) {
+  final normalized = normalizeSalesItemType(itemType);
+  if (normalized == 'addon') return false;
+  if (targetType == 'product') return normalized == 'product';
+  return normalized == targetType;
+}
+
+/// PocketBase raw filter for saleItems matching a primary KPI type.
+String saleItemsRawFilterForPrimaryType(String targetType) {
+  switch (targetType) {
+    case 'membership':
+      return "itemType = 'membership'";
+    case 'walkIn':
+      return "itemType = 'walkIn'";
+    case 'product':
+      // Empty/null lines normalize to product in KPI aggregation.
+      return "(itemType = 'product' || itemType = '')";
+    default:
+      return "itemType = '$targetType'";
+  }
+}
+
+/// Distinct sale IDs whose lines match [targetType] (membership/walkIn/product).
+List<String> distinctSaleIdsForPrimaryItemType(
+  Iterable<({String saleId, String? itemType})> items,
+  String targetType,
+) {
+  final ids = <String>{};
+  for (final item in items) {
+    if (item.saleId.isEmpty) continue;
+    if (saleItemMatchesPrimaryType(item.itemType, targetType)) {
+      ids.add(item.saleId);
+    }
+  }
+  return ids.toList(growable: false);
+}
+
+/// Plan / item fragment from a membership descriptor (`Name · Plan`).
+///
+/// Returns null when there is no ` · ` separator after a non-empty name.
+String? descriptorDetailAfterCustomerName(String? descriptor) {
+  final value = descriptor?.trim();
+  if (value == null || value.isEmpty) return null;
+  const sep = ' · ';
+  final index = value.indexOf(sep);
+  if (index <= 0) return null;
+  final detail = value.substring(index + sep.length).trim();
+  return detail.isEmpty ? null : detail;
+}
+
 /// Whether Day/Week/Month should fetch period-scoped raw rows instead of
 /// all-history SQL views.
 ///

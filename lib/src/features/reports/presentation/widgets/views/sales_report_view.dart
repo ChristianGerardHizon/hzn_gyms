@@ -20,6 +20,7 @@ import '../charts/pie_chart_widget.dart';
 import '../report_kpi_card.dart';
 import '../report_kpi_grid.dart';
 import '../report_no_data_card.dart';
+import '../sales_item_type_transactions_dialog.dart';
 
 /// View displaying the sales report with charts and tables.
 class SalesReportView extends HookConsumerWidget {
@@ -264,6 +265,12 @@ class SalesReportView extends HookConsumerWidget {
               color: Colors.purple,
               subtitle: salesCountLabel(typeTotals.membershipCount),
               featured: true,
+              onTap: () => showSalesItemTypeTransactionsDialog(
+                context,
+                itemType: 'membership',
+                revenueLabel:
+                    _currencyFormat.format(typeTotals.membershipTotal),
+              ),
             ),
             ReportKpiCard(
               title: 'Walk-ins',
@@ -272,6 +279,11 @@ class SalesReportView extends HookConsumerWidget {
               color: Colors.indigo,
               subtitle: salesCountLabel(typeTotals.walkInCount),
               featured: true,
+              onTap: () => showSalesItemTypeTransactionsDialog(
+                context,
+                itemType: 'walkIn',
+                revenueLabel: _currencyFormat.format(typeTotals.walkInTotal),
+              ),
             ),
             ReportKpiCard(
               title: 'Products',
@@ -280,6 +292,11 @@ class SalesReportView extends HookConsumerWidget {
               color: Colors.teal,
               subtitle: salesCountLabel(typeTotals.productCount),
               featured: true,
+              onTap: () => showSalesItemTypeTransactionsDialog(
+                context,
+                itemType: 'product',
+                revenueLabel: _currencyFormat.format(typeTotals.productTotal),
+              ),
             ),
           ],
         ),
