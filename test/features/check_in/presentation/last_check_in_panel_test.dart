@@ -97,6 +97,8 @@ void main() {
       expect(decoration, isNotNull);
       expect(decoration!.color, Colors.green.withValues(alpha: 0.12));
       expect(decoration.border?.top.color, Colors.green.withValues(alpha: 0.3));
+      expect(find.textContaining('Checked in at'), findsNothing);
+      expect(find.textContaining('Expires'), findsOneWidget);
     });
 
     testWidgets('uses orange background for near-expiry membership', (

@@ -173,7 +173,7 @@ Future<void> _pumpWizard(
           effectiveBranchIdForWriteProvider.overrideWithValue('branch-1'),
           currentBranchIdProvider.overrideWithValue('branch-1'),
           currentUserPermissionsProvider.overrideWith(
-            (ref) async => permissions,
+            () => _FakeCurrentUserPermissionsController(permissions),
           ),
           memberLocalDataSourceProvider.overrideWithValue(local),
           memberRepositoryProvider.overrideWithValue(repo),
@@ -208,6 +208,16 @@ Future<void> _completeDetailsStep(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
+}
+
+class _FakeCurrentUserPermissionsController
+    extends CurrentUserPermissionsController {
+  _FakeCurrentUserPermissionsController(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
 }
 
 class _FakeBranchesController extends BranchesController {

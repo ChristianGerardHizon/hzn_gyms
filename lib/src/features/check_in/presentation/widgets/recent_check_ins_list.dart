@@ -12,6 +12,7 @@ import '../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/check_in_controller.dart';
 import '../../domain/check_in.dart';
+import '../../domain/check_in_membership_highlight.dart';
 import 'last_check_in_panel.dart';
 import 'void_check_in_dialog.dart';
 
@@ -103,6 +104,9 @@ class _CheckInListTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final memberAsync = ref.watch(memberProvider(checkIn.memberId));
+    final membershipAsync = ref.watch(
+      memberActiveMembershipProvider(checkIn.memberId),
+    );
     final branchPill = showBranch
         ? BranchCodePill.fromBranches(
             branchId: checkIn.branchId,
@@ -111,7 +115,54 @@ class _CheckInListTile extends ConsumerWidget {
           )
         : null;
 
-    return ListTile(
+    final highlight = membershipAsync.whenOrNull(
+      data: resolveCheckInMembershipHighlight,
+    );
+    final statusColor = highlight != null
+        ? checkInMembershipHighlightColor(highlight)
+        : null;
+
+    final statusIcon = highlight != null
+        ? Icon(
+            checkInMembershipHighlightIcon(highlight),
+            color: statusColor,
+            size: 22,
+          )
+        : null;
+
+    Widget? trailing;
+    if (canVoid && statusIcon != null) {
+      trailing = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          statusIcon,
+          IconButton(
+            tooltip: 'Void check-in',
+            icon: const Icon(Icons.undo),
+            onPressed: () =>
+                showVoidCheckInDialog(context, ref, checkIn: checkIn),
+          ),
+        ],
+      );
+    } else if (canVoid) {
+      trailing = IconButton(
+        tooltip: 'Void check-in',
+        icon: const Icon(Icons.undo),
+        onPressed: () =>
+            showVoidCheckInDialog(context, ref, checkIn: checkIn),
+      );
+    } else if (statusIcon != null) {
+      trailing = statusIcon;
+    }
+
+    final tile = ListTile(
+      tileColor: statusColor?.withValues(alpha: 0.12),
+      shape: statusColor != null
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: statusColor.withValues(alpha: 0.3)),
+            )
+          : null,
       leading: CachedAvatar(
         imageUrl: memberAsync.value?.photo,
         radius: 20,
@@ -133,20 +184,20 @@ class _CheckInListTile extends ConsumerWidget {
           if (branchPill != null) ...[const SizedBox(width: 6), branchPill],
         ],
       ),
-      trailing: canVoid
-          ? IconButton(
-              tooltip: 'Void check-in',
-              icon: const Icon(Icons.undo),
-              onPressed: () =>
-                  showVoidCheckInDialog(context, ref, checkIn: checkIn),
-            )
-          : null,
+      trailing: trailing,
       onTap: () => showActiveMembershipFromCheckIn(
         context,
         ref,
         memberId: checkIn.memberId,
         memberName: checkIn.memberName ?? 'Unknown Member',
       ),
+    );
+
+    if (statusColor == null) return tile;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: tile,
     );
   }
 }
