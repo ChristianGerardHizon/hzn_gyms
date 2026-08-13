@@ -6,7 +6,7 @@ import 'package:ebe_gym/src/features/pos/domain/sale_status.dart';
 void main() {
   group('PaymentType.displayName', () {
     test('maps each type', () {
-      expect(PaymentType.payment.displayName, 'Payment');
+      expect(PaymentType.payment.displayName, 'Cash');
       expect(PaymentType.deposit.displayName, 'GCash/Bank');
       expect(PaymentType.refund.displayName, 'Refund');
     });
