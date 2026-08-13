@@ -16,6 +16,7 @@ import 'package:ebe_gym/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 
 import '../../../helpers/fixtures.dart';
 
@@ -68,8 +69,17 @@ void main() {
       required List<CheckIn> checkIns,
       MemberMembership? membership,
       bool viewingAll = false,
+      bool canVoid = false,
+      Size? surfaceSize,
       List<Branch> branches = const [branchA, branchB],
     }) async {
+      if (surfaceSize != null) {
+        tester.view.physicalSize = surfaceSize;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+      }
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -93,8 +103,11 @@ void main() {
               ),
             currentUserPermissionsProvider.overrideWith(
               () => _FixedPermissions(
-                const CurrentUserPermissions(
-                  permissions: {Permissions.membershipsView},
+                CurrentUserPermissions(
+                  permissions: {
+                    Permissions.membershipsView,
+                    if (canVoid) Permissions.checkInsVoid,
+                  },
                 ),
               ),
             ),
@@ -195,5 +208,79 @@ void main() {
 
       expect(find.byType(BranchCodePill), findsNothing);
     });
+
+    testWidgets('shows membership end date left of status badge', (
+      tester,
+    ) async {
+      final endDate = DateTime(2026, 12, 15);
+      await pumpList(
+        tester,
+        canVoid: true,
+        checkIns: [buildCheckIn(memberId: 'member-1', memberName: 'Jane Doe')],
+        membership: buildMemberMembership(endDate: endDate),
+      );
+
+      final dateFinder = find.text(DateFormat('MMM d, yyyy').format(endDate));
+      final badgeFinder = find.byIcon(Icons.verified);
+      expect(dateFinder, findsOneWidget);
+      expect(badgeFinder, findsOneWidget);
+      expect(find.byTooltip('Void check-in'), findsOneWidget);
+      expect(
+        tester.getTopLeft(dateFinder).dx,
+        lessThan(tester.getTopLeft(badgeFinder).dx),
+      );
+    });
+
+    testWidgets('shows Expired when member has no active membership', (
+      tester,
+    ) async {
+      await pumpList(
+        tester,
+        checkIns: [buildCheckIn(memberId: 'member-1', memberName: 'Jane Doe')],
+      );
+
+      expect(find.text('Expired'), findsOneWidget);
+      expect(find.byIcon(Icons.cancel_outlined), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Expired')).dx,
+        lessThan(tester.getTopLeft(find.byIcon(Icons.cancel_outlined)).dx),
+      );
+    });
+
+    testWidgets(
+      'keeps name, time, expiry, and void visible on a narrow screen',
+      (tester) async {
+        final endDate = DateTime(2026, 12, 15);
+        final checkInTime = DateTime(2026, 8, 14, 14, 30);
+        await pumpList(
+          tester,
+          canVoid: true,
+          surfaceSize: const Size(400, 800),
+          checkIns: [
+            buildCheckIn(
+              memberId: 'member-1',
+              memberName: 'Jane Doe',
+              checkInTime: checkInTime,
+            ),
+          ],
+          membership: buildMemberMembership(endDate: endDate),
+        );
+
+        final dateFinder = find.text(DateFormat('MMM d, yyyy').format(endDate));
+        final badgeFinder = find.byIcon(Icons.verified);
+        expect(find.text('Jane Doe'), findsOneWidget);
+        expect(
+          find.textContaining(DateFormat('hh:mm a').format(checkInTime)),
+          findsOneWidget,
+        );
+        expect(dateFinder, findsOneWidget);
+        expect(badgeFinder, findsOneWidget);
+        expect(find.byTooltip('Void check-in'), findsOneWidget);
+        expect(
+          tester.getTopLeft(dateFinder).dx,
+          lessThan(tester.getTopLeft(badgeFinder).dx),
+        );
+      },
+    );
   });
 }

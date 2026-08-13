@@ -130,30 +130,19 @@ class _CheckInListTile extends ConsumerWidget {
           )
         : null;
 
-    Widget? trailing;
-    if (canVoid && statusIcon != null) {
-      trailing = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          statusIcon,
-          IconButton(
-            tooltip: 'Void check-in',
-            icon: const Icon(Icons.undo),
-            onPressed: () =>
-                showVoidCheckInDialog(context, ref, checkIn: checkIn),
-          ),
-        ],
-      );
-    } else if (canVoid) {
-      trailing = IconButton(
-        tooltip: 'Void check-in',
-        icon: const Icon(Icons.undo),
-        onPressed: () =>
-            showVoidCheckInDialog(context, ref, checkIn: checkIn),
-      );
-    } else if (statusIcon != null) {
-      trailing = statusIcon;
-    }
+    final expiryLabel = membershipAsync.whenOrNull(
+      data: (membership) => membership == null
+          ? 'Expired'
+          : DateFormat('MMM d, yyyy').format(membership.endDate),
+    );
+
+    final trailing = _buildTrailing(
+      context: context,
+      ref: ref,
+      statusColor: statusColor,
+      statusIcon: statusIcon,
+      expiryLabel: expiryLabel,
+    );
 
     final tile = ListTile(
       tileColor: statusColor?.withValues(alpha: 0.12),
@@ -198,6 +187,62 @@ class _CheckInListTile extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: tile,
+    );
+  }
+
+  Widget? _buildTrailing({
+    required BuildContext context,
+    required WidgetRef ref,
+    required Color? statusColor,
+    required Widget? statusIcon,
+    required String? expiryLabel,
+  }) {
+    final expiryText = expiryLabel == null
+        ? null
+        : Text(
+            expiryLabel,
+            softWrap: false,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w600,
+            ),
+          );
+
+    final voidButton = canVoid
+        ? IconButton(
+            tooltip: 'Void check-in',
+            icon: const Icon(Icons.undo),
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            padding: EdgeInsets.zero,
+            onPressed: () =>
+                showVoidCheckInDialog(context, ref, checkIn: checkIn),
+          )
+        : null;
+
+    Widget? statusCluster;
+    if (expiryText != null || statusIcon != null) {
+      statusCluster = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (expiryText != null) expiryText,
+          if (expiryText != null && statusIcon != null)
+            const SizedBox(width: 6),
+          if (statusIcon != null) statusIcon,
+        ],
+      );
+    }
+
+    if (statusCluster == null && voidButton == null) {
+      return null;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (statusCluster != null) statusCluster,
+        if (voidButton != null) voidButton,
+      ],
     );
   }
 }
