@@ -50,8 +50,9 @@ class PBFilter {
     final uniqueIds = ids.toSet();
     if (uniqueIds.isEmpty) return this;
 
-    final orConditions =
-        uniqueIds.map((id) => '$field = "${escape(id)}"').join(' || ');
+    final orConditions = uniqueIds
+        .map((id) => '$field = "${escape(id)}"')
+        .join(' || ');
     _conditions.add('($orConditions)');
     return this;
   }
@@ -279,4 +280,17 @@ abstract class PBFilters {
   /// Result: `branch = "id" && isDeleted = false`
   static PBFilter forBranch(String branchId) =>
       PBFilter().relation('branch', branchId).notDeleted();
+
+  /// Currently active member subscriptions.
+  ///
+  /// `startDate <= now` and `endDate >= start of today` (local). The end
+  /// date is date-only and inclusive through that calendar day, so a
+  /// membership ending today stays valid until midnight.
+  static PBFilter activeMemberMemberships({DateTime? now}) {
+    final current = now ?? DateTime.now();
+    return PBFilter()
+        .equals('status', 'active')
+        .lessOrEqual('startDate', current)
+        .greaterOrEqual('endDate', toLocalDateOnly(current));
+  }
 }

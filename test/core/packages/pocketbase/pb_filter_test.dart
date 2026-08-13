@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ebe_gym/src/core/packages/pocketbase/pb_filter.dart';
+import 'package:ebe_gym/src/core/utils/date_utils.dart';
 
 void main() {
   group('PBFilter.escape', () {
@@ -21,23 +22,19 @@ void main() {
     });
 
     test('relation uses double quotes', () {
-      expect(
-        PBFilter().relation('member', 'abc').build(),
-        'member = "abc"',
-      );
+      expect(PBFilter().relation('member', 'abc').build(), 'member = "abc"');
     });
 
     test('searchFields wraps OR conditions', () {
-      final filter = PBFilter()
-          .searchFields('doe', ['name', 'email'])
-          .build();
+      final filter = PBFilter().searchFields('doe', ['name', 'email']).build();
       expect(filter, "(name ~ 'doe' || email ~ 'doe')");
     });
 
     test('searchFields ANDs whitespace tokens across fields', () {
-      final filter = PBFilter()
-          .searchFields('chloe sy', ['name', 'mobileNumber'])
-          .build();
+      final filter = PBFilter().searchFields('chloe sy', [
+        'name',
+        'mobileNumber',
+      ]).build();
       expect(
         filter,
         "(name ~ 'chloe' || mobileNumber ~ 'chloe') && "
@@ -46,9 +43,9 @@ void main() {
     });
 
     test('searchFields collapses irregular query spacing', () {
-      final filter = PBFilter()
-          .searchFields('  chloe   sy  ', ['name'])
-          .build();
+      final filter = PBFilter().searchFields('  chloe   sy  ', [
+        'name',
+      ]).build();
       expect(filter, "(name ~ 'chloe') && (name ~ 'sy')");
     });
 
@@ -78,8 +75,10 @@ void main() {
       expect(PBFilter().greaterThan('qty', 5).build(), 'qty > 5');
       expect(PBFilter().lessOrEqual('qty', 2).build(), 'qty <= 2');
       expect(PBFilter().contains('name', "O'a").build(), r"name ~ 'O\'a'");
-      expect(PBFilter().isTrue('active').isFalse('deleted').build(),
-          'active = true && deleted = false');
+      expect(
+        PBFilter().isTrue('active').isFalse('deleted').build(),
+        'active = true && deleted = false',
+      );
       expect(
         PBFilter().isNull('notes').build(),
         "(notes = '' || notes = null)",
@@ -93,7 +92,10 @@ void main() {
     test('between and isActive preset', () {
       final start = DateTime.utc(2024, 1, 1);
       final end = DateTime.utc(2024, 1, 31, 23, 59, 59);
-      final filter = PBFilter().between('created', start, end).isActive().build();
+      final filter = PBFilter()
+          .between('created', start, end)
+          .isActive()
+          .build();
       expect(filter, contains("created >= '2024-01-01 00:00:00.000Z'"));
       expect(filter, contains("created <= '2024-01-31 23:59:59.000Z'"));
       expect(filter, endsWith('isActive = true'));
@@ -121,6 +123,20 @@ void main() {
         PBFilters.forBranch('b1').build(),
         'branch = "b1" && isDeleted = false',
       );
+    });
+
+    test('activeMemberMemberships keeps last calendar day inclusive', () {
+      final now = DateTime(2026, 8, 13, 15, 30, 45);
+      final filter = PBFilters.activeMemberMemberships(now: now).build();
+      final startOfToday = toLocalDateOnly(now);
+
+      expect(filter, contains("status = 'active'"));
+      expect(filter, contains("startDate <= '${now.toPocketBaseUtc()}'"));
+      expect(
+        filter,
+        contains("endDate >= '${startOfToday.toPocketBaseUtc()}'"),
+      );
+      expect(filter, isNot(contains("endDate >= '${now.toPocketBaseUtc()}'")));
     });
   });
 }

@@ -248,11 +248,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       final itemTypeMetrics = aggregateScopedItemTypeMetrics(
         itemRows.map(
-          (i) => (
-            saleId: i.saleId,
-            itemType: i.itemType,
-            subtotal: i.subtotal,
-          ),
+          (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: i.subtotal),
         ),
         reportableSaleIds,
       );
@@ -776,10 +772,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final mmPeriodFilter = PBFilter().and(branchFilter).and(periodFilter);
 
       final now = DateTime.now();
-      final activeFilter = PBFilter()
-          .equals('status', 'active')
-          .lessOrEqual('startDate', now)
-          .greaterOrEqual('endDate', DateTime(now.year, now.month, now.day));
+      final activeFilter = PBFilters.activeMemberMemberships(now: now);
       if (branchId != null) {
         activeFilter.relation('branch', branchId);
       }

@@ -114,13 +114,7 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
     return MemberMembershipDto.fromRecord(record).toEntity();
   }
 
-  PBFilter _activeMembershipsFilter() {
-    final now = DateTime.now();
-    return PBFilter()
-        .equals('status', 'active')
-        .before('startDate', now)
-        .after('endDate', now);
-  }
+  PBFilter _activeMembershipsFilter() => PBFilters.activeMemberMemberships();
 
   static const _memberIdChunkSize = 50;
 
@@ -254,10 +248,12 @@ class MemberMembershipRepositoryImpl implements MemberMembershipRepository {
         filter: PBFilter().equals('saleId', saleId).build(),
       );
 
-      await Future.wait(records.map((record) async {
-        await _collection.update(record.id, body: {'status': status.name});
-        _invalidateMemberCache(record.getStringValue('member'));
-      }));
+      await Future.wait(
+        records.map((record) async {
+          await _collection.update(record.id, body: {'status': status.name});
+          _invalidateMemberCache(record.getStringValue('member'));
+        }),
+      );
     }, Failure.handle).run();
   }
 
