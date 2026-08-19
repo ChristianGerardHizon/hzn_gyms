@@ -31,16 +31,13 @@ class ActivityLogDetailPage extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              log.summary,
+              formatActivityLogHeadline(log),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-            _MetaRow(
-              label: 'Action',
-              value: log.action.label,
-            ),
+            _MetaRow(label: 'Action', value: log.action.label),
             _MetaRow(
               label: 'Collection',
               value: activityLogCollectionLabel(log.collection),
@@ -51,10 +48,7 @@ class ActivityLogDetailPage extends ConsumerWidget {
             if (log.branchName != null)
               _MetaRow(label: 'Branch', value: log.branchName!),
             if (log.created != null)
-              _MetaRow(
-                label: 'When',
-                value: _dateFormat.format(log.created!),
-              ),
+              _MetaRow(label: 'When', value: _dateFormat.format(log.created!)),
             const SizedBox(height: 24),
             Text(
               'Field Changes',
@@ -97,12 +91,7 @@ class _MetaRow extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
         ],
       ),
     );

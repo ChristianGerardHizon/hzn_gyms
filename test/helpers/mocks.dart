@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:ebe_gym/src/core/database/app_database.dart';
 import 'package:ebe_gym/src/core/sync/outbox_service.dart';
+import 'package:ebe_gym/src/features/activity_log/data/repositories/activity_log_repository.dart';
 import 'package:ebe_gym/src/features/check_in/data/repositories/check_in_repository.dart';
 import 'package:ebe_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
 import 'package:ebe_gym/src/features/members/data/local/member_local_data_source.dart';
@@ -38,6 +39,8 @@ class MockProductRepository extends Mock implements ProductRepository {}
 class MockCartRepository extends Mock implements CartRepository {}
 
 class MockOutboxService extends Mock implements OutboxService {}
+
+class MockActivityLogRepository extends Mock implements ActivityLogRepository {}
 
 /// In-memory Drift database for offline orchestrator tests.
 AppDatabase createTestDatabase() => AppDatabase(NativeDatabase.memory());

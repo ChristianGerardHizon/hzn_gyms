@@ -4,19 +4,13 @@ import 'package:intl/intl.dart';
 import '../../domain/activity_log.dart';
 import '../../domain/activity_log_action.dart';
 import '../../domain/activity_log_formatters.dart';
+import 'activity_log_changes_table.dart';
 
-/// List tile showing an activity log summary row.
-class ActivityLogListTile extends StatelessWidget {
-  const ActivityLogListTile({
-    super.key,
-    required this.log,
-    required this.onTap,
-    this.selected = false,
-  });
+/// Expandable row: descriptive headline when collapsed, field diffs when open.
+class ActivityLogExpandableTile extends StatelessWidget {
+  const ActivityLogExpandableTile({super.key, required this.log});
 
   final ActivityLog log;
-  final VoidCallback onTap;
-  final bool selected;
 
   static final _dateFormat = DateFormat('MMM d, yyyy h:mm a');
 
@@ -25,8 +19,7 @@ class ActivityLogListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final preview = formatActivityLogChangePreview(log);
 
-    return ListTile(
-      selected: selected,
+    return ExpansionTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.secondaryContainer,
         child: Icon(
@@ -58,13 +51,15 @@ class ActivityLogListTile extends StatelessWidget {
           ],
         ],
       ),
-      trailing: Text(
-        activityLogCollectionLabel(log.collection),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.primary,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: ActivityLogChangesTable(
+            collection: log.collection,
+            changes: log.changes,
+          ),
         ),
-      ),
-      onTap: onTap,
+      ],
     );
   }
 

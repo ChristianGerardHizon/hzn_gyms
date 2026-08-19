@@ -61,6 +61,21 @@ void main() {
       );
       expect(withVoid.canVoidCheckIns, isTrue);
     });
+
+    test('canViewActivityLog is granted by admin or activityLog.view', () {
+      const admin = CurrentUserPermissions(isAdmin: true);
+      expect(admin.canViewActivityLog, isTrue);
+
+      const viewer = CurrentUserPermissions(
+        permissions: {Permissions.activityLogView},
+      );
+      expect(viewer.canViewActivityLog, isTrue);
+
+      const staff = CurrentUserPermissions(
+        permissions: {Permissions.membersView},
+      );
+      expect(staff.canViewActivityLog, isFalse);
+    });
   });
 
   group('CurrentUserPermissionsController', () {
