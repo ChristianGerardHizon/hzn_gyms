@@ -82,6 +82,8 @@ flutter_native_splash:
   #android: false
   #ios: false
   web: true
+  # After `dart run flutter_native_splash:create`, restore the "Loading…"
+  # label and #splash-loading styles in web/index.html (not generated).
 
   # Platform specific images can be specified with the following parameters, which will override
   # the respective parameter.  You may specify all, selected, or none of these parameters:

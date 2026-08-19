@@ -99,10 +99,29 @@
       right: 0;
     }
   </style>
+  <style id="splash-loading-style">
+    #splash-loading {
+      position: absolute;
+      top: calc(50% + 100px);
+      left: 50%;
+      transform: translate(-50%, 0);
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      color: #666666;
+    }
+    @media (prefers-color-scheme: dark) {
+      #splash-loading {
+        color: #bbbbbb;
+      }
+    }
+  </style>
   <script id="splash-screen-script">
     function removeSplashFromWeb() {
       document.getElementById("splash")?.remove();
       document.getElementById("splash-branding")?.remove();
+      document.getElementById("splash-loading")?.remove();
       document.body.style.background = "transparent";
     }
   </script>
@@ -113,6 +132,7 @@
       <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
       <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
   </picture>
+  <p id="splash-loading">Loading...</p>
   
   
   
