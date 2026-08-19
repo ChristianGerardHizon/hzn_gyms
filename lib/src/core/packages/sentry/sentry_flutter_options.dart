@@ -7,8 +7,8 @@ import 'sentry_config.dart';
 /// Configures DSN, environment, and release on [options] from package info.
 ///
 /// PackageInfo is a local `version.json` read on web — it does not wait on
-/// Sentry ingest. Callers should still not await [SentryFlutter.init] before
-/// first frame.
+/// Sentry ingest. Call [SentryFlutter.init] only after [runApp] so first paint
+/// is not blocked; queue zone errors until init completes.
 Future<void> configureSentryFlutterOptions(SentryFlutterOptions options) async {
   final info = await PackageInfo.fromPlatform();
 

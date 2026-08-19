@@ -39,16 +39,43 @@ function startVersionPoll() {
     })
     .catch(() => {});
 
+  let reloadingForDeploy = false;
+
   setInterval(() => {
     readVersion()
       .then((payload) => {
         const next = versionKey(payload);
         if (currentVersion && next && next !== currentVersion) {
-          location.reload();
+          reloadForNewDeploy();
+        }
+        if (!currentVersion && next) {
+          currentVersion = next;
         }
       })
       .catch(() => {});
   }, 60000);
+
+  // Refresh HTTP cache for boot files, then reload. A plain location.reload()
+  // can keep cached flutter_bootstrap.js / main.dart.js after version.json
+  // (fetched with no-store) already moved forward.
+  function reloadForNewDeploy() {
+    if (reloadingForDeploy) return;
+    reloadingForDeploy = true;
+    const bootAssets = [
+      'index.html',
+      'flutter_bootstrap.js',
+      'flutter.js',
+      'main.dart.js',
+      'main.dart.wasm',
+    ];
+    Promise.all(
+      bootAssets.map((path) =>
+        fetch(path, { cache: 'reload' }).catch(() => null),
+      ),
+    ).finally(() => {
+      location.reload();
+    });
+  }
 }
 
 async function retireLegacyServiceWorker() {

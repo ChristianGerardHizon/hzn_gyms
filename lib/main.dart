@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:ebe_gym/src/application.dart';
 import 'package:ebe_gym/src/core/i18n/strings.g.dart';
 import 'package:ebe_gym/src/core/packages/sentry/sentry_config.dart';
 import 'package:ebe_gym/src/core/packages/sentry/sentry_flutter_options.dart';
+import 'package:ebe_gym/src/core/packages/sentry/sentry_startup_error_buffer.dart';
 import 'package:ebe_gym/src/core/utils/window_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -29,18 +28,20 @@ Future<void> main() async {
   // from the root zone. Calling ensureInitialized (or PackageInfo) in the root
   // zone then runApp inside that child zone causes "Zone mismatch" (EBEGYM-3).
   // Enter Sentry's zone first so bindings and runApp share the same zone.
-  // Do not await SentryFlutter.init before runApp: first paint must not wait
-  // on Sentry ingest. Init without appRunner so it does not create a nested zone.
+  // runApp before awaiting init so first paint is not blocked on Sentry ingest.
+  // Queue zone errors until init binds the DSN, then flush them.
+  final startupErrors = SentryStartupErrorBuffer();
   await Sentry.runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
       runEbeGymApp(appChild: SentryWidget(child: const Application()));
 
-      unawaited(SentryFlutter.init(configureSentryFlutterOptions));
+      await SentryFlutter.init(configureSentryFlutterOptions);
+      await startupErrors.markReadyAndFlush();
     },
     (error, stackTrace) {
-      // Sentry.runZonedGuarded already reports [error].
+      startupErrors.add(error, stackTrace);
     },
   );
 }

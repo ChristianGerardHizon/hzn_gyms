@@ -579,7 +579,7 @@ lib/src/
 | Date | Feature | Description |
 |------|---------|-------------|
 | Aug 19 | Today's activity logs | Dashboard **Today's Logs** quick action (admin or `activityLog.view`) opens today's branch-scoped activity with descriptive headlines and expandable field diffs |
-| Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; deploys picked up via version.json |
+| Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; new deploys bust boot-asset HTTP cache then reload via version.json |
 | Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |
 | Aug 10 | Check-in void, cooldown, cashier consolidation | Soft-void check-ins (`checkIns.void`); 30s same-member cooldown with prompt; cashier check-in strip in dashboard POS dialog; hide standalone Cashier nav (`/cashier` → dashboard) |
 | Aug 9 | Dashboard greeting header | Shared mobile/tablet header shows time-of-day greeting + user name and app version; RFID + refresh actions unchanged |
