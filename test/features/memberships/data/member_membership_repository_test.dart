@@ -1,8 +1,8 @@
-import 'package:ebe_gym/src/core/packages/pocketbase/pb_filter.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
+import 'package:kylie_gym/src/core/packages/pocketbase/pb_filter.dart';
+import 'package:kylie_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:kylie_gym/src/core/utils/date_utils.dart';
+import 'package:kylie_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -26,10 +26,7 @@ RecordModel buildMemberMembershipRecord({
   final membershipExpand = buildRecord(
     id: membership,
     collectionName: 'memberships',
-    data: {
-      'name': 'Monthly',
-      'validBranches': validBranches,
-    },
+    data: {'name': 'Monthly', 'validBranches': validBranches},
   );
 
   return buildRecord(
@@ -43,9 +40,7 @@ RecordModel buildMemberMembershipRecord({
       'status': status,
       'branch': branch,
       if (saleId != null) 'saleId': saleId,
-      'expand': {
-        'membership': membershipExpand.toJson(),
-      },
+      'expand': {'membership': membershipExpand.toJson()},
     },
   );
 }
@@ -69,10 +64,7 @@ void main() {
   test('fetchActiveByMemberIds returns empty map for empty input', () async {
     final result = await repo.fetchActiveByMemberIds([]);
     expect(result.isRight(), isTrue);
-    result.fold(
-      (_) => fail('expected right'),
-      (map) => expect(map, isEmpty),
-    );
+    result.fold((_) => fail('expected right'), (map) => expect(map, isEmpty));
     verifyNever(
       () => memberMemberships.getFullList(
         filter: any(named: 'filter'),
@@ -113,31 +105,64 @@ void main() {
     final result = await repo.fetchActiveByMemberIds(['member-1', 'member-2']);
     expect(result.isRight(), isTrue);
 
-    result.fold(
-      (_) => fail('expected right'),
-      (map) {
-        expect(map.keys, containsAll(['member-1', 'member-2']));
-        expect(map['member-1'], hasLength(2));
-        expect(map['member-2'], hasLength(1));
-        expect(
-          map['member-1']!.first.membershipValidBranches,
-          ['branch-1'],
-        );
-      },
-    );
+    result.fold((_) => fail('expected right'), (map) {
+      expect(map.keys, containsAll(['member-1', 'member-2']));
+      expect(map['member-1'], hasLength(2));
+      expect(map['member-2'], hasLength(1));
+      expect(map['member-1']!.first.membershipValidBranches, ['branch-1']);
+    });
 
-    final captured = verify(
-      () => memberMemberships.getFullList(
-        filter: captureAny(named: 'filter'),
-        sort: '-endDate',
-        expand: 'membership',
-      ),
-    ).captured.single as String?;
+    final captured =
+        verify(
+              () => memberMemberships.getFullList(
+                filter: captureAny(named: 'filter'),
+                sort: '-endDate',
+                expand: 'membership',
+              ),
+            ).captured.single
+            as String?;
 
     expect(captured, isNotNull);
     expect(captured, contains('member = "member-1"'));
     expect(captured, contains('member = "member-2"'));
     expect(captured, contains("status = 'active'"));
+    expect(
+      captured,
+      contains(
+        "endDate >= '${toLocalDateOnly(DateTime.now()).toPocketBaseUtc()}'",
+      ),
+    );
+  });
+
+  test('fetchActive uses start of today for inclusive endDate', () async {
+    when(
+      () => memberMemberships.getFullList(
+        filter: any(named: 'filter'),
+        sort: any(named: 'sort'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((_) async => []);
+
+    await repo.fetchActive('member-1');
+
+    final captured =
+        verify(
+              () => memberMemberships.getFullList(
+                filter: captureAny(named: 'filter'),
+                sort: '-endDate',
+                expand: 'member,membership',
+              ),
+            ).captured.single
+            as String?;
+
+    expect(captured, contains('member = "member-1"'));
+    expect(captured, contains("status = 'active'"));
+    expect(
+      captured,
+      contains(
+        "endDate >= '${toLocalDateOnly(DateTime.now()).toPocketBaseUtc()}'",
+      ),
+    );
   });
 
   test('updateStatusBySaleId updates matching records', () async {
@@ -176,29 +201,27 @@ void main() {
     );
 
     expect(result.isRight(), isTrue);
-    final filter = verify(
-      () => memberMemberships.getFullList(filter: captureAny(named: 'filter')),
-    ).captured.single as String?;
+    final filter =
+        verify(
+              () => memberMemberships.getFullList(
+                filter: captureAny(named: 'filter'),
+              ),
+            ).captured.single
+            as String?;
     expect(filter, "saleId = 'sale-1'");
 
     verify(
-      () => memberMemberships.update(
-        'mm-1',
-        body: {'status': 'active'},
-      ),
+      () => memberMemberships.update('mm-1', body: {'status': 'active'}),
     ).called(1);
     verify(
-      () => memberMemberships.update(
-        'mm-2',
-        body: {'status': 'active'},
-      ),
+      () => memberMemberships.update('mm-2', body: {'status': 'active'}),
     ).called(1);
   });
 
   test('create persists provided status', () async {
-    when(
-      () => memberMemberships.create(body: any(named: 'body')),
-    ).thenAnswer((invocation) async {
+    when(() => memberMemberships.create(body: any(named: 'body'))).thenAnswer((
+      invocation,
+    ) async {
       final body = invocation.namedArguments[#body] as Map<String, dynamic>;
       return buildMemberMembershipRecord(
         id: 'mm-new',
@@ -221,18 +244,18 @@ void main() {
     );
 
     expect(result.isRight(), isTrue);
-    final body = verify(
-      () => memberMemberships.create(body: captureAny(named: 'body')),
-    ).captured.single as Map<String, dynamic>;
+    final body =
+        verify(
+              () => memberMemberships.create(body: captureAny(named: 'body')),
+            ).captured.single
+            as Map<String, dynamic>;
     expect(body['status'], 'pending');
     expect(body['saleId'], 'sale-1');
     expect(body['idempotencyKey'], 'mm-key-1');
   });
 
   test('create reuses membership when idempotencyKey already exists', () async {
-    when(
-      () => memberMemberships.create(body: any(named: 'body')),
-    ).thenThrow(
+    when(() => memberMemberships.create(body: any(named: 'body'))).thenThrow(
       ClientException(
         url: Uri.parse('https://pb.test'),
         statusCode: 400,
@@ -286,10 +309,7 @@ void main() {
           .equals('status', 'active')
           .build();
 
-      expect(
-        filter,
-        "(member = \"a\" || member = \"b\") && status = 'active'",
-      );
+      expect(filter, "(member = \"a\" || member = \"b\") && status = 'active'");
     });
 
     test('is no-op for empty ids', () {

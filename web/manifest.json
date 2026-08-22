@@ -1,11 +1,11 @@
 {
-    "name": "Ebe Gym",
-    "short_name": "Ebe Gym",
+    "name": "Kylie Gym",
+    "short_name": "Kylie Gym",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
-    "description": "Ebe Gym",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Kylie Gym",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -28,7 +28,7 @@ Home screen with gym metrics and quick actions.
 - Header greets the signed-in user by time of day (`Good Morning/Noon/Afternoon/Evening`) with app version under the title; RFID status + refresh stay on the right
 - Responsive layout (single column mobile, single-pane tablet)
 - KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
-- Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member
+- Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member, and **Today's Logs** (admins, or staff with `activityLog.view`)
 - Search Member: cross-branch name/phone search with branch-activity chips; opens quick-view to renew or purchase at the current branch, or create a new member when no match
 - Cashier opens the product POS as a dialog (same `CashierBody` layout; standalone `/cashier` nav removed and redirects to dashboard; member optional at checkout; optional check-in strip for staff with `checkIns.create`)
 - Walk-in opens a day-pass dialog (customer name + plan with **Membership not required** + optional add-ons); creates a sale only — no member or membership record
@@ -39,6 +39,7 @@ Home screen with gym metrics and quick actions.
 - Expiring memberships section (memberships expiring within 7 days)
 - Inventory alerts (out of stock, low stock below threshold, expiring products)
 - Pull-to-refresh invalidates all dashboard data
+- **Today's Logs**: opens a dialog of today's activity (branch-scoped) with descriptive headlines and expandable field-level diffs
 - RFID keyboard-wedge listener (same as Check-In); NFC icon is green when active, red when inactive
 
 #### Check-In (`/check-in`)
@@ -210,7 +211,7 @@ Self-service account page for staff (and any user without `users.view`). Shows o
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
 - **Appearance** (`/system/appearance`) - Theme and default camera (available to all signed-in users)
 - **Debug** (`/system/debug`) - Admin tools; simulate RFID check-in dialogs
-- **Activity Log** (`/system/activity-log`) - Admin-only system-wide change history with summary list and field-level diffs
+- **Activity Log** (`/system/activity-log`) - System-wide change history with descriptive summaries and field-level diffs (`system.admin` or `activityLog.view`)
 
 ---
 
@@ -330,7 +331,7 @@ Located in `/lib/src/core/`
 - Password Recovery (`/recovery`)
 
 ### Main Navigation
-- **Dashboard**: Home with KPIs, quick actions, recent transactions (View All dialog), inventory alerts
+- **Dashboard**: Home with KPIs, quick actions (including Today's Logs), recent transactions (View All dialog), inventory alerts
 - **Check-In**: Member search, check-in with membership validation
 - **Cashier/POS**: Product grid and checkout
 - **Sales List**: Transaction history
@@ -577,6 +578,8 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Aug 19 | Today's activity logs | Dashboard **Today's Logs** quick action (admin or `activityLog.view`) opens today's branch-scoped activity with descriptive headlines and expandable field diffs |
+| Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; new deploys bust boot-asset HTTP cache then reload via version.json |
 | Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |
 | Aug 10 | Check-in void, cooldown, cashier consolidation | Soft-void check-ins (`checkIns.void`); 30s same-member cooldown with prompt; cashier check-in strip in dashboard POS dialog; hide standalone Cashier nav (`/cashier` → dashboard) |
 | Aug 9 | Dashboard greeting header | Shared mobile/tablet header shows time-of-day greeting + user name and app version; RFID + refresh actions unchanged |

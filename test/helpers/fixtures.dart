@@ -1,21 +1,46 @@
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
-import 'package:ebe_gym/src/features/auth/domain/user.dart';
-import 'package:ebe_gym/src/features/check_in/domain/check_in.dart';
-import 'package:ebe_gym/src/features/member_cards/domain/member_card.dart';
-import 'package:ebe_gym/src/features/members/domain/member.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership_add_on.dart';
-import 'package:ebe_gym/src/features/pos/domain/cart_item.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_method.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_type.dart';
-import 'package:ebe_gym/src/features/pos/domain/sale.dart';
-import 'package:ebe_gym/src/features/products/domain/product.dart';
-import 'package:ebe_gym/src/features/products/domain/product_lot.dart';
+import 'package:kylie_gym/src/core/utils/date_utils.dart';
+import 'package:kylie_gym/src/features/activity_log/domain/activity_log.dart';
+import 'package:kylie_gym/src/features/activity_log/domain/activity_log_action.dart';
+import 'package:kylie_gym/src/features/activity_log/domain/activity_log_change.dart';
+import 'package:kylie_gym/src/features/auth/domain/auth_state.dart';
+import 'package:kylie_gym/src/features/auth/domain/user.dart';
+import 'package:kylie_gym/src/features/check_in/domain/check_in.dart';
+import 'package:kylie_gym/src/features/member_cards/domain/member_card.dart';
+import 'package:kylie_gym/src/features/members/domain/member.dart';
+import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
+import 'package:kylie_gym/src/features/memberships/domain/membership.dart';
+import 'package:kylie_gym/src/features/memberships/domain/membership_add_on.dart';
+import 'package:kylie_gym/src/features/pos/domain/cart_item.dart';
+import 'package:kylie_gym/src/features/pos/domain/payment.dart';
+import 'package:kylie_gym/src/features/pos/domain/payment_method.dart';
+import 'package:kylie_gym/src/features/pos/domain/payment_type.dart';
+import 'package:kylie_gym/src/features/pos/domain/sale.dart';
+import 'package:kylie_gym/src/features/products/domain/product.dart';
+import 'package:kylie_gym/src/features/products/domain/product_lot.dart';
 
 /// Shared fixture builders for unit tests.
+ActivityLog buildActivityLog({
+  String id = 'log-1',
+  ActivityLogAction action = ActivityLogAction.update,
+  String collection = 'members',
+  String recordId = 'mem-1',
+  String summary = 'Updated Member: Juan Dela Cruz',
+  List<ActivityLogChange> changes = const [],
+  String? actorName = 'Chris',
+  DateTime? created,
+}) {
+  return ActivityLog(
+    id: id,
+    action: action,
+    collection: collection,
+    recordId: recordId,
+    summary: summary,
+    changes: changes,
+    actorName: actorName,
+    created: created,
+  );
+}
+
 AuthState buildAuthState({String userId = 'user-1', String token = 'token'}) {
   return AuthState(
     token: token,

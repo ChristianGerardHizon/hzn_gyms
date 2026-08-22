@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/pos/domain/sale.dart';
-import 'package:ebe_gym/src/features/pos/domain/sale_item.dart';
+import 'package:kylie_gym/src/features/pos/domain/sale.dart';
+import 'package:kylie_gym/src/features/pos/domain/sale_item.dart';
 
 import '../../../helpers/fixtures.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/users/domain/permission.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:kylie_gym/src/features/users/domain/permission.dart';
+import 'package:kylie_gym/src/features/users/domain/user_role.dart';
 
 void main() {
   group('UserRole', () {
@@ -15,8 +15,11 @@ void main() {
       expect(role.isAdmin, isTrue);
       expect(role.permissionCountDisplay, '2 permissions');
       expect(
-        const UserRole(id: 'x', name: 'One', permissions: ['a'])
-            .permissionCountDisplay,
+        const UserRole(
+          id: 'x',
+          name: 'One',
+          permissions: ['a'],
+        ).permissionCountDisplay,
         '1 permission',
       );
     });
@@ -32,11 +35,7 @@ void main() {
       expect(role.permissionCountInCategory(category), 1);
       expect(role.hasAllInCategory(category), allInCategory.length == 1);
 
-      final full = UserRole(
-        id: '3',
-        name: 'Full',
-        permissions: allInCategory,
-      );
+      final full = UserRole(id: '3', name: 'Full', permissions: allInCategory);
       expect(full.hasAllInCategory(category), isTrue);
       expect(full.permissionObjects, hasLength(allInCategory.length));
       expect(full.permissionsByCategory.keys, isNotEmpty);
@@ -47,21 +46,15 @@ void main() {
     test('Sales category includes void permission', () {
       final salesPermissions = Permissions.allByCategory['Sales']!;
       expect(salesPermissions, contains(Permissions.salesVoid));
-      expect(
-        Permissions.getByKey(Permissions.salesVoid)?.category,
-        'Sales',
-      );
+      expect(Permissions.getByKey(Permissions.salesVoid)?.category, 'Sales');
     });
 
-    test('Memberships category includes excludeFromSales permission', () {
-      final membershipPermissions = Permissions.allByCategory['Memberships']!;
+    test('System category includes activityLog.view permission', () {
+      final systemPermissions = Permissions.allByCategory['System']!;
+      expect(systemPermissions, contains(Permissions.activityLogView));
       expect(
-        membershipPermissions,
-        contains(Permissions.membershipsExcludeFromSales),
-      );
-      expect(
-        Permissions.getByKey(Permissions.membershipsExcludeFromSales)?.category,
-        'Memberships',
+        Permissions.getByKey(Permissions.activityLogView)?.category,
+        'System',
       );
     });
   });

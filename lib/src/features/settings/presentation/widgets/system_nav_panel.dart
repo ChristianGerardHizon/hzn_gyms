@@ -117,18 +117,23 @@ class SystemNavPanel extends ConsumerWidget {
             ),
           ),
           const Divider(),
-          const SizedBox(height: 8),
-          for (final entry in modes) ...[
-            _NavButton(
-              icon: entry.$2,
-              selectedIcon: entry.$3,
-              label: entry.$4,
-              isSelected: currentMode == entry.$1,
-              onTap: () => onModeChanged(entry.$1),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: modes.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 4),
+              itemBuilder: (context, index) {
+                final entry = modes[index];
+                return _NavButton(
+                  icon: entry.$2,
+                  selectedIcon: entry.$3,
+                  label: entry.$4,
+                  isSelected: currentMode == entry.$1,
+                  onTap: () => onModeChanged(entry.$1),
+                );
+              },
             ),
-            const SizedBox(height: 4),
-          ],
-          const Spacer(),
+          ),
         ],
       ),
     );

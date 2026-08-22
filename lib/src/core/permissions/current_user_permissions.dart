@@ -50,7 +50,7 @@ class CurrentUserPermissions {
   bool get canEditProductQuantity => has(Permissions.productsEditQuantity);
   bool get canAdjustInventory => has(Permissions.inventoryAdjust);
   bool get canManageSystem => has(Permissions.systemAdmin);
-  bool get canViewActivityLog => canManageSystem;
+  bool get canViewActivityLog => has(Permissions.activityLogView);
 
   @override
   bool operator ==(Object other) {

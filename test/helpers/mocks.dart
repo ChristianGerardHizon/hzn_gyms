@@ -1,17 +1,18 @@
 import 'package:drift/native.dart';
-import 'package:ebe_gym/src/core/database/app_database.dart';
-import 'package:ebe_gym/src/core/sync/outbox_service.dart';
-import 'package:ebe_gym/src/features/check_in/data/repositories/check_in_repository.dart';
-import 'package:ebe_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
-import 'package:ebe_gym/src/features/members/data/local/member_local_data_source.dart';
-import 'package:ebe_gym/src/features/members/data/repositories/member_repository.dart';
-import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
-import 'package:ebe_gym/src/features/memberships/data/repositories/membership_repository.dart';
-import 'package:ebe_gym/src/features/pos/data/repositories/cart_repository.dart';
-import 'package:ebe_gym/src/features/pos/data/repositories/payment_repository.dart';
-import 'package:ebe_gym/src/features/pos/data/repositories/sales_repository.dart';
-import 'package:ebe_gym/src/features/products/data/repositories/product_lot_repository.dart';
-import 'package:ebe_gym/src/features/products/data/repositories/product_repository.dart';
+import 'package:kylie_gym/src/core/database/app_database.dart';
+import 'package:kylie_gym/src/core/sync/outbox_service.dart';
+import 'package:kylie_gym/src/features/activity_log/data/repositories/activity_log_repository.dart';
+import 'package:kylie_gym/src/features/check_in/data/repositories/check_in_repository.dart';
+import 'package:kylie_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
+import 'package:kylie_gym/src/features/members/data/local/member_local_data_source.dart';
+import 'package:kylie_gym/src/features/members/data/repositories/member_repository.dart';
+import 'package:kylie_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:kylie_gym/src/features/memberships/data/repositories/membership_repository.dart';
+import 'package:kylie_gym/src/features/pos/data/repositories/cart_repository.dart';
+import 'package:kylie_gym/src/features/pos/data/repositories/payment_repository.dart';
+import 'package:kylie_gym/src/features/pos/data/repositories/sales_repository.dart';
+import 'package:kylie_gym/src/features/products/data/repositories/product_lot_repository.dart';
+import 'package:kylie_gym/src/features/products/data/repositories/product_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockCheckInRepository extends Mock implements CheckInRepository {}
@@ -38,6 +39,8 @@ class MockProductRepository extends Mock implements ProductRepository {}
 class MockCartRepository extends Mock implements CartRepository {}
 
 class MockOutboxService extends Mock implements OutboxService {}
+
+class MockActivityLogRepository extends Mock implements ActivityLogRepository {}
 
 /// In-memory Drift database for offline orchestrator tests.
 AppDatabase createTestDatabase() => AppDatabase(NativeDatabase.memory());

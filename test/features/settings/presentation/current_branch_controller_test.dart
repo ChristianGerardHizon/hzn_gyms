@@ -2,16 +2,16 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pb_filter.dart';
-import 'package:ebe_gym/src/core/packages/storage/secure_storage_provider.dart';
-import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:ebe_gym/src/features/settings/domain/branch.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/branches_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
-import 'package:ebe_gym/src/features/users/domain/user.dart' as users;
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
-import 'package:ebe_gym/src/features/users/presentation/controllers/user_provider.dart';
-import 'package:ebe_gym/src/features/users/presentation/controllers/user_role_provider.dart';
+import 'package:kylie_gym/src/core/packages/pocketbase/pb_filter.dart';
+import 'package:kylie_gym/src/core/packages/storage/secure_storage_provider.dart';
+import 'package:kylie_gym/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:kylie_gym/src/features/settings/domain/branch.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:kylie_gym/src/features/users/domain/user.dart' as users;
+import 'package:kylie_gym/src/features/users/domain/user_role.dart';
+import 'package:kylie_gym/src/features/users/presentation/controllers/user_provider.dart';
+import 'package:kylie_gym/src/features/users/presentation/controllers/user_role_provider.dart';
 
 import '../../../helpers/fixtures.dart';
 

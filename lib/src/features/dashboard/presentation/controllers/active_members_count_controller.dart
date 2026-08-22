@@ -11,11 +11,7 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 part 'active_members_count_controller.g.dart';
 
 PBFilter _activeMembershipsFilter(String? branchId) {
-  final now = DateTime.now();
-  final filter = PBFilter()
-      .equals('status', 'active')
-      .lessOrEqual('startDate', now)
-      .greaterOrEqual('endDate', now);
+  final filter = PBFilters.activeMemberMemberships();
   if (branchId != null) {
     filter.relation('branch', branchId);
   }
@@ -25,7 +21,7 @@ PBFilter _activeMembershipsFilter(String? branchId) {
 /// Count of members with currently active memberships.
 ///
 /// Queries memberMemberships where status = 'active'
-/// and current date is between startDate and endDate.
+/// and today is between startDate and the inclusive end calendar day.
 @riverpod
 Future<int> activeMembersCount(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);

@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/check_in/domain/editable_text_focus.dart';
+import 'package:kylie_gym/src/features/check_in/domain/editable_text_focus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

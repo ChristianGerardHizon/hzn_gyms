@@ -1,6 +1,6 @@
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
-import 'package:ebe_gym/src/features/member_cards/domain/member_card.dart';
+import 'package:kylie_gym/src/core/utils/date_utils.dart';
+import 'package:kylie_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
+import 'package:kylie_gym/src/features/member_cards/domain/member_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

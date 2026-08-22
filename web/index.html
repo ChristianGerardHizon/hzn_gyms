@@ -16,21 +16,30 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Ebe Gym">
+  <meta name="description" content="Kylie Gym">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Ebe Gym">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-title" content="Kylie Gym">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png">
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="mask-icon" href="safari-pinned-tab.svg" color="#000000">
 
-  <title>Ebe Gym</title>
+  <!-- Windows tiles -->
+  <meta name="msapplication-config" content="browserconfig.xml">
+  <meta name="msapplication-TileColor" content="#000000">
+  <meta name="theme-color" content="#000000">
+
+  <title>Kylie Gym</title>
   <link rel="manifest" href="manifest.json">
-  
-  
+
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
   <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self)">
   
@@ -99,10 +108,29 @@
       right: 0;
     }
   </style>
+  <style id="splash-loading-style">
+    #splash-loading {
+      position: absolute;
+      top: calc(50% + 100px);
+      left: 50%;
+      transform: translate(-50%, 0);
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      color: #666666;
+    }
+    @media (prefers-color-scheme: dark) {
+      #splash-loading {
+        color: #bbbbbb;
+      }
+    }
+  </style>
   <script id="splash-screen-script">
     function removeSplashFromWeb() {
       document.getElementById("splash")?.remove();
       document.getElementById("splash-branding")?.remove();
+      document.getElementById("splash-loading")?.remove();
       document.body.style.background = "transparent";
     }
   </script>
@@ -113,11 +141,13 @@
       <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
       <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
   </picture>
+  <p id="splash-loading">Loading...</p>
   
   
   
   
   <script src="flutter_bootstrap.js" async=""></script>
+
 
 
 

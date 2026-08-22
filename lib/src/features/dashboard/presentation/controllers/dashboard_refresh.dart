@@ -1,5 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../activity_log/presentation/controllers/todays_activity_logs_controller.dart';
 import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
 import 'active_members_count_controller.dart';
 import 'dashboard_kpi_provider.dart';
@@ -64,4 +65,5 @@ Future<void> refreshDashboard(WidgetRef ref) async {
   ref.invalidate(productsNearExpirationCountProvider);
   ref.invalidate(productsExpiredCountProvider);
   ref.invalidate(lowStockProductsCountProvider);
+  ref.invalidate(todaysActivityLogsControllerProvider);
 }

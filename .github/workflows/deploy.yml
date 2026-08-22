@@ -226,7 +226,9 @@ jobs:
 
       # BUILD WEB (& APK unless web-only)
       - name: Build Web
-        run: flutter build web --release --build-name=${{ env.STAGING_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=staging --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
+        run: |
+          flutter build web --release --pwa-strategy=none --build-name=${{ env.STAGING_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=staging --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
+          cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
       - name: Build APK (Release)
         if: needs.preflight-staging.outputs.web_only != 'true'
@@ -461,7 +463,9 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_RELEASE: ${{ env.PROD_VER }}+${{ github.run_number }}
           SENTRY_DIST: ${{ github.run_number }}
-        run: flutter build web --release --source-maps --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
+        run: |
+          flutter build web --release --pwa-strategy=none --source-maps --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
+          cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
       - name: Build APK (Release)
         if: steps.bump_type.outputs.web_only != 'true'

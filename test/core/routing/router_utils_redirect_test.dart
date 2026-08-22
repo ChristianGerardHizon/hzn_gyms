@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:ebe_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:ebe_gym/src/core/routing/pending_redirect_provider.dart';
-import 'package:ebe_gym/src/core/routing/router_utils.dart';
-import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
-import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:kylie_gym/src/core/permissions/current_user_permissions.dart';
+import 'package:kylie_gym/src/core/routing/pending_redirect_provider.dart';
+import 'package:kylie_gym/src/core/routing/router_utils.dart';
+import 'package:kylie_gym/src/features/auth/domain/auth_state.dart';
+import 'package:kylie_gym/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:kylie_gym/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

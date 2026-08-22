@@ -1,9 +1,9 @@
-import 'package:ebe_gym/src/core/packages/storage/secure_storage_provider.dart';
-import 'package:ebe_gym/src/core/packages/theme/app_themes.dart';
-import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
-import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:ebe_gym/src/features/settings/domain/app_theme_mode.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/theme_controller.dart';
+import 'package:kylie_gym/src/core/packages/storage/secure_storage_provider.dart';
+import 'package:kylie_gym/src/core/packages/theme/app_themes.dart';
+import 'package:kylie_gym/src/features/auth/domain/auth_state.dart';
+import 'package:kylie_gym/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:kylie_gym/src/features/settings/domain/app_theme_mode.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';

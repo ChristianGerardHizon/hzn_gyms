@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/dashboard/domain/inventory_alert.dart';
+import 'package:kylie_gym/src/features/dashboard/domain/inventory_alert.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

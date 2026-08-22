@@ -1,5 +1,5 @@
-import 'package:ebe_gym/src/features/memberships/presentation/widgets/purchase_membership_dialog.dart';
-import 'package:ebe_gym/src/features/pos/domain/sale.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/widgets/purchase_membership_dialog.dart';
+import 'package:kylie_gym/src/features/pos/domain/sale.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/fixtures.dart';

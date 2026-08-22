@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/sales/domain/payment_amount_validation.dart';
+import 'package:kylie_gym/src/features/sales/domain/payment_amount_validation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

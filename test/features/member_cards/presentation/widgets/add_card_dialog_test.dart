@@ -1,8 +1,8 @@
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
-import 'package:ebe_gym/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
-import 'package:ebe_gym/src/features/member_cards/domain/member_card.dart';
-import 'package:ebe_gym/src/features/member_cards/presentation/controllers/member_cards_controller.dart';
-import 'package:ebe_gym/src/features/member_cards/presentation/widgets/add_card_dialog.dart';
+import 'package:kylie_gym/src/core/i18n/strings.g.dart';
+import 'package:kylie_gym/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
+import 'package:kylie_gym/src/features/member_cards/domain/member_card.dart';
+import 'package:kylie_gym/src/features/member_cards/presentation/controllers/member_cards_controller.dart';
+import 'package:kylie_gym/src/features/member_cards/presentation/widgets/add_card_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

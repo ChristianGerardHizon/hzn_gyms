@@ -1,4 +1,4 @@
-name: ebe_gym
+name: kylie_gym
 description: "A template application"
 
 publish_to: 'none' 
@@ -124,7 +124,7 @@ scripts:
 sentry:
   upload_debug_symbols: true
   upload_source_maps: true
-  project: ebegym
+  project: kyliegym
   org: christian-hizon
   # Shallow CI clones can't always resolve the previous release SHA
   ignore_missing: true
@@ -142,7 +142,7 @@ flutter_launcher_icons:
   macos:
     generate: true
     image_path: "assets/icons/app_icon_mac.png"
-  adaptive_icon_background: "#ffffff"
+  adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/icons/app_icon_transparent.png"
 
 

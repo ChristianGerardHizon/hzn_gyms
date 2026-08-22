@@ -1,8 +1,8 @@
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
-import 'package:ebe_gym/src/features/members/presentation/widgets/member_form_dialog.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:kylie_gym/src/core/i18n/strings.g.dart';
+import 'package:kylie_gym/src/features/members/presentation/widgets/member_form_dialog.dart';
+import 'package:kylie_gym/src/features/memberships/domain/membership.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';

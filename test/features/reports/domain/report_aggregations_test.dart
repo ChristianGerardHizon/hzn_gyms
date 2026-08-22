@@ -1,5 +1,5 @@
-import 'package:ebe_gym/src/features/reports/domain/report_aggregations.dart';
-import 'package:ebe_gym/src/features/reports/domain/report_period.dart';
+import 'package:kylie_gym/src/features/reports/domain/report_aggregations.dart';
+import 'package:kylie_gym/src/features/reports/domain/report_period.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,30 +1,30 @@
 package_rename_config:
   android:
-    app_name: Ebe Gym # (String) The display name of the android app
-    package_name: com.ebegym.app # (String) The package name of the android app
+    app_name: Kylie Gym # (String) The display name of the android app
+    package_name: com.kyliegym.app # (String) The package name of the android app
 
   ios:
-    app_name: Ebe Gym # (String) The display name of the ios app
-    bundle_name: com.ebegym.app # (String) The bundle name of the ios app
-    package_name: com.ebegym.app # (String) The product bundle identifier of the ios app
+    app_name: Kylie Gym # (String) The display name of the ios app
+    bundle_name: com.kyliegym.app # (String) The bundle name of the ios app
+    package_name: com.kyliegym.app # (String) The product bundle identifier of the ios app
 
   linux:
-    app_name: Ebe Gym # (String) The window title of the linux app
-    package_name: com.ebegym.app # (String) The application id of the linux app
-    exe_name: ebe_gym # (String) The executable name (binary name) of the linux app
+    app_name: Kylie Gym # (String) The window title of the linux app
+    package_name: com.kyliegym.app # (String) The application id of the linux app
+    exe_name: kylie_gym # (String) The executable name (binary name) of the linux app
 
   macos:
-    app_name: Ebe Gym # (String) The product name of the macos app
-    package_name: com.ebegym.app # (String) The product bundle identifier of the macos app
-    copyright_notice: Ebe Gym # (String) The product copyright of the macos app
+    app_name: Kylie Gym # (String) The product name of the macos app
+    package_name: com.kyliegym.app # (String) The product bundle identifier of the macos app
+    copyright_notice: Kylie Gym # (String) The product copyright of the macos app
 
   web:
-    app_name: Ebe Gym # (String) The title of the web app and PWA
-    short_app_name: Ebe Gym # (String) The short display name of the PWA (Optional, defaults to app_name if not set)
-    description: Ebe Gym # (String) The description of the web app and PWA
+    app_name: Kylie Gym # (String) The title of the web app and PWA
+    short_app_name: Kylie Gym # (String) The short display name of the PWA (Optional, defaults to app_name if not set)
+    description: Kylie Gym # (String) The description of the web app and PWA
 
   windows:
-    app_name: Ebe Gym # (String) The window title & software name of the windows app
-    organization: Ebe Gym # (String) The organization name (company name) of the windows app
-    copyright_notice: Ebe Gym # (String) The legal copyright of the windows app
-    exe_name: ebe_gym # (String) The executable name (binary name) of the windows app
+    app_name: Kylie Gym # (String) The window title & software name of the windows app
+    organization: Kylie Gym # (String) The organization name (company name) of the windows app
+    copyright_notice: Kylie Gym # (String) The legal copyright of the windows app
+    exe_name: kylie_gym # (String) The executable name (binary name) of the windows app

@@ -40,13 +40,21 @@ class MobileDrawer extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer,
               ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Assets.icons.appIconTransparent.image(width: 48, height: 48),
-                  const SizedBox(height: 8),
-                  Text('Ebe Gym', style: theme.textTheme.titleLarge),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Assets.icons.appIconTransparent.image(
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  Text('Kylie Gym', style: theme.textTheme.titleLarge),
                   Text(
                     'Gym Management System',
                     style: theme.textTheme.bodyMedium?.copyWith(

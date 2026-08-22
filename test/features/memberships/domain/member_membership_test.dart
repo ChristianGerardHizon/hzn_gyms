@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
+import 'package:kylie_gym/src/core/utils/date_utils.dart';
+import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
+import 'package:kylie_gym/src/features/memberships/domain/membership.dart';
 
 import '../../../helpers/fixtures.dart';
 

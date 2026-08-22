@@ -23,6 +23,7 @@ class ActivityLogListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final preview = formatActivityLogChangePreview(log);
 
     return ListTile(
       selected: selected,
@@ -35,16 +36,16 @@ class ActivityLogListTile extends StatelessWidget {
         ),
       ),
       title: Text(
-        log.summary,
+        formatActivityLogHeadline(log),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (log.actorName != null) ...[
+          if (preview != null) ...[
             const SizedBox(height: 4),
-            Text('By ${log.actorName}'),
+            Text(preview, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
           if (log.created != null) ...[
             const SizedBox(height: 2),
@@ -68,8 +69,8 @@ class ActivityLogListTile extends StatelessWidget {
   }
 
   IconData _iconForAction(ActivityLogAction action) => switch (action) {
-        ActivityLogAction.create => Icons.add_circle_outline,
-        ActivityLogAction.update => Icons.edit_outlined,
-        ActivityLogAction.delete => Icons.delete_outline,
-      };
+    ActivityLogAction.create => Icons.add_circle_outline,
+    ActivityLogAction.update => Icons.edit_outlined,
+    ActivityLogAction.delete => Icons.delete_outline,
+  };
 }

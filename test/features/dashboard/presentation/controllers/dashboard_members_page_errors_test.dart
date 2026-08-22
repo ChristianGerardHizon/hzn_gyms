@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/controllers/dashboard_members_controller.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/controllers/dashboard_members_page_errors.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/controllers/dashboard_members_controller.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/controllers/dashboard_members_page_errors.dart';
 
 void main() {
   group('isProviderDisposedDuringLoading', () {

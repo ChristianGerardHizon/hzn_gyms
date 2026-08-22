@@ -1,9 +1,9 @@
-import 'package:ebe_gym/src/core/database/app_database.dart';
-import 'package:ebe_gym/src/core/database/database_provider.dart';
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
+import 'package:kylie_gym/src/core/database/app_database.dart';
+import 'package:kylie_gym/src/core/database/database_provider.dart';
+import 'package:kylie_gym/src/core/foundation/failure.dart';
+import 'package:kylie_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

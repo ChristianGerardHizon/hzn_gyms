@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/sales/domain/sale_status_filter.dart';
+import 'package:kylie_gym/src/features/sales/domain/sale_status_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

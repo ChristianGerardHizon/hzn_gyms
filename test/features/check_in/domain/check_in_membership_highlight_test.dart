@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/check_in/domain/check_in_membership_highlight.dart';
+import 'package:kylie_gym/src/features/check_in/domain/check_in_membership_highlight.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

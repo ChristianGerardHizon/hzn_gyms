@@ -41,7 +41,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.defaults()
     : super(
         driftDatabase(
-          name: 'ebe_gym',
+          name: 'kylie_gym',
           web: DriftWebOptions(
             sqlite3Wasm: Uri.parse('sqlite3.wasm'),
             driftWorker: Uri.parse('drift_worker.js'),

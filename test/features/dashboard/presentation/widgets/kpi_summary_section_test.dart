@@ -1,10 +1,10 @@
-import 'package:ebe_gym/src/core/widgets/branch_code_pill.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/controllers/active_members_count_controller.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/controllers/new_members_controller.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/controllers/todays_checkins_controller.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/controllers/todays_sales_controller.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/widgets/kpi_summary_section.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:kylie_gym/src/core/widgets/branch_code_pill.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/controllers/active_members_count_controller.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/controllers/new_members_controller.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/controllers/todays_checkins_controller.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/controllers/todays_sales_controller.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/widgets/kpi_summary_section.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
