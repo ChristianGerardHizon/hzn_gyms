@@ -4,12 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/features/check_in/data/repositories/check_in_repository.dart';
-import 'package:ebe_gym/src/features/check_in/domain/check_in.dart';
-import 'package:ebe_gym/src/features/check_in/presentation/controllers/check_in_records_controller.dart';
-import 'package:ebe_gym/src/features/check_in/presentation/controllers/check_in_records_date_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:kylie_gym/src/core/foundation/failure.dart';
+import 'package:kylie_gym/src/features/check_in/data/repositories/check_in_repository.dart';
+import 'package:kylie_gym/src/features/check_in/domain/check_in.dart';
+import 'package:kylie_gym/src/features/check_in/presentation/controllers/check_in_records_controller.dart';
+import 'package:kylie_gym/src/features/check_in/presentation/controllers/check_in_records_date_controller.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 
 import '../../../helpers/fixtures.dart';
 import '../../../helpers/mocks.dart';

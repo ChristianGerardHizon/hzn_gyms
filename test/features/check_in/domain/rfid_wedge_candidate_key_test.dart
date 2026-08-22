@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ebe_gym/src/features/check_in/domain/rfid_wedge_candidate_key.dart';
+import 'package:kylie_gym/src/features/check_in/domain/rfid_wedge_candidate_key.dart';
 
 void main() {
   group('isRfidWedgeCandidateKey', () {

@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/settings/domain/branch.dart';
+import 'package:kylie_gym/src/features/settings/domain/branch.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

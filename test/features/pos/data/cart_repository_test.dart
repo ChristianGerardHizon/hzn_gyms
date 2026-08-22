@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:ebe_gym/src/features/pos/data/repositories/cart_repository.dart';
-import 'package:ebe_gym/src/features/pos/domain/cart.dart';
-import 'package:ebe_gym/src/features/pos/domain/cart_item.dart';
+import 'package:kylie_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:kylie_gym/src/features/pos/data/repositories/cart_repository.dart';
+import 'package:kylie_gym/src/features/pos/domain/cart.dart';
+import 'package:kylie_gym/src/features/pos/domain/cart_item.dart';
 
 import '../../../helpers/pb_test_helpers.dart';
 

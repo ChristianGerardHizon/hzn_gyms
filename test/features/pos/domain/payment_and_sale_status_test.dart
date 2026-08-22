@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_method.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_type.dart';
-import 'package:ebe_gym/src/features/pos/domain/sale_status.dart';
+import 'package:kylie_gym/src/features/pos/domain/payment_method.dart';
+import 'package:kylie_gym/src/features/pos/domain/payment_type.dart';
+import 'package:kylie_gym/src/features/pos/domain/sale_status.dart';
 
 void main() {
   group('PaymentType.displayName', () {

@@ -1,10 +1,10 @@
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/core/foundation/type_defs.dart';
-import 'package:ebe_gym/src/features/activity_log/data/repositories/activity_log_repository.dart';
-import 'package:ebe_gym/src/features/activity_log/domain/activity_log.dart';
-import 'package:ebe_gym/src/features/activity_log/domain/activity_log_filter.dart';
-import 'package:ebe_gym/src/features/activity_log/presentation/controllers/todays_activity_logs_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:kylie_gym/src/core/foundation/failure.dart';
+import 'package:kylie_gym/src/core/foundation/type_defs.dart';
+import 'package:kylie_gym/src/features/activity_log/data/repositories/activity_log_repository.dart';
+import 'package:kylie_gym/src/features/activity_log/domain/activity_log.dart';
+import 'package:kylie_gym/src/features/activity_log/domain/activity_log_filter.dart';
+import 'package:kylie_gym/src/features/activity_log/presentation/controllers/todays_activity_logs_controller.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

@@ -10,9 +10,10 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
-        android:label="Ebe Gym"
+        android:label="Kylie Gym"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
     
         <activity
             android:name=".MainActivity"

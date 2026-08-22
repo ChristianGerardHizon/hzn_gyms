@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/products/domain/product_branch_visibility.dart';
+import 'package:kylie_gym/src/features/products/domain/product_branch_visibility.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

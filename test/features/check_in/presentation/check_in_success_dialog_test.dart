@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/widgets/cached_avatar.dart';
-import 'package:ebe_gym/src/features/check_in/presentation/widgets/check_in_success_dialog.dart';
+import 'package:kylie_gym/src/core/widgets/cached_avatar.dart';
+import 'package:kylie_gym/src/features/check_in/presentation/widgets/check_in_success_dialog.dart';
 
 void main() {
   testWidgets('success dialog shows member photo avatar', (tester) async {

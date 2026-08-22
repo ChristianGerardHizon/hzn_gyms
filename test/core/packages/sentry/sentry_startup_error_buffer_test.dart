@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/core/packages/sentry/sentry_startup_error_buffer.dart';
+import 'package:kylie_gym/src/core/packages/sentry/sentry_startup_error_buffer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

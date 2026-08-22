@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/users/domain/permission.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:kylie_gym/src/features/users/domain/permission.dart';
+import 'package:kylie_gym/src/features/users/domain/user_role.dart';
 
 void main() {
   group('UserRole', () {

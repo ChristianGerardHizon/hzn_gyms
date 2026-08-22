@@ -1,7 +1,7 @@
-import 'package:ebe_gym/src/core/widgets/select_branch_for_action_dialog.dart';
-import 'package:ebe_gym/src/features/settings/domain/branch.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/branches_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:kylie_gym/src/core/widgets/select_branch_for_action_dialog.dart';
+import 'package:kylie_gym/src/features/settings/domain/branch.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

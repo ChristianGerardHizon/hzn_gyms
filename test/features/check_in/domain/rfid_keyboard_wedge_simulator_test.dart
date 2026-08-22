@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ebe_gym/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
+import 'package:kylie_gym/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
 
 void main() {
   group('mapCharacterToRfidWedgeKey', () {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/dashboard/domain/dashboard_members_layout.dart';
+import 'package:kylie_gym/src/features/dashboard/domain/dashboard_members_layout.dart';
 
 void main() {
   group('DashboardMembersLayout', () {

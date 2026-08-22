@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Ebe Gym" "\0"
-            VALUE "FileDescription", "Ebe Gym" "\0"
+            VALUE "CompanyName", "Kylie Gym" "\0"
+            VALUE "FileDescription", "Kylie Gym" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Ebe Gym" "\0"
-            VALUE "LegalCopyright", "Ebe Gym" "\0"
-            VALUE "OriginalFilename", "ebe_gym.exe" "\0"
-            VALUE "ProductName", "Ebe Gym" "\0"
+            VALUE "InternalName", "Kylie Gym" "\0"
+            VALUE "LegalCopyright", "Kylie Gym" "\0"
+            VALUE "OriginalFilename", "kylie_gym.exe" "\0"
+            VALUE "ProductName", "Kylie Gym" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

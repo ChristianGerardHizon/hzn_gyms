@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/members/presentation/controllers/member_branch_activity_controller.dart';
+import 'package:kylie_gym/src/features/members/presentation/controllers/member_branch_activity_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

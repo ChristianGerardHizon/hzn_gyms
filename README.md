@@ -1,4 +1,4 @@
-# Ebe Gym
+# Kylie Gym
 
 A Flutter multi-platform gym management system supporting Android, iOS, macOS, Linux, Windows, and Web.
 

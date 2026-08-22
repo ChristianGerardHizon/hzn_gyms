@@ -1,14 +1,14 @@
-import 'package:ebe_gym/src/application.dart';
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
-import 'package:ebe_gym/src/core/packages/sentry/sentry_config.dart';
-import 'package:ebe_gym/src/core/packages/sentry/sentry_flutter_options.dart';
-import 'package:ebe_gym/src/core/packages/sentry/sentry_startup_error_buffer.dart';
-import 'package:ebe_gym/src/core/utils/window_utils.dart';
+import 'package:kylie_gym/src/application.dart';
+import 'package:kylie_gym/src/core/i18n/strings.g.dart';
+import 'package:kylie_gym/src/core/packages/sentry/sentry_config.dart';
+import 'package:kylie_gym/src/core/packages/sentry/sentry_flutter_options.dart';
+import 'package:kylie_gym/src/core/packages/sentry/sentry_startup_error_buffer.dart';
+import 'package:kylie_gym/src/core/utils/window_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-void runEbeGymApp({Widget? appChild}) {
+void runKylieGymApp({Widget? appChild}) {
   WindowUtils.register();
   LocaleSettings.useDeviceLocale();
 
@@ -20,7 +20,7 @@ void runEbeGymApp({Widget? appChild}) {
 Future<void> main() async {
   if (!isSentryEnabled) {
     WidgetsFlutterBinding.ensureInitialized();
-    runEbeGymApp();
+    runKylieGymApp();
     return;
   }
 
@@ -35,7 +35,7 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
-      runEbeGymApp(appChild: SentryWidget(child: const Application()));
+      runKylieGymApp(appChild: SentryWidget(child: const Application()));
 
       await SentryFlutter.init(configureSentryFlutterOptions);
       await startupErrors.markReadyAndFlush();

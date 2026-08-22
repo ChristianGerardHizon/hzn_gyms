@@ -86,7 +86,8 @@ List<AppNavDestination> visibleAppNavDestinations(
           case AppNavId.profile:
             return !permissions.canManageUsers;
           case AppNavId.outbox:
-            return permissions.canManageSystem;
+            // Hidden from sidebar/drawer; route remains for deep links / badges.
+            return false;
           case AppNavId.system:
             // Appearance and Camera are available to every signed-in user.
             return true;

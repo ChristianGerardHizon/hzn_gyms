@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/members/presentation/widgets/member_form_dialog.dart';
+import 'package:kylie_gym/src/features/members/presentation/widgets/member_form_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:ebe_gym/src/core/constants/constants.dart';
-import 'package:ebe_gym/src/core/database/app_database.dart';
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:ebe_gym/src/core/sync/outbox_service.dart';
-import 'package:ebe_gym/src/core/sync/sync_status.dart';
-import 'package:ebe_gym/src/features/members/data/local/member_local_data_source.dart';
-import 'package:ebe_gym/src/features/members/data/repositories/member_repository.dart';
-import 'package:ebe_gym/src/features/members/domain/member.dart';
+import 'package:kylie_gym/src/core/constants/constants.dart';
+import 'package:kylie_gym/src/core/database/app_database.dart';
+import 'package:kylie_gym/src/core/foundation/failure.dart';
+import 'package:kylie_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:kylie_gym/src/core/sync/outbox_service.dart';
+import 'package:kylie_gym/src/core/sync/sync_status.dart';
+import 'package:kylie_gym/src/features/members/data/local/member_local_data_source.dart';
+import 'package:kylie_gym/src/features/members/data/repositories/member_repository.dart';
+import 'package:kylie_gym/src/features/members/domain/member.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';

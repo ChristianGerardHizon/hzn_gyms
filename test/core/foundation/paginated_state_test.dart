@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/foundation/paginated_state.dart';
-import 'package:ebe_gym/src/core/foundation/sort_config.dart';
+import 'package:kylie_gym/src/core/foundation/paginated_state.dart';
+import 'package:kylie_gym/src/core/foundation/sort_config.dart';
 
 void main() {
   group('PaginatedState', () {

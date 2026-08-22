@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/navigation/app_nav_destination.dart';
-import 'package:ebe_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:kylie_gym/src/core/navigation/app_nav_destination.dart';
+import 'package:kylie_gym/src/core/permissions/current_user_permissions.dart';
+import 'package:kylie_gym/src/features/users/domain/user_role.dart';
 
 void main() {
   group('visibleAppNavDestinations', () {
@@ -67,7 +67,7 @@ void main() {
       expect(ids, contains(AppNavId.organization));
       expect(ids, isNot(contains(AppNavId.profile)));
       expect(ids, contains(AppNavId.reports));
-      expect(ids, contains(AppNavId.outbox));
+      expect(ids, isNot(contains(AppNavId.outbox)));
     });
   });
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/check_in/domain/card_check_in_result.dart';
+import 'package:kylie_gym/src/features/check_in/domain/card_check_in_result.dart';
 
 import '../../../helpers/fixtures.dart';
 

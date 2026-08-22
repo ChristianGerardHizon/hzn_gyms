@@ -1,7 +1,7 @@
-import 'package:ebe_gym/src/features/pos/domain/pos_group.dart';
-import 'package:ebe_gym/src/features/pos/presentation/cart_controller.dart';
-import 'package:ebe_gym/src/features/pos/presentation/components/cashier_dialog.dart';
-import 'package:ebe_gym/src/features/pos/presentation/controllers/pos_groups_controller.dart';
+import 'package:kylie_gym/src/features/pos/domain/pos_group.dart';
+import 'package:kylie_gym/src/features/pos/presentation/cart_controller.dart';
+import 'package:kylie_gym/src/features/pos/presentation/components/cashier_dialog.dart';
+import 'package:kylie_gym/src/features/pos/presentation/controllers/pos_groups_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

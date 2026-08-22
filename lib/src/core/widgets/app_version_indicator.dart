@@ -10,7 +10,7 @@ import 'outbox_pending_sheet.dart';
 ///
 /// Shows:
 /// - Online/offline status from PocketBase health
-/// - Server domain: `staging.ebegym.hznsystems.com`
+/// - Server domain (from PocketBase URL host)
 /// - Version and build number: `v1.0.0+1`
 /// - Environment badge (only for non-prod): `DEV` or `STAGING`
 class AppVersionIndicator extends ConsumerWidget {

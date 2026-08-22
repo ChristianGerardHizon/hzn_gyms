@@ -4,7 +4,7 @@
 // Do not pass serviceWorkerSettings. Flutter's generated worker precaches the
 // entire app (main.dart.js + CanvasKit + wasm) before first frame and can leave
 // the HTML splash up for minutes. Repeat visits use the browser HTTP cache.
-const _swCleanupFlag = 'ebeGymSwCleanupDone';
+const _swCleanupFlag = 'kylieGymSwCleanupDone';
 
 function loadFlutterEngine() {
   _flutter.loader.load({

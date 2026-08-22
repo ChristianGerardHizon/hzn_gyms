@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/pos/domain/receipt_print_mode.dart';
+import 'package:kylie_gym/src/features/pos/domain/receipt_print_mode.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

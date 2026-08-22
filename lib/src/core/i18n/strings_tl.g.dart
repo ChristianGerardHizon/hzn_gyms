@@ -84,7 +84,7 @@ class _Translations$common$tl implements Translations$common$en {
 	final TranslationsTl _root; // ignore: unused_field
 
 	// Translations
-	@override String get appName => 'Ebe Gym';
+	@override String get appName => 'Kylie Gym';
 	@override String get placeholderText => 'N/A';
 	@override String get save => 'I-save';
 	@override String get cancel => 'Kanselahin';
@@ -272,7 +272,7 @@ extension on TranslationsTl {
 			'auth.resetLinkSent' => ({required Object email}) => 'Naipadala na ang password reset link sa ${email}',
 			'auth.signInToContinue' => 'Mag-sign in upang magpatuloy',
 			'auth.signingIn' => 'Nagsa-sign in...',
-			'common.appName' => 'Ebe Gym',
+			'common.appName' => 'Kylie Gym',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'I-save',
 			'common.cancel' => 'Kanselahin',

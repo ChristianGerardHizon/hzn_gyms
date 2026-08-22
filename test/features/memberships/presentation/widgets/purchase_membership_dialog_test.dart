@@ -1,7 +1,7 @@
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/widgets/purchase_membership_dialog.dart';
+import 'package:kylie_gym/src/core/utils/date_utils.dart';
+import 'package:kylie_gym/src/features/memberships/domain/membership.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/widgets/purchase_membership_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

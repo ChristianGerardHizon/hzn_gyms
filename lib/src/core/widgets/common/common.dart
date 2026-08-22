@@ -2,7 +2,7 @@
 ///
 /// This library exports all common widgets for easy importing:
 /// ```dart
-/// import 'package:ebe_gym/src/core/widgets/common/common.dart';
+/// import 'package:kylie_gym/src/core/widgets/common/common.dart';
 /// ```
 library;
 

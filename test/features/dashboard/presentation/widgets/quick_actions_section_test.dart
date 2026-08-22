@@ -1,6 +1,6 @@
-import 'package:ebe_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:ebe_gym/src/features/dashboard/presentation/widgets/quick_actions_section.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:kylie_gym/src/core/permissions/current_user_permissions.dart';
+import 'package:kylie_gym/src/features/dashboard/presentation/widgets/quick_actions_section.dart';
+import 'package:kylie_gym/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
