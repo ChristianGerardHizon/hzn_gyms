@@ -1,5 +1,9 @@
 name: Auto Promote to Main
 
+# Match deploy.yml — Kylie Gym is web-only.
+env:
+  DEPLOY_WEB_ONLY: "true"
+
 on:
   pull_request:
     types: [closed]
@@ -77,7 +81,7 @@ jobs:
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
           WEB_ONLY_NOTE=""
           TITLE="v${VERSION}"
-          if echo "$LABELS" | grep -q '"web-only"'; then
+          if echo "$LABELS" | grep -q '"web-only"' || [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
             WEB_ONLY_NOTE=" (**web only** — Android APK skipped)"
             TITLE="v${VERSION} (web-only)"
           fi
@@ -118,7 +122,7 @@ jobs:
             ADD_ARGS+=(--add-label "minimum version")
           fi
 
-          if echo "$LABELS" | grep -q '"web-only"'; then
+          if echo "$LABELS" | grep -q '"web-only"' || [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
             ADD_ARGS+=(--add-label "web-only")
           fi
 

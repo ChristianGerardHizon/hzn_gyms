@@ -314,7 +314,7 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 
 | Platform | CI/CD Status | Notes |
 |----------|-------------|-------|
-| Android (APK) | Fully automated | Signed release builds for both environments |
+| Android (APK) | Disabled | `DEPLOY_WEB_ONLY=true` in deploy workflows — Kylie Gym is web-only |
 | Web | Fully automated | Standard builds for both environments. Auto-deployed via SSH/rsync to PocketBase `pb_public/`. |
 | iOS | Not configured | Would require macOS runner + signing certificates |
 | macOS | Not configured | Would require macOS runner |
