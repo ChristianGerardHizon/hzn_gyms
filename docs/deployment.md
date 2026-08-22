@@ -213,20 +213,20 @@ The SSH user needs write access to:
 
 | Path | Purpose |
 |------|---------|
-| `/opt/pocketbase/ebegym-staging/pb_public/` | Staging web build |
-| `/opt/pocketbase/ebegym-staging/pb_migrations/` | Staging PocketBase migrations |
-| `/opt/pocketbase/ebegym/pb_public/` | Production web build |
-| `/opt/pocketbase/ebegym/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/kyliegym-staging/pb_public/` | Staging web build |
+| `/opt/pocketbase/kyliegym-staging/pb_migrations/` | Staging PocketBase migrations |
+| `/opt/pocketbase/kyliegym/pb_public/` | Production web build |
+| `/opt/pocketbase/kyliegym/pb_migrations/` | Production PocketBase migrations |
 
 ### Passwordless Sudo
 
 The SSH user needs passwordless sudo for restarting PocketBase services. Add to `/etc/sudoers.d/deploy`:
 
 ```
-deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_ebegym.service, /bin/systemctl restart pocketbase_ebegym-staging.service
+deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_kyliegym.service, /bin/systemctl restart pocketbase_kyliegym-staging.service
 ```
 
-Configured on the server as `/etc/sudoers.d/deploy-ebegym`.
+Configured on the server as `/etc/sudoers.d/deploy-kyliegym`.
 
 ---
 
@@ -347,8 +347,8 @@ Shared bash script used by GitHub Actions (and local Linux/macOS emergency deplo
 
 | Environment | Server root | Service |
 |-------------|-------------|---------|
-| staging | `/opt/pocketbase/ebegym-staging` | `pocketbase_ebegym-staging.service` |
-| prod | `/opt/pocketbase/ebegym` | `pocketbase_ebegym.service` |
+| staging | `/opt/pocketbase/kyliegym-staging` | `pocketbase_kyliegym-staging.service` |
+| prod | `/opt/pocketbase/kyliegym` | `pocketbase_kyliegym.service` |
 
 ---
 
