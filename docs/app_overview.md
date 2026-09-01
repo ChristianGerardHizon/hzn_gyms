@@ -187,6 +187,14 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 
 ### Organization/Admin Features
 
+#### Organizations (`/organizations`)
+Super-admin platform page for managing tenants (requires `organizations.manage`, not granted by `systemAdmin` alone).
+
+- List all organizations with slug, subdomain, and DNS provisioning status
+- Create/edit organization branding fields (name, slug, display name, seed/splash colors)
+- Retry Porkbun DNS provisioning for failed/pending orgs
+- **Organization switcher** in the app shell (top bar + mobile drawer) for super-admins to change active tenant
+
 #### Organization (`/organization`)
 3-panel tablet layout for managing organizational settings.
 
@@ -425,6 +433,7 @@ App Root (Shell)
     │   ├── /memberships (List)
     │   └── /memberships/:id (Detail)
     ├── /reports (Reports)
+    ├── /organizations (Super-admin tenant management)
     ├── /organization (3-panel layout)
     │   ├── /organization/users
     │   │   └── /organization/users/:id
@@ -578,6 +587,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 2 | Organizations admin UI | Super-admin `/organizations` page, org switcher, DNS retry, and `organizations.manage` nav gating |
 | Aug 19 | Today's activity logs | Dashboard **Today's Logs** quick action (admin or `activityLog.view`) opens today's branch-scoped activity with descriptive headlines and expandable field diffs |
 | Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; new deploys bust boot-asset HTTP cache then reload via version.json |
 | Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |

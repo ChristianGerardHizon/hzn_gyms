@@ -10,6 +10,7 @@ import '../sync/outbox_sync_worker.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/organization.routes.dart';
+import '../routing/routes/organizations.routes.dart';
 import '../routing/routes/outbox.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/members.routes.dart';
@@ -21,6 +22,7 @@ import '../routing/routes/sales_history.routes.dart';
 import '../routing/routes/system.routes.dart';
 import '../utils/breakpoints.dart';
 import '../widgets/branch_switcher.dart';
+import '../widgets/organization_switcher.dart';
 import '../widgets/mobile_bottom_nav.dart';
 import '../widgets/mobile_drawer.dart';
 import '../widgets/tablet_nav_rail.dart';
@@ -74,6 +76,8 @@ class _AppRootState extends ConsumerState<AppRoot> {
         const ReportsRoute().go(context);
       case AppNavId.organization:
         const OrganizationRoute().go(context);
+      case AppNavId.organizations:
+        const OrganizationsRoute().go(context);
       case AppNavId.profile:
         const ProfileRoute().go(context);
       case AppNavId.outbox:
@@ -160,8 +164,13 @@ class _AppRootState extends ConsumerState<AppRoot> {
   }
 
   Widget _buildBranchBar(BuildContext context) {
-    // BranchSwitcher supplies its own surface styling.
-    return const BranchSwitcher(compact: true);
+    return const Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        OrganizationSwitcher(compact: true),
+        BranchSwitcher(compact: true),
+      ],
+    );
   }
 
   Widget _buildMobileLayout(

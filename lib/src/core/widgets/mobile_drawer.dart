@@ -7,6 +7,7 @@ import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
 import 'branch_switcher.dart';
+import 'organization_switcher.dart';
 import 'org_logo.dart';
 import 'outbox_queue_badge.dart';
 
@@ -77,6 +78,7 @@ class MobileDrawer extends ConsumerWidget {
                 ],
               ),
             ),
+            const OrganizationSwitcher(),
             const BranchSwitcher(),
             for (var i = 0; i < destinations.length; i++) ...[
               if (_shouldInsertDividerBefore(destinations, i)) const Divider(),
@@ -111,6 +113,7 @@ class MobileDrawer extends ConsumerWidget {
     const secondary = {
       AppNavId.reports,
       AppNavId.organization,
+      AppNavId.organizations,
       AppNavId.profile,
       AppNavId.outbox,
       AppNavId.system,
@@ -140,6 +143,8 @@ class MobileDrawer extends ConsumerWidget {
         return Icons.analytics;
       case AppNavId.organization:
         return Icons.business;
+      case AppNavId.organizations:
+        return Icons.apartment;
       case AppNavId.profile:
         return Icons.person;
       case AppNavId.outbox:
@@ -169,6 +174,8 @@ class MobileDrawer extends ConsumerWidget {
         return t.navigation.reports;
       case AppNavId.organization:
         return t.navigation.organization;
+      case AppNavId.organizations:
+        return t.navigation.organizations;
       case AppNavId.profile:
         return t.navigation.profile;
       case AppNavId.outbox:

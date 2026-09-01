@@ -117,6 +117,8 @@ class TabletNavRail extends ConsumerWidget {
         return selected ? Icons.analytics : Icons.analytics_outlined;
       case AppNavId.organization:
         return selected ? Icons.business : Icons.business_outlined;
+      case AppNavId.organizations:
+        return selected ? Icons.apartment : Icons.apartment_outlined;
       case AppNavId.profile:
         return selected ? Icons.person : Icons.person_outline;
       case AppNavId.outbox:
@@ -146,6 +148,8 @@ class TabletNavRail extends ConsumerWidget {
         return t.navigation.reports;
       case AppNavId.organization:
         return t.navigation.organization;
+      case AppNavId.organizations:
+        return t.navigation.organizations;
       case AppNavId.profile:
         return t.navigation.profile;
       case AppNavId.outbox:

@@ -42,6 +42,7 @@ class TranslationsTl with BaseTranslations<AppLocale, Translations> implements T
 	@override late final _Translations$failures$tl failures = _Translations$failures$tl._(_root);
 	@override late final _Translations$fields$tl fields = _Translations$fields$tl._(_root);
 	@override late final _Translations$navigation$tl navigation = _Translations$navigation$tl._(_root);
+	@override late final _Translations$organizations$tl organizations = _Translations$organizations$tl._(_root);
 	@override late final _Translations$sort$tl sort = _Translations$sort$tl._(_root);
 	@override late final _Translations$validation$tl validation = _Translations$validation$tl._(_root);
 }
@@ -193,6 +194,7 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get sales => 'Cashier';
 	@override String get salesHistory => 'Mga Benta';
 	@override String get organization => 'Organisasyon';
+	@override String get organizations => 'Mga Organisasyon';
 	@override String get checkIn => 'Check-In';
 	@override String get checkInRecords => 'Kasaysayan ng Check-In';
 	@override String get members => 'Mga Miyembro';
@@ -202,6 +204,34 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get account => 'Account';
 	@override String get noBranch => 'Walang Sangay';
 	@override String get allBranches => 'Lahat ng Sangay';
+}
+
+// Path: organizations
+class _Translations$organizations$tl implements Translations$organizations$en {
+	_Translations$organizations$tl._(this._root);
+
+	final TranslationsTl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Mga Organisasyon';
+	@override String get create => 'Gumawa ng Organisasyon';
+	@override String get edit => 'I-edit ang Organisasyon';
+	@override String get name => 'Pangalan';
+	@override String get slug => 'Slug';
+	@override String get displayName => 'Display Name';
+	@override String get seedColor => 'Seed Color';
+	@override String get splashBackgroundColor => 'Splash Background Color';
+	@override String get subdomain => 'Subdomain';
+	@override String get dnsStatus => 'DNS Status';
+	@override String get retryDns => 'Subukang Muli ang DNS';
+	@override String get retryDnsSuccess => 'Sinubukan muli ang DNS provisioning';
+	@override String get retryDnsFailed => 'Hindi na-retry ang DNS provisioning';
+	@override String get createSuccess => 'Matagumpay na nagawa ang organisasyon';
+	@override String get updateSuccess => 'Matagumpay na na-update ang organisasyon';
+	@override String get saveFailed => 'Hindi na-save ang organisasyon. Pakisubukang muli.';
+	@override String get emptyList => 'Walang nahanap na organisasyon';
+	@override String get noOrganization => 'Walang Organisasyon';
+	@override String get switchOrganization => 'Palitan ang Organisasyon';
 }
 
 // Path: sort
@@ -354,6 +384,7 @@ extension on TranslationsTl {
 			'navigation.sales' => 'Cashier',
 			'navigation.salesHistory' => 'Mga Benta',
 			'navigation.organization' => 'Organisasyon',
+			'navigation.organizations' => 'Mga Organisasyon',
 			'navigation.checkIn' => 'Check-In',
 			'navigation.checkInRecords' => 'Kasaysayan ng Check-In',
 			'navigation.members' => 'Mga Miyembro',
@@ -363,6 +394,25 @@ extension on TranslationsTl {
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'Walang Sangay',
 			'navigation.allBranches' => 'Lahat ng Sangay',
+			'organizations.title' => 'Mga Organisasyon',
+			'organizations.create' => 'Gumawa ng Organisasyon',
+			'organizations.edit' => 'I-edit ang Organisasyon',
+			'organizations.name' => 'Pangalan',
+			'organizations.slug' => 'Slug',
+			'organizations.displayName' => 'Display Name',
+			'organizations.seedColor' => 'Seed Color',
+			'organizations.splashBackgroundColor' => 'Splash Background Color',
+			'organizations.subdomain' => 'Subdomain',
+			'organizations.dnsStatus' => 'DNS Status',
+			'organizations.retryDns' => 'Subukang Muli ang DNS',
+			'organizations.retryDnsSuccess' => 'Sinubukan muli ang DNS provisioning',
+			'organizations.retryDnsFailed' => 'Hindi na-retry ang DNS provisioning',
+			'organizations.createSuccess' => 'Matagumpay na nagawa ang organisasyon',
+			'organizations.updateSuccess' => 'Matagumpay na na-update ang organisasyon',
+			'organizations.saveFailed' => 'Hindi na-save ang organisasyon. Pakisubukang muli.',
+			'organizations.emptyList' => 'Walang nahanap na organisasyon',
+			'organizations.noOrganization' => 'Walang Organisasyon',
+			'organizations.switchOrganization' => 'Palitan ang Organisasyon',
 			'sort.sortBy' => 'Ayusin Ayon Sa',
 			'sort.direction' => 'Direksyon',
 			'sort.ascending' => 'Pataas',

@@ -1,0 +1,21 @@
+{
+    "title": "Organizations",
+    "create": "Create Organization",
+    "edit": "Edit Organization",
+    "name": "Name",
+    "slug": "Slug",
+    "displayName": "Display Name",
+    "seedColor": "Seed Color",
+    "splashBackgroundColor": "Splash Background Color",
+    "subdomain": "Subdomain",
+    "dnsStatus": "DNS Status",
+    "retryDns": "Retry DNS",
+    "retryDnsSuccess": "DNS provisioning retried",
+    "retryDnsFailed": "Failed to retry DNS provisioning",
+    "createSuccess": "Organization created successfully",
+    "updateSuccess": "Organization updated successfully",
+    "saveFailed": "Failed to save organization. Please try again.",
+    "emptyList": "No organizations found",
+    "noOrganization": "No Organization",
+    "switchOrganization": "Switch Organization"
+}
