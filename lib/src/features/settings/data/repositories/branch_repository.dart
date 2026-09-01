@@ -14,8 +14,8 @@ part 'branch_repository.g.dart';
 
 /// Repository interface for branch operations.
 abstract class BranchRepository {
-  /// Fetches all branches.
-  FutureEither<List<Branch>> fetchAll();
+  /// Fetches all branches, optionally scoped to [organizationId].
+  FutureEither<List<Branch>> fetchAll({String? organizationId});
 
   /// Fetches a single branch by ID.
   FutureEither<Branch> fetchOne(String id);
@@ -51,10 +51,12 @@ class BranchRepositoryImpl implements BranchRepository {
   }
 
   @override
-  FutureEither<List<Branch>> fetchAll() async {
+  FutureEither<List<Branch>> fetchAll({String? organizationId}) async {
     return TaskEither.tryCatch(
       () async {
-        final filter = PBFilters.active.build();
+        final filter = (organizationId != null && organizationId.isNotEmpty)
+            ? PBFilters.forOrganization(organizationId).build()
+            : PBFilters.active.build();
 
         final records = await _collection.getFullList(
           filter: filter,
@@ -98,6 +100,7 @@ class BranchRepositoryImpl implements BranchRepository {
           'operatingHours': branch.operatingHours,
           'cutOffTime': branch.cutOffTime,
           'color': branch.color,
+          'organization': branch.organization,
           'isDeleted': false,
         };
 

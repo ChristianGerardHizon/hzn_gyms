@@ -33,6 +33,10 @@ class User with UserMappable {
   /// FK to UserRole (PocketBase `role` relation id).
   final String? roleId;
 
+  /// FK to Organization (PocketBase `organization` relation id), for
+  /// org-level users (e.g. super-admins) with no default branch.
+  final String? organization;
+
   const User({
     required this.id,
     required this.name,
@@ -42,5 +46,6 @@ class User with UserMappable {
     this.branch,
     this.allowedBranches = const [],
     this.roleId,
+    this.organization,
   });
 }

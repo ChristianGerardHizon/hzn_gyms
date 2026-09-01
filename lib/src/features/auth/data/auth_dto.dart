@@ -25,6 +25,7 @@ class AuthDto with AuthDtoMappable {
   final String? role;
   final String? branch;
   final List<String> allowedBranches;
+  final String? organization;
 
   const AuthDto({
     required this.token,
@@ -39,6 +40,7 @@ class AuthDto with AuthDtoMappable {
     this.role,
     this.branch,
     this.allowedBranches = const [],
+    this.organization,
   });
 
   /// Creates an AuthDto from a PocketBase auth result.
@@ -62,6 +64,7 @@ class AuthDto with AuthDtoMappable {
       role: json['role'] as String?,
       branch: json['branch'] as String?,
       allowedBranches: allowedBranches,
+      organization: json['organization'] as String?,
     );
   }
 
@@ -82,6 +85,7 @@ class AuthDto with AuthDtoMappable {
       branch: branch,
       allowedBranches: allowedBranches,
       roleId: role != null && role!.isNotEmpty ? role : null,
+      organization: organization,
     );
   }
 
@@ -99,6 +103,7 @@ class AuthDto with AuthDtoMappable {
       'role': role,
       'branch': branch,
       'allowedBranches': allowedBranches,
+      'organization': organization,
     });
   }
 }
