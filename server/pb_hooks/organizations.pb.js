@@ -7,6 +7,14 @@
 // actual logic (required inside each callback, per this repo's convention
 // for sharing code between hook callbacks).
 
+onRecordCreateRequest((e) => {
+    require(`${__hooks}/lib/organizations_helpers.js`).onCreateRequest(e);
+}, "organizations");
+
+onRecordUpdateRequest((e) => {
+    require(`${__hooks}/lib/organizations_helpers.js`).onUpdateRequest(e);
+}, "organizations");
+
 onRecordAfterCreateSuccess((e) => {
     require(`${__hooks}/lib/organizations_helpers.js`).onCreateSuccess(e);
 }, "organizations");

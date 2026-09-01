@@ -4,7 +4,7 @@
     "edit": "Edit Organization",
     "name": "Name",
     "slug": "Slug",
-    "slugHelper": "Used for subdomain (e.g. slug.hzngyms.com)",
+    "slugHelper": "Used for subdomain (e.g. slug.gyms.hznsystems.com)",
     "displayNameHint": "Shown in app title/branding",
     "slugValidationError": "Lowercase letters, numbers, and hyphens only",
     "seedColorValidationError": "Use hex format like #1E88E5",

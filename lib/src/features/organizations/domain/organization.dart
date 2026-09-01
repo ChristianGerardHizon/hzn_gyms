@@ -52,7 +52,7 @@ class Organization with OrganizationMappable {
   /// Hex background color for the in-app/web post-boot loading screen.
   final String? splashBackgroundColor;
 
-  /// Resolved `<slug>.hzngyms.com` hostname.
+  /// Resolved `<slug>.gyms.hznsystems.com` hostname (see PocketBase org hooks).
   final String? subdomain;
 
   /// Porkbun DNS provisioning status for [subdomain].
