@@ -2,6 +2,7 @@ name: Branch Protection
 
 on:
   pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, edited]
     branches: ["main"]
 
 jobs:
@@ -16,3 +17,22 @@ jobs:
       - name: Branch check passed
         if: github.head_ref == 'staging'
         run: echo "Source branch is 'staging'. Check passed."
+
+  check-version-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require version bump label
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          if echo "$LABELS" | grep -q '"version:major"'; then
+            echo "Found version:major — check passed."
+          elif echo "$LABELS" | grep -q '"version:minor"'; then
+            echo "Found version:minor — check passed."
+          elif echo "$LABELS" | grep -q '"version:patch"'; then
+            echo "Found version:patch — check passed."
+          else
+            echo "::error::Missing version label! Add one of: version:patch, version:minor, version:major"
+            echo "Production deploy needs a version bump label so the build is handled correctly."
+            exit 1
+          fi

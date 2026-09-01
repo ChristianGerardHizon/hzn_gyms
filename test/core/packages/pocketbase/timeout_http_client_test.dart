@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/timeout_http_client.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/timeout_http_client.dart';
 
 void main() {
   group('TimeoutHttpClient', () {

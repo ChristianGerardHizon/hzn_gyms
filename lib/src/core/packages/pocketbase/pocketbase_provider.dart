@@ -50,17 +50,17 @@ String get currentEnvironment {
 }
 
 /// Returns the app title based on environment.
-/// - Dev: "Ebe Gym [Dev]"
-/// - Staging: "Ebe Gym [Stg]"
-/// - Production: "Ebe Gym"
+/// - Dev: "HZN Gyms [Dev]"
+/// - Staging: "HZN Gyms [Stg]"
+/// - Production: "HZN Gyms"
 String get appTitle {
   switch (currentEnvironment) {
     case 'dev':
-      return 'Ebe Gym [Dev]';
+      return 'HZN Gyms [Dev]';
     case 'staging':
-      return 'Ebe Gym [Stg]';
+      return 'HZN Gyms [Stg]';
     default:
-      return 'Ebe Gym';
+      return AppConstants.appName;
   }
 }
 

@@ -13,6 +13,7 @@ class CardCheckInSuccess extends CardCheckInResult {
     required this.membershipEndDate,
     this.membershipName,
     this.membershipDaysRemaining,
+    this.memberPhoto,
   });
 
   final CheckIn checkIn;
@@ -26,6 +27,9 @@ class CardCheckInSuccess extends CardCheckInResult {
 
   /// Days left until expiry (`0` on the expiration day), when known.
   final int? membershipDaysRemaining;
+
+  /// Member profile photo URL, when available.
+  final String? memberPhoto;
 }
 
 /// No member card (or legacy RFID) matched the scanned value.
@@ -36,6 +40,13 @@ class CardCheckInCardNotFound extends CardCheckInResult {
 /// Member was found but has no active membership.
 class CardCheckInNoActiveMembership extends CardCheckInResult {
   const CardCheckInNoActiveMembership({required this.memberName});
+
+  final String memberName;
+}
+
+/// Member has an active membership, but the linked sale is unpaid.
+class CardCheckInUnpaidMembership extends CardCheckInResult {
+  const CardCheckInUnpaidMembership({required this.memberName});
 
   final String memberName;
 }
@@ -55,4 +66,11 @@ class CardCheckInNoBranch extends CardCheckInResult {
 /// Repository/API failure while creating the check-in.
 class CardCheckInFailed extends CardCheckInResult {
   const CardCheckInFailed();
+}
+
+/// Blocked because the member checked in within the cooldown window.
+class CardCheckInCooldown extends CardCheckInResult {
+  const CardCheckInCooldown({required this.remaining});
+
+  final Duration remaining;
 }

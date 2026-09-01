@@ -8,6 +8,8 @@ import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/packages/sentry/sentry_config.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../check_in/domain/card_check_in_result.dart';
+import '../../../check_in/domain/check_in_block_reason.dart';
+import '../../../check_in/domain/check_in_cooldown.dart';
 import '../../../check_in/presentation/controllers/check_in_controller.dart';
 import '../../../check_in/presentation/controllers/rfid_listener_status.dart';
 import '../../../check_in/presentation/widgets/check_in_error_dialog.dart';
@@ -49,6 +51,7 @@ class SystemDebugPanel extends HookConsumerWidget {
             :final membershipName,
             :final membershipEndDate,
             :final membershipDaysRemaining,
+            :final memberPhoto,
           ):
             await showCheckInSuccessDialog(
               context,
@@ -57,6 +60,7 @@ class SystemDebugPanel extends HookConsumerWidget {
               membershipName: membershipName,
               membershipEndDate: membershipEndDate,
               membershipDaysRemaining: membershipDaysRemaining,
+              memberPhotoUrl: memberPhoto,
             );
           case CardCheckInCardNotFound():
             await showCheckInErrorDialog(
@@ -69,17 +73,29 @@ class SystemDebugPanel extends HookConsumerWidget {
           case CardCheckInNoActiveMembership(:final memberName):
             await showCheckInErrorDialog(
               context,
-              title: 'No Active Membership',
-              message:
-                  '$memberName has no active membership and cannot check in.',
+              title: checkInBlockTitle(CheckInBlockReason.noActiveMembership),
+              message: checkInBlockMessage(
+                CheckInBlockReason.noActiveMembership,
+                memberName,
+              ),
+            );
+          case CardCheckInUnpaidMembership(:final memberName):
+            await showCheckInErrorDialog(
+              context,
+              title: checkInBlockTitle(CheckInBlockReason.unpaidMembership),
+              message: checkInBlockMessage(
+                CheckInBlockReason.unpaidMembership,
+                memberName,
+              ),
             );
           case CardCheckInMembershipNotValidAtBranch(:final memberName):
             await showCheckInErrorDialog(
               context,
-              title: 'Not Valid at This Branch',
-              message:
-                  '$memberName has an active membership, but it is not valid '
-                  'at this branch.',
+              title: checkInBlockTitle(CheckInBlockReason.notValidAtBranch),
+              message: checkInBlockMessage(
+                CheckInBlockReason.notValidAtBranch,
+                memberName,
+              ),
             );
           case CardCheckInNoBranch():
             await showCheckInErrorDialog(
@@ -93,7 +109,13 @@ class SystemDebugPanel extends HookConsumerWidget {
             await showCheckInErrorDialog(
               context,
               title: 'Check-In Failed',
-              message: 'Something went wrong while recording the check-in.',
+              message: 'Could not record check-in. Try again.',
+            );
+          case CardCheckInCooldown(:final remaining):
+            await showCheckInErrorDialog(
+              context,
+              title: 'Check-In Too Soon',
+              message: checkInCooldownMessage(remaining),
             );
         }
       } finally {

@@ -14,8 +14,8 @@ part 'auth_repository.g.dart';
 
 /// Repository interface for authentication operations.
 abstract class AuthRepository {
-  /// Attempts to login with username and password.
-  FutureEither<AuthState> login(String username, String password);
+  /// Attempts to login with email and password.
+  FutureEither<AuthState> login(String email, String password);
 
   /// Logs out the current user.
   FutureEither<void> logout();
@@ -62,10 +62,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  FutureEither<AuthState> login(String username, String password) async {
+  FutureEither<AuthState> login(String email, String password) async {
     return TaskEither.tryCatch(() async {
       final result = await _collection.authWithPassword(
-        username,
+        email,
         password,
         expand: _expand,
       );

@@ -12,8 +12,8 @@ import '../../data/local/member_local_data_source.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
 import '../controllers/member_branch_activity_controller.dart';
-import 'member_branch_activity_chips.dart';
 import 'member_form_dialog.dart';
+import 'member_list_tile.dart';
 
 /// Shows a searchable dialog to pick a member.
 ///
@@ -294,40 +294,30 @@ class MemberPickerDialog extends HookConsumerWidget {
                         data: (state) => state.activityByMemberId[member.id],
                         orElse: () => null,
                       );
+                      final branchCodeById = activityAsync?.maybeWhen(
+                        data: (state) => state.branchCodeById,
+                        orElse: () => const <String, String>{},
+                      ) ?? const <String, String>{};
                       final branchNameById = activityAsync?.maybeWhen(
                         data: (state) => state.branchNameById,
+                        orElse: () => const <String, String>{},
+                      ) ?? const <String, String>{};
+                      final branchColorById = activityAsync?.maybeWhen(
+                        data: (state) => state.branchColorById,
                         orElse: () => const <String, String>{},
                       ) ?? const <String, String>{};
                       final activityLoading = showBranchActivity &&
                           (activityAsync?.isLoading ?? false);
 
-                      return ListTile(
-                        leading: CircleAvatar(
-                          child: Text(
-                            member.name.isNotEmpty
-                                ? member.name[0].toUpperCase()
-                                : '?',
-                          ),
-                        ),
-                        title: Text(member.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (member.mobileNumber != null)
-                              Text(member.mobileNumber!),
-                            if (showBranchActivity) ...[
-                              if (member.mobileNumber != null)
-                                const SizedBox(height: 6),
-                              MemberBranchActivityChips(
-                                activity: activity,
-                                branchNameById: branchNameById,
-                                currentBranchId: currentBranchId,
-                                isLoading: activityLoading,
-                              ),
-                            ],
-                          ],
-                        ),
-                        isThreeLine: showBranchActivity,
+                      return MemberListTile(
+                        member: member,
+                        showBranchActivity: showBranchActivity,
+                        activity: activity,
+                        branchCodeById: branchCodeById,
+                        branchNameById: branchNameById,
+                        branchColorById: branchColorById,
+                        currentBranchId: currentBranchId,
+                        isActivityLoading: activityLoading,
                         onTap: () => Navigator.of(context).pop(member),
                       );
                     },

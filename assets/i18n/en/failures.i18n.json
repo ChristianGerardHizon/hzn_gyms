@@ -9,7 +9,7 @@
     "conflict": "A conflict occurred. The resource may already exist.",
     "timeout": "Request timed out. Please try again.",
     "noInternet": "No internet connection.",
-    "invalidCredentials": "Invalid username or password.",
+    "invalidCredentials": "Invalid email or password.",
     "accountDisabled": "Your account has been disabled.",
     "accountNotVerified": "Your account has not been verified.",
     "tooManyRequests": "Too many requests. Please wait a moment."

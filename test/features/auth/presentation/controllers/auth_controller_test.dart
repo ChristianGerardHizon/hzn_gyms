@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/features/auth/data/auth_repository.dart';
-import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
-import 'package:ebe_gym/src/features/auth/domain/user.dart';
-import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/auth/data/auth_repository.dart';
+import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
+import 'package:hzn_gyms/src/features/auth/domain/user.dart';
+import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

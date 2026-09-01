@@ -95,10 +95,12 @@ abstract class Permissions {
   static const membershipsCreate = 'memberships.create';
   static const membershipsEdit = 'memberships.edit';
   static const membershipsDelete = 'memberships.delete';
+  static const membershipsExcludeFromSales = 'memberships.excludeFromSales';
 
   // Check-in permissions
   static const checkInsView = 'checkIns.view';
   static const checkInsCreate = 'checkIns.create';
+  static const checkInsVoid = 'checkIns.void';
 
   // Member card permissions
   static const memberCardsView = 'memberCards.view';
@@ -113,6 +115,7 @@ abstract class Permissions {
   static const productsView = 'products.view';
   static const productsCreate = 'products.create';
   static const productsEdit = 'products.edit';
+  static const productsEditQuantity = 'products.editQuantity';
   static const productsDelete = 'products.delete';
 
   // Inventory permissions
@@ -148,6 +151,12 @@ abstract class Permissions {
 
   // System permissions
   static const systemAdmin = 'system.admin';
+  static const activityLogView = 'activityLog.view';
+
+  // Organizations permissions (cross-org platform management — deliberately
+  // NOT granted by systemAdmin; see CurrentUserPermissions.canManageOrganizations)
+  static const organizationsView = 'organizations.view';
+  static const organizationsManage = 'organizations.manage';
 
   /// All permissions grouped by category (keys only).
   static const Map<String, List<String>> allByCategory = {
@@ -157,8 +166,9 @@ abstract class Permissions {
       membershipsCreate,
       membershipsEdit,
       membershipsDelete,
+      membershipsExcludeFromSales,
     ],
-    'Check-In': [checkInsView, checkInsCreate],
+    'Check-In': [checkInsView, checkInsCreate, checkInsVoid],
     'Member Cards': [
       memberCardsView,
       memberCardsCreate,
@@ -166,14 +176,21 @@ abstract class Permissions {
       memberCardsDelete,
     ],
     'Reports': [reportsView],
-    'Products': [productsView, productsCreate, productsEdit, productsDelete],
+    'Products': [
+      productsView,
+      productsCreate,
+      productsEdit,
+      productsEditQuantity,
+      productsDelete,
+    ],
     'Inventory': [inventoryView, inventoryAdjust],
     'Sales': [salesView, salesCreate, salesVoid],
     'Users': [usersView, usersCreate, usersEdit, usersDelete],
     'Roles': [rolesView, rolesCreate, rolesEdit, rolesDelete],
     'Branches': [branchesView, branchesCreate, branchesEdit, branchesDelete],
     'Settings': [settingsView, settingsEdit],
-    'System': [systemAdmin],
+    'System': [systemAdmin, activityLogView],
+    'Organizations': [organizationsView, organizationsManage],
   };
 
   /// All permissions with full metadata.
@@ -271,6 +288,14 @@ abstract class Permissions {
         description: 'Remove membership plans (soft delete)',
         icon: Icons.delete,
       ),
+      const Permission(
+        key: membershipsExcludeFromSales,
+        name: 'Exclude Membership from Sales',
+        category: 'Memberships',
+        description:
+            'Assign or renew memberships without creating a sale or receipt',
+        icon: Icons.receipt_long_outlined,
+      ),
       // Check-In
       const Permission(
         key: checkInsView,
@@ -285,6 +310,13 @@ abstract class Permissions {
         category: 'Check-In',
         description: 'Process member check-ins',
         icon: Icons.add,
+      ),
+      const Permission(
+        key: checkInsVoid,
+        name: 'Void Check-Ins',
+        category: 'Check-In',
+        description: 'Void duplicate or mistaken check-ins',
+        icon: Icons.undo,
       ),
       // Member Cards
       const Permission(
@@ -346,6 +378,14 @@ abstract class Permissions {
         icon: Icons.edit,
       ),
       const Permission(
+        key: productsEditQuantity,
+        name: 'Edit Product Quantity',
+        category: 'Products',
+        description:
+            'Change on-hand quantity in Edit Product (prefer Stock Adjustment otherwise)',
+        icon: Icons.numbers,
+      ),
+      const Permission(
         key: productsDelete,
         name: 'Delete Products',
         category: 'Products',
@@ -364,7 +404,8 @@ abstract class Permissions {
         key: inventoryAdjust,
         name: 'Adjust Inventory',
         category: 'Inventory',
-        description: 'Make inventory adjustments',
+        description:
+            'Make inventory adjustments and void manual stock adjustments',
         icon: Icons.tune,
       ),
       // Sales
@@ -498,6 +539,31 @@ abstract class Permissions {
         category: 'System',
         description: 'Full administrative access to all system features',
         icon: Icons.admin_panel_settings,
+      ),
+      const Permission(
+        key: activityLogView,
+        name: 'View Activity Log',
+        category: 'System',
+        description:
+            'View system-wide change history and today\'s activity logs',
+        icon: Icons.history,
+      ),
+      // Organizations
+      const Permission(
+        key: organizationsView,
+        name: 'View Organizations',
+        category: 'Organizations',
+        description: 'View this organization\'s branding and DNS status',
+        icon: Icons.visibility,
+      ),
+      const Permission(
+        key: organizationsManage,
+        name: 'Manage Organizations',
+        category: 'Organizations',
+        description:
+            'Create, switch between, and manage all organizations (platform '
+            'super-admin) — not granted by System Admin alone',
+        icon: Icons.corporate_fare,
       ),
     ];
   }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
-import 'dashboard_member_search_flow.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
 import '../../../members/presentation/widgets/member_picker_dialog.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
 import '../../../pos/presentation/components/cashier_dialog.dart';
+import 'dashboard_member_search_flow.dart';
+import 'todays_activity_logs_dialog.dart';
 
 /// Section displaying quick action buttons on the dashboard.
 ///
@@ -15,10 +17,7 @@ import '../../../pos/presentation/components/cashier_dialog.dart';
 /// - Walk-in (day pass / name-only sale for plans with membership not required)
 /// - Show dashboard overview (tablet only)
 class QuickActionsSection extends ConsumerWidget {
-  const QuickActionsSection({
-    super.key,
-    this.onShowOverview,
-  });
+  const QuickActionsSection({super.key, this.onShowOverview});
 
   /// Optional callback to show the dashboard overview (clears selection).
   /// Only shown when this callback is provided (tablet layout).
@@ -26,6 +25,10 @@ class QuickActionsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final canViewActivityLog =
+        ref.watch(currentUserPermissionsProvider).value?.canViewActivityLog ??
+        false;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -33,9 +36,9 @@ class QuickActionsSection extends ConsumerWidget {
         children: [
           Text(
             'Quick Actions',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -70,7 +73,7 @@ class QuickActionsSection extends ConsumerWidget {
                   icon: Icons.directions_walk,
                   label: 'Walk-in',
                   color: Colors.indigo,
-                  onTap: () => sellWalkInAndRecordPayment(context, ref),
+                  onTap: () => sellWalkInAndRecordPayment(context),
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(
@@ -87,7 +90,6 @@ class QuickActionsSection extends ConsumerWidget {
 
                     await purchaseMembershipAndRecordPayment(
                       context,
-                      ref,
                       memberId: member.id,
                       memberName: member.name,
                       isRenewal: true,
@@ -113,6 +115,15 @@ class QuickActionsSection extends ConsumerWidget {
                     }
                   },
                 ),
+                if (canViewActivityLog) ...[
+                  const SizedBox(width: 12),
+                  _QuickActionButton(
+                    icon: Icons.history,
+                    label: "Today's Logs",
+                    color: Colors.blueGrey,
+                    onTap: () => showTodaysActivityLogsDialog(context),
+                  ),
+                ],
               ],
             ),
           ),
@@ -150,11 +161,7 @@ class _QuickActionButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
+              Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
               Text(
                 label,

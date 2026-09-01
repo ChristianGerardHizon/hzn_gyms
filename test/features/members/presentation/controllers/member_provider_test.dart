@@ -1,10 +1,10 @@
-import 'package:ebe_gym/src/core/database/app_database.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:ebe_gym/src/core/sync/outbox_service.dart';
-import 'package:ebe_gym/src/features/members/data/dto/member_dto.dart';
-import 'package:ebe_gym/src/features/members/data/local/member_local_data_source.dart';
-import 'package:ebe_gym/src/features/members/data/repositories/member_repository.dart';
-import 'package:ebe_gym/src/features/members/presentation/controllers/member_provider.dart';
+import 'package:hzn_gyms/src/core/database/app_database.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:hzn_gyms/src/core/sync/outbox_service.dart';
+import 'package:hzn_gyms/src/features/members/data/dto/member_dto.dart';
+import 'package:hzn_gyms/src/features/members/data/local/member_local_data_source.dart';
+import 'package:hzn_gyms/src/features/members/data/repositories/member_repository.dart';
+import 'package:hzn_gyms/src/features/members/presentation/controllers/member_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

@@ -6,16 +6,37 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../products/data/repositories/product_adjustment_repository.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../sales/data/sale_side_effects.dart';
+import '../../../sales/domain/open_unpaid_sale.dart';
 import '../../../sales/presentation/controllers/sale_provider.dart';
 import '../../../sales/presentation/controllers/sale_refresh.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_refresh.dart';
+import 'sale_quick_view_dialog.dart';
 
-/// Branch-scoped list of today's unpaid sales with pay / void actions.
+/// Session-local sale IDs dismissed from the Unpaid today banner via Ignore.
+///
+/// Does not change the sale on the server; duplicate unpaid checks still apply.
+class IgnoredUnpaidSaleIds extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => <String>{};
+
+  void ignore(String saleId) {
+    if (saleId.isEmpty || state.contains(saleId)) return;
+    state = {...state, saleId};
+  }
+}
+
+final ignoredUnpaidSaleIdsProvider =
+    NotifierProvider<IgnoredUnpaidSaleIds, Set<String>>(
+  IgnoredUnpaidSaleIds.new,
+);
+
+/// Branch-scoped list of today's unpaid sales with pay / void / ignore actions.
 class UnpaidSalesQueueSection extends ConsumerWidget {
   const UnpaidSalesQueueSection({super.key});
 
@@ -23,13 +44,15 @@ class UnpaidSalesQueueSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final branchId = ref.watch(effectiveBranchIdForWriteProvider);
     final unpaidAsync = ref.watch(todayUnpaidSalesProvider);
+    final ignoredIds = ref.watch(ignoredUnpaidSaleIdsProvider);
 
     if (branchId == null) return const SizedBox.shrink();
 
     return unpaidAsync.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
-      data: (sales) {
+      data: (allSales) {
+        final sales = excludeIgnoredUnpaidSales(allSales, ignoredIds);
         if (sales.isEmpty) return const SizedBox.shrink();
         final theme = Theme.of(context);
         final currency =
@@ -106,11 +129,24 @@ class _UnpaidSaleTile extends ConsumerWidget {
   final Sale sale;
   final NumberFormat currency;
 
+  Future<void> _openSaleDialog(BuildContext context, WidgetRef ref) async {
+    await showSaleQuickViewDialog(
+      context,
+      saleId: sale.id,
+      fallbackSale: sale,
+    );
+    if (!context.mounted) return;
+    refreshSalesData(ref);
+    ref.invalidate(todayUnpaidSalesProvider);
+    ref.invalidate(saleProvider(sale.id));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
+      onTap: () => _openSaleDialog(context, ref),
       title: Text(sale.listTitle, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
         '${sale.shortReceiptNumber} · ${sale.status} · ${currency.format(sale.totalAmount)}',
@@ -162,6 +198,7 @@ class _UnpaidSaleTile extends ConsumerWidget {
                     ref.read(memberMembershipRepositoryProvider),
                 lotRepo: ref.read(productLotRepositoryProvider),
                 productRepo: ref.read(productRepositoryProvider),
+                adjustmentRepo: ref.read(productAdjustmentRepositoryProvider),
                 saleId: sale.id,
                 voidedById: ref.read(currentAuthProvider)?.user.id,
               );
@@ -177,6 +214,17 @@ class _UnpaidSaleTile extends ConsumerWidget {
               );
             },
             child: const Text('Void'),
+          ),
+          Tooltip(
+            message: 'Hide from this list (sale stays unpaid)',
+            child: TextButton(
+              onPressed: () {
+                ref
+                    .read(ignoredUnpaidSaleIdsProvider.notifier)
+                    .ignore(sale.id);
+              },
+              child: const Text('Ignore'),
+            ),
           ),
         ],
       ),

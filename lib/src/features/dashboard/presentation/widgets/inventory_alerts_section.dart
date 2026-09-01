@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/products.routes.dart';
+import '../../../../core/utils/breakpoints.dart';
 import '../../domain/inventory_alert.dart';
 import '../controllers/inventory_alerts_controller.dart';
 
 /// Section displaying inventory alerts on the dashboard.
 ///
 /// Shows:
-/// - Low stock items (both lot-tracked and non-lot-tracked products)
+/// - Out of stock items (qty ≤ 0)
+/// - Low stock items (0 < qty ≤ threshold)
 /// - Products/lots near expiration
 /// - Expired products/lots
+///
+/// Layout: single column on mobile; two columns side-by-side on tablet+.
 class InventoryAlertsSection extends ConsumerWidget {
   const InventoryAlertsSection({super.key});
 
@@ -26,6 +30,51 @@ class InventoryAlertsSection extends ConsumerWidget {
         if (!summary.hasAlerts) {
           return const SizedBox.shrink();
         }
+
+        final cards = <Widget>[
+          if (summary.expiredAlerts.isNotEmpty)
+            _AlertCard(
+              icon: Icons.error_outline,
+              title: 'Expired Products',
+              subtitle:
+                  '${summary.expiredCount} item${summary.expiredCount > 1 ? 's' : ''} expired',
+              color: Colors.red,
+              onTap: () => const ProductsRoute().go(context),
+            ),
+          if (summary.outOfStockAlerts.isNotEmpty)
+            _AlertCard(
+              icon: Icons.cancel_outlined,
+              title: 'Out of Stock',
+              subtitle:
+                  '${summary.outOfStockCount} item${summary.outOfStockCount > 1 ? 's' : ''} with no stock',
+              color: Theme.of(context).colorScheme.error,
+              alerts: summary.outOfStockAlerts.take(_maxItems).toList(),
+              totalCount: summary.outOfStockCount,
+              onTap: () => const ProductsRoute().go(context),
+            ),
+          if (summary.lowStockAlerts.isNotEmpty)
+            _AlertCard(
+              icon: Icons.inventory_2_outlined,
+              title: 'Low Stock',
+              subtitle:
+                  '${summary.lowStockCount} item${summary.lowStockCount > 1 ? 's' : ''} below threshold',
+              color: Colors.orange,
+              alerts: summary.lowStockAlerts.take(_maxItems).toList(),
+              totalCount: summary.lowStockCount,
+              onTap: () => const ProductsRoute().go(context),
+            ),
+          if (summary.nearExpirationAlerts.isNotEmpty)
+            _AlertCard(
+              icon: Icons.schedule,
+              title: 'Expiring Soon',
+              subtitle:
+                  '${summary.nearExpirationCount} item${summary.nearExpirationCount > 1 ? 's' : ''} expiring within 30 days',
+              color: Colors.amber.shade700,
+              alerts: summary.nearExpirationAlerts.take(_maxItems).toList(),
+              totalCount: summary.nearExpirationCount,
+              onTap: () => const ProductsRoute().go(context),
+            ),
+        ];
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -54,43 +103,7 @@ class InventoryAlertsSection extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-
-              // Expired products alert
-              if (summary.expiredAlerts.isNotEmpty)
-                _AlertCard(
-                  icon: Icons.error_outline,
-                  title: 'Expired Products',
-                  subtitle:
-                      '${summary.expiredCount} item${summary.expiredCount > 1 ? 's' : ''} expired',
-                  color: Colors.red,
-                  onTap: () => const ProductsRoute().go(context),
-                ),
-
-              // Low stock alert
-              if (summary.lowStockAlerts.isNotEmpty)
-                _AlertCard(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Low Stock',
-                  subtitle:
-                      '${summary.lowStockCount} item${summary.lowStockCount > 1 ? 's' : ''} need restocking',
-                  color: Colors.orange,
-                  alerts: summary.lowStockAlerts.take(_maxItems).toList(),
-                  totalCount: summary.lowStockCount,
-                  onTap: () => const ProductsRoute().go(context),
-                ),
-
-              // Near expiration alert
-              if (summary.nearExpirationAlerts.isNotEmpty)
-                _AlertCard(
-                  icon: Icons.schedule,
-                  title: 'Expiring Soon',
-                  subtitle:
-                      '${summary.nearExpirationCount} item${summary.nearExpirationCount > 1 ? 's' : ''} expiring within 30 days',
-                  color: Colors.amber.shade700,
-                  alerts: summary.nearExpirationAlerts.take(_maxItems).toList(),
-                  totalCount: summary.nearExpirationCount,
-                  onTap: () => const ProductsRoute().go(context),
-                ),
+              _AlertCardsLayout(cards: cards),
             ],
           ),
         );
@@ -100,6 +113,51 @@ class InventoryAlertsSection extends ConsumerWidget {
         child: _LoadingAlertCard(),
       ),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+/// Single column on mobile; pairs of cards side-by-side on tablet+.
+class _AlertCardsLayout extends StatelessWidget {
+  const _AlertCardsLayout({required this.cards});
+
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) {
+    if (cards.isEmpty) return const SizedBox.shrink();
+
+    final sideBySide = Breakpoints.isTabletOrLarger(context);
+    if (!sideBySide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: cards,
+      );
+    }
+
+    final rows = <Widget>[];
+    for (var i = 0; i < cards.length; i += 2) {
+      final left = cards[i];
+      final hasRight = i + 1 < cards.length;
+      rows.add(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: left),
+              const SizedBox(width: 8),
+              Expanded(
+                child: hasRight ? cards[i + 1] : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
     );
   }
 }

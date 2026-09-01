@@ -1,5 +1,5 @@
-import 'package:ebe_gym/src/features/pos/domain/sale.dart';
-import 'package:ebe_gym/src/features/sales/domain/open_unpaid_sale.dart';
+import 'package:hzn_gyms/src/features/pos/domain/sale.dart';
+import 'package:hzn_gyms/src/features/sales/domain/open_unpaid_sale.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -115,6 +115,26 @@ void main() {
         branchId: 'b1',
       );
       expect(matches, isEmpty);
+    });
+  });
+
+  group('excludeIgnoredUnpaidSales', () {
+    test('returns all sales when ignored set is empty', () {
+      final sales = [
+        buildSale(id: 'a', status: 'pending', isPaid: false),
+        buildSale(id: 'b', status: 'pending', isPaid: false),
+      ];
+      expect(excludeIgnoredUnpaidSales(sales, {}), sales);
+    });
+
+    test('filters out ignored sale ids', () {
+      final sales = [
+        buildSale(id: 'a', status: 'pending', isPaid: false),
+        buildSale(id: 'b', status: 'pending', isPaid: false),
+        buildSale(id: 'c', status: 'pending', isPaid: false),
+      ];
+      final visible = excludeIgnoredUnpaidSales(sales, {'b'});
+      expect(visible.map((s) => s.id), ['a', 'c']);
     });
   });
 }

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership_add_on.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership_add_on.dart';
 
 import '../../../helpers/fixtures.dart';
 

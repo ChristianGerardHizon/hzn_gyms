@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
-import '../assets/assets.gen.dart';
+import '../../features/organizations/presentation/controllers/organization_branding_providers.dart';
 import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
 import 'branch_switcher.dart';
+import 'organization_switcher.dart';
+import 'org_logo.dart';
 import 'outbox_queue_badge.dart';
 
 /// Mobile drawer with permission-filtered navigation.
@@ -40,13 +42,20 @@ class MobileDrawer extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer,
               ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Assets.icons.appIconTransparent.image(width: 48, height: 48),
-                  const SizedBox(height: 8),
-                  Text('Ebe Gym', style: theme.textTheme.titleLarge),
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OrgLogo(width: 96, height: 96),
+                    ),
+                  ),
+                  Text(
+                    ref.watch(effectiveAppTitleProvider),
+                    style: theme.textTheme.titleLarge,
+                  ),
                   Text(
                     'Gym Management System',
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -69,6 +78,7 @@ class MobileDrawer extends ConsumerWidget {
                 ],
               ),
             ),
+            const OrganizationSwitcher(),
             const BranchSwitcher(),
             for (var i = 0; i < destinations.length; i++) ...[
               if (_shouldInsertDividerBefore(destinations, i)) const Divider(),
@@ -103,6 +113,7 @@ class MobileDrawer extends ConsumerWidget {
     const secondary = {
       AppNavId.reports,
       AppNavId.organization,
+      AppNavId.organizations,
       AppNavId.profile,
       AppNavId.outbox,
       AppNavId.system,
@@ -132,6 +143,8 @@ class MobileDrawer extends ConsumerWidget {
         return Icons.analytics;
       case AppNavId.organization:
         return Icons.business;
+      case AppNavId.organizations:
+        return Icons.apartment;
       case AppNavId.profile:
         return Icons.person;
       case AppNavId.outbox:
@@ -161,6 +174,8 @@ class MobileDrawer extends ConsumerWidget {
         return t.navigation.reports;
       case AppNavId.organization:
         return t.navigation.organization;
+      case AppNavId.organizations:
+        return t.navigation.organizations;
       case AppNavId.profile:
         return t.navigation.profile;
       case AppNavId.outbox:

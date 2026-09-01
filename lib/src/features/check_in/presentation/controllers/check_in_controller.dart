@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/permissions/current_user_permissions.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../member_cards/data/repositories/member_card_repository.dart';
 import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
@@ -13,8 +15,10 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../data/repositories/check_in_repository.dart';
 import '../../domain/card_check_in_result.dart';
 import '../../domain/check_in.dart';
-import '../../domain/check_in_membership_eligibility.dart';
+import '../../domain/check_in_block_reason.dart';
+import '../../domain/check_in_cooldown.dart';
 import '../../domain/check_in_realtime.dart';
+import '../../domain/manual_check_in_result.dart';
 
 part 'check_in_controller.g.dart';
 
@@ -96,23 +100,63 @@ class CheckInController extends _$CheckInController {
     final branchId = ref.read(currentBranchIdProvider);
     final result = await _repository.fetchTodaysCheckIns(branchId);
 
-    result.fold(
-      (_) {},
-      (checkIns) => state = AsyncData(checkIns),
+    result.fold((_) {}, (checkIns) => state = AsyncData(checkIns));
+  }
+
+  /// Remaining cooldown for [memberId] at [branchId], or null if clear.
+  ///
+  /// Always consults the server latest so another terminal's recent check-in
+  /// is not skipped when today's in-memory list is stale. Also considers the
+  /// local today list (e.g. just recorded here before realtime catches up).
+  Future<Duration?> _cooldownRemaining({
+    required String memberId,
+    required String branchId,
+  }) async {
+    CheckIn? latest;
+
+    final result = await _repository.fetchLatestForMember(
+      memberId: memberId,
+      branchId: branchId,
     );
+    latest = result.fold((_) => null, (checkIn) => checkIn);
+
+    final today = state.asData?.value;
+    if (today != null) {
+      for (final checkIn in today) {
+        if (checkIn.memberId != memberId) continue;
+        if (checkIn.branchId != branchId) continue;
+        if (checkIn.isVoided) continue;
+        if (latest == null || checkIn.checkInTime.isAfter(latest.checkInTime)) {
+          latest = checkIn;
+        }
+      }
+    }
+
+    if (latest == null) return null;
+    return checkInCooldownRemaining(latest.checkInTime);
   }
 
   /// Records a manual check-in for a member.
-  Future<CheckIn?> manualCheckIn({
+  Future<ManualCheckInResult> manualCheckIn({
     required String memberId,
     String? memberMembershipId,
     String? checkedInBy,
     String? notes,
   }) async {
-    if (ref.read(viewingAllBranchesProvider)) return null;
+    if (ref.read(viewingAllBranchesProvider)) {
+      return const ManualCheckInNoBranch();
+    }
 
     final branchId = ref.read(effectiveBranchIdForWriteProvider);
-    if (branchId == null) return null;
+    if (branchId == null) return const ManualCheckInNoBranch();
+
+    final remaining = await _cooldownRemaining(
+      memberId: memberId,
+      branchId: branchId,
+    );
+    if (remaining != null) {
+      return ManualCheckInCooldown(remaining: remaining);
+    }
 
     final result = await _repository.checkIn(
       memberId: memberId,
@@ -121,6 +165,28 @@ class CheckInController extends _$CheckInController {
       checkedInBy: checkedInBy,
       memberMembershipId: memberMembershipId,
       notes: notes,
+    );
+
+    return result.fold((failure) => const ManualCheckInFailed(), (checkIn) {
+      refresh();
+      return ManualCheckInSuccess(checkIn);
+    });
+  }
+
+  /// Soft-voids a check-in when the user has [Permissions.checkInsVoid].
+  Future<CheckIn?> voidCheckIn({required String id, String? reason}) async {
+    final canVoid =
+        ref.read(currentUserPermissionsProvider).value?.canVoidCheckIns ??
+        false;
+    if (!canVoid) return null;
+
+    final voidedById = ref.read(currentAuthProvider)?.user.id;
+    if (voidedById == null || voidedById.isEmpty) return null;
+
+    final result = await _repository.voidCheckIn(
+      id: id,
+      voidedById: voidedById,
+      reason: reason,
     );
 
     return result.fold((failure) => null, (checkIn) {
@@ -148,12 +214,14 @@ class CheckInController extends _$CheckInController {
 
     String? memberId;
     String? memberName;
+    String? memberPhoto;
 
     final card = cardResult.fold((_) => null, (card) => card);
 
     if (card != null) {
       memberId = card.memberId;
       memberName = card.memberName;
+      memberPhoto = card.memberPhoto;
     } else {
       // 2. Fallback: search by legacy rfidCardId on member
       final memberRepo = ref.read(memberRepositoryProvider);
@@ -166,6 +234,7 @@ class CheckInController extends _$CheckInController {
         final member = members.first;
         memberId = member.id;
         memberName = member.name;
+        memberPhoto = member.photo;
       }
     }
 
@@ -173,7 +242,7 @@ class CheckInController extends _$CheckInController {
 
     final resolvedName = memberName ?? 'Member';
 
-    // 3. Check for active membership valid at this branch (and paid if linked)
+    // 3. Resolve an eligible membership at this branch (paid if sale linked)
     final mmRepo = ref.read(memberMembershipRepositoryProvider);
     final mmResult = await mmRepo.fetchActive(memberId);
     final activeMemberships = mmResult.fold(
@@ -181,23 +250,34 @@ class CheckInController extends _$CheckInController {
       (m) => m,
     );
 
-    final paidEligible = await filterCheckInEligibleMemberships(
-      memberships: activeMemberships,
+    final resolution = await resolveCheckInMembership(
+      activeMemberships: activeMemberships,
+      branchId: branchId,
       salesRepo: ref.read(salesRepositoryProvider),
     );
 
-    if (paidEligible.isEmpty) {
-      return CardCheckInNoActiveMembership(memberName: resolvedName);
+    if (!resolution.isAllowed) {
+      return switch (resolution.reason!) {
+        CheckInBlockReason.noActiveMembership => CardCheckInNoActiveMembership(
+          memberName: resolvedName,
+        ),
+        CheckInBlockReason.unpaidMembership => CardCheckInUnpaidMembership(
+          memberName: resolvedName,
+        ),
+        CheckInBlockReason.notValidAtBranch =>
+          CardCheckInMembershipNotValidAtBranch(memberName: resolvedName),
+      };
     }
 
-    final validHere = paidEligible
-        .where((m) => m.isValidAtBranch(branchId))
-        .toList();
-    if (validHere.isEmpty) {
-      return CardCheckInMembershipNotValidAtBranch(memberName: resolvedName);
-    }
+    final activeMembership = resolution.membership!;
 
-    final activeMembership = validHere.first;
+    final remaining = await _cooldownRemaining(
+      memberId: memberId,
+      branchId: branchId,
+    );
+    if (remaining != null) {
+      return CardCheckInCooldown(remaining: remaining);
+    }
 
     // 4. Create check-in
     final result = await _repository.checkIn(
@@ -215,6 +295,7 @@ class CheckInController extends _$CheckInController {
         membershipName: activeMembership.membershipName,
         membershipEndDate: activeMembership.endDate,
         membershipDaysRemaining: activeMembership.daysRemaining,
+        memberPhoto: memberPhoto,
       );
     });
   }

@@ -18,6 +18,7 @@ import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../../settings/presentation/controllers/branch_provider.dart';
 import '../../../settings/presentation/controllers/printer_config_provider.dart';
+import '../../domain/receipt_print_mode.dart';
 import '../../domain/sale.dart';
 import '../../domain/sale_item.dart';
 import '../services/thermal_print_service.dart';
@@ -29,6 +30,8 @@ class _ReceiptPdfPayload {
     required this.createdDate,
     required this.totalAmount,
     required this.isPaid,
+    required this.items,
+    this.customerName,
     this.notes,
   });
 
@@ -36,7 +39,21 @@ class _ReceiptPdfPayload {
   final DateTime createdDate;
   final double totalAmount;
   final bool isPaid;
+  final List<_ReceiptPdfItem> items;
+  final String? customerName;
   final String? notes;
+}
+
+class _ReceiptPdfItem {
+  const _ReceiptPdfItem({
+    required this.productName,
+    required this.quantity,
+    required this.subtotal,
+  });
+
+  final String productName;
+  final double quantity;
+  final double subtotal;
 }
 
 /// Top-level function that builds receipt PDF bytes in an isolate.
@@ -79,6 +96,37 @@ Future<Uint8List> _buildReceiptPdfBytes(_ReceiptPdfPayload payload) async {
           pw.Text(
             'Status: ${payload.isPaid ? 'Paid' : 'Unpaid'}',
           ),
+          if (payload.customerName != null &&
+              payload.customerName!.isNotEmpty) ...[
+            pw.SizedBox(height: 4),
+            pw.Text('Customer: ${payload.customerName}'),
+          ],
+          if (payload.items.isNotEmpty) ...[
+            pw.SizedBox(height: 10),
+            pw.Divider(),
+            pw.SizedBox(height: 10),
+            pw.Text(
+              'Items',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 8),
+            ...payload.items.map(
+              (item) => pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 4),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Expanded(
+                      child: pw.Text(
+                        '${item.productName} x ${item.quantity.toInt()}',
+                      ),
+                    ),
+                    pw.Text(currencyFormat.format(item.subtotal)),
+                  ],
+                ),
+              ),
+            ),
+          ],
           pw.SizedBox(height: 10),
           pw.Divider(),
           pw.SizedBox(height: 10),
@@ -128,16 +176,17 @@ Future<Uint8List> _buildReceiptPdfBytes(_ReceiptPdfPayload payload) async {
   return await pdf.save();
 }
 
-/// Shows the receipt dialog after successful checkout.
+/// Shows the receipt dialog after successful checkout, or for reprinting.
 Future<void> showReceiptDialog(
   BuildContext context, {
   required Sale sale,
   List<SaleItem> saleItems = const [],
+  bool isReprint = false,
 }) {
   return showDialog(
     context: context,
     useRootNavigator: true,
-    barrierDismissible: false,
+    barrierDismissible: isReprint,
     builder: (context) => Dialog(
       insetPadding: const EdgeInsets.all(8),
       clipBehavior: Clip.antiAlias,
@@ -147,6 +196,7 @@ Future<void> showReceiptDialog(
           body: ReceiptDialog(
             sale: sale,
             saleItems: saleItems,
+            isReprint: isReprint,
           ),
         ),
       ),
@@ -160,10 +210,14 @@ class ReceiptDialog extends HookConsumerWidget {
     super.key,
     required this.sale,
     this.saleItems = const [],
+    this.isReprint = false,
   });
 
   final Sale sale;
   final List<SaleItem> saleItems;
+
+  /// When true, shows reprint UI and skips auto-print on open.
+  final bool isReprint;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -255,8 +309,10 @@ class ReceiptDialog extends HookConsumerWidget {
       }
     }
 
-    // Auto-print when dialog opens if default printer is configured
+    // Auto-print after checkout when a default printer is configured.
+    // Skip on reprint so the user explicitly chooses when to print.
     useEffect(() {
+      if (!shouldAutoPrintReceipt(isReprint: isReprint)) return null;
       final defaultPrinter = defaultPrinterAsync.value;
       if (defaultPrinter != null &&
           !hasAutoPrinted.value &&
@@ -268,7 +324,7 @@ class ReceiptDialog extends HookConsumerWidget {
         });
       }
       return null;
-    }, [defaultPrinterAsync.value]);
+    }, [defaultPrinterAsync.value, isReprint]);
 
     Future<void> handlePdfPrint() async {
       final result = await runPdfTask<_ReceiptPdfPayload>(
@@ -279,7 +335,17 @@ class ReceiptDialog extends HookConsumerWidget {
           createdDate: sale.created ?? DateTime.now(),
           totalAmount: sale.totalAmount.toDouble(),
           isPaid: sale.isPaid,
+          customerName: sale.customerName,
           notes: sale.notes,
+          items: saleItems
+              .map(
+                (item) => _ReceiptPdfItem(
+                  productName: item.productName,
+                  quantity: item.quantity.toDouble(),
+                  subtotal: item.subtotal.toDouble(),
+                ),
+              )
+              .toList(),
         ),
         generate: _buildReceiptPdfBytes,
       );
@@ -291,6 +357,9 @@ class ReceiptDialog extends HookConsumerWidget {
     }
 
     final hasDefaultPrinter = defaultPrinterAsync.value != null;
+    final headline = receiptDialogHeadline(isReprint: isReprint);
+    final dialogTitle = receiptDialogTitle(isReprint: isReprint);
+    final dismissLabel = receiptDialogDismissLabel(isReprint: isReprint);
 
     return DialogCloseHandler(
       child: SizedBox(
@@ -309,7 +378,7 @@ class ReceiptDialog extends HookConsumerWidget {
                   ),
                   Expanded(
                     child: Text(
-                      'Receipt',
+                      dialogTitle,
                       style: theme.textTheme.titleLarge,
                     ),
                   ),
@@ -352,7 +421,7 @@ class ReceiptDialog extends HookConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Success icon
+            // Status icon
             Container(
               width: 64,
               height: 64,
@@ -361,7 +430,7 @@ class ReceiptDialog extends HookConsumerWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.check_rounded,
+                isReprint ? Icons.receipt_long : Icons.check_rounded,
                 size: 40,
                 color: theme.colorScheme.primary,
               ),
@@ -369,7 +438,7 @@ class ReceiptDialog extends HookConsumerWidget {
             const SizedBox(height: 16),
 
             Text(
-              'Sale Complete!',
+              headline,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -412,6 +481,46 @@ class ReceiptDialog extends HookConsumerWidget {
                         'Payment Status',
                         sale.isPaid ? 'Paid' : 'Unpaid',
                       ),
+                      if (sale.customerName != null &&
+                          sale.customerName!.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildDetailRow(
+                          context,
+                          'Customer',
+                          sale.customerName!,
+                        ),
+                      ],
+                      if (saleItems.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          'Items',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...saleItems.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${item.productName} × ${item.quantity.toInt()}',
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ),
+                                Text(
+                                  item.subtotal.toCurrency(),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       // Prominent total display
                       Container(
@@ -484,11 +593,11 @@ class ReceiptDialog extends HookConsumerWidget {
                 child: hasDefaultPrinter
                     ? OutlinedButton(
                         onPressed: () => context.pop(),
-                        child: const Text('Done'),
+                        child: Text(dismissLabel),
                       )
                     : FilledButton(
                         onPressed: () => context.pop(),
-                        child: const Text('Done'),
+                        child: Text(dismissLabel),
                       ),
               ),
             ),

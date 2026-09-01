@@ -46,9 +46,25 @@ class ActivityLogChangesTable extends StatelessWidget {
             .map(
               (change) => DataRow(
                 cells: [
-                  DataCell(Text(activityLogFieldLabel(collection, change.field))),
-                  DataCell(Text(formatActivityLogValue(change.oldValue))),
-                  DataCell(Text(formatActivityLogValue(change.newValue))),
+                  DataCell(
+                    Text(activityLogFieldLabel(collection, change.field)),
+                  ),
+                  DataCell(
+                    Text(
+                      formatActivityLogValue(
+                        change.oldValue,
+                        field: change.field,
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      formatActivityLogValue(
+                        change.newValue,
+                        field: change.field,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             )

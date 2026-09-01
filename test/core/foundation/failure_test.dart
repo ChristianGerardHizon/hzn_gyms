@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
-import 'package:ebe_gym/src/core/foundation/error_display.dart';
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/foundation/error_display.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

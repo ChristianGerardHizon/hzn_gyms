@@ -8,6 +8,7 @@ import '../../../dashboard/presentation/widgets/unpaid_sales_queue_section.dart'
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';
+import '../../../products/data/repositories/product_adjustment_repository.dart';
 import '../../../products/data/repositories/product_lot_repository.dart';
 import '../../../products/data/repositories/product_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
@@ -56,26 +57,35 @@ Future<bool> resolveOpenUnpaidBeforeCreate(
     context,
     existingSale: existing,
   );
+  if (!context.mounted) return false;
 
   switch (action) {
     case OpenUnpaidSaleAction.openExisting:
-      if (context.mounted) {
-        SaleDetailRoute(id: existing.id).go(context);
-      }
+      SaleDetailRoute(id: existing.id).go(context);
       return false;
     case OpenUnpaidSaleAction.voidAndRecreate:
+      // Capture deps before the async void so we never touch [ref] after dispose.
+      final salesRepo = ref.read(salesRepositoryProvider);
+      final memberMembershipRepo = ref.read(memberMembershipRepositoryProvider);
+      final lotRepo = ref.read(productLotRepositoryProvider);
+      final productRepo = ref.read(productRepositoryProvider);
+      final adjustmentRepo = ref.read(productAdjustmentRepositoryProvider);
+      final voidedById = ref.read(currentAuthProvider)?.user.id;
+      final container = ProviderScope.containerOf(context);
+
       final voided = await voidSaleWithSideEffects(
-        salesRepo: ref.read(salesRepositoryProvider),
-        memberMembershipRepo: ref.read(memberMembershipRepositoryProvider),
-        lotRepo: ref.read(productLotRepositoryProvider),
-        productRepo: ref.read(productRepositoryProvider),
+        salesRepo: salesRepo,
+        memberMembershipRepo: memberMembershipRepo,
+        lotRepo: lotRepo,
+        productRepo: productRepo,
+        adjustmentRepo: adjustmentRepo,
         saleId: existing.id,
-        voidedById: ref.read(currentAuthProvider)?.user.id,
+        voidedById: voidedById,
       );
       final ok = voided.fold((_) => false, (_) => true);
-      if (ok) {
-        refreshAfterSaleVoided(ref, existing.id);
-        ref.invalidate(todayUnpaidSalesProvider);
+      if (ok && context.mounted) {
+        refreshAfterSaleVoidedOnContainer(container, existing.id);
+        container.invalidate(todayUnpaidSalesProvider);
       }
       return ok;
     case OpenUnpaidSaleAction.cancel:
@@ -88,8 +98,7 @@ Future<bool> resolveOpenUnpaidBeforeCreate(
 ///
 /// Returns whether the sale ended up paid.
 Future<bool> recordPaymentWithDisposition(
-  BuildContext context,
-  WidgetRef ref, {
+  BuildContext context, {
   required Sale sale,
   required num balanceDue,
 }) async {
@@ -103,14 +112,22 @@ Future<bool> recordPaymentWithDisposition(
       balanceDue: remaining,
     );
 
-    ref.invalidate(saleProvider(currentSale.id));
-    refreshSalesData(ref);
-    ref.invalidate(todayUnpaidSalesProvider);
+    // Caller may have been disposed while the dialog was open.
+    if (!context.mounted) return paid == true;
+
+    final container = ProviderScope.containerOf(context);
+    container.invalidate(saleProvider(currentSale.id));
+    refreshSalesDataOnContainer(container);
+    container.invalidate(todayUnpaidSalesProvider);
 
     Sale? refreshed;
     try {
-      refreshed = await ref.read(saleProvider(currentSale.id).future);
+      refreshed = await container.read(saleProvider(currentSale.id).future);
     } catch (_) {}
+
+    if (!context.mounted) {
+      return paid == true || (refreshed?.isPaid ?? false);
+    }
 
     if (refreshed != null) currentSale = refreshed;
 
@@ -118,28 +135,42 @@ Future<bool> recordPaymentWithDisposition(
       return true;
     }
 
-    if (!context.mounted) return false;
-
     final disposition = await showPaymentDispositionDialog(
       context,
       sale: currentSale,
     );
+    if (!context.mounted) return false;
 
     switch (disposition) {
       case PaymentDisposition.recordPayment:
         remaining = currentSale.totalAmount;
         continue;
       case PaymentDisposition.voidSale:
+        // Use container from [context] so this stays safe when a parent dialog
+        // was already popped (renew / quick-view flows).
+        final voidContainer = ProviderScope.containerOf(context);
+        final salesRepo = voidContainer.read(salesRepositoryProvider);
+        final memberMembershipRepo =
+            voidContainer.read(memberMembershipRepositoryProvider);
+        final lotRepo = voidContainer.read(productLotRepositoryProvider);
+        final productRepo = voidContainer.read(productRepositoryProvider);
+        final adjustmentRepo =
+            voidContainer.read(productAdjustmentRepositoryProvider);
+        final voidedById = voidContainer.read(currentAuthProvider)?.user.id;
+
         await voidSaleWithSideEffects(
-          salesRepo: ref.read(salesRepositoryProvider),
-          memberMembershipRepo: ref.read(memberMembershipRepositoryProvider),
-          lotRepo: ref.read(productLotRepositoryProvider),
-          productRepo: ref.read(productRepositoryProvider),
+          salesRepo: salesRepo,
+          memberMembershipRepo: memberMembershipRepo,
+          lotRepo: lotRepo,
+          productRepo: productRepo,
+          adjustmentRepo: adjustmentRepo,
           saleId: currentSale.id,
-          voidedById: ref.read(currentAuthProvider)?.user.id,
+          voidedById: voidedById,
         );
-        refreshAfterSaleVoided(ref, currentSale.id);
-        ref.invalidate(todayUnpaidSalesProvider);
+        if (context.mounted) {
+          refreshAfterSaleVoidedOnContainer(voidContainer, currentSale.id);
+          voidContainer.invalidate(todayUnpaidSalesProvider);
+        }
         return false;
       case PaymentDisposition.keepUnpaid:
       case null:

@@ -153,7 +153,6 @@ class CheckoutDialog extends HookConsumerWidget {
 
           final wasPaid = await recordPaymentWithDisposition(
             context,
-            ref,
             sale: sale,
             balanceDue: sale.totalAmount,
           );

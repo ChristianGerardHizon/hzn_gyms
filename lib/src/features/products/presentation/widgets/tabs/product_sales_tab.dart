@@ -4,14 +4,16 @@ import 'package:intl/intl.dart';
 
 import '../../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../../core/utils/currency_format.dart';
+import '../../../../../core/utils/date_utils.dart';
 import '../../../../../core/widgets/state/error_state.dart';
 import '../../../../pos/domain/product_sale_line.dart';
 import '../../../domain/product.dart';
+import '../../../domain/product_sales_by_date.dart';
 import '../../controllers/product_sales_provider.dart';
 
 /// Sales tab for product detail page.
 ///
-/// Shows recent purchase history for the product.
+/// Shows recent purchase history for the product, grouped by date.
 class ProductSalesTab extends ConsumerWidget {
   const ProductSalesTab({
     super.key,
@@ -104,6 +106,13 @@ class _SalesListContent extends ConsumerWidget {
       (sum, line) =>
           line.countsTowardSalesTotals ? sum + line.subtotal : sum,
     );
+    final groups = groupProductSalesByDate(lines);
+    final items = <_SalesListItem>[
+      for (final group in groups) ...[
+        _SalesListItem.header(group),
+        for (final line in group.lines) _SalesListItem.line(line),
+      ],
+    ];
 
     return Column(
       children: [
@@ -147,19 +156,94 @@ class _SalesListContent extends ConsumerWidget {
               ref.invalidate(productSalesProvider(productId));
               await ref.read(productSalesProvider(productId).future);
             },
-            child: ListView.separated(
+            child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),
-              itemCount: lines.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemCount: items.length,
               itemBuilder: (context, index) {
-                final line = lines[index];
-                return _SaleLineListTile(line: line);
+                final item = items[index];
+                if (item.isHeader) {
+                  return _DayHeader(group: item.group!);
+                }
+                return Column(
+                  children: [
+                    _SaleLineListTile(line: item.line!),
+                    if (index + 1 < items.length && !items[index + 1].isHeader)
+                      const Divider(height: 1),
+                  ],
+                );
               },
             ),
           ),
         ),
       ],
     );
+  }
+}
+
+class _SalesListItem {
+  const _SalesListItem._({this.group, this.line});
+
+  factory _SalesListItem.header(ProductSalesDayGroup group) =>
+      _SalesListItem._(group: group);
+
+  factory _SalesListItem.line(ProductSaleLine line) =>
+      _SalesListItem._(line: line);
+
+  final ProductSalesDayGroup? group;
+  final ProductSaleLine? line;
+
+  bool get isHeader => group != null;
+}
+
+class _DayHeader extends StatelessWidget {
+  const _DayHeader({required this.group});
+
+  final ProductSalesDayGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final qty = group.totalQty;
+    final qtyLabel = qty.toStringAsFixed(
+      qty == qty.roundToDouble() ? 0 : 1,
+    );
+
+    return Container(
+      width: double.infinity,
+      color: theme.colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _dayLabel(group.date),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '$qtyLabel sold · ${group.totalRevenue.toCurrency()}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _dayLabel(DateTime? date) {
+    if (date == null) return 'Unknown date';
+
+    final today = toLocalDateOnly(DateTime.now());
+    final yesterday = today.subtract(const Duration(days: 1));
+    final day = toLocalDateOnly(date);
+
+    if (day == today) return 'Today';
+    if (day == yesterday) return 'Yesterday';
+    return DateFormat('MMM dd, yyyy').format(day);
   }
 }
 
@@ -218,7 +302,7 @@ class _SaleLineListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
+    final timeFormat = DateFormat('hh:mm a');
     final receiptLabel = line.receiptNumber.isNotEmpty
         ? '#${line.receiptNumber}'
         : 'Sale';
@@ -241,7 +325,7 @@ class _SaleLineListTile extends StatelessWidget {
         children: [
           Text(
             [
-              if (line.created != null) dateFormat.format(line.created!),
+              if (line.created != null) timeFormat.format(line.created!),
               if (line.customerName != null && line.customerName!.isNotEmpty)
                 line.customerName!,
               '$qtyLabel × ${line.unitPrice.toCurrency()}',

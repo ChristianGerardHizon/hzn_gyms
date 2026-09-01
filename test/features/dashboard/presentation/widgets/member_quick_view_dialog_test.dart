@@ -1,11 +1,11 @@
-import 'package:ebe_gym/src/features/dashboard/presentation/widgets/member_quick_view_dialog.dart';
-import 'package:ebe_gym/src/features/members/domain/member.dart';
-import 'package:ebe_gym/src/features/members/presentation/controllers/member_branch_activity_controller.dart';
-import 'package:ebe_gym/src/features/members/presentation/controllers/member_provider.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_branch_activity.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/widgets/member_quick_view_dialog.dart';
+import 'package:hzn_gyms/src/features/members/domain/member.dart';
+import 'package:hzn_gyms/src/features/members/presentation/controllers/member_branch_activity_controller.dart';
+import 'package:hzn_gyms/src/features/members/presentation/controllers/member_provider.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_branch_activity.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +44,9 @@ void main() {
                 activityByMemberId: {
                   'member-1': MemberBranchActivity(branchIds: {'branch-1'}),
                 },
+                branchCodeById: {'branch-1': 'MAIN'},
                 branchNameById: {'branch-1': 'Main Branch'},
+                branchColorById: {'branch-1': 'teal'},
               ),
             ),
           ],
@@ -60,6 +62,7 @@ void main() {
 
       expect(find.text('No membership at this branch'), findsOneWidget);
       expect(find.text('Purchase membership'), findsOneWidget);
+      expect(find.text('Add Card'), findsOneWidget);
       expect(find.text('Active at other branches'), findsOneWidget);
     });
 
@@ -93,7 +96,9 @@ void main() {
                 activityByMemberId: {
                   'member-1': MemberBranchActivity(branchIds: {'branch-1'}),
                 },
+                branchCodeById: {'branch-1': 'MAIN'},
                 branchNameById: {'branch-1': 'Main Branch'},
+                branchColorById: {'branch-1': 'teal'},
               ),
             ),
           ],
@@ -108,6 +113,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Renew membership'), findsOneWidget);
+      expect(find.text('Add Card'), findsOneWidget);
       expect(find.text('Monthly Plan'), findsOneWidget);
     });
   });

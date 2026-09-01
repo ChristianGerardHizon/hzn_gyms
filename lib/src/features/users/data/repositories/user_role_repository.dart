@@ -32,6 +32,12 @@ abstract class UserRoleRepository {
   /// Searches user roles by name.
   FutureEither<List<UserRole>> search(String query);
 
+  /// Subscribes to realtime updates for a single role record.
+  Future<UnsubscribeFunc> subscribeOne(
+    String id, {
+    required void Function(RecordSubscriptionEvent event) onEvent,
+  });
+
   /// Invalidates the role list cache.
   void invalidateCache();
 }
@@ -198,5 +204,13 @@ class UserRoleRepositoryImpl implements UserRoleRepository {
 
       return records.map(_toEntity).toList();
     }, Failure.handle).run();
+  }
+
+  @override
+  Future<UnsubscribeFunc> subscribeOne(
+    String id, {
+    required void Function(RecordSubscriptionEvent event) onEvent,
+  }) {
+    return _collection.subscribe(id, onEvent);
   }
 }

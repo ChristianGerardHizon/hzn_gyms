@@ -1,13 +1,13 @@
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
-import 'package:ebe_gym/src/core/widgets/branch_switcher.dart';
-import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:ebe_gym/src/features/settings/domain/branch.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/branches_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
-import 'package:ebe_gym/src/features/users/domain/user.dart' as users;
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
-import 'package:ebe_gym/src/features/users/presentation/controllers/user_provider.dart';
-import 'package:ebe_gym/src/features/users/presentation/controllers/user_role_provider.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/widgets/branch_switcher.dart';
+import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:hzn_gyms/src/features/users/domain/user.dart' as users;
+import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
+import 'package:hzn_gyms/src/features/users/presentation/controllers/user_provider.dart';
+import 'package:hzn_gyms/src/features/users/presentation/controllers/user_role_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,12 +21,14 @@ void main() {
     const branchA = Branch(
       id: 'branch-a',
       name: 'Branch A',
+      code: 'BRA',
       address: 'x',
       contactNumber: '1',
     );
     const branchB = Branch(
       id: 'branch-b',
       name: 'Branch B',
+      code: 'BRB',
       address: 'y',
       contactNumber: '2',
     );

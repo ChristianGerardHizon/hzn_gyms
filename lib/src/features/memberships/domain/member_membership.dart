@@ -104,13 +104,20 @@ class MemberMembership with MemberMembershipMappable {
 
   /// Whether this subscription is currently active.
   ///
-  /// Aligns with server `fetchActive` (`startDate <= now`): the start
-  /// instant itself counts as active, not only moments strictly after it.
+  /// Aligns with `fetchActive`: `startDate <= now` (the start instant
+  /// itself counts) and `endDate` is inclusive through that calendar day.
   bool get isCurrentlyActive {
     if (status != MemberMembershipStatus.active) return false;
     final now = DateTime.now();
     return !now.isBefore(startDate) && !isBeforeToday(endDate);
   }
+
+  /// Whether this membership belongs in the primary list on member detail.
+  ///
+  /// Includes active and not-yet-started plans; excludes expired-by-date
+  /// (even if status is still active), pending, cancelled, and voided.
+  bool get isPrimaryActiveList =>
+      status == MemberMembershipStatus.active && !isExpired;
 
   /// Whether the linked plan grants access at [branchId].
   ///

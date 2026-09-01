@@ -42,7 +42,7 @@ final class ThemeControllerProvider
   ThemeController create() => ThemeController();
 }
 
-String _$themeControllerHash() => r'aaca8658b88bbc9447e48aff0e9ce6df40cadb53';
+String _$themeControllerHash() => r'726bae944ba1c1ce98535550d3b0b1fb2f339d57';
 
 /// Controller for managing app theme mode.
 ///

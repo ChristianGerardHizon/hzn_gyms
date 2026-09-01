@@ -4,18 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../features/check_in/presentation/widgets/check_in_rfid_listener.dart';
-import '../../../features/check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../../features/dashboard/presentation/controllers/dashboard_refresh.dart';
+import '../../../features/dashboard/presentation/widgets/dashboard_footer.dart';
+import '../../../features/dashboard/presentation/widgets/dashboard_header.dart';
 import '../../../features/dashboard/presentation/widgets/dashboard_members_section.dart';
 import '../../../features/dashboard/presentation/widgets/inventory_alerts_section.dart';
 import '../../../features/dashboard/presentation/widgets/kpi_summary_section.dart';
 import '../../../features/dashboard/presentation/widgets/quick_actions_section.dart';
 import '../../../features/dashboard/presentation/widgets/recent_transactions_section.dart';
 import '../../../features/dashboard/presentation/widgets/tablet_dashboard_layout.dart';
-import '../../../features/dashboard/presentation/widgets/dashboard_footer.dart';
 import '../../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../../utils/breakpoints.dart';
-import '../../widgets/branch_switcher.dart';
 import '../../widgets/scroll_to_top_button.dart';
 
 part 'dashboard.routes.g.dart';
@@ -109,13 +108,15 @@ class DashboardPage extends HookConsumerWidget {
                           child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _MobileDashboardHeader(),
+                              DashboardHeader(),
                               SizedBox(height: 16),
                               KpiSummarySection(),
                               SizedBox(height: 20),
                               QuickActionsSection(),
                               SizedBox(height: 24),
                               RecentTransactionsSection(),
+                              SizedBox(height: 24),
+                              InventoryAlertsSection(),
                               SizedBox(height: 24),
                             ],
                           ),
@@ -127,15 +128,13 @@ class DashboardPage extends HookConsumerWidget {
                   // Members Section (virtualized slivers)
                   const DashboardMembersSection(),
 
-                  // Inventory Alerts + Footer
+                  // Footer
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     sliver: SliverToBoxAdapter(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
-                          SizedBox(height: 24),
-                          InventoryAlertsSection(),
                           SizedBox(height: 24),
                           DashboardFooter(),
                           SizedBox(height: 16),
@@ -152,70 +151,6 @@ class DashboardPage extends HookConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Mobile dashboard header widget.
-class _MobileDashboardHeader extends ConsumerWidget {
-  const _MobileDashboardHeader();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final selection = ref.watch(currentBranchControllerProvider).value;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.dashboard,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Dashboard Overview',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              const RfidListenerStatusIcon(),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh',
-                onPressed: () => refreshDashboard(ref),
-              ),
-            ],
-          ),
-          if (selection != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: selection.isAll
-                  ? const BranchSwitcher(compact: true)
-                  : Row(
-                      children: [
-                        Icon(
-                          Icons.store,
-                          size: 16,
-                          color: theme.colorScheme.outline,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          selection.branch?.name ?? '',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.outline,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-        ],
       ),
     );
   }

@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../../core/utils/currency_format.dart';
-import '../../../../core/widgets/form_feedback.dart';
-import '../../../products/domain/product.dart';
-import '../../../products/domain/product_status.dart';
 import '../../domain/pos_group.dart';
 import '../../domain/pos_group_item.dart';
-import '../cart_controller.dart';
-import '../providers/pos_product_stock_provider.dart';
-import 'lot_selection_dialog.dart';
-import 'variable_price_dialog.dart';
+import '../utils/cashier_grid_layout.dart';
+import 'cashier_product_card.dart';
 
 /// Displays POS groups as scrollable sections with sticky headers.
 ///
@@ -20,9 +14,13 @@ class GroupedCashierView extends StatelessWidget {
   const GroupedCashierView({
     super.key,
     required this.groups,
+    this.bottomPadding = 12,
   });
 
   final List<PosGroup> groups;
+
+  /// Extra scroll padding under the last section (FAB / cart bar clearance).
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -33,32 +31,21 @@ class GroupedCashierView extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        // Mobile: 2 columns, Tablet: 4-5 columns, Large: 6+ columns
-        final crossAxisCount = width < 600
-            ? 2
-            : width < 900
-                ? 4
-                : width < 1200
-                    ? 5
-                    : 6;
-
-        // Adjust aspect ratio based on column count
-        // More columns = wider cards, fewer columns = taller cards
-        final childAspectRatio = crossAxisCount <= 3 ? 0.9 : 1.3;
+        final spacing = CashierGridLayout.spacing(width);
 
         return CustomScrollView(
           slivers: [
             for (final group in groups) ...[
-              // Sticky section header
               SliverToBoxAdapter(
                 child: _GroupHeader(group: group),
               ),
-              // Grid of items
               if (group.items.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 24),
+                      horizontal: 16,
+                      vertical: 24,
+                    ),
                     child: Center(
                       child: Text(
                         'No items in this group',
@@ -71,13 +58,15 @@ class GroupedCashierView extends StatelessWidget {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.all(8),
+                  padding: CashierGridLayout.padding(width),
                   sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      childAspectRatio: childAspectRatio,
-                      crossAxisSpacing: 6,
-                      mainAxisSpacing: 6,
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent:
+                          CashierGridLayout.maxCrossAxisExtent(width),
+                      childAspectRatio:
+                          CashierGridLayout.childAspectRatio(width),
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -89,8 +78,7 @@ class GroupedCashierView extends StatelessWidget {
                   ),
                 ),
             ],
-            // Bottom padding for FAB
-            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+            SliverPadding(padding: EdgeInsets.only(bottom: bottomPadding)),
           ],
         );
       },
@@ -107,26 +95,30 @@ class _GroupHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       child: Row(
         children: [
           Icon(
-            Icons.dashboard_customize,
+            Icons.dashboard_customize_outlined,
             size: 18,
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 8),
-          Text(
-            group.name,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
+          Expanded(
+            child: Text(
+              group.name,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 8),
           Text(
-            '(${group.items.length})',
+            '${group.items.length}',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.outline,
             ),
@@ -137,9 +129,6 @@ class _GroupHeader extends StatelessWidget {
   }
 }
 
-/// A card that renders a product from a group item.
-///
-/// Non-product items are skipped (renders as [SizedBox.shrink]).
 class _GroupItemCard extends ConsumerWidget {
   const _GroupItemCard({required this.item});
 
@@ -148,180 +137,8 @@ class _GroupItemCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (item.isProduct && item.product != null) {
-      return _ProductGroupCard(product: item.product!);
+      return CashierProductCard(product: item.product!);
     }
     return const SizedBox.shrink();
-  }
-}
-
-/// Product card within a group - reuses the same tap logic as ProductGrid.
-class _ProductGroupCard extends ConsumerWidget {
-  const _ProductGroupCard({required this.product});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final stockStatusAsync = ref.watch(posProductStockProvider(product));
-
-    return stockStatusAsync.when(
-      loading: () => _buildCard(context, ref, theme,
-          stockStatus: null, isLoading: true),
-      error: (_, __) => _buildCard(context, ref, theme,
-          stockStatus: ProductStatus.noThreshold),
-      data: (stockStatus) =>
-          _buildCard(context, ref, theme, stockStatus: stockStatus),
-    );
-  }
-
-  Widget _buildCard(
-    BuildContext context,
-    WidgetRef ref,
-    ThemeData theme, {
-    required ProductStatus? stockStatus,
-    bool isLoading = false,
-  }) {
-    final isOutOfStock = stockStatus == ProductStatus.outOfStock;
-    final isLowStock = stockStatus == ProductStatus.lowStock;
-    final isDisabled = isOutOfStock && product.requireStock;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: isDisabled
-            ? () => showErrorSnackBar(context,
-                message: '${product.name} is out of stock',
-                duration: const Duration(seconds: 2))
-            : () => _handleProductTap(context, ref),
-        child: Stack(
-          children: [
-            Opacity(
-              opacity: isDisabled ? 0.5 : 1.0,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        product.name,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      product.isVariablePrice
-                          ? 'Variable'
-                          : product.price.toCurrency(),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: product.isVariablePrice
-                            ? theme.colorScheme.tertiary
-                            : theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (!isLoading && (isOutOfStock || isLowStock))
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: (isOutOfStock
-                            ? theme.colorScheme.error
-                            : Colors.orange)
-                        .withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Icon(
-                    isOutOfStock
-                        ? Icons.cancel_outlined
-                        : Icons.warning_amber_outlined,
-                    color: Colors.white,
-                    size: 12,
-                  ),
-                ),
-              ),
-            if (isLoading)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleProductTap(BuildContext context, WidgetRef ref) {
-    final cartNotifier = ref.read(cartControllerProvider.notifier);
-
-    if (product.trackByLot) {
-      showLotSelectionDialog(
-        context,
-        product: product,
-        onLotSelected: (lot, quantity) async {
-          if (product.isVariablePrice) {
-            final price = await showVariablePriceDialog(
-              context,
-              productName: product.name,
-            );
-            if (price != null) {
-              final error = await cartNotifier.addToCartWithLot(
-                product,
-                lot,
-                quantity,
-                customPrice: price,
-              );
-              if (error != null && context.mounted) {
-                showErrorSnackBar(context, message: error);
-              }
-            }
-          } else {
-            final error =
-                await cartNotifier.addToCartWithLot(product, lot, quantity);
-            if (error != null && context.mounted) {
-              showErrorSnackBar(context, message: error);
-            }
-          }
-        },
-      );
-    } else if (product.isVariablePrice) {
-      showVariablePriceDialog(
-        context,
-        productName: product.name,
-      ).then((price) async {
-        if (price != null) {
-          final error =
-              await cartNotifier.addToCart(product, customPrice: price);
-          if (error != null && context.mounted) {
-            showErrorSnackBar(context, message: error);
-          }
-        }
-      });
-    } else {
-      cartNotifier.addToCart(product).then((error) {
-        if (error != null && context.mounted) {
-          showErrorSnackBar(context, message: error);
-        }
-      });
-    }
   }
 }

@@ -16,7 +16,7 @@ enum MemberCardStatus {
       case MemberCardStatus.lost:
         return 'Lost';
       case MemberCardStatus.deactivated:
-        return 'Deactivated';
+        return 'Disabled';
     }
   }
 }
@@ -36,6 +36,7 @@ class MemberCard with MemberCardMappable {
     this.deactivatedAt,
     this.notes,
     this.memberName,
+    this.memberPhoto,
     this.created,
     this.updated,
   });
@@ -63,6 +64,9 @@ class MemberCard with MemberCardMappable {
 
   /// Member name (from expand, for display).
   final String? memberName;
+
+  /// Member profile photo URL (from expand, for display).
+  final String? memberPhoto;
 
   /// Creation timestamp (also serves as issued date).
   final DateTime? created;

@@ -8,10 +8,13 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
 import '../../../../core/widgets/state/error_state.dart';
+import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
+import '../../../member_cards/presentation/widgets/add_card_dialog.dart';
 import '../../../members/domain/member.dart';
 import '../../../members/presentation/controllers/member_branch_activity_controller.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
 import '../../../members/presentation/widgets/member_branch_activity_chips.dart';
+import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_branch_activity.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/domain/membership_status_colors.dart';
@@ -157,8 +160,16 @@ class MemberQuickViewDialog extends ConsumerWidget {
                               state.activityByMemberId[memberId],
                           orElse: () => null,
                         ),
+                        branchCodeById: activityAsync.maybeWhen(
+                          data: (state) => state.branchCodeById,
+                          orElse: () => const {},
+                        ),
                         branchNameById: activityAsync.maybeWhen(
                           data: (state) => state.branchNameById,
+                          orElse: () => const {},
+                        ),
+                        branchColorById: activityAsync.maybeWhen(
+                          data: (state) => state.branchColorById,
                           orElse: () => const {},
                         ),
                         activityLoading: activityAsync.isLoading,
@@ -343,7 +354,9 @@ class _MembershipSummary extends StatelessWidget {
     this.dashboardMember,
     this.branchId,
     this.branchActivity,
+    this.branchCodeById = const {},
     this.branchNameById = const {},
+    this.branchColorById = const {},
     this.activityLoading = false,
   });
 
@@ -352,7 +365,9 @@ class _MembershipSummary extends StatelessWidget {
   final DashboardMember? dashboardMember;
   final String? branchId;
   final MemberBranchActivity? branchActivity;
+  final Map<String, String> branchCodeById;
   final Map<String, String> branchNameById;
+  final Map<String, String> branchColorById;
   final bool activityLoading;
 
   @override
@@ -425,7 +440,9 @@ class _MembershipSummary extends StatelessWidget {
               const SizedBox(height: 12),
               MemberBranchActivityChips(
                 activity: branchActivity,
+                branchCodeById: branchCodeById,
                 branchNameById: branchNameById,
+                branchColorById: branchColorById,
                 currentBranchId: branchId,
                 isLoading: activityLoading,
               ),
@@ -499,9 +516,7 @@ class _MembershipSummary extends StatelessWidget {
           if (primary.isCurrentlyActive)
             _InfoRow(
               label: 'Days left',
-              value: primary.daysRemaining == 0
-                  ? 'Expires today'
-                  : '${primary.daysRemaining} days',
+              value: formatDaysRemainingLabel(primary.daysRemaining),
               valueColor: membershipLifecycleColor(
                 daysRemaining: primary.daysRemaining,
               ),
@@ -556,28 +571,49 @@ class _ActionButtons extends ConsumerWidget {
           onPressed: !membershipsLoaded || branchId == null
               ? null
               : () async {
-                  final success = await purchaseMembershipAndRecordPayment(
-                    context,
-                    ref,
+                  // Close quick-view first so purchase/payment are not stacked
+                  // under the member modal (same pattern as membership detail).
+                  // Use the navigator context — this dialog's ref/context die
+                  // on pop; ProviderContainer is taken from the new context.
+                  final navigator = Navigator.of(context);
+                  navigator.pop();
+                  if (!navigator.mounted) return;
+
+                  await purchaseMembershipAndRecordPayment(
+                    navigator.context,
                     memberId: memberId,
                     memberName: memberName,
                     preselectedMembershipId:
                         renewableMembership?.membershipId,
                     isRenewal: hasRenewable,
                   );
-                  if (success && hasRenewable && context.mounted) {
-                    Navigator.of(context).pop();
-                  }
                 },
           icon: Icon(hasRenewable ? Icons.autorenew : Icons.add),
           label: Text(renewLabel),
+        ),
+        const SizedBox(height: 8),
+        FilledButton.tonalIcon(
+          onPressed: () async {
+            final result = await showAddCardDialog(
+              context,
+              memberId: memberId,
+            );
+            if (result == true) {
+              ref.invalidate(memberCardsControllerProvider(memberId));
+            }
+          },
+          icon: const Icon(Icons.credit_card),
+          label: const Text('Add Card'),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () {
             final router = GoRouter.of(context);
             final location = MemberDetailRoute(id: memberId).location;
-            Navigator.of(context).pop();
+            // Close stacked dialogs (e.g. KPI list + quick view) before leaving.
+            Navigator.of(context, rootNavigator: true).popUntil(
+              (route) => route is! PopupRoute,
+            );
             router.push(location);
           },
           icon: const Icon(Icons.open_in_new),

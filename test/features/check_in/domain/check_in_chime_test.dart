@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/check_in/domain/card_check_in_result.dart';
-import 'package:ebe_gym/src/features/check_in/domain/check_in_chime.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/card_check_in_result.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/check_in_chime.dart';
 
 import '../../../helpers/fixtures.dart';
 
@@ -52,9 +52,11 @@ void main() {
       const denies = <CardCheckInResult>[
         CardCheckInCardNotFound(),
         CardCheckInNoActiveMembership(memberName: 'Jane'),
+        CardCheckInUnpaidMembership(memberName: 'Jane'),
         CardCheckInMembershipNotValidAtBranch(memberName: 'Jane'),
         CardCheckInNoBranch(),
         CardCheckInFailed(),
+        CardCheckInCooldown(remaining: Duration(seconds: 5)),
       ];
       for (final result in denies) {
         expect(resolveCheckInChime(result), CheckInChime.failure);

@@ -60,14 +60,14 @@ class AuthController extends _$AuthController {
     _refreshGeneration++;
   }
 
-  /// Attempts to login with username and password.
+  /// Attempts to login with email and password.
   ///
   /// Returns true on success, false on failure.
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(String email, String password) async {
     _invalidateBackgroundRefresh();
     state = const AsyncLoading();
 
-    final result = await _repository.login(username, password);
+    final result = await _repository.login(email, password);
 
     return result.fold(
       (failure) {

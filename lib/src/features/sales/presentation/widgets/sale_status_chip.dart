@@ -5,23 +5,52 @@ class SaleStatusChip extends StatelessWidget {
   const SaleStatusChip({
     super.key,
     required this.status,
+    this.dense = false,
+    this.showLabel = false,
   });
 
   final String status;
 
+  /// Smaller padding/icon for list trailing rows.
+  final bool dense;
+
+  /// When true, shows icon + status text (e.g. list trailing under amount).
+  final bool showLabel;
+
   @override
   Widget build(BuildContext context) {
     final (color, icon) = _getStatusStyle(status);
+    final label = _formatStatus(status);
+    final iconSize = dense ? 14.0 : 18.0;
+
+    if (showLabel) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: iconSize),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      );
+    }
+
+    final padding = dense ? 4.0 : 8.0;
 
     return Tooltip(
-      message: _formatStatus(status),
+      message: label,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(padding),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 18),
+        child: Icon(icon, color: color, size: dense ? 16.0 : 18.0),
       ),
     );
   }

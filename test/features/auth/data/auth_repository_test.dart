@@ -2,11 +2,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:ebe_gym/src/core/packages/storage/auth_storage_provider.dart';
-import 'package:ebe_gym/src/features/auth/data/auth_dto.dart';
-import 'package:ebe_gym/src/features/auth/data/auth_repository.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:hzn_gyms/src/core/packages/storage/auth_storage_provider.dart';
+import 'package:hzn_gyms/src/features/auth/data/auth_dto.dart';
+import 'package:hzn_gyms/src/features/auth/data/auth_repository.dart';
 
 import '../../../helpers/pb_test_helpers.dart';
 

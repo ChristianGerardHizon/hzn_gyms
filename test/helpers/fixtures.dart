@@ -1,21 +1,46 @@
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
-import 'package:ebe_gym/src/features/auth/domain/user.dart';
-import 'package:ebe_gym/src/features/check_in/domain/check_in.dart';
-import 'package:ebe_gym/src/features/member_cards/domain/member_card.dart';
-import 'package:ebe_gym/src/features/members/domain/member.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership_add_on.dart';
-import 'package:ebe_gym/src/features/pos/domain/cart_item.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_method.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_type.dart';
-import 'package:ebe_gym/src/features/pos/domain/sale.dart';
-import 'package:ebe_gym/src/features/products/domain/product.dart';
-import 'package:ebe_gym/src/features/products/domain/product_lot.dart';
+import 'package:hzn_gyms/src/core/utils/date_utils.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log_action.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log_change.dart';
+import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
+import 'package:hzn_gyms/src/features/auth/domain/user.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/check_in.dart';
+import 'package:hzn_gyms/src/features/member_cards/domain/member_card.dart';
+import 'package:hzn_gyms/src/features/members/domain/member.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership_add_on.dart';
+import 'package:hzn_gyms/src/features/pos/domain/cart_item.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment_method.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment_type.dart';
+import 'package:hzn_gyms/src/features/pos/domain/sale.dart';
+import 'package:hzn_gyms/src/features/products/domain/product.dart';
+import 'package:hzn_gyms/src/features/products/domain/product_lot.dart';
 
 /// Shared fixture builders for unit tests.
+ActivityLog buildActivityLog({
+  String id = 'log-1',
+  ActivityLogAction action = ActivityLogAction.update,
+  String collection = 'members',
+  String recordId = 'mem-1',
+  String summary = 'Updated Member: Juan Dela Cruz',
+  List<ActivityLogChange> changes = const [],
+  String? actorName = 'Chris',
+  DateTime? created,
+}) {
+  return ActivityLog(
+    id: id,
+    action: action,
+    collection: collection,
+    recordId: recordId,
+    summary: summary,
+    changes: changes,
+    actorName: actorName,
+    created: created,
+  );
+}
+
 AuthState buildAuthState({String userId = 'user-1', String token = 'token'}) {
   return AuthState(
     token: token,
@@ -73,6 +98,8 @@ CartItem buildCartItem({
   Product? product,
   num quantity = 1,
   num? customPrice,
+  String? productLotId,
+  String? lotNumber,
 }) {
   return CartItem(
     id: id,
@@ -80,6 +107,8 @@ CartItem buildCartItem({
     product: product ?? buildProduct(id: productId),
     quantity: quantity,
     customPrice: customPrice,
+    productLotId: productLotId,
+    lotNumber: lotNumber,
   );
 }
 
@@ -136,6 +165,7 @@ MemberMembership buildMemberMembership({
   List<String> membershipValidBranches = const [],
   String? memberName = 'Jane Doe',
   String? membershipName = 'Monthly Plan',
+  String? saleId,
 }) {
   final start = startDate ?? DateTime.now().subtract(const Duration(days: 1));
   final end = endDate ?? DateTime.now().add(const Duration(days: 29));
@@ -150,6 +180,7 @@ MemberMembership buildMemberMembership({
     membershipValidBranches: membershipValidBranches,
     memberName: memberName,
     membershipName: membershipName,
+    saleId: saleId,
   );
 }
 
@@ -157,8 +188,14 @@ Member buildMember({
   String id = 'member-1',
   String name = 'Jane Doe',
   String? rfidCardId,
+  String? mobileNumber,
 }) {
-  return Member(id: id, name: name, rfidCardId: rfidCardId);
+  return Member(
+    id: id,
+    name: name,
+    rfidCardId: rfidCardId,
+    mobileNumber: mobileNumber,
+  );
 }
 
 MemberCard buildMemberCard({
@@ -166,6 +203,7 @@ MemberCard buildMemberCard({
   String memberId = 'member-1',
   String cardValue = 'RFID123',
   String? memberName = 'Jane Doe',
+  String? memberPhoto,
   MemberCardStatus status = MemberCardStatus.active,
 }) {
   return MemberCard(
@@ -174,6 +212,7 @@ MemberCard buildMemberCard({
     cardValue: cardValue,
     status: status,
     memberName: memberName,
+    memberPhoto: memberPhoto,
   );
 }
 
@@ -185,6 +224,7 @@ CheckIn buildCheckIn({
   String? memberName,
   DateTime? checkInTime,
   CheckInMethod method = CheckInMethod.rfid,
+  bool isVoided = false,
 }) {
   return CheckIn(
     id: id,
@@ -194,6 +234,7 @@ CheckIn buildCheckIn({
     method: method,
     memberMembershipId: memberMembershipId,
     memberName: memberName,
+    isVoided: isVoided,
   );
 }
 
@@ -209,6 +250,7 @@ Sale buildSale({
   String? customerName,
   String? descriptor,
   String? idempotencyKey,
+  DateTime? created,
 }) {
   return Sale(
     id: id,
@@ -222,6 +264,7 @@ Sale buildSale({
     customerName: customerName,
     descriptor: descriptor,
     idempotencyKey: idempotencyKey,
+    created: created,
   );
 }
 

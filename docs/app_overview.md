@@ -25,18 +25,21 @@ A comprehensive Flutter multi-platform gym management system supporting Android,
 #### Dashboard (`/`)
 Home screen with gym metrics and quick actions.
 
+- Header greets the signed-in user by time of day (`Good Morning/Noon/Afternoon/Evening`) with app version under the title; RFID status + refresh stay on the right
 - Responsive layout (single column mobile, single-pane tablet)
 - KPI summary cards: Today's Sales, Today's Check-ins, Active Members, New Members — tap any card for a breakdown dialog (aggregate chips + item list)
-- Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member
+- Quick action buttons: Check-In, Cashier, Walk-in, Renew, Search Member, New Member, and **Today's Logs** (admins, or staff with `activityLog.view`)
 - Search Member: cross-branch name/phone search with branch-activity chips; opens quick-view to renew or purchase at the current branch, or create a new member when no match
-- Cashier opens the product POS as a dialog (same layout as `/cashier`; member optional at checkout)
+- Cashier opens the product POS as a dialog (same `CashierBody` layout; standalone `/cashier` nav removed and redirects to dashboard; member optional at checkout; optional check-in strip for staff with `checkIns.create`)
 - Walk-in opens a day-pass dialog (customer name + plan with **Membership not required** + optional add-ons); creates a sale only — no member or membership record
 - Renew Membership: pick any member, then choose a plan for the current branch; if they still have an active membership, the new period defaults to the day after it ends (start date can be customized)
+- Unpaid today: banner of open unpaid sales with Pay / Void / Ignore; tap a row for sale quick view; Ignore hides it for this session (sale stays unpaid; duplicate-sale checks still apply)
 - Recent Transactions: collapsible preview of today's sales (up to 5); tap opens sale quick view; View All opens today's transactions dialog
 - Members grid: tap a member for a quick-view dialog (details + membership summary, Renew / Purchase, Show full details)
 - Expiring memberships section (memberships expiring within 7 days)
-- Inventory alerts (low stock, expiring products)
+- Inventory alerts (out of stock, low stock below threshold, expiring products)
 - Pull-to-refresh invalidates all dashboard data
+- **Today's Logs**: opens a dialog of today's activity (branch-scoped) with descriptive headlines and expandable field-level diffs
 - RFID keyboard-wedge listener (same as Check-In); NFC icon is green when active, red when inactive
 
 #### Check-In (`/check-in`)
@@ -47,11 +50,13 @@ Member check-in system for tracking gym visits.
   - RFID keyboard-wedge on Check-In and Dashboard; auto-listens while the window is focused (NFC icon green = active, red = inactive)
   - Fullscreen "Not in focus" overlay when the Check-In window/app loses OS focus (RFID paused)
   - Today's check-ins update live across devices via PocketBase realtime subscription
+  - 30-second same-member cooldown with an explanatory prompt (avoids accidental duplicates)
+  - Staff with `checkIns.void` can void mistaken/duplicate check-ins (soft void + audit)
   - Member search by name or mobile number
   - Active membership status display
   - Manual check-in with membership validation
   - Warning for members without active membership
-  - Recent check-ins list for today
+  - Recent check-ins list for today (void action when permitted)
   - Success dialog with membership status
   - Audio chimes for check-in outcomes: success, near-expiry (≤7 days), and failure
   - Backward compatibility with legacy `rfidCardId` field on members
@@ -68,6 +73,7 @@ Historical check-in log filtered by calendar date. Opened from Check-In (not a t
   - Date picker with previous/next day and Today shortcuts
   - Lists members who checked in on the selected date (branch-scoped)
   - Shows check-in time and method (Manual / RFID)
+  - Voided check-ins shown with a Voided badge; details include void reason when set
   - Tap a record to open details (date, time, method, membership) with link to member profile
 - **Controllers**:
   - `checkInRecordsDateController` - Selected calendar day
@@ -118,11 +124,16 @@ Inventory and product management with lot tracking.
 
 ### Secondary Features
 
-#### Point of Sale / Cashier (`/cashier`)
+#### Point of Sale / Cashier (Dashboard dialog; `/cashier` redirects home)
 Complete POS system for processing product sales.
 
 - **Features**:
+  - Opened from Dashboard **Cashier** quick action (full-screen dialog); standalone shell Cashier nav removed
+  - Optional check-in strip (member picker / card ID) when user has `checkIns.create` — no nested RFID listener (Dashboard owns RFID)
   - **Customizable Cashier Layout** (POS Groups): Create named groups of products per branch to define the cashier page layout. Groups display as scrollable sections with sticky headers. Falls back to default product grid when no groups are configured.
+  - Responsive product grid (max-extent tiles) with denser cards and readable Out/Low stock chips
+  - **Mobile**: full-width product pane + sticky cart bar; cart opens as a bottom sheet for review/checkout
+  - **Tablet/Desktop**: side-by-side products + cart (shared `CashierBody` for dashboard dialog)
   - Product grid with search and category filtering
   - Search dropdown overlay (grouped mode)
   - Shopping cart with product items
@@ -133,6 +144,10 @@ Complete POS system for processing product sales.
   - **Walk-in / day pass**: Dashboard **Walk-in** sells plans marked **Membership not required** (name + plan + optional add-ons → sale only). Dashboard **Cashier** opens product POS in a dialog; checkout member remains optional
   - Receipt generation and printing
 - **Components**:
+  - `CashierBody` - Shared responsive products + cart layout
+  - `CashierCheckInStrip` - Compact member/card check-in on cashier
+  - `CashierProductCard` - Shared product tile (flat + grouped modes)
+  - `CashierCartBar` - Mobile sticky cart summary / bottom sheet
   - `ProductGrid` - Product selection (default mode)
   - `GroupedCashierView` - Scrollable grouped sections (grouped mode)
   - `CashierSearchDropdown` - Search overlay for grouped mode
@@ -147,7 +162,9 @@ View and manage completed transactions.
 
 - Paginated sales history with search
 - Sale status display (pending, completed, refunded, voided)
+- Search fields dialog can toggle status filters (Paid, Voided, Awaiting Payment)
 - Detailed sale view with items and payment info
+- Reprint receipt from sale detail (thermal printer and/or PDF), same flow as checkout
 - Refund/unrefund functionality with confirmation dialogs
 
 #### Reports (`/reports`)
@@ -161,7 +178,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 **Tabs:**
 - Period selector: **Day** (single calendar date; lists each sale and opens sale detail on tap), **Week** (Mon–Sun From/To), **Month** (calendar months), **Year** (calendar years), **All Time** (years from 2019)
 - Trend charts for Week / Month / Year / All Time (hidden on Day — use peak hours for attendance instead)
-- **Sales** — cash collected, revenue by item type (product / membership / walk-in / add-on), payment methods, top selling items (products + memberships + guest day-pass), unpaid (AR), staff performance
+- **Sales** — cash collected, revenue by item type (product / membership / walk-in / add-on), featured KPI cards for Memberships / Walk-ins / Products (tap to open filtered transactions dialog; memberships list shows member name first) with compact cash/AR sub-details, payment methods, top selling items (products + memberships + guest day-pass), unpaid (AR), staff performance
 - **Inventory** — stock status, low stock, expiration alerts, inventory value (via SQL views)
 - **Members & Memberships** — new members, active base, renewals vs new, expiring soon, churn/lapse, plan mix; plan value sold (labeled separately from cash collected); excludes walk-in / guest (`memberNotRequired` / `walkIn`) plans
 - **Attendance** — check-ins trend (non-Day), unique members, method mix; peak hours on Day only
@@ -169,6 +186,14 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 ---
 
 ### Organization/Admin Features
+
+#### Organizations (`/organizations`)
+Super-admin platform page for managing tenants (requires `organizations.manage`, not granted by `systemAdmin` alone).
+
+- List all organizations with slug, subdomain, and DNS provisioning status
+- Create/edit organization branding fields (name, slug, display name, seed/splash colors)
+- Retry Porkbun DNS provisioning for failed/pending orgs
+- **Organization switcher** in the app shell (top bar + mobile drawer) for super-admins to change active tenant
 
 #### Organization (`/organization`)
 3-panel tablet layout for managing organizational settings.
@@ -181,7 +206,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 **Modes:**
 - **Users** (`/organization/users`) - User CRUD, role assignment, branch association
 - **Roles** (`/organization/roles`) - Role and permission management (Admin, Staff, Cashier)
-- **Branches** (`/organization/branches`) - Multi-location support with address and contact info
+- **Branches** (`/organization/branches`) - Multi-location support with name, code (pill label), optional pill color preset, address, contact, operating hours, and cut-off time (only name + code required)
 
 #### Profile (`/profile`)
 Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
@@ -194,7 +219,7 @@ Self-service account page for staff (and any user without `users.view`). Shows o
 - **Cashier Layout** (`/system/cashier-groups`) - POS groups management per branch
 - **Appearance** (`/system/appearance`) - Theme and default camera (available to all signed-in users)
 - **Debug** (`/system/debug`) - Admin tools; simulate RFID check-in dialogs
-- **Activity Log** (`/system/activity-log`) - Admin-only system-wide change history with summary list and field-level diffs
+- **Activity Log** (`/system/activity-log`) - System-wide change history with descriptive summaries and field-level diffs (`system.admin` or `activityLog.view`)
 
 ---
 
@@ -314,7 +339,7 @@ Located in `/lib/src/core/`
 - Password Recovery (`/recovery`)
 
 ### Main Navigation
-- **Dashboard**: Home with KPIs, quick actions, recent transactions (View All dialog), inventory alerts
+- **Dashboard**: Home with KPIs, quick actions (including Today's Logs), recent transactions (View All dialog), inventory alerts
 - **Check-In**: Member search, check-in with membership validation
 - **Cashier/POS**: Product grid and checkout
 - **Sales List**: Transaction history
@@ -408,6 +433,7 @@ App Root (Shell)
     │   ├── /memberships (List)
     │   └── /memberships/:id (Detail)
     ├── /reports (Reports)
+    ├── /organizations (Super-admin tenant management)
     ├── /organization (3-panel layout)
     │   ├── /organization/users
     │   │   └── /organization/users/:id
@@ -451,6 +477,10 @@ App Root (Shell)
 Destinations are filtered by role permissions. Staff typically see Dashboard through Memberships, Profile, and System (Appearance only).
 
 **Sales permissions:** `sales.view` (sales history), `sales.create` (cashier/POS), `sales.void` (void sales and payments — assign explicitly under the Sales category in Roles).
+
+**Membership no-sale assignment:** `memberships.excludeFromSales` shows “Exclude from sales” on purchase/renew and new-member create so privileged staff can attach an active membership without a sale/receipt (e.g. migration recovery). Admins (`system.admin`) have it by default.
+
+**Product quantity:** `products.editQuantity` is required to change on-hand quantity in Edit Product. Admins (`system.admin`) have it by default; other roles should use Stock Adjustment unless this permission is assigned.
 
 ---
 
@@ -557,6 +587,38 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 2 | Organizations admin UI | Super-admin `/organizations` page, org switcher, DNS retry, and `organizations.manage` nav gating |
+| Aug 19 | Today's activity logs | Dashboard **Today's Logs** quick action (admin or `activityLog.view`) opens today's branch-scoped activity with descriptive headlines and expandable field diffs |
+| Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; new deploys bust boot-asset HTTP cache then reload via version.json |
+| Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |
+| Aug 10 | Check-in void, cooldown, cashier consolidation | Soft-void check-ins (`checkIns.void`); 30s same-member cooldown with prompt; cashier check-in strip in dashboard POS dialog; hide standalone Cashier nav (`/cashier` → dashboard) |
+| Aug 9 | Dashboard greeting header | Shared mobile/tablet header shows time-of-day greeting + user name and app version; RFID + refresh actions unchanged |
+| Aug 9 | Member list row layout | Member rows match sales list structure: avatar, name tooltip, phone + branch activity in the subtitle row, pending sync trailing |
+| Aug 8 | Member card disable | Member cards use Disable (not Deactivate); Report Lost removed; disable confirm explains check-in impact |
+| Aug 8 | Membership exclude-from-sales permission | `memberships.excludeFromSales` gates no-sale membership assign/renew/create; available for new purchases (not renewals only) |
+| Aug 8 | Update-created admin API | Superuser-only `POST /api/ebe/update-created` backdates `created` on members/sales; see [docs/update_created_endpoint.md](update_created_endpoint.md) |
+| Aug 7 | Product stock status pills | Products list filters by Out of Stock / Low Stock / Not Tracked under search; trailing icons show status tooltips |
+| Aug 7 | Cashier responsive redesign | Shared CashierBody for web/mobile; denser product tiles with Out/Low chips; mobile sticky cart bar + bottom sheet |
+| Aug 7 | Member list row redesign | Members/picker rows use avatar + name/phone on the left and dense branch-activity chips on the right; empty activity uses a muted None chip |
+| Aug 7 | Branch pill color presets | Branches can pick a pill color (teal/blue/indigo/purple/pink/orange/green/cyan); used on BranchCodePill and membership/member branch chips |
+| Aug 7 | Branch detail + required fields | Branch detail shows all edit fields (incl. code); create/edit only requires Name and Code, with helper text for the pill code |
+| Aug 11 | Sales KPI Products split | Today's Sales dialog and Sales report KPIs/PDF show Walk-ins, Memberships, and Products line revenue (add-ons stay in pie chart only) |
+| Aug 11 | Sales report KPI hierarchy | Sales report features Memberships / Walk-ins / Products as hero cards; cash collected and unpaid metrics sit in a compact secondary row |
+| Aug 12 | Sales KPI tap → transactions | Tap Memberships / Walk-ins / Products on Sales report to open a filtered transactions dialog; memberships highlight member name first |
+| Aug 12 | Sales report KPI sale counts | Hero Memberships / Walk-ins / Products cards show distinct sale counts; PDF KPIs include count beside amount |
+| Aug 7 | Sale list row redesign | Sales/dashboard rows use a three-zone layout (title+short subtitle, aligned branch pill, fixed amount + status) for better mobile readability |
+| Aug 7 | Void stock adjustment | Product Adjustments tab can void manual adjustments (reverse qty + audit row); sale-linked rows stay sale-only; requires `inventory.adjust` |
+| Aug 7 | Inventory alerts layout | Dashboard inventory alerts are side-by-side on tablet+ and single-column on mobile |
+| Aug 7 | Inventory alerts split | Dashboard inventory alerts separate **Out of Stock** (qty ≤ 0) from **Low Stock** (qty below threshold) |
+| Aug 7 | All-branches KPI pills | When viewing All branches, KPI breakdown dialogs and recent transactions show branch code pills (e.g. BCD); cards stay aggregate-only |
+| Aug 7 | Branch codes for pills | Branches have a unique `code` (max 5, e.g. BCD/TAL) used on membership/member branch pills; full name stays on tooltip/admin |
+| Aug 7 | Cross-branch membership purchase | Purchase/renew/new-member plan picker has **Show all memberships**; sale stays on the selling branch while check-in follows the plan's `validBranches` |
+| Aug 7 | Out-of-stock continue warning | Cashier warns when adding an out-of-stock product; Continue still adds it, with optional Don't warn again until tomorrow |
+| Aug 7 | Edit product quantity permission | New `products.editQuantity`; Edit Product quantity is read-only without it (admins included via `system.admin`). Prefer Stock Adjustment otherwise. |
+| Aug 7 | POS sale stock adjustments | Checkout writes `productAdjustments` linked to the sale UUID; void restores qty and writes a reverse adjustment on the same sale |
+| Aug 6 | POS non-lot stock decrement | Cashier checkout now decreases `products.quantity` for `trackStock` products without lots; void restores the same. Lot-tracked path unchanged. |
+| Aug 6 | Sales status filters | Sales search fields dialog toggles Paid / Voided / Awaiting Payment; list refreshes with PocketBase status filter |
+| Aug 6 | Sale receipt reprint | Sale detail Print Receipt opens the receipt dialog (thermal + PDF); reprint skips auto-print and includes line items |
 | Aug 5 | Profile change password | Profile page can change own password with current + new + confirm (PocketBase `oldPassword`) |
 | Aug 4 | Membership plan type labels | Plan form toggle and detail plan type use **Recurring \| Walk-in** (replacing Monthly / Standard); Walk-in still simplifies the form (1-day duration, no description / all-branches) |
 | Aug 3 | Membership status colors | Expired/voided memberships and voided sales use red; almost expiring (≤7d) orange; active green; cancelled blueGrey |

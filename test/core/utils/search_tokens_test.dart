@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/utils/search_tokens.dart';
+import 'package:hzn_gyms/src/core/utils/search_tokens.dart';
 
 void main() {
   group('splitSearchTokens', () {

@@ -1,5 +1,5 @@
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership_status_colors.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership_status_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

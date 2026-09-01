@@ -18,6 +18,8 @@ import 'kpi_card.dart';
 /// - New members registered today
 ///
 /// Tapping a card opens a breakdown dialog with aggregates and the item list.
+/// When viewing All branches, branch code pills appear inside those dialogs
+/// (and on recent transactions), not on the cards themselves.
 class KpiSummarySection extends ConsumerWidget {
   const KpiSummarySection({super.key});
 

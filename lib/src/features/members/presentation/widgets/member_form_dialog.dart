@@ -9,7 +9,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../../../../core/constants/constants.dart';
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/permissions/current_user_permissions.dart';
 import '../../../../core/utils/photo_capture_support.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -33,16 +35,24 @@ import '../../../memberships/domain/membership_add_on.dart';
 import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
 import '../../../member_cards/presentation/widgets/member_card_entry_form.dart';
 import '../../../memberships/presentation/widgets/membership_purchase_content.dart';
+import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../data/local/member_local_data_source.dart';
+import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
+import '../../domain/member_duplicate_match.dart';
 import '../controllers/members_controller.dart';
 import '../controllers/member_provider.dart';
 import '../controllers/paginated_members_controller.dart';
 
 /// Result from the member form dialog.
 class MemberFormResult {
-  const MemberFormResult({this.sale, this.totalPrice});
+  const MemberFormResult({
+    this.sale,
+    this.totalPrice,
+    this.renewExistingMember,
+  });
 
   /// The sale created during membership purchase (null if no membership
   /// or sales were excluded).
@@ -50,23 +60,70 @@ class MemberFormResult {
 
   /// Total price of the membership + add-ons.
   final num? totalPrice;
+
+  /// When set, the create wizard selected an existing member match and should
+  /// continue into renew for that member (form was pre-filled from them).
+  final Member? renewExistingMember;
 }
 
 /// Whether the new-member wizard should create a sale for the selected plan.
 ///
 /// Default is to create a sale (and open record payment). Checking
 /// "Exclude from sales" skips the sale while still creating the membership.
+/// Requires [canExcludeFromSales] so the opt-out only applies with permission.
 bool shouldCreateNewMemberSale({
   required bool hasSelectedMembership,
   required bool excludeFromSales,
+  required bool canExcludeFromSales,
 }) =>
-    hasSelectedMembership && !excludeFromSales;
+    hasSelectedMembership && !(excludeFromSales && canExcludeFromSales);
 
-/// Records payment after the new-member wizard when a membership sale was created.
+/// Choice from the existing-member match gate shown after Details → Next.
+enum ExistingMemberMatchGateAction {
+  /// Stay on the details step (dialog dismissed).
+  stay,
+
+  /// No match / user confirms this is a new person — continue the wizard.
+  continueAsNew,
+
+  /// User picked an existing member — renew with their profile.
+  selectExisting,
+}
+
+/// Result of [showExistingMemberMatchGate].
+class ExistingMemberMatchGateResult {
+  const ExistingMemberMatchGateResult._(this.action, [this.member]);
+
+  const ExistingMemberMatchGateResult.stay()
+      : this._(ExistingMemberMatchGateAction.stay);
+
+  const ExistingMemberMatchGateResult.continueAsNew()
+      : this._(ExistingMemberMatchGateAction.continueAsNew);
+
+  const ExistingMemberMatchGateResult.selectExisting(Member member)
+      : this._(ExistingMemberMatchGateAction.selectExisting, member);
+
+  final ExistingMemberMatchGateAction action;
+  final Member? member;
+}
+
+/// Handles post-create wizard results: renew an existing match, or record payment.
 Future<void> handleMemberFormPaymentResult(
   BuildContext context,
   MemberFormResult? result,
 ) async {
+  final renewMember = result?.renewExistingMember;
+  if (renewMember != null) {
+    if (!context.mounted) return;
+    await purchaseMembershipAndRecordPayment(
+      context,
+      memberId: renewMember.id,
+      memberName: renewMember.name,
+      isRenewal: true,
+    );
+    return;
+  }
+
   if (result?.sale != null &&
       result?.totalPrice != null &&
       context.mounted) {
@@ -77,6 +134,14 @@ Future<void> handleMemberFormPaymentResult(
     );
   }
 }
+
+/// Name is always required on create/edit member forms.
+FormFieldValidator<String> memberNameValidator() =>
+    FormBuilderValidators.required();
+
+/// Mobile number is required on create/edit member forms.
+FormFieldValidator<String> memberMobileNumberValidator() =>
+    FormBuilderValidators.required();
 
 /// Shows a dialog form for creating or editing a member.
 ///
@@ -281,6 +346,10 @@ class _MemberCreateWizard extends HookConsumerWidget {
     final selectedAddOns = useState<Set<MembershipAddOn>>({});
     // Default: create a sale + open record payment. Opt out via Review checkbox.
     final excludeFromSales = useState(false);
+    final canExcludeFromSales =
+        ref.watch(currentUserPermissionsProvider).value
+            ?.canExcludeMembershipFromSales ??
+        false;
     // One key for this wizard session so Save retries reuse sale/membership rows.
     final membershipIdempotencyKey = useMemoized(generateIdempotencyKey);
 
@@ -373,6 +442,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
         final createSale = shouldCreateNewMemberSale(
           hasSelectedMembership: true,
           excludeFromSales: excludeFromSales.value,
+          canExcludeFromSales: canExcludeFromSales,
         );
 
         // 2a. Create a Sale record unless excluded from sales
@@ -585,6 +655,14 @@ class _MemberCreateWizard extends HookConsumerWidget {
                             formKey: formKey,
                             initialName: initialName,
                             onNext: () => currentStep.value = 1,
+                            onSelectExisting: (member) {
+                              formKey.currentState?.patchValue(
+                                memberFormValuesFromMember(member),
+                              );
+                              Navigator.of(context).pop(
+                                MemberFormResult(renewExistingMember: member),
+                              );
+                            },
                           ),
 
                           // Step 1: Photo
@@ -626,6 +704,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
                             selectedMembership: selectedMembership,
                             selectedAddOns: selectedAddOns,
                             excludeFromSales: excludeFromSales,
+                            canExcludeFromSales: canExcludeFromSales,
                             isSaving: isSaving.value,
                             onSave: handleFinish,
                             onBack: () => currentStep.value = 3,
@@ -648,19 +727,84 @@ class _MemberCreateWizard extends HookConsumerWidget {
 // Step 0: Member Details
 // =============================================================================
 
-class _MemberDetailsStep extends StatelessWidget {
+class _MemberDetailsStep extends HookConsumerWidget {
   const _MemberDetailsStep({
     required this.formKey,
     required this.onNext,
+    required this.onSelectExisting,
     this.initialName,
   });
 
   final GlobalKey<FormBuilderState> formKey;
   final VoidCallback onNext;
+  final ValueChanged<Member> onSelectExisting;
   final String? initialName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isChecking = useState(false);
+
+    Future<List<Member>> searchMembers(String query) async {
+      const searchFields = ['name', 'mobileNumber'];
+      final local = ref.read(memberLocalDataSourceProvider);
+      final cached = await local.searchQuick(
+        query,
+        fields: searchFields,
+        limit: Pagination.memberPickerSearchLimit,
+      );
+      final remote = await ref.read(memberRepositoryProvider).searchQuick(
+            query,
+            fields: searchFields,
+            limit: Pagination.memberPickerSearchLimit,
+          );
+      return remote.fold((_) => cached, (members) => members);
+    }
+
+    Future<void> handleNext() async {
+      if (!formKey.currentState!.saveAndValidate()) return;
+
+      final values = formKey.currentState!.value;
+      final name = (values['name'] as String?)?.trim() ?? '';
+      final phone = (values['mobileNumber'] as String?)?.trim() ?? '';
+
+      isChecking.value = true;
+      List<Member> matches;
+      try {
+        matches = await lookupLikelyDuplicateMembers(
+          name: name,
+          phone: phone,
+          search: searchMembers,
+        );
+      } finally {
+        isChecking.value = false;
+      }
+
+      if (!context.mounted) return;
+
+      // Empty on no match or lookup timeout — continue as new.
+      if (matches.isEmpty) {
+        onNext();
+        return;
+      }
+
+      final gate = await showExistingMemberMatchGate(
+        context,
+        matches: matches,
+      );
+      if (!context.mounted) return;
+
+      switch (gate.action) {
+        case ExistingMemberMatchGateAction.stay:
+          return;
+        case ExistingMemberMatchGateAction.continueAsNew:
+          onNext();
+          return;
+        case ExistingMemberMatchGateAction.selectExisting:
+          final member = gate.member;
+          if (member != null) onSelectExisting(member);
+      }
+    }
+
     return Column(
       children: [
         Expanded(
@@ -679,24 +823,92 @@ class _MemberDetailsStep extends StatelessWidget {
             ),
           ),
         ),
-        // Next button
+        if (isChecking.value) const LinearProgressIndicator(minHeight: 2),
         Padding(
           padding: const EdgeInsets.all(16),
           child: SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () {
-                if (formKey.currentState!.saveAndValidate()) {
-                  onNext();
-                }
-              },
-              child: const Text('Next'),
+              onPressed: isChecking.value ? null : handleNext,
+              child: isChecking.value
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Next'),
             ),
           ),
         ),
       ],
     );
   }
+}
+
+/// Asks the user to pick a likely existing member or continue as new.
+Future<ExistingMemberMatchGateResult> showExistingMemberMatchGate(
+  BuildContext context, {
+  required List<Member> matches,
+}) async {
+  final result = await showDialog<ExistingMemberMatchGateResult>(
+    context: context,
+    builder: (context) {
+      final theme = Theme.of(context);
+      return AlertDialog(
+        title: const Text('Existing member found'),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Name and phone look similar to an existing member. '
+                'Select them to renew with their profile, or continue as new.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              ...matches.map((member) {
+                final phone = member.mobileNumber?.trim();
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.secondaryContainer,
+                    child: Text(
+                      member.name.isNotEmpty
+                          ? member.name[0].toUpperCase()
+                          : '?',
+                    ),
+                  ),
+                  title: Text(member.name),
+                  subtitle: phone == null || phone.isEmpty ? null : Text(phone),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).pop(
+                    ExistingMemberMatchGateResult.selectExisting(member),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(
+              const ExistingMemberMatchGateResult.stay(),
+            ),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(
+              const ExistingMemberMatchGateResult.continueAsNew(),
+            ),
+            child: const Text('Continue as new'),
+          ),
+        ],
+      );
+    },
+  );
+  return result ?? const ExistingMemberMatchGateResult.stay();
 }
 
 // =============================================================================
@@ -1005,6 +1217,7 @@ class _ReviewStep extends HookWidget {
     required this.selectedMembership,
     required this.selectedAddOns,
     required this.excludeFromSales,
+    required this.canExcludeFromSales,
     required this.isSaving,
     required this.onSave,
     required this.onBack,
@@ -1017,6 +1230,7 @@ class _ReviewStep extends HookWidget {
   final ValueNotifier<Membership?> selectedMembership;
   final ValueNotifier<Set<MembershipAddOn>> selectedAddOns;
   final ValueNotifier<bool> excludeFromSales;
+  final bool canExcludeFromSales;
   final bool isSaving;
   final VoidCallback onSave;
   final VoidCallback onBack;
@@ -1237,24 +1451,25 @@ class _ReviewStep extends HookWidget {
                     ),
                   ],
                   const SizedBox(height: 8),
-                  CheckboxListTile(
-                    value: excludeFromSales.value,
-                    onChanged: isSaving
-                        ? null
-                        : (checked) {
-                            excludeFromSales.value = checked ?? false;
-                          },
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    title: const Text('Exclude from sales'),
-                    subtitle: Text(
-                      'Create membership without a sale or payment',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                  if (canExcludeFromSales)
+                    CheckboxListTile(
+                      value: excludeFromSales.value,
+                      onChanged: isSaving
+                          ? null
+                          : (checked) {
+                              excludeFromSales.value = checked ?? false;
+                            },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('Exclude from sales'),
+                      subtitle: Text(
+                        'Create membership without a sale or payment',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
                 ] else
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1301,7 +1516,9 @@ class _ReviewStep extends HookWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
-                        plan != null && excludeFromSales.value
+                        plan != null &&
+                                excludeFromSales.value &&
+                                canExcludeFromSales
                             ? 'Save (no sale)'
                             : 'Save',
                       ),
@@ -1363,7 +1580,7 @@ class _MemberFormFields extends StatelessWidget {
           name: 'name',
           initialValue: member?.name ?? initialName,
           decoration: const InputDecoration(labelText: 'Name *'),
-          validator: FormBuilderValidators.required(),
+          validator: memberNameValidator(),
           textInputAction: TextInputAction.next,
           textCapitalization: TextCapitalization.words,
         ),
@@ -1371,7 +1588,8 @@ class _MemberFormFields extends StatelessWidget {
         FormBuilderTextField(
           name: 'mobileNumber',
           initialValue: member?.mobileNumber,
-          decoration: const InputDecoration(labelText: 'Mobile Number'),
+          decoration: const InputDecoration(labelText: 'Mobile Number *'),
+          validator: memberMobileNumberValidator(),
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
         ),

@@ -6,8 +6,10 @@ import '../../../core/foundation/failure.dart';
 import '../../../core/utils/receipt_utils.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 import '../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../products/data/repositories/product_adjustment_repository.dart';
 import '../../products/data/repositories/product_lot_repository.dart';
 import '../../products/data/repositories/product_repository.dart';
+import '../../products/domain/product_adjustment_type.dart';
 import '../data/repositories/payment_repository.dart';
 import '../data/repositories/sales_repository.dart';
 import '../domain/payment_method.dart';
@@ -84,6 +86,7 @@ class CheckoutController extends _$CheckoutController {
         quantity: cartItem.quantity,
         unitPrice: cartItem.effectivePrice,
         subtotal: cartItem.total,
+        product: product,
         productLotId: cartItem.productLotId,
         lotNumber: cartItem.lotNumber,
         itemType: 'product',
@@ -123,6 +126,7 @@ class CheckoutController extends _$CheckoutController {
     final cartNotifier = ref.read(cartControllerProvider.notifier);
     final lotRepo = ref.read(productLotRepositoryProvider);
     final productRepo = ref.read(productRepositoryProvider);
+    final adjustmentRepo = ref.read(productAdjustmentRepositoryProvider);
 
     // Save sale to backend
     final result = await salesRepo.createSale(
@@ -156,14 +160,57 @@ class CheckoutController extends _$CheckoutController {
           );
         }
 
-        // Track products that need quantity sync
+        // Track products that need quantity sync from lots
         final productIdsToSync = <String>{};
+        final saleId = createdSale.id;
+        final adjustmentReason = 'POS sale $receiptNumber';
 
-        // Decrement lot quantities for lot-tracked items
+        // Decrement stock for product line items and record adjustments
         for (final item in saleItems) {
-          if (item.productLotId != null && item.productLotId!.isNotEmpty) {
-            await lotRepo.decrementQuantity(item.productLotId!, item.quantity);
+          if (item.productId.isEmpty) continue;
+
+          if (item.hasLot) {
+            final lotChange = await lotRepo.decrementQuantity(
+              item.productLotId!,
+              item.quantity,
+            );
+            await lotChange.fold(
+              (_) async {},
+              (change) async {
+                await adjustmentRepo.create(
+                  type: ProductAdjustmentType.productStock,
+                  oldValue: change.oldValue,
+                  newValue: change.newValue,
+                  reason: adjustmentReason,
+                  productId: item.productId,
+                  productLotId: item.productLotId,
+                  saleId: saleId,
+                );
+              },
+            );
             productIdsToSync.add(item.productId);
+            continue;
+          }
+
+          // Non-lot stock-tracked products: decrement product.quantity directly
+          if (item.product?.trackStock == true) {
+            final productChange = await productRepo.decrementQuantity(
+              item.productId,
+              item.quantity,
+            );
+            await productChange.fold(
+              (_) async {},
+              (change) async {
+                await adjustmentRepo.create(
+                  type: ProductAdjustmentType.product,
+                  oldValue: change.oldValue,
+                  newValue: change.newValue,
+                  reason: adjustmentReason,
+                  productId: item.productId,
+                  saleId: saleId,
+                );
+              },
+            );
           }
         }
 

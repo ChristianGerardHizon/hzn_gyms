@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:ebe_gym/src/core/utils/idempotency.dart';
+import 'package:hzn_gyms/src/core/utils/idempotency.dart';
 
 void main() {
   group('generateIdempotencyKey', () {

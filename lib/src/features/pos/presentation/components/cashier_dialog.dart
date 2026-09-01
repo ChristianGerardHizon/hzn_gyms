@@ -4,13 +4,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
-import '../../domain/pos_group.dart';
 import '../cart_controller.dart';
 import '../controllers/pos_groups_controller.dart';
-import 'cart_view.dart';
-import 'cashier_search_dropdown.dart';
-import 'grouped_cashier_view.dart';
-import 'product_grid.dart';
+import 'cashier_body.dart';
 
 /// Opens a walk-in cashier as a dialog without leaving the current route.
 ///
@@ -104,122 +100,18 @@ class CashierDialog extends ConsumerWidget {
               ),
               const Divider(height: 1),
               Expanded(
-                child: isMobile
-                    ? _MobileCashierBody(
-                        hasGroups: hasGroups,
-                        groups: groups,
-                      )
-                    : _DesktopCashierBody(
-                        hasGroups: hasGroups,
-                        groups: groups,
-                      ),
+                child: CashierBody(
+                  hasGroups: hasGroups,
+                  groups: groups,
+                  isMobile: isMobile,
+                  compactSearch: true,
+                  showCheckIn: false,
+                ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class _DesktopCashierBody extends StatelessWidget {
-  const _DesktopCashierBody({
-    required this.hasGroups,
-    required this.groups,
-  });
-
-  final bool hasGroups;
-  final List<PosGroup> groups;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Expanded(
-          flex: 6,
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: CashierSearchDropdown(),
-              ),
-              const SizedBox(height: 12),
-              if (hasGroups)
-                Expanded(child: GroupedCashierView(groups: groups))
-              else ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Products',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                  ),
-                ),
-                const Expanded(child: ProductGrid()),
-              ],
-            ],
-          ),
-        ),
-        const VerticalDivider(width: 1),
-        Expanded(
-          flex: 4,
-          child: ColoredBox(
-            color: theme.colorScheme.surfaceContainerLowest,
-            child: const CartView(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MobileCashierBody extends StatelessWidget {
-  const _MobileCashierBody({
-    required this.hasGroups,
-    required this.groups,
-  });
-
-  final bool hasGroups;
-  final List<PosGroup> groups;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(8),
-          child: CashierSearchDropdown(isDense: true),
-        ),
-        Expanded(
-          flex: 3,
-          child: hasGroups
-              ? GroupedCashierView(groups: groups)
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        'Products',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                    ),
-                    const Expanded(child: ProductGrid()),
-                  ],
-                ),
-        ),
-        const Divider(height: 1),
-        const Expanded(
-          flex: 2,
-          child: CartView(),
-        ),
-      ],
     );
   }
 }

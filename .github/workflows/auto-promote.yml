@@ -1,5 +1,9 @@
 name: Auto Promote to Main
 
+# Match deploy.yml — HZN Gyms is web-only.
+env:
+  DEPLOY_WEB_ONLY: "true"
+
 on:
   pull_request:
     types: [closed]
@@ -76,10 +80,10 @@ jobs:
 
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
           WEB_ONLY_NOTE=""
-          TITLE="Deploy v${VERSION} to Production"
-          if echo "$LABELS" | grep -q '"web-only"'; then
+          TITLE="v${VERSION}"
+          if echo "$LABELS" | grep -q '"web-only"' || [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
             WEB_ONLY_NOTE=" (**web only** — Android APK skipped)"
-            TITLE="Deploy v${VERSION} to Production (web-only)"
+            TITLE="v${VERSION} (web-only)"
           fi
 
           PR_URL=$(gh pr create \
@@ -118,7 +122,7 @@ jobs:
             ADD_ARGS+=(--add-label "minimum version")
           fi
 
-          if echo "$LABELS" | grep -q '"web-only"'; then
+          if echo "$LABELS" | grep -q '"web-only"' || [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
             ADD_ARGS+=(--add-label "web-only")
           fi
 

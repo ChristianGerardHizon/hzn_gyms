@@ -8,6 +8,7 @@ import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/form_feedback.dart';
+import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../../members/data/repositories/member_repository.dart';
 import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
@@ -16,9 +17,12 @@ import '../../../memberships/domain/membership_status_colors.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/card_check_in_result.dart';
+import '../../domain/check_in_block_reason.dart';
 import '../../domain/check_in_chime.dart';
-import '../../domain/check_in_membership_eligibility.dart';
+import '../../domain/check_in_cooldown.dart';
 import '../../domain/check_in_membership_highlight.dart';
+import '../../domain/manual_check_in_result.dart';
+import '../../domain/membership_expiry_label.dart';
 import '../controllers/check_in_controller.dart';
 import '../utils/check_in_sound_player.dart';
 import '../widgets/check_in_error_dialog.dart';
@@ -27,6 +31,10 @@ import '../widgets/check_in_success_dialog.dart';
 import '../widgets/last_check_in_panel.dart';
 import '../widgets/recent_check_ins_list.dart';
 import '../widgets/rfid_listener_status_icon.dart';
+
+const _checkInNeedsBranchMessage =
+    'Check-in cannot be done while viewing all branches. '
+    'Select a branch first.';
 
 /// Main check-in page.
 ///
@@ -49,6 +57,7 @@ class CheckInPage extends HookConsumerWidget {
     final searchResults = useState<List<Member>>([]);
     final selectedMember = useState<Member?>(null);
     final activeMembership = useState<MemberMembership?>(null);
+    final checkInBlockReason = useState<CheckInBlockReason?>(null);
     final isSearching = useState(false);
     final isCheckingIn = useState(false);
     final isCardCheckingIn = useState(false);
@@ -79,24 +88,28 @@ class CheckInPage extends HookConsumerWidget {
       searchResults.value = [];
       inputController.text = member.name;
 
-      // Fetch active membership valid at the current branch and paid if linked
       final branchId = ref.read(effectiveBranchIdForWriteProvider);
+      if (branchId == null) {
+        activeMembership.value = null;
+        checkInBlockReason.value = null;
+        return;
+      }
+
       final mmRepo = ref.read(memberMembershipRepositoryProvider);
-      final result = await mmRepo.fetchActive(
-        member.id,
-        validAtBranchId: branchId,
-      );
+      final result = await mmRepo.fetchActive(member.id);
       await result.fold(
         (_) async {
           activeMembership.value = null;
+          checkInBlockReason.value = CheckInBlockReason.noActiveMembership;
         },
         (memberships) async {
-          final eligible = await filterCheckInEligibleMemberships(
-            memberships: memberships,
+          final resolution = await resolveCheckInMembership(
+            activeMemberships: memberships,
+            branchId: branchId,
             salesRepo: ref.read(salesRepositoryProvider),
           );
-          activeMembership.value =
-              eligible.isNotEmpty ? eligible.first : null;
+          activeMembership.value = resolution.membership;
+          checkInBlockReason.value = resolution.reason;
         },
       );
     }
@@ -104,6 +117,7 @@ class CheckInPage extends HookConsumerWidget {
     void clearSelection() {
       selectedMember.value = null;
       activeMembership.value = null;
+      checkInBlockReason.value = null;
       inputController.clear();
       searchResults.value = [];
       // Keep field unfocused so USB RFID wedge keeps auto-listening.
@@ -114,24 +128,33 @@ class CheckInPage extends HookConsumerWidget {
       final member = selectedMember.value;
       if (member == null) return;
 
-      // Block check-in if member has no membership valid at this branch
+      final hasBranch = await ensureWritableBranch(
+        context,
+        ref,
+        message: _checkInNeedsBranchMessage,
+      );
+      if (!hasBranch || !context.mounted) return;
+
+      // Re-resolve membership after switching off "All branches".
+      if (activeMembership.value == null || checkInBlockReason.value != null) {
+        await selectMember(member);
+        if (!context.mounted) return;
+      }
+
       if (activeMembership.value == null) {
-        if (context.mounted) {
-          CheckInSoundPlayer.play(CheckInChime.failure);
-          showErrorSnackBar(
-            context,
-            message:
-                '${member.name} has no membership valid at this branch. '
-                'Only members with an active membership for this branch '
-                'can check in.',
-          );
-        }
+        final reason =
+            checkInBlockReason.value ?? CheckInBlockReason.noActiveMembership;
+        await showCheckInErrorDialog(
+          context,
+          title: checkInBlockTitle(reason),
+          message: checkInBlockMessage(reason, member.name),
+        );
         return;
       }
 
       isCheckingIn.value = true;
 
-      final checkIn = await ref
+      final result = await ref
           .read(checkInControllerProvider.notifier)
           .manualCheckIn(
             memberId: member.id,
@@ -140,28 +163,48 @@ class CheckInPage extends HookConsumerWidget {
 
       isCheckingIn.value = false;
 
-      if (checkIn != null && context.mounted) {
-        // Capture before resetting
-        final membership = activeMembership.value;
-        final hadActiveMembership = membership != null;
-        final checkedInMemberName = member.name;
+      if (!context.mounted) return;
 
-        clearSelection();
+      switch (result) {
+        case ManualCheckInSuccess():
+          // Capture before resetting
+          final membership = activeMembership.value;
+          final hadActiveMembership = membership != null;
+          final checkedInMemberName = member.name;
+          final checkedInMemberPhoto = member.photo;
 
-        await showCheckInSuccessDialog(
-          context,
-          memberName: checkedInMemberName,
-          hasActiveMembership: hadActiveMembership,
-          membershipName: membership?.membershipName,
-          membershipEndDate: membership?.endDate,
-          membershipDaysRemaining: membership?.daysRemaining,
-        );
-        if (context.mounted) {
-          readyForNextScan();
-        }
-      } else if (context.mounted) {
-        CheckInSoundPlayer.play(CheckInChime.failure);
-        showErrorSnackBar(context, message: 'Failed to check in');
+          clearSelection();
+
+          await showCheckInSuccessDialog(
+            context,
+            memberName: checkedInMemberName,
+            hasActiveMembership: hadActiveMembership,
+            membershipName: membership?.membershipName,
+            membershipEndDate: membership?.endDate,
+            membershipDaysRemaining: membership?.daysRemaining,
+            memberPhotoUrl: checkedInMemberPhoto,
+          );
+          if (context.mounted) {
+            readyForNextScan();
+          }
+        case ManualCheckInCooldown(:final remaining):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Too Soon',
+            message: checkInCooldownMessage(remaining),
+          );
+        case ManualCheckInNoBranch():
+          await showCheckInErrorDialog(
+            context,
+            title: 'Branch Required',
+            message: _checkInNeedsBranchMessage,
+          );
+        case ManualCheckInFailed():
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Failed',
+            message: 'Could not record check-in. Try again.',
+          );
       }
     }
 
@@ -174,6 +217,16 @@ class CheckInPage extends HookConsumerWidget {
       // Member already selected from search — check them in.
       if (selectedMember.value != null) {
         await handleCheckIn();
+        return;
+      }
+
+      final hasBranch = await ensureWritableBranch(
+        context,
+        ref,
+        message: _checkInNeedsBranchMessage,
+      );
+      if (!hasBranch || !context.mounted) {
+        readyForNextScan();
         return;
       }
 
@@ -193,6 +246,7 @@ class CheckInPage extends HookConsumerWidget {
           :final membershipName,
           :final membershipEndDate,
           :final membershipDaysRemaining,
+          :final memberPhoto,
         ):
           clearSelection();
           await showCheckInSuccessDialog(
@@ -202,6 +256,7 @@ class CheckInPage extends HookConsumerWidget {
             membershipName: membershipName,
             membershipEndDate: membershipEndDate,
             membershipDaysRemaining: membershipDaysRemaining,
+            memberPhotoUrl: memberPhoto,
           );
           if (context.mounted) {
             readyForNextScan();
@@ -210,9 +265,23 @@ class CheckInPage extends HookConsumerWidget {
         case CardCheckInNoActiveMembership(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'No Active Membership',
-            message:
-                '$memberName has no active membership and cannot check in.',
+            title: checkInBlockTitle(CheckInBlockReason.noActiveMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.noActiveMembership,
+              memberName,
+            ),
+          );
+          inputController.clear();
+          readyForNextScan();
+          return;
+        case CardCheckInUnpaidMembership(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: checkInBlockTitle(CheckInBlockReason.unpaidMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.unpaidMembership,
+              memberName,
+            ),
           );
           inputController.clear();
           readyForNextScan();
@@ -220,27 +289,42 @@ class CheckInPage extends HookConsumerWidget {
         case CardCheckInMembershipNotValidAtBranch(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'Not Valid at This Branch',
-            message:
-                '$memberName has an active membership, but it is not valid '
-                'at this branch.',
+            title: checkInBlockTitle(CheckInBlockReason.notValidAtBranch),
+            message: checkInBlockMessage(
+              CheckInBlockReason.notValidAtBranch,
+              memberName,
+            ),
           );
           inputController.clear();
           readyForNextScan();
           return;
         case CardCheckInNoBranch():
+          final switched = await ensureWritableBranch(
+            context,
+            ref,
+            message: _checkInNeedsBranchMessage,
+          );
+          if (switched && context.mounted) {
+            await handleSubmit(trimmed);
+          } else {
+            readyForNextScan();
+          }
+          return;
+        case CardCheckInFailed():
           await showCheckInErrorDialog(
             context,
-            title: 'Select a Branch',
-            message:
-                'Choose a specific branch before checking in. '
-                '"All branches" cannot be used for check-in.',
+            title: 'Check-In Failed',
+            message: 'Could not record check-in. Try again.',
           );
           readyForNextScan();
           return;
-        case CardCheckInFailed():
-          CheckInSoundPlayer.play(CheckInChime.failure);
-          showErrorSnackBar(context, message: 'Failed to check in');
+        case CardCheckInCooldown(:final remaining):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Too Soon',
+            message: checkInCooldownMessage(remaining),
+          );
+          inputController.clear();
           readyForNextScan();
           return;
         case CardCheckInCardNotFound():
@@ -267,6 +351,7 @@ class CheckInPage extends HookConsumerWidget {
     // Shared check-in form widgets
     Widget buildCheckInForm() {
       final isBusy = isCardCheckingIn.value || isCheckingIn.value;
+      final viewingAll = ref.watch(viewingAllBranchesProvider);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -303,6 +388,7 @@ class CheckInPage extends HookConsumerWidget {
               if (selectedMember.value != null) {
                 selectedMember.value = null;
                 activeMembership.value = null;
+                checkInBlockReason.value = null;
               }
               searchMembers(query);
             },
@@ -364,8 +450,9 @@ class CheckInPage extends HookConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Check-in button
-            if (activeMembership.value == null)
+            // Check-in button (still shown on "All branches" — press prompts
+            // for a concrete branch, then resolves membership and checks in).
+            if (!viewingAll && activeMembership.value == null)
               Card(
                 color: Colors.red.shade50,
                 child: Padding(
@@ -376,7 +463,11 @@ class CheckInPage extends HookConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'This member has no active membership and cannot check in.',
+                          checkInBlockMessage(
+                            checkInBlockReason.value ??
+                                CheckInBlockReason.noActiveMembership,
+                            selectedMember.value!.name,
+                          ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.red.shade700,
                           ),
@@ -576,11 +667,7 @@ class _SelectedMemberCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CachedAvatar(
-                  imageUrl: member.photo,
-                  radius: 24,
-                  thumbSize: 96,
-                ),
+                CachedAvatar(imageUrl: member.photo, radius: 24, thumbSize: 96),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -644,7 +731,11 @@ class _SelectedMemberCard extends StatelessWidget {
                         ),
                         if (hasActiveMembership)
                           Text(
-                            'Expires ${dateFormat.format(activeMembership!.endDate)} (${activeMembership!.daysRemaining} days left)',
+                            formatMembershipExpiryLabel(
+                              endDate: activeMembership!.endDate,
+                              daysRemaining: activeMembership!.daysRemaining,
+                              dateFormat: dateFormat,
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: membershipLifecycleColor(
                                 daysRemaining: activeMembership!.daysRemaining,

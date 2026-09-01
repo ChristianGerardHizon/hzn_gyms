@@ -57,6 +57,7 @@ String _$todaySalesHash() => r'463641acfebbfe000e0aaa7a232ad38f4f0c2293';
 /// Today's sales summary (count and total amount).
 /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
 /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
+/// Membership / walk-in / product totals come from [PocketBaseCollections.vwRevenueByItemType].
 /// Filtered by the current branch.
 
 @ProviderFor(todaySalesSummary)
@@ -65,6 +66,7 @@ final todaySalesSummaryProvider = TodaySalesSummaryProvider._();
 /// Today's sales summary (count and total amount).
 /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
 /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
+/// Membership / walk-in / product totals come from [PocketBaseCollections.vwRevenueByItemType].
 /// Filtered by the current branch.
 
 final class TodaySalesSummaryProvider
@@ -80,6 +82,7 @@ final class TodaySalesSummaryProvider
   /// Today's sales summary (count and total amount).
   /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
   /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
+  /// Membership / walk-in / product totals come from [PocketBaseCollections.vwRevenueByItemType].
   /// Filtered by the current branch.
   TodaySalesSummaryProvider._()
     : super(
@@ -107,4 +110,4 @@ final class TodaySalesSummaryProvider
   }
 }
 
-String _$todaySalesSummaryHash() => r'3e2af7c0b88e85603879f867702fab3085ca34cd';
+String _$todaySalesSummaryHash() => r'110fa6688a26eb33018f620dbdaf84f425325ad0';

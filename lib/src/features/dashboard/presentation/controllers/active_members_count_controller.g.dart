@@ -11,7 +11,7 @@ part of 'active_members_count_controller.dart';
 /// Count of members with currently active memberships.
 ///
 /// Queries memberMemberships where status = 'active'
-/// and current date is between startDate and endDate.
+/// and today is between startDate and the inclusive end calendar day.
 
 @ProviderFor(activeMembersCount)
 final activeMembersCountProvider = ActiveMembersCountProvider._();
@@ -19,7 +19,7 @@ final activeMembersCountProvider = ActiveMembersCountProvider._();
 /// Count of members with currently active memberships.
 ///
 /// Queries memberMemberships where status = 'active'
-/// and current date is between startDate and endDate.
+/// and today is between startDate and the inclusive end calendar day.
 
 final class ActiveMembersCountProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
@@ -27,7 +27,7 @@ final class ActiveMembersCountProvider
   /// Count of members with currently active memberships.
   ///
   /// Queries memberMemberships where status = 'active'
-  /// and current date is between startDate and endDate.
+  /// and today is between startDate and the inclusive end calendar day.
   ActiveMembersCountProvider._()
     : super(
         from: null,

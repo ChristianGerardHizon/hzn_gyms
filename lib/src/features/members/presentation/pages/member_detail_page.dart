@@ -13,10 +13,6 @@ import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../data/repositories/member_repository.dart';
-import '../../../memberships/domain/member_membership.dart';
-import '../../../memberships/domain/membership_status_colors.dart';
-import '../../../memberships/presentation/controllers/member_memberships_controller.dart';
-import '../../../memberships/presentation/widgets/member_membership_detail_dialog.dart';
 import '../../../memberships/presentation/widgets/purchase_membership_dialog.dart';
 import '../../../check_in/presentation/controllers/member_check_ins_controller.dart';
 import '../../../sales/presentation/controllers/member_sales_provider.dart';
@@ -27,6 +23,7 @@ import '../../../member_cards/domain/member_card.dart';
 import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
 import '../../../member_cards/presentation/widgets/add_card_dialog.dart';
 import '../widgets/member_form_dialog.dart';
+import '../widgets/member_memberships_section.dart';
 
 /// Member detail page showing member information and sales history.
 class MemberDetailPage extends HookConsumerWidget {
@@ -230,7 +227,6 @@ class MemberDetailPage extends HookConsumerWidget {
                           FilledButton.tonalIcon(
                             onPressed: () => purchaseMembershipAndRecordPayment(
                               context,
-                              ref,
                               memberId: memberId,
                               memberName: member.name,
                             ),
@@ -240,7 +236,7 @@ class MemberDetailPage extends HookConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _MemberMembershipsSection(
+                      MemberMembershipsSection(
                         memberId: memberId,
                         memberName: member.name,
                       ),
@@ -453,136 +449,6 @@ class MemberDetailPage extends HookConsumerWidget {
   }
 }
 
-/// Widget that displays a member's memberships.
-class _MemberMembershipsSection extends ConsumerWidget {
-  const _MemberMembershipsSection({
-    required this.memberId,
-    required this.memberName,
-  });
-
-  final String memberId;
-  final String memberName;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final membershipsAsync = ref.watch(
-      memberMembershipsControllerProvider(memberId),
-    );
-    final theme = Theme.of(context);
-    final dateFormat = DateFormat('MMM dd, yyyy');
-
-    return membershipsAsync.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(),
-        ),
-      ),
-      error: (error, _) => ErrorState.fromError(error, compact: true),
-      data: (memberships) {
-        if (memberships.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.card_membership_outlined,
-                    size: 48,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No memberships yet',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: memberships.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final mm = memberships[index];
-            final effectiveExpired =
-                mm.isExpired && mm.status == MemberMembershipStatus.active;
-            final statusColor = membershipStatusColor(
-              mm.status,
-              effectiveExpired: effectiveExpired,
-            );
-
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              onTap: () => showMemberMembershipDetailDialog(
-                context,
-                memberMembership: mm,
-                memberId: memberId,
-                memberName: memberName,
-              ),
-              leading: CircleAvatar(
-                backgroundColor: statusColor.withValues(alpha: 0.15),
-                child: Icon(
-                  Icons.card_membership,
-                  color: statusColor,
-                  size: 20,
-                ),
-              ),
-              title: Text(mm.membershipName ?? 'Membership'),
-              subtitle: Text(
-                '${dateFormat.format(mm.startDate)} - ${dateFormat.format(mm.endDate)}',
-                style: theme.textTheme.bodySmall,
-              ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      effectiveExpired ? 'Expired' : mm.status.displayName,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  if (mm.isCurrentlyActive) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${mm.daysRemaining} days left',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: membershipLifecycleColor(
-                          daysRemaining: mm.daysRemaining,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
 /// Widget that displays a member's check-in history.
 class _MemberCheckInsSection extends ConsumerWidget {
   const _MemberCheckInsSection({required this.memberId});
@@ -666,8 +532,10 @@ class _MemberCheckInsSection extends ConsumerWidget {
 }
 
 /// Widget that fetches and displays sales history for a member.
-class _MemberSalesHistory extends ConsumerWidget {
+class _MemberSalesHistory extends HookConsumerWidget {
   const _MemberSalesHistory({required this.memberId});
+
+  static const _initialLimit = 10;
 
   final String memberId;
 
@@ -676,6 +544,7 @@ class _MemberSalesHistory extends ConsumerWidget {
     final salesAsync = ref.watch(memberSalesProvider(memberId));
     final theme = Theme.of(context);
     final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
+    final showAll = useState(false);
 
     return salesAsync.when(
       loading: () => const Center(
@@ -712,72 +581,92 @@ class _MemberSalesHistory extends ConsumerWidget {
           );
         }
 
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: sales.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final sale = sales[index];
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(
-                  Icons.receipt,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 20,
-                ),
-              ),
-              title: Text('#${sale.receiptNumber}'),
-              subtitle: Text(
-                sale.created != null
-                    ? dateFormat.format(sale.created!)
-                    : 'Unknown date',
-                style: theme.textTheme.bodySmall,
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+        final hasMore = sales.length > _initialLimit;
+        final displaySales = showAll.value
+            ? sales
+            : sales.take(_initialLimit).toList();
+
+        return Column(
+          children: [
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displaySales.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final sale = displaySales[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.receipt,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text('#${sale.receiptNumber}'),
+                  subtitle: Text(
+                    sale.created != null
+                        ? dateFormat.format(sale.created!)
+                        : 'Unknown date',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        sale.totalAmount.toCurrency(),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Icon(
-                            sale.isPaid ? Icons.check_circle : Icons.pending,
-                            size: 12,
-                            color: sale.isPaid ? Colors.green : Colors.orange,
-                          ),
-                          const SizedBox(width: 4),
                           Text(
-                            sale.isPaid ? 'Paid' : 'Unpaid',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: sale.isPaid ? Colors.green : Colors.orange,
+                            sale.totalAmount.toCurrency(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                sale.isPaid
+                                    ? Icons.check_circle
+                                    : Icons.pending,
+                                size: 12,
+                                color: sale.isPaid
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                sale.isPaid ? 'Paid' : 'Unpaid',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: sale.isPaid
+                                      ? Colors.green
+                                      : Colors.orange,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.chevron_right,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ],
                   ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
+                  onTap: () => SaleDetailRoute(id: sale.id).go(context),
+                );
+              },
+            ),
+            if (hasMore)
+              TextButton(
+                onPressed: () => showAll.value = !showAll.value,
+                child: Text(showAll.value ? 'Show less' : 'Show more'),
               ),
-              onTap: () => SaleDetailRoute(id: sale.id).go(context),
-            );
-          },
+          ],
         );
       },
     );
@@ -887,22 +776,35 @@ class _MemberCardsSection extends ConsumerWidget {
                           _handleCardAction(context, ref, value, card),
                       itemBuilder: (context) => [
                         const PopupMenuItem(
-                          value: 'deactivate',
+                          value: 'disable',
                           child: ListTile(
                             leading: Icon(Icons.block),
-                            title: Text('Deactivate'),
+                            title: Text('Disable'),
                             dense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
                         ),
                         const PopupMenuItem(
-                          value: 'lost',
+                          value: 'delete',
                           child: ListTile(
-                            leading: Icon(
-                              Icons.report_problem,
-                              color: Colors.orange,
-                            ),
-                            title: Text('Report Lost'),
+                            leading: Icon(Icons.delete, color: Colors.red),
+                            title: Text('Delete'),
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    PopupMenuButton<String>(
+                      onSelected: (value) =>
+                          _handleCardAction(context, ref, value, card),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'enable',
+                          child: ListTile(
+                            leading: Icon(Icons.refresh),
+                            title: Text('Enable'),
                             dense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -938,6 +840,39 @@ class _MemberCardsSection extends ConsumerWidget {
     }
   }
 
+  Future<bool> _confirmCardAction({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required String confirmLabel,
+    bool isDestructive = false,
+  }) async {
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content, style: theme.textTheme.bodyMedium),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: isDestructive
+                ? FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.error,
+                  )
+                : null,
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
   void _handleCardAction(
     BuildContext context,
     WidgetRef ref,
@@ -949,51 +884,57 @@ class _MemberCardsSection extends ConsumerWidget {
     );
 
     switch (action) {
-      case 'deactivate':
-        final success = await controller.deactivateCard(card.id);
+      case 'disable':
+        final confirmed = await _confirmCardAction(
+          context: context,
+          title: 'Disable Card',
+          content:
+              'Disable this card?\n\n'
+              'When disabled:\n'
+              '• The card can no longer be used for check-in\n'
+              '• It stays linked to this member\n'
+              '• You can enable it again later\n'
+              '• The card record is not deleted\n\n'
+              'Use this when the card should temporarily stop working.',
+          confirmLabel: 'Disable',
+        );
+        if (!confirmed) return;
+        final success = await controller.disableCard(card.id);
         if (context.mounted) {
           if (success) {
-            showSuccessSnackBar(context, message: 'Card deactivated');
+            showSuccessSnackBar(context, message: 'Card disabled');
           } else {
-            showErrorSnackBar(context, message: 'Failed to deactivate card');
+            showErrorSnackBar(context, message: 'Failed to disable card');
           }
         }
-      case 'lost':
-        final success = await controller.reportLost(card.id);
+      case 'enable':
+        final confirmed = await _confirmCardAction(
+          context: context,
+          title: 'Enable Card',
+          content:
+              'Enable this card?\n\n'
+              'When enabled, the card can be used for check-in again.',
+          confirmLabel: 'Enable',
+        );
+        if (!confirmed) return;
+        final success = await controller.reactivateCard(card.id);
         if (context.mounted) {
           if (success) {
-            showSuccessSnackBar(context, message: 'Card reported as lost');
+            showSuccessSnackBar(context, message: 'Card enabled');
           } else {
-            showErrorSnackBar(
-              context,
-              message: 'Failed to report card as lost',
-            );
+            showErrorSnackBar(context, message: 'Failed to enable card');
           }
         }
       case 'delete':
-        final confirmed = await showDialog<bool>(
+        final confirmed = await _confirmCardAction(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Card'),
-            content: const Text(
+          title: 'Delete Card',
+          content:
               'Are you sure you want to delete this card? This cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
+          confirmLabel: 'Delete',
+          isDestructive: true,
         );
-        if (confirmed == true) {
+        if (confirmed) {
           final success = await controller.deleteCard(card.id);
           if (context.mounted) {
             if (success) {

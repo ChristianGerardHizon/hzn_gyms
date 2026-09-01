@@ -2,12 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ebe_gym/src/core/foundation/failure.dart';
-import 'package:ebe_gym/src/features/pos/data/repositories/payment_repository.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_method.dart';
-import 'package:ebe_gym/src/features/pos/domain/payment_type.dart';
-import 'package:ebe_gym/src/features/pos/presentation/payments_controller.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/pos/data/repositories/payment_repository.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment_method.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment_type.dart';
+import 'package:hzn_gyms/src/features/pos/presentation/payments_controller.dart';
 
 import '../../../helpers/fixtures.dart';
 import '../../../helpers/mocks.dart';

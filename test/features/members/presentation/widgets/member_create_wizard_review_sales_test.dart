@@ -1,27 +1,48 @@
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
-import 'package:ebe_gym/src/features/members/presentation/widgets/member_form_dialog.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/membership_add_ons_controller.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
-import 'package:ebe_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership_add_on.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
+import 'package:hzn_gyms/src/features/members/data/local/member_local_data_source.dart';
+import 'package:hzn_gyms/src/features/members/data/repositories/member_repository.dart';
+import 'package:hzn_gyms/src/features/members/domain/member.dart';
+import 'package:hzn_gyms/src/features/members/presentation/widgets/member_form_dialog.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership_add_on.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/membership_add_ons_controller.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/membership_purchase_catalog_provider.dart';
+import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../../../../helpers/fixtures.dart';
+import '../../../../helpers/mocks.dart';
+
+const _testBranch = Branch(
+  id: 'branch-1',
+  name: 'Main Branch',
+  code: 'MAIN',
+  address: '123 Gym St',
+  contactNumber: '555-0100',
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Member create wizard review sales checkbox', () {
     testWidgets(
-      'shows Exclude from sales unchecked by default when plan selected',
+      'shows Exclude from sales unchecked by default when permitted',
       (tester) async {
         await _pumpWizard(
           tester,
           plans: [buildMembership(name: 'Monthly')],
+          permissions: const CurrentUserPermissions(
+            permissions: {Permissions.membershipsExcludeFromSales},
+          ),
         );
 
         await _completeDetailsStep(tester);
@@ -63,9 +84,43 @@ void main() {
     );
 
     testWidgets(
+      'hides Exclude from sales without memberships.excludeFromSales',
+      (tester) async {
+        await _pumpWizard(
+          tester,
+          plans: [buildMembership(name: 'Monthly')],
+          permissions: const CurrentUserPermissions(
+            permissions: {Permissions.membershipsCreate},
+          ),
+        );
+
+        await _completeDetailsStep(tester);
+        await tester.tap(find.text('Skip'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Skip'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Monthly'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Next'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Exclude from sales'), findsNothing);
+        expect(find.text('Save'), findsOneWidget);
+        expect(find.text('Save (no sale)'), findsNothing);
+      },
+    );
+
+    testWidgets(
       'hides Exclude from sales when no membership is selected',
       (tester) async {
-        await _pumpWizard(tester, plans: [buildMembership(name: 'Monthly')]);
+        await _pumpWizard(
+          tester,
+          plans: [buildMembership(name: 'Monthly')],
+          permissions: const CurrentUserPermissions(
+            permissions: {Permissions.membershipsExcludeFromSales},
+          ),
+        );
 
         await _completeDetailsStep(tester);
         await tester.tap(find.text('Skip'));
@@ -87,19 +142,49 @@ void main() {
 Future<void> _pumpWizard(
   WidgetTester tester, {
   required List<Membership> plans,
+  required CurrentUserPermissions permissions,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
+  final local = MockMemberLocalDataSource();
+  final repo = MockMemberRepository();
+  when(
+    () => local.searchQuick(
+      any(),
+      fields: any(named: 'fields'),
+      limit: any(named: 'limit'),
+    ),
+  ).thenAnswer((_) async => <Member>[]);
+  when(
+    () => repo.searchQuick(
+      any(),
+      fields: any(named: 'fields'),
+      limit: any(named: 'limit'),
+    ),
+  ).thenAnswer((_) async => right(<Member>[]));
+
   await tester.pumpWidget(
     TranslationProvider(
       child: ProviderScope(
         overrides: [
           effectiveBranchIdForWriteProvider.overrideWithValue('branch-1'),
-          membershipsControllerProvider.overrideWith(
-            () => _FakeMembershipsController(plans),
+          currentBranchIdProvider.overrideWithValue('branch-1'),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FakeCurrentUserPermissionsController(permissions),
+          ),
+          memberLocalDataSourceProvider.overrideWithValue(local),
+          memberRepositoryProvider.overrideWithValue(repo),
+          branchesControllerProvider.overrideWith(
+            () => _FakeBranchesController(const [_testBranch]),
+          ),
+          membershipPurchaseCatalogProvider(false).overrideWith(
+            (ref) async => plans,
+          ),
+          membershipPurchaseCatalogProvider(true).overrideWith(
+            (ref) async => plans,
           ),
           membershipAddOnsControllerProvider.overrideWith(
             () => _FakeMembershipAddOnsController(),
@@ -117,22 +202,31 @@ Future<void> _pumpWizard(
 }
 
 Future<void> _completeDetailsStep(WidgetTester tester) async {
-  await tester.enterText(
-    find.byType(FormBuilderTextField).first,
-    'Jane Doe',
-  );
+  final fields = find.byType(FormBuilderTextField);
+  await tester.enterText(fields.at(0), 'Jane Doe');
+  await tester.enterText(fields.at(1), '09171234567');
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
 }
 
-class _FakeMembershipsController extends MembershipsController {
-  _FakeMembershipsController(this._plans);
+class _FakeCurrentUserPermissionsController
+    extends CurrentUserPermissionsController {
+  _FakeCurrentUserPermissionsController(this._permissions);
 
-  final List<Membership> _plans;
+  final CurrentUserPermissions _permissions;
 
   @override
-  Future<List<Membership>> build() async => _plans;
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
+
+class _FakeBranchesController extends BranchesController {
+  _FakeBranchesController(this._branches);
+
+  final List<Branch> _branches;
+
+  @override
+  Future<List<Branch>> build() async => _branches;
 }
 
 class _FakeMembershipAddOnsController extends MembershipAddOnsController {

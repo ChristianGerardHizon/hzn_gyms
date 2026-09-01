@@ -5,8 +5,19 @@ part 'inventory_alert.mapper.dart';
 /// Types of inventory alerts.
 enum InventoryAlertType {
   lowStock,
+  outOfStock,
   nearExpiration,
   expired,
+}
+
+/// Classifies quantity from low-stock views into low vs out of stock.
+///
+/// Those views already filter to `quantity <= stockThreshold`. Zero (or
+/// negative) stock is [InventoryAlertType.outOfStock]; remaining items are
+/// [InventoryAlertType.lowStock].
+InventoryAlertType stockAlertTypeForQuantity(num quantity) {
+  if (quantity <= 0) return InventoryAlertType.outOfStock;
+  return InventoryAlertType.lowStock;
 }
 
 /// Represents a unified inventory alert that can be either:
@@ -77,20 +88,24 @@ class InventoryAlert with InventoryAlertMappable {
 class InventoryAlertsSummary with InventoryAlertsSummaryMappable {
   const InventoryAlertsSummary({
     this.lowStockAlerts = const [],
+    this.outOfStockAlerts = const [],
     this.nearExpirationAlerts = const [],
     this.expiredAlerts = const [],
   });
 
   final List<InventoryAlert> lowStockAlerts;
+  final List<InventoryAlert> outOfStockAlerts;
   final List<InventoryAlert> nearExpirationAlerts;
   final List<InventoryAlert> expiredAlerts;
 
   int get lowStockCount => lowStockAlerts.length;
+  int get outOfStockCount => outOfStockAlerts.length;
   int get nearExpirationCount => nearExpirationAlerts.length;
   int get expiredCount => expiredAlerts.length;
 
   bool get hasAlerts =>
       lowStockAlerts.isNotEmpty ||
+      outOfStockAlerts.isNotEmpty ||
       nearExpirationAlerts.isNotEmpty ||
       expiredAlerts.isNotEmpty;
 }

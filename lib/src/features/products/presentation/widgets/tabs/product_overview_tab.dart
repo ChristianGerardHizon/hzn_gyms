@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../../core/utils/currency_format.dart';
 import '../../../domain/product.dart';
+import '../../../domain/product_sales_by_date.dart';
+import '../../controllers/product_sales_provider.dart';
 import '../product_stock_badge.dart';
 
 /// Overview tab showing key product information at a glance.
 ///
 /// Displays:
 /// - Price and sale status
+/// - Today's sales (qty + revenue)
 /// - Stock level and status
 /// - Category
 class ProductOverviewTab extends HookConsumerWidget {
-  const ProductOverviewTab({super.key, required this.product});
+  const ProductOverviewTab({
+    super.key,
+    required this.product,
+    required this.onViewSales,
+  });
 
   final Product product;
+  final VoidCallback onViewSales;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,6 +33,13 @@ class ProductOverviewTab extends HookConsumerWidget {
         children: [
           // Price and Sale Status Card
           _buildPriceCard(context),
+          const SizedBox(height: 16),
+
+          // Today's Sales Card
+          _TodaysSalesCard(
+            productId: product.id,
+            onViewSales: onViewSales,
+          ),
           const SizedBox(height: 16),
 
           // Stock Status Card (only when stock tracking is enabled)
@@ -306,6 +322,176 @@ class ProductOverviewTab extends HookConsumerWidget {
                     ? theme.textTheme.headlineSmall
                     : theme.textTheme.titleMedium)
                 ?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodaysSalesCard extends ConsumerWidget {
+  const _TodaysSalesCard({
+    required this.productId,
+    required this.onViewSales,
+  });
+
+  final String productId;
+  final VoidCallback onViewSales;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final salesAsync = ref.watch(productSalesProvider(productId));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.point_of_sale_outlined,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Today's Sales",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: onViewSales,
+                  icon: const Icon(Icons.receipt_long, size: 18),
+                  label: const Text('View Sales'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            salesAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+              error: (_, __) => Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 18,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Could not load sales',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        ref.invalidate(productSalesProvider(productId)),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+              data: (lines) {
+                final summary = todaysProductSalesSummary(lines);
+                final qty = summary.totalQty;
+                final qtyLabel = qty.toStringAsFixed(
+                  qty == qty.roundToDouble() ? 0 : 1,
+                );
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _TodaysSalesStat(
+                        icon: Icons.shopping_bag_outlined,
+                        label: 'Qty Sold',
+                        value: qtyLabel,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _TodaysSalesStat(
+                        icon: Icons.payments_outlined,
+                        label: 'Revenue',
+                        value: summary.totalRevenue.toCurrency(),
+                        valueColor: Colors.green,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TodaysSalesStat extends StatelessWidget {
+  const _TodaysSalesStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: valueColor,
             ),

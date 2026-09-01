@@ -6,9 +6,8 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../products/data/repositories/product_repository.dart';
-import '../cart_controller.dart';
-import 'lot_selection_dialog.dart';
-import 'variable_price_dialog.dart';
+import 'cashier_product_card.dart';
+import 'out_of_stock_continue_dialog.dart';
 
 /// A search field with a dropdown overlay that shows matching products.
 ///
@@ -365,42 +364,15 @@ class _SearchResultTile extends StatelessWidget {
 
     await result.fold((_) async {}, (product) async {
       if (!context.mounted) return;
-      final cartNotifier = ref.read(cartControllerProvider.notifier);
 
-      if (product.trackByLot) {
-        showLotSelectionDialog(
-          context,
-          product: product,
-          onLotSelected: (lot, quantity) async {
-            if (product.isVariablePrice) {
-              final price = await showVariablePriceDialog(
-                context,
-                productName: product.name,
-              );
-              if (price != null) {
-                await cartNotifier.addToCartWithLot(
-                  product,
-                  lot,
-                  quantity,
-                  customPrice: price,
-                );
-              }
-            } else {
-              await cartNotifier.addToCartWithLot(product, lot, quantity);
-            }
-          },
-        );
-      } else if (product.isVariablePrice) {
-        final price = await showVariablePriceDialog(
-          context,
-          productName: product.name,
-        );
-        if (price != null) {
-          await cartNotifier.addToCart(product, customPrice: price);
-        }
-      } else {
-        await cartNotifier.addToCart(product);
-      }
+      final allowed = await confirmOutOfStockSaleIfNeeded(
+        context: context,
+        ref: ref,
+        product: product,
+      );
+      if (!allowed || !context.mounted) return;
+
+      await addProductToCart(context, ref, product);
     });
   }
 }

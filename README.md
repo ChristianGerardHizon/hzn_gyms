@@ -1,4 +1,4 @@
-# Ebe Gym
+# HZN Gyms
 
 A Flutter multi-platform gym management system supporting Android, iOS, macOS, Linux, Windows, and Web.
 
@@ -425,14 +425,19 @@ Use the VS Code Run and Debug dropdown to select environment:
 
 ```bash
 # Development build
-flutter build web --dart-define=ENV=dev
+flutter build web --pwa-strategy=none --dart-define=ENV=dev
+cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
 # Staging build
-flutter build web --dart-define=ENV=staging
+flutter build web --pwa-strategy=none --dart-define=ENV=staging
+cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
 # Production build
-flutter build web --dart-define=ENV=prod --release
+flutter build web --release --pwa-strategy=none --dart-define=ENV=prod
+cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 ```
+
+`--pwa-strategy=none` skips Flutter's precache service worker (it blocked first paint). Copy `web/flutter_service_worker.js` afterward so existing browsers can retire the old worker. Do not skip that copy: `flutter build` may overwrite the file.
 
 ### CI/CD
 
@@ -440,7 +445,9 @@ Pass the `--dart-define=ENV=<env>` flag in your build pipeline:
 
 ```yaml
 # GitHub Actions example
-- run: flutter build web --dart-define=ENV=staging
+- run: |
+    flutter build web --pwa-strategy=none --dart-define=ENV=staging
+    cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 ```
 
 ### Fallback Behavior

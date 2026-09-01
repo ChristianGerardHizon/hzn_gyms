@@ -10,10 +10,13 @@ class Branch with BranchMappable {
   const Branch({
     required this.id,
     required this.name,
+    required this.code,
     required this.address,
     required this.contactNumber,
     this.operatingHours,
     this.cutOffTime,
+    this.color,
+    this.organization,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -22,8 +25,11 @@ class Branch with BranchMappable {
   /// PocketBase record ID.
   final String id;
 
-  /// Branch name (short internal identifier, e.g., "Main Branch").
+  /// Full branch name (e.g. "Bacolod Branch").
   final String name;
+
+  /// Short pill label (max 5 alphanumeric), e.g. "BCD", "TAL".
+  final String code;
 
   /// Branch address.
   final String address;
@@ -37,6 +43,12 @@ class Branch with BranchMappable {
   /// Cut-off time for daily operations (e.g., "10:00 PM").
   final String? cutOffTime;
 
+  /// Pill accent preset id (e.g. `teal`, `indigo`). See [BranchColorPreset].
+  final String? color;
+
+  /// FK to Organization (PocketBase `organization` relation id).
+  final String? organization;
+
   /// Soft delete flag.
   final bool isDeleted;
 
@@ -45,4 +57,27 @@ class Branch with BranchMappable {
 
   /// Last update timestamp.
   final DateTime? updated;
+
+  /// Compact label for chips/pills — prefer [code], never the full name.
+  String get pillLabel {
+    final trimmed = code.trim();
+    if (trimmed.isNotEmpty) return trimmed.toUpperCase();
+    return _fallbackPillLabel(name);
+  }
+}
+
+/// Display value for optional branch fields on detail screens.
+String branchDetailValue(String? value) {
+  final trimmed = value?.trim() ?? '';
+  return trimmed.isEmpty ? '—' : trimmed;
+}
+
+/// Fallback when [Branch.code] is missing: strip trailing "Branch" and truncate.
+String _fallbackPillLabel(String name) {
+  final stripped = name
+      .replaceAll(RegExp(r'\s*Branch\s*$', caseSensitive: false), '')
+      .trim();
+  final alnum = stripped.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
+  if (alnum.isEmpty) return '???';
+  return alnum.length <= 5 ? alnum : alnum.substring(0, 5);
 }

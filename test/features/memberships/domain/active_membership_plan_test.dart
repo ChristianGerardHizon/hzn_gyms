@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/memberships/domain/active_membership_plan.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/active_membership_plan.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
 
 import '../../../helpers/fixtures.dart';
 

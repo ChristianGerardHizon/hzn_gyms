@@ -40,13 +40,24 @@ class BarChartWidget extends StatelessWidget {
     if (data.isEmpty) {
       return SizedBox(
         height: height,
-        child: Center(
-          child: Text(
-            'No data available',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null) ...[
+              Text(title!, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+            ],
+            Expanded(
+              child: Center(
+                child: Text(
+                  'No data available',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       );
     }
@@ -54,7 +65,9 @@ class BarChartWidget extends StatelessWidget {
     final entries = data.entries.toList();
     final maxValue = entries
         .map((e) => e.value)
-        .reduce((a, b) => a > b ? a : b);
+        .fold<num>(0, (max, value) => value > max ? value : max);
+    // fl_chart requires a positive maxY; treat all-zero as empty-scale floor.
+    final chartMax = maxValue <= 0 ? 1.0 : maxValue.toDouble() * 1.1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,8 +79,8 @@ class BarChartWidget extends StatelessWidget {
         SizedBox(
           height: height,
           child: horizontal
-              ? _buildHorizontalChart(context, entries, color, maxValue)
-              : _buildVerticalChart(context, entries, color, maxValue),
+              ? _buildHorizontalChart(context, entries, color, chartMax)
+              : _buildVerticalChart(context, entries, color, chartMax),
         ),
       ],
     );
@@ -77,14 +90,14 @@ class BarChartWidget extends StatelessWidget {
     BuildContext context,
     List<MapEntry<String, num>> entries,
     Color color,
-    num maxValue,
+    double maxY,
   ) {
     final theme = Theme.of(context);
 
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: maxValue.toDouble() * 1.1,
+        maxY: maxY,
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -148,7 +161,7 @@ class BarChartWidget extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: _calculateInterval(maxValue.toDouble()),
+          horizontalInterval: _calculateInterval(maxY),
         ),
         barGroups: entries.asMap().entries.map((entry) {
           return BarChartGroupData(
@@ -173,7 +186,7 @@ class BarChartWidget extends StatelessWidget {
     BuildContext context,
     List<MapEntry<String, num>> entries,
     Color color,
-    num maxValue,
+    double maxY,
   ) {
     final theme = Theme.of(context);
 
@@ -182,7 +195,7 @@ class BarChartWidget extends StatelessWidget {
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: maxValue.toDouble() * 1.1,
+          maxY: maxY,
           titlesData: FlTitlesData(
             show: true,
             rightTitles: const AxisTitles(

@@ -1,11 +1,11 @@
 {
-    "name": "Ebe Gym",
-    "short_name": "Ebe Gym",
+    "name": "HZN Gyms",
+    "short_name": "HZN Gyms",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#ffffff",
-    "description": "Ebe Gym",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "HZN Gyms",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

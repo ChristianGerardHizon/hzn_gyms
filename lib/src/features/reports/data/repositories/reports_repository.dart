@@ -39,6 +39,16 @@ abstract class ReportsRepository {
     String? branchId,
   });
 
+  /// Sales that include at least one line of [itemType] in [period].
+  ///
+  /// [itemType] is `membership` / `walkIn` / `product`. Year / All Time are
+  /// capped at [kSalesByItemTypeYearCap] (newest first).
+  FutureEither<List<Sale>> getSalesByItemType({
+    required ReportPeriodSelection period,
+    required String itemType,
+    String? branchId,
+  });
+
   FutureEither<InventoryReport> getInventoryReport({String? branchId});
 
   FutureEither<MembershipReport> getMembershipReport({
@@ -200,15 +210,17 @@ class ReportsRepositoryImpl implements ReportsRepository {
           .map((r) => r.saleId)
           .toSet();
 
-      final itemRows = itemRecords.map(
-        (item) => (
-          saleId: item.getStringValue('sale'),
-          name: item.getStringValue('productName'),
-          itemType: item.getStringValue('itemType'),
-          quantity: item.getDoubleValue('quantity'),
-          subtotal: item.getDoubleValue('subtotal'),
-        ),
-      );
+      final itemRows = itemRecords
+          .map(
+            (item) => (
+              saleId: item.getStringValue('sale'),
+              name: item.getStringValue('productName'),
+              itemType: item.getStringValue('itemType'),
+              quantity: item.getDoubleValue('quantity'),
+              subtotal: item.getDoubleValue('subtotal'),
+            ),
+          )
+          .toList(growable: false);
 
       final topProducts =
           aggregateTopSellingItems(
@@ -234,12 +246,15 @@ class ReportsRepositoryImpl implements ReportsRepository {
               .take(10)
               .toList();
 
-      final revenueByItemType = aggregateScopedRevenueByItemType(
+      final itemTypeMetrics = aggregateScopedItemTypeMetrics(
         itemRows.map(
           (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: i.subtotal),
         ),
         reportableSaleIds,
       );
+      final revenueByItemType = itemTypeMetrics.revenueByItemType;
+      final transactionCountByItemType =
+          itemTypeMetrics.transactionCountByItemType;
 
       final avgValue = kpis.transactionCount > 0
           ? kpis.totalRevenue / kpis.transactionCount
@@ -258,6 +273,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByPaymentMethod: kpis.revenueByPaymentMethod,
         topSellingProducts: topProducts,
         revenueByItemType: revenueByItemType,
+        transactionCountByItemType: transactionCountByItemType,
       );
 
       final unpaid = aggregateUnpaidSales(
@@ -302,6 +318,115 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       return ScopedSalesReportBundle(report: report, extras: extras);
     }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<List<Sale>> getSalesByItemType({
+    required ReportPeriodSelection period,
+    required String itemType,
+    String? branchId,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final cap = shouldCapSalesByItemType(period.period)
+          ? kSalesByItemTypeYearCap
+          : null;
+      final saleIds = await _collectSaleIdsByItemType(
+        period: period,
+        itemType: itemType,
+        branchId: branchId,
+        maxSales: cap,
+      );
+      if (saleIds.isEmpty) return const <Sale>[];
+
+      final saleFilters = buildIdOrFilters('id', saleIds);
+      final saleChunks = await Future.wait(
+        saleFilters.map(
+          (f) => _sales.getFullList(
+            filter: f,
+            fields: _daySaleListFields,
+            sort: '-created',
+          ),
+        ),
+      );
+      final sales = saleChunks
+          .expand((e) => e)
+          .map((record) => SaleDto.fromRecord(record).toEntity())
+          .toList();
+      sales.sort((a, b) {
+        final aCreated = a.created ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bCreated = b.created ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bCreated.compareTo(aCreated);
+      });
+      if (cap != null && sales.length > cap) {
+        return sales.sublist(0, cap);
+      }
+      return sales;
+    }, Failure.handle).run();
+  }
+
+  /// Collects distinct sale IDs with a matching primary item type in [period].
+  Future<List<String>> _collectSaleIdsByItemType({
+    required ReportPeriodSelection period,
+    required String itemType,
+    String? branchId,
+    int? maxSales,
+  }) async {
+    final filter = PBFilter()
+        .between('sale.created', period.startDate, period.endDate)
+        .raw(saleItemsRawFilterForPrimaryType(itemType))
+        .raw("(sale.status = 'completed' || sale.status = 'paid')");
+    if (branchId != null) {
+      filter.raw('sale.branch = "$branchId"');
+    }
+    final filterString = filter.build();
+
+    if (maxSales == null) {
+      final records = await _saleItems.getFullList(
+        filter: filterString,
+        fields: 'id,sale,itemType',
+      );
+      return distinctSaleIdsForPrimaryItemType(
+        records.map(
+          (r) => (
+            saleId: r.getStringValue('sale'),
+            itemType: r.getStringValue('itemType'),
+          ),
+        ),
+        itemType,
+      );
+    }
+
+    // Paginate newest-first until we have [maxSales] distinct sale IDs.
+    final ids = <String>[];
+    final seen = <String>{};
+    const pageSize = 100;
+    var page = 1;
+    while (ids.length < maxSales) {
+      final result = await _saleItems.getList(
+        page: page,
+        perPage: pageSize,
+        filter: filterString,
+        sort: '-sale.created',
+        fields: 'id,sale,itemType',
+      );
+      if (result.items.isEmpty) break;
+      for (final record in result.items) {
+        final saleId = record.getStringValue('sale');
+        if (saleId.isEmpty || seen.contains(saleId)) continue;
+        if (!saleItemMatchesPrimaryType(
+          record.getStringValue('itemType'),
+          itemType,
+        )) {
+          continue;
+        }
+        seen.add(saleId);
+        ids.add(saleId);
+        if (ids.length >= maxSales) break;
+      }
+      if (result.items.length < pageSize) break;
+      page++;
+    }
+    return ids;
   }
 
   @override
@@ -404,6 +529,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
               .toList();
 
       final revenueByItemType = <String, num>{};
+      final transactionCountByItemType = <String, int>{};
       for (final record in itemTypeRecords) {
         final type = record.getStringValue('itemType');
         // Historical walk-in rows may still be typed as membership/addon with
@@ -413,6 +539,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByItemType[key] =
             (revenueByItemType[key] ?? 0) +
             record.getDoubleValue('total_revenue');
+        transactionCountByItemType[key] =
+            (transactionCountByItemType[key] ?? 0) +
+            _transactionCountFromViewRecord(record);
       }
 
       final revenueTrend = zeroFillBuckets(
@@ -430,6 +559,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         revenueByPaymentMethod: revenueByPaymentMethod,
         topSellingProducts: topProducts.take(10).toList(),
         revenueByItemType: revenueByItemType,
+        transactionCountByItemType: transactionCountByItemType,
       );
     }, Failure.handle).run();
   }
@@ -642,10 +772,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final mmPeriodFilter = PBFilter().and(branchFilter).and(periodFilter);
 
       final now = DateTime.now();
-      final activeFilter = PBFilter()
-          .equals('status', 'active')
-          .lessOrEqual('startDate', now)
-          .greaterOrEqual('endDate', DateTime(now.year, now.month, now.day));
+      final activeFilter = PBFilters.activeMemberMemberships(now: now);
       if (branchId != null) {
         activeFilter.relation('branch', branchId);
       }
@@ -1059,5 +1186,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
       checkInsByHour: aggregateCheckInsByHour(times),
       withoutActiveMembershipCount: withoutMembership,
     );
+  }
+
+  /// Reads `transaction_count` from a revenue-by-item-type view row.
+  ///
+  /// Prefers int, then falls back to double (SQLite/JSON may surface either).
+  static int _transactionCountFromViewRecord(RecordModel record) {
+    final asInt = record.getIntValue('transaction_count');
+    if (asInt != 0) return asInt;
+    return record.getDoubleValue('transaction_count').round();
   }
 }

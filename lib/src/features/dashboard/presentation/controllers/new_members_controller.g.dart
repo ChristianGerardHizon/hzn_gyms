@@ -8,26 +8,26 @@ part of 'new_members_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Count of new members registered today.
+/// Count of new members registered today at the current branch.
 ///
-/// Queries the members collection with a date filter on `created`.
-/// Members are global (no branch filter).
+/// Derived from [todaysNewMembersList] so the card and breakdown dialog
+/// never disagree.
 
 @ProviderFor(todaysNewMembersCount)
 final todaysNewMembersCountProvider = TodaysNewMembersCountProvider._();
 
-/// Count of new members registered today.
+/// Count of new members registered today at the current branch.
 ///
-/// Queries the members collection with a date filter on `created`.
-/// Members are global (no branch filter).
+/// Derived from [todaysNewMembersList] so the card and breakdown dialog
+/// never disagree.
 
 final class TodaysNewMembersCountProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Count of new members registered today.
+  /// Count of new members registered today at the current branch.
   ///
-  /// Queries the members collection with a date filter on `created`.
-  /// Members are global (no branch filter).
+  /// Derived from [todaysNewMembersList] so the card and breakdown dialog
+  /// never disagree.
   TodaysNewMembersCountProvider._()
     : super(
         from: null,
@@ -54,30 +54,38 @@ final class TodaysNewMembersCountProvider
 }
 
 String _$todaysNewMembersCountHash() =>
-    r'ac616133ea3d40457fc1a236175704b6d2d6a24f';
+    r'acb042a211fb33a82de0cfda7ae696e6bacac75e';
 
-/// Members registered today (KPI breakdown list).
+/// Members registered today (KPI breakdown list), each paired with the
+/// membership plan they signed up for, filtered to the current branch.
 ///
-/// Same filter as [todaysNewMembersCount]; sorted newest first.
+/// Members are attributed to a branch via [NewMemberEntry.effectiveBranchId].
+/// Unfiltered when viewing all branches. Sorted newest first.
 
 @ProviderFor(todaysNewMembersList)
 final todaysNewMembersListProvider = TodaysNewMembersListProvider._();
 
-/// Members registered today (KPI breakdown list).
+/// Members registered today (KPI breakdown list), each paired with the
+/// membership plan they signed up for, filtered to the current branch.
 ///
-/// Same filter as [todaysNewMembersCount]; sorted newest first.
+/// Members are attributed to a branch via [NewMemberEntry.effectiveBranchId].
+/// Unfiltered when viewing all branches. Sorted newest first.
 
 final class TodaysNewMembersListProvider
     extends
         $FunctionalProvider<
-          AsyncValue<List<Member>>,
-          List<Member>,
-          FutureOr<List<Member>>
+          AsyncValue<List<NewMemberEntry>>,
+          List<NewMemberEntry>,
+          FutureOr<List<NewMemberEntry>>
         >
-    with $FutureModifier<List<Member>>, $FutureProvider<List<Member>> {
-  /// Members registered today (KPI breakdown list).
+    with
+        $FutureModifier<List<NewMemberEntry>>,
+        $FutureProvider<List<NewMemberEntry>> {
+  /// Members registered today (KPI breakdown list), each paired with the
+  /// membership plan they signed up for, filtered to the current branch.
   ///
-  /// Same filter as [todaysNewMembersCount]; sorted newest first.
+  /// Members are attributed to a branch via [NewMemberEntry.effectiveBranchId].
+  /// Unfiltered when viewing all branches. Sorted newest first.
   TodaysNewMembersListProvider._()
     : super(
         from: null,
@@ -94,15 +102,15 @@ final class TodaysNewMembersListProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<Member>> $createElement(
+  $FutureProviderElement<List<NewMemberEntry>> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<List<Member>> create(Ref ref) {
+  FutureOr<List<NewMemberEntry>> create(Ref ref) {
     return todaysNewMembersList(ref);
   }
 }
 
 String _$todaysNewMembersListHash() =>
-    r'c24aa11942214f4636455ce0a5cb43fe6dae5afe';
+    r'5a270ba9e6f5432464999aca76aa6881d307430a';

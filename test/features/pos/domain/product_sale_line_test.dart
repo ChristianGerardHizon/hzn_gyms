@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/pos/domain/product_sale_line.dart';
+import 'package:hzn_gyms/src/features/pos/domain/product_sale_line.dart';
 
 void main() {
   test('hasLot is true when lotNumber is set', () {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/check_in/presentation/controllers/check_in_records_date_controller.dart';
+import 'package:hzn_gyms/src/core/utils/date_utils.dart';
+import 'package:hzn_gyms/src/features/check_in/presentation/controllers/check_in_records_date_controller.dart';
 
 void main() {
   test('defaults to today as a local date-only value', () {

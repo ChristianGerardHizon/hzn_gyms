@@ -4,9 +4,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/routing/routes/memberships.routes.dart';
 import '../../../../core/utils/currency_format.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/membership.dart';
 import '../controllers/memberships_controller.dart';
 import 'membership_form_dialog.dart';
+import 'membership_valid_branches_chips.dart';
 
 /// List panel for displaying membership plans with search and create.
 class MembershipListPanel extends HookConsumerWidget {
@@ -135,6 +138,21 @@ class _MembershipListTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final branchesAsync = ref.watch(branchesControllerProvider);
+    final writeBranchId = ref.watch(effectiveBranchIdForWriteProvider);
+    final branchCodeById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        branch.id: branch.pillLabel,
+    };
+    final branchNamesById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        branch.id: branch.name,
+    };
+    final branchColorById = <String, String>{
+      for (final branch in branchesAsync.value ?? const [])
+        if (branch.color != null && branch.color!.trim().isNotEmpty)
+          branch.id: branch.color!,
+    };
 
     Future<void> toggleFavorite() async {
       final updated = membership.copyWith(isFavorite: !membership.isFavorite);
@@ -149,6 +167,7 @@ class _MembershipListTile extends ConsumerWidget {
     }
 
     return ListTile(
+      isThreeLine: true,
       leading: CircleAvatar(
         backgroundColor: membership.isActive
             ? theme.colorScheme.primaryContainer
@@ -163,16 +182,30 @@ class _MembershipListTile extends ConsumerWidget {
         ),
       ),
       title: Text(membership.name),
-      subtitle: Text(
-        [
-          membership.durationDisplay,
-          membership.price.toCurrency(),
-          if (membership.walkInBadgeLabel != null) membership.walkInBadgeLabel!,
-          if (!membership.isActive) 'Inactive',
-        ].join(' · '),
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            [
+              membership.durationDisplay,
+              membership.price.toCurrency(),
+              if (membership.walkInBadgeLabel != null)
+                membership.walkInBadgeLabel!,
+              if (!membership.isActive) 'Inactive',
+            ].join(' · '),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          MembershipValidBranchesChips(
+            membership: membership,
+            branchCodeById: branchCodeById,
+            branchNameById: branchNamesById,
+            branchColorById: branchColorById,
+            currentBranchId: writeBranchId,
+          ),
+        ],
       ),
       trailing: IconButton(
         icon: Icon(

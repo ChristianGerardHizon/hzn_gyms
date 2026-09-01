@@ -16,5 +16,10 @@
     "paymentRef": "Reference ng Bayad",
     "notes": "Mga Tala",
     "description": "Paglalarawan",
-    "category": "Kategorya"
+    "category": "Kategorya",
+    "statusFilters": "Status",
+    "statusFiltersHint": "Ipakita ang mga benta na may mga status na ito",
+    "statusPaid": "Bayad",
+    "statusVoided": "Voided",
+    "statusAwaitingPayment": "Naghihintay ng Bayad"
 }

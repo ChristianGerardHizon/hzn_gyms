@@ -16,6 +16,7 @@ class SalesReport with SalesReportMappable {
     required this.revenueByPaymentMethod,
     required this.topSellingProducts,
     this.revenueByItemType = const {},
+    this.transactionCountByItemType,
     this.unpaidSalesCount = 0,
     this.unpaidBalance = 0,
     this.staffPerformance = const [],
@@ -42,6 +43,12 @@ class SalesReport with SalesReportMappable {
 
   /// Revenue split by sale item type: product / membership / walkIn / addon.
   final Map<String, num> revenueByItemType;
+
+  /// Distinct sale counts by item type (same keys as [revenueByItemType]).
+  ///
+  /// Nullable so hot-reloaded in-memory instances (created before this field
+  /// existed) do not throw on web/DDC; treat null as empty.
+  final Map<String, int>? transactionCountByItemType;
 
   /// Number of unpaid or partially paid sales (accounts receivable).
   final int unpaidSalesCount;
@@ -87,6 +94,8 @@ class SalesReport with SalesReportMappable {
       totalRevenue: totalRevenue,
       transactionCount: transactionCount,
       averageTransactionValue: avgValue,
+      // Explicit so hot-reload / copyWith never drops type sale counts.
+      transactionCountByItemType: transactionCountByItemType,
       unpaidSalesCount: extras.unpaidSalesCount,
       unpaidBalance: extras.unpaidBalance,
       staffPerformance: extras.staffPerformance,

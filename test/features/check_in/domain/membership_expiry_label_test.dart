@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 
-import 'package:ebe_gym/src/features/check_in/domain/membership_expiry_label.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/membership_expiry_label.dart';
 
 void main() {
   final format = DateFormat('MMM dd, yyyy');

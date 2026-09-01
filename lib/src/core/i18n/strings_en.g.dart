@@ -45,6 +45,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$failures$en failures = Translations$failures$en._(_root);
 	late final Translations$fields$en fields = Translations$fields$en._(_root);
 	late final Translations$navigation$en navigation = Translations$navigation$en._(_root);
+	late final Translations$organizations$en organizations = Translations$organizations$en._(_root);
 	late final Translations$sort$en sort = Translations$sort$en._(_root);
 	late final Translations$validation$en validation = Translations$validation$en._(_root);
 }
@@ -117,8 +118,8 @@ class Translations$common$en {
 
 	// Translations
 
-	/// en: 'Ebe Gym'
-	String get appName => 'Ebe Gym';
+	/// en: 'HZN Gyms'
+	String get appName => 'HZN Gyms';
 
 	/// en: 'N/A'
 	String get placeholderText => 'N/A';
@@ -252,8 +253,8 @@ class Translations$failures$en {
 	/// en: 'No internet connection.'
 	String get noInternet => 'No internet connection.';
 
-	/// en: 'Invalid username or password.'
-	String get invalidCredentials => 'Invalid username or password.';
+	/// en: 'Invalid email or password.'
+	String get invalidCredentials => 'Invalid email or password.';
 
 	/// en: 'Your account has been disabled.'
 	String get accountDisabled => 'Your account has been disabled.';
@@ -326,6 +327,21 @@ class Translations$fields$en {
 
 	/// en: 'Category'
 	String get category => 'Category';
+
+	/// en: 'Status'
+	String get statusFilters => 'Status';
+
+	/// en: 'Show sales with these statuses'
+	String get statusFiltersHint => 'Show sales with these statuses';
+
+	/// en: 'Paid'
+	String get statusPaid => 'Paid';
+
+	/// en: 'Voided'
+	String get statusVoided => 'Voided';
+
+	/// en: 'Awaiting Payment'
+	String get statusAwaitingPayment => 'Awaiting Payment';
 }
 
 // Path: navigation
@@ -375,6 +391,9 @@ class Translations$navigation$en {
 	/// en: 'Organization'
 	String get organization => 'Organization';
 
+	/// en: 'Organizations'
+	String get organizations => 'Organizations';
+
 	/// en: 'Check-In'
 	String get checkIn => 'Check-In';
 
@@ -401,6 +420,87 @@ class Translations$navigation$en {
 
 	/// en: 'All Branches'
 	String get allBranches => 'All Branches';
+}
+
+// Path: organizations
+class Translations$organizations$en {
+	Translations$organizations$en._(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Organizations'
+	String get title => 'Organizations';
+
+	/// en: 'Create Organization'
+	String get create => 'Create Organization';
+
+	/// en: 'Edit Organization'
+	String get edit => 'Edit Organization';
+
+	/// en: 'Name'
+	String get name => 'Name';
+
+	/// en: 'Slug'
+	String get slug => 'Slug';
+
+	/// en: 'Used for subdomain (e.g. slug.hzngyms.com)'
+	String get slugHelper => 'Used for subdomain (e.g. slug.hzngyms.com)';
+
+	/// en: 'Shown in app title/branding'
+	String get displayNameHint => 'Shown in app title/branding';
+
+	/// en: 'Lowercase letters, numbers, and hyphens only'
+	String get slugValidationError => 'Lowercase letters, numbers, and hyphens only';
+
+	/// en: 'Use hex format like #1E88E5'
+	String get seedColorValidationError => 'Use hex format like #1E88E5';
+
+	/// en: 'Use hex format like #FFFFFF'
+	String get splashColorValidationError => 'Use hex format like #FFFFFF';
+
+	/// en: 'Display Name'
+	String get displayName => 'Display Name';
+
+	/// en: 'Seed Color'
+	String get seedColor => 'Seed Color';
+
+	/// en: 'Splash Background Color'
+	String get splashBackgroundColor => 'Splash Background Color';
+
+	/// en: 'Subdomain'
+	String get subdomain => 'Subdomain';
+
+	/// en: 'DNS Status'
+	String get dnsStatus => 'DNS Status';
+
+	/// en: 'Retry DNS'
+	String get retryDns => 'Retry DNS';
+
+	/// en: 'DNS provisioning retried'
+	String get retryDnsSuccess => 'DNS provisioning retried';
+
+	/// en: 'Failed to retry DNS provisioning'
+	String get retryDnsFailed => 'Failed to retry DNS provisioning';
+
+	/// en: 'Organization created successfully'
+	String get createSuccess => 'Organization created successfully';
+
+	/// en: 'Organization updated successfully'
+	String get updateSuccess => 'Organization updated successfully';
+
+	/// en: 'Failed to save organization. Please try again.'
+	String get saveFailed => 'Failed to save organization. Please try again.';
+
+	/// en: 'No organizations found'
+	String get emptyList => 'No organizations found';
+
+	/// en: 'No Organization'
+	String get noOrganization => 'No Organization';
+
+	/// en: 'Switch Organization'
+	String get switchOrganization => 'Switch Organization';
 }
 
 // Path: sort
@@ -519,7 +619,7 @@ extension on Translations {
 			'auth.resetLinkSent' => ({required Object email}) => 'Password reset link has been sent to ${email}',
 			'auth.signInToContinue' => 'Sign in to continue',
 			'auth.signingIn' => 'Signing in...',
-			'common.appName' => 'Ebe Gym',
+			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'Save',
 			'common.cancel' => 'Cancel',
@@ -561,7 +661,7 @@ extension on Translations {
 			'failures.conflict' => 'A conflict occurred. The resource may already exist.',
 			'failures.timeout' => 'Request timed out. Please try again.',
 			'failures.noInternet' => 'No internet connection.',
-			'failures.invalidCredentials' => 'Invalid username or password.',
+			'failures.invalidCredentials' => 'Invalid email or password.',
 			'failures.accountDisabled' => 'Your account has been disabled.',
 			'failures.accountNotVerified' => 'Your account has not been verified.',
 			'failures.tooManyRequests' => 'Too many requests. Please wait a moment.',
@@ -583,6 +683,11 @@ extension on Translations {
 			'fields.notes' => 'Notes',
 			'fields.description' => 'Description',
 			'fields.category' => 'Category',
+			'fields.statusFilters' => 'Status',
+			'fields.statusFiltersHint' => 'Show sales with these statuses',
+			'fields.statusPaid' => 'Paid',
+			'fields.statusVoided' => 'Voided',
+			'fields.statusAwaitingPayment' => 'Awaiting Payment',
 			'navigation.dashboard' => 'Dashboard',
 			'navigation.products' => 'Products',
 			'navigation.inventory' => 'Inventory',
@@ -596,6 +701,7 @@ extension on Translations {
 			'navigation.sales' => 'Cashier',
 			'navigation.salesHistory' => 'Sales',
 			'navigation.organization' => 'Organization',
+			'navigation.organizations' => 'Organizations',
 			'navigation.checkIn' => 'Check-In',
 			'navigation.checkInRecords' => 'Check-In Records',
 			'navigation.members' => 'Members',
@@ -605,6 +711,30 @@ extension on Translations {
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'No Branch',
 			'navigation.allBranches' => 'All Branches',
+			'organizations.title' => 'Organizations',
+			'organizations.create' => 'Create Organization',
+			'organizations.edit' => 'Edit Organization',
+			'organizations.name' => 'Name',
+			'organizations.slug' => 'Slug',
+			'organizations.slugHelper' => 'Used for subdomain (e.g. slug.hzngyms.com)',
+			'organizations.displayNameHint' => 'Shown in app title/branding',
+			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens only',
+			'organizations.seedColorValidationError' => 'Use hex format like #1E88E5',
+			'organizations.splashColorValidationError' => 'Use hex format like #FFFFFF',
+			'organizations.displayName' => 'Display Name',
+			'organizations.seedColor' => 'Seed Color',
+			'organizations.splashBackgroundColor' => 'Splash Background Color',
+			'organizations.subdomain' => 'Subdomain',
+			'organizations.dnsStatus' => 'DNS Status',
+			'organizations.retryDns' => 'Retry DNS',
+			'organizations.retryDnsSuccess' => 'DNS provisioning retried',
+			'organizations.retryDnsFailed' => 'Failed to retry DNS provisioning',
+			'organizations.createSuccess' => 'Organization created successfully',
+			'organizations.updateSuccess' => 'Organization updated successfully',
+			'organizations.saveFailed' => 'Failed to save organization. Please try again.',
+			'organizations.emptyList' => 'No organizations found',
+			'organizations.noOrganization' => 'No Organization',
+			'organizations.switchOrganization' => 'Switch Organization',
 			'sort.sortBy' => 'Sort By',
 			'sort.direction' => 'Direction',
 			'sort.ascending' => 'Ascending',

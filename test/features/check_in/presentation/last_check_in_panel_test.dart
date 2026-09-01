@@ -1,17 +1,26 @@
-import 'package:ebe_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:ebe_gym/src/features/check_in/presentation/controllers/member_check_ins_controller.dart';
-import 'package:ebe_gym/src/features/check_in/presentation/widgets/last_check_in_panel.dart';
-import 'package:ebe_gym/src/features/members/presentation/controllers/member_provider.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/member_membership_add_ons_provider.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/controllers/membership_provider.dart';
-import 'package:ebe_gym/src/features/memberships/presentation/widgets/member_membership_detail_dialog.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
+import 'package:hzn_gyms/src/features/check_in/presentation/controllers/member_check_ins_controller.dart';
+import 'package:hzn_gyms/src/features/check_in/presentation/widgets/last_check_in_panel.dart';
+import 'package:hzn_gyms/src/features/members/presentation/controllers/member_provider.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/member_membership_add_ons_provider.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/membership_provider.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/widgets/member_membership_detail_dialog.dart';
+import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';
+
+class _FixedPermissions extends CurrentUserPermissionsController {
+  _FixedPermissions(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
+}
 
 void main() {
   group('LastCheckInPanel membership status background', () {
@@ -23,26 +32,27 @@ void main() {
         ProviderScope(
           overrides: [
             memberProvider('member-1').overrideWith(
-              (ref) async => buildMember().copyWith(
-                photo: 'https://example.com/jane.jpg',
-              ),
+              (ref) async =>
+                  buildMember().copyWith(photo: 'https://example.com/jane.jpg'),
             ),
-            memberActiveMembershipProvider('member-1').overrideWith(
-              (ref) async => membership,
-            ),
+            memberActiveMembershipProvider(
+              'member-1',
+            ).overrideWith((ref) async => membership),
             memberCheckInsProvider('member-1').overrideWith((ref) async => []),
             currentUserPermissionsProvider.overrideWith(
-              (ref) async => const CurrentUserPermissions(
-                permissions: {Permissions.membershipsView},
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membershipsView},
+                ),
               ),
             ),
             if (membership != null) ...[
-              membershipProvider(membership.membershipId).overrideWith(
-                (ref) async => buildMembership(),
-              ),
-              memberMembershipAddOnsProvider(membership.id).overrideWith(
-                (ref) async => [],
-              ),
+              membershipProvider(
+                membership.membershipId,
+              ).overrideWith((ref) async => buildMembership()),
+              memberMembershipAddOnsProvider(
+                membership.id,
+              ).overrideWith((ref) async => []),
             ],
           ],
           child: MaterialApp(
@@ -87,6 +97,8 @@ void main() {
       expect(decoration, isNotNull);
       expect(decoration!.color, Colors.green.withValues(alpha: 0.12));
       expect(decoration.border?.top.color, Colors.green.withValues(alpha: 0.3));
+      expect(find.textContaining('Checked in at'), findsNothing);
+      expect(find.textContaining('Expires'), findsOneWidget);
     });
 
     testWidgets('uses orange background for near-expiry membership', (

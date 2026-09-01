@@ -2,7 +2,7 @@
 ///
 /// This library exports all form-related widgets for easy importing:
 /// ```dart
-/// import 'package:ebe_gym/src/core/widgets/form/form.dart';
+/// import 'package:hzn_gyms/src/core/widgets/form/form.dart';
 /// ```
 library;
 

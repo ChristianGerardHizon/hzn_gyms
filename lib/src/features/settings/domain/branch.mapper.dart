@@ -26,6 +26,8 @@ class BranchMapper extends ClassMapperBase<Branch> {
   static const Field<Branch, String> _f$id = Field('id', _$id);
   static String _$name(Branch v) => v.name;
   static const Field<Branch, String> _f$name = Field('name', _$name);
+  static String _$code(Branch v) => v.code;
+  static const Field<Branch, String> _f$code = Field('code', _$code);
   static String _$address(Branch v) => v.address;
   static const Field<Branch, String> _f$address = Field('address', _$address);
   static String _$contactNumber(Branch v) => v.contactNumber;
@@ -43,6 +45,18 @@ class BranchMapper extends ClassMapperBase<Branch> {
   static const Field<Branch, String> _f$cutOffTime = Field(
     'cutOffTime',
     _$cutOffTime,
+    opt: true,
+  );
+  static String? _$color(Branch v) => v.color;
+  static const Field<Branch, String> _f$color = Field(
+    'color',
+    _$color,
+    opt: true,
+  );
+  static String? _$organization(Branch v) => v.organization;
+  static const Field<Branch, String> _f$organization = Field(
+    'organization',
+    _$organization,
     opt: true,
   );
   static bool _$isDeleted(Branch v) => v.isDeleted;
@@ -69,10 +83,13 @@ class BranchMapper extends ClassMapperBase<Branch> {
   final MappableFields<Branch> fields = const {
     #id: _f$id,
     #name: _f$name,
+    #code: _f$code,
     #address: _f$address,
     #contactNumber: _f$contactNumber,
     #operatingHours: _f$operatingHours,
     #cutOffTime: _f$cutOffTime,
+    #color: _f$color,
+    #organization: _f$organization,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -82,10 +99,13 @@ class BranchMapper extends ClassMapperBase<Branch> {
     return Branch(
       id: data.dec(_f$id),
       name: data.dec(_f$name),
+      code: data.dec(_f$code),
       address: data.dec(_f$address),
       contactNumber: data.dec(_f$contactNumber),
       operatingHours: data.dec(_f$operatingHours),
       cutOffTime: data.dec(_f$cutOffTime),
+      color: data.dec(_f$color),
+      organization: data.dec(_f$organization),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -141,10 +161,13 @@ abstract class BranchCopyWith<$R, $In extends Branch, $Out>
   $R call({
     String? id,
     String? name,
+    String? code,
     String? address,
     String? contactNumber,
     String? operatingHours,
     String? cutOffTime,
+    String? color,
+    String? organization,
     bool? isDeleted,
     DateTime? created,
     DateTime? updated,
@@ -162,10 +185,13 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
   $R call({
     String? id,
     String? name,
+    String? code,
     String? address,
     String? contactNumber,
     Object? operatingHours = $none,
     Object? cutOffTime = $none,
+    Object? color = $none,
+    Object? organization = $none,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -173,10 +199,13 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
     FieldCopyWithData({
       if (id != null) #id: id,
       if (name != null) #name: name,
+      if (code != null) #code: code,
       if (address != null) #address: address,
       if (contactNumber != null) #contactNumber: contactNumber,
       if (operatingHours != $none) #operatingHours: operatingHours,
       if (cutOffTime != $none) #cutOffTime: cutOffTime,
+      if (color != $none) #color: color,
+      if (organization != $none) #organization: organization,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -186,10 +215,13 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
   Branch $make(CopyWithData data) => Branch(
     id: data.get(#id, or: $value.id),
     name: data.get(#name, or: $value.name),
+    code: data.get(#code, or: $value.code),
     address: data.get(#address, or: $value.address),
     contactNumber: data.get(#contactNumber, or: $value.contactNumber),
     operatingHours: data.get(#operatingHours, or: $value.operatingHours),
     cutOffTime: data.get(#cutOffTime, or: $value.cutOffTime),
+    color: data.get(#color, or: $value.color),
+    organization: data.get(#organization, or: $value.organization),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

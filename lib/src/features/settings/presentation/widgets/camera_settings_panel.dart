@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/packages/sentry/report_camera_failure.dart';
 import '../../../../core/utils/photo_capture_support.dart';
 import '../controllers/camera_preference_controller.dart';
 
@@ -28,9 +29,24 @@ class CameraSettingsPanel extends HookConsumerWidget {
     Future<void> loadCameras() async {
       camerasLoading.value = true;
       camerasError.value = null;
+      var enumerateAttempts = 0;
       try {
-        cameras.value = await availableCameras();
-      } catch (e) {
+        cameras.value = await availableCamerasWithRetry(
+          onAttempt: (attempt) => enumerateAttempts = attempt,
+        );
+      } catch (e, stackTrace) {
+        final reportAttempts = shouldReportCameraRetryAttempts(
+          error: e,
+          attemptsUsed: enumerateAttempts,
+        );
+        await reportCameraFailure(
+          e,
+          stackTrace,
+          phase: 'enumerate',
+          startTrigger: 'settings',
+          attempt: reportAttempts ? enumerateAttempts : null,
+          maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+        );
         camerasError.value = formatCameraInitError(e);
         cameras.value = const [];
       } finally {

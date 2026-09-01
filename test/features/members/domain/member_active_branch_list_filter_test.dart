@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/members/domain/member_active_branch_list_filter.dart';
+import 'package:hzn_gyms/src/features/members/domain/member_active_branch_list_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -20,7 +20,7 @@ void main() {
       );
     });
 
-    test('includes plan OR clause and active date bound', () {
+    test('includes plan OR clause, active status, and date bound', () {
       final filter = buildActiveMembersAtBranchViewFilter(
         planIds: const ['plan-a', 'plan-b'],
         now: now,
@@ -31,6 +31,7 @@ void main() {
         filter,
         contains('(membershipId = "plan-a" || membershipId = "plan-b")'),
       );
+      expect(filter, contains("membershipStatus = 'active'"));
       expect(filter, contains("expirationDate >= '"));
       // Start of local day 2026-08-03 as UTC ISO via toPocketBaseUtc
       expect(filter, contains('2026-08-0'));

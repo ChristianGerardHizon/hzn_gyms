@@ -7,7 +7,8 @@ abstract class PocketBaseCollections {
   static const String users = 'users';
   static const String userRoles = 'userRoles';
 
-  // Organization
+  // Organizations
+  static const String organizations = 'organizations';
   static const String branches = 'branches';
   static const String printerConfigs = 'printerConfigs';
 

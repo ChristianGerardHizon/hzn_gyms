@@ -1,12 +1,12 @@
-import 'package:ebe_gym/src/core/packages/app_info/app_info_provider.dart';
-import 'package:ebe_gym/src/core/packages/pocketbase/pb_connectivity_provider.dart';
-import 'package:ebe_gym/src/core/routing/pending_redirect_provider.dart';
-import 'package:ebe_gym/src/core/routing/router_utils.dart';
-import 'package:ebe_gym/src/core/sync/outbox_sync_worker.dart';
-import 'package:ebe_gym/src/features/auth/domain/auth_state.dart';
-import 'package:ebe_gym/src/features/auth/domain/user.dart';
-import 'package:ebe_gym/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:ebe_gym/src/features/auth/presentation/pages/login_page.dart';
+import 'package:hzn_gyms/src/core/packages/app_info/app_info_provider.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pb_connectivity_provider.dart';
+import 'package:hzn_gyms/src/core/routing/pending_redirect_provider.dart';
+import 'package:hzn_gyms/src/core/routing/router_utils.dart';
+import 'package:hzn_gyms/src/core/sync/outbox_sync_worker.dart';
+import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
+import 'package:hzn_gyms/src/features/auth/domain/user.dart';
+import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/auth/presentation/pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +29,7 @@ class _FakeAuthController extends AuthController {
   Future<AuthState?> build() async => null;
 
   @override
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(String email, String password) async {
     state = const AsyncLoading();
     await Future<void>.delayed(Duration.zero);
     if (shouldFail) {
@@ -108,8 +108,8 @@ _baseOverrides() => [
   pbConnectivityProvider.overrideWith(_FakePbConnectivity.new),
   appInfoProvider.overrideWith(
     (ref) async => PackageInfo(
-      appName: 'ebe_gym',
-      packageName: 'com.test.ebe_gym',
+      appName: 'hzn_gyms',
+      packageName: 'com.test.hzn_gyms',
       version: '1.0.0',
       buildNumber: '1',
     ),
@@ -118,7 +118,7 @@ _baseOverrides() => [
 ];
 
 Future<void> _fillAndSubmit(WidgetTester tester) async {
-  await tester.enterText(find.byType(TextField).at(0), 'cashier');
+  await tester.enterText(find.byType(TextField).at(0), 'cashier@test.com');
   await tester.enterText(find.byType(TextField).at(1), 'secret123');
   await tester.tap(find.byType(FilledButton));
   await tester.pumpAndSettle();
@@ -202,7 +202,7 @@ void main() {
 
       await _fillAndSubmit(tester);
 
-      expect(find.text('Invalid username or password.'), findsOneWidget);
+      expect(find.text('Invalid email or password.'), findsOneWidget);
       expect(find.byType(LoginPage), findsOneWidget);
       expect(find.text('DASHBOARD'), findsNothing);
     });

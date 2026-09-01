@@ -59,6 +59,14 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       v.revenueByItemType;
   static const Field<SalesReport, Map<String, num>> _f$revenueByItemType =
       Field('revenueByItemType', _$revenueByItemType, opt: true, def: const {});
+  static Map<String, int>? _$transactionCountByItemType(SalesReport v) =>
+      v.transactionCountByItemType;
+  static const Field<SalesReport, Map<String, int>>
+  _f$transactionCountByItemType = Field(
+    'transactionCountByItemType',
+    _$transactionCountByItemType,
+    opt: true,
+  );
   static int _$unpaidSalesCount(SalesReport v) => v.unpaidSalesCount;
   static const Field<SalesReport, int> _f$unpaidSalesCount = Field(
     'unpaidSalesCount',
@@ -94,6 +102,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
     #revenueByPaymentMethod: _f$revenueByPaymentMethod,
     #topSellingProducts: _f$topSellingProducts,
     #revenueByItemType: _f$revenueByItemType,
+    #transactionCountByItemType: _f$transactionCountByItemType,
     #unpaidSalesCount: _f$unpaidSalesCount,
     #unpaidBalance: _f$unpaidBalance,
     #staffPerformance: _f$staffPerformance,
@@ -109,6 +118,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       revenueByPaymentMethod: data.dec(_f$revenueByPaymentMethod),
       topSellingProducts: data.dec(_f$topSellingProducts),
       revenueByItemType: data.dec(_f$revenueByItemType),
+      transactionCountByItemType: data.dec(_f$transactionCountByItemType),
       unpaidSalesCount: data.dec(_f$unpaidSalesCount),
       unpaidBalance: data.dec(_f$unpaidBalance),
       staffPerformance: data.dec(_f$staffPerformance),
@@ -192,6 +202,8 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
   get topSellingProducts;
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
   get revenueByItemType;
+  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
+  get transactionCountByItemType;
   ListCopyWith<
     $R,
     StaffSalesSummary,
@@ -207,6 +219,7 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
     Map<String, num>? revenueByPaymentMethod,
     List<ProductSalesSummary>? topSellingProducts,
     Map<String, num>? revenueByItemType,
+    Map<String, int>? transactionCountByItemType,
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
@@ -260,6 +273,15 @@ class _SalesReportCopyWithImpl<$R, $Out>
     (v) => call(revenueByItemType: v),
   );
   @override
+  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
+  get transactionCountByItemType => $value.transactionCountByItemType != null
+      ? MapCopyWith(
+          $value.transactionCountByItemType!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(transactionCountByItemType: v),
+        )
+      : null;
+  @override
   ListCopyWith<
     $R,
     StaffSalesSummary,
@@ -286,6 +308,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
     Map<String, num>? revenueByPaymentMethod,
     List<ProductSalesSummary>? topSellingProducts,
     Map<String, num>? revenueByItemType,
+    Object? transactionCountByItemType = $none,
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
@@ -301,6 +324,8 @@ class _SalesReportCopyWithImpl<$R, $Out>
         #revenueByPaymentMethod: revenueByPaymentMethod,
       if (topSellingProducts != null) #topSellingProducts: topSellingProducts,
       if (revenueByItemType != null) #revenueByItemType: revenueByItemType,
+      if (transactionCountByItemType != $none)
+        #transactionCountByItemType: transactionCountByItemType,
       if (unpaidSalesCount != null) #unpaidSalesCount: unpaidSalesCount,
       if (unpaidBalance != null) #unpaidBalance: unpaidBalance,
       if (staffPerformance != null) #staffPerformance: staffPerformance,
@@ -327,6 +352,10 @@ class _SalesReportCopyWithImpl<$R, $Out>
     revenueByItemType: data.get(
       #revenueByItemType,
       or: $value.revenueByItemType,
+    ),
+    transactionCountByItemType: data.get(
+      #transactionCountByItemType,
+      or: $value.transactionCountByItemType,
     ),
     unpaidSalesCount: data.get(#unpaidSalesCount, or: $value.unpaidSalesCount),
     unpaidBalance: data.get(#unpaidBalance, or: $value.unpaidBalance),

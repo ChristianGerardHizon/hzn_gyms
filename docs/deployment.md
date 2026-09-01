@@ -62,9 +62,9 @@ Same model as sannjose_animal_clinic:
 | Environment | GitHub Release tag | Release title |
 |-------------|--------------------|---------------|
 | Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK (APK omitted when `web-only`) | `Deploy X.Y.Z to Staging` |
-| Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) | `Deploy X.Y.Z to Production` |
+| Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) | `vX.Y.Z` |
 
-Auto-promote opens the staging→main PR as **`Deploy vX.Y.Z to Production`** (adds `(web-only)` when applicable).
+Auto-promote opens the staging→main PR as **`vX.Y.Z`** (adds `(web-only)` when applicable). The Actions run name uses that PR title.
 
 Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`) and optional `web_only`.
 
@@ -144,7 +144,7 @@ PR merged to main
       ├─ Download APK artifact
       ├─ Create GitHub Release
       │   Tag: vX.Y.Z
-      │   Title: Deploy X.Y.Z to Production
+      │   Title: vX.Y.Z
       │   Artifact: app-release.apk
       └─ PATCH Version Manager API with new version
 ```
@@ -160,7 +160,7 @@ Labeled PR merged to staging
   │   └─ If yes → skip
   │
   └─ Create PR: staging → main
-      Title: "Deploy vX.Y.Z to Production" (or "... (web-only)")
+      Title: "vX.Y.Z" (or "vX.Y.Z (web-only)")
       Body: includes source PR number and title
 ```
 
@@ -213,20 +213,20 @@ The SSH user needs write access to:
 
 | Path | Purpose |
 |------|---------|
-| `/opt/pocketbase/ebegym-staging/pb_public/` | Staging web build |
-| `/opt/pocketbase/ebegym-staging/pb_migrations/` | Staging PocketBase migrations |
-| `/opt/pocketbase/ebegym/pb_public/` | Production web build |
-| `/opt/pocketbase/ebegym/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/kyliegym-staging/pb_public/` | Staging web build |
+| `/opt/pocketbase/kyliegym-staging/pb_migrations/` | Staging PocketBase migrations |
+| `/opt/pocketbase/kyliegym/pb_public/` | Production web build |
+| `/opt/pocketbase/kyliegym/pb_migrations/` | Production PocketBase migrations |
 
 ### Passwordless Sudo
 
 The SSH user needs passwordless sudo for restarting PocketBase services. Add to `/etc/sudoers.d/deploy`:
 
 ```
-deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_ebegym.service, /bin/systemctl restart pocketbase_ebegym-staging.service
+deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_kyliegym.service, /bin/systemctl restart pocketbase_kyliegym-staging.service
 ```
 
-Configured on the server as `/etc/sudoers.d/deploy-ebegym`.
+Configured on the server as `/etc/sudoers.d/deploy-kyliegym`.
 
 ---
 
@@ -284,7 +284,7 @@ Versions are tracked via an external PocketBase instance (the "Version Manager")
 | Environment | Version Format | Tag Format | Release title | Example |
 |-------------|---------------|------------|---------------|---------|
 | Staging | `X.Y.Z-staging` | `staging-X.Y.Z` or `staging-X.Y.Z-build.N` | `Deploy X.Y.Z to Staging` | `1.2.4-staging` / `staging-1.2.4-build.42` |
-| Production | `X.Y.Z` | `vX.Y.Z` | `Deploy X.Y.Z to Production` | `1.2.4` / `v1.2.4` |
+| Production | `X.Y.Z` | `vX.Y.Z` | `vX.Y.Z` | `1.2.4` / `v1.2.4` |
 
 ---
 
@@ -314,7 +314,7 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 
 | Platform | CI/CD Status | Notes |
 |----------|-------------|-------|
-| Android (APK) | Fully automated | Signed release builds for both environments |
+| Android (APK) | Disabled | `DEPLOY_WEB_ONLY=true` in deploy workflows — HZN Gyms is web-only |
 | Web | Fully automated | Standard builds for both environments. Auto-deployed via SSH/rsync to PocketBase `pb_public/`. |
 | iOS | Not configured | Would require macOS runner + signing certificates |
 | macOS | Not configured | Would require macOS runner |
@@ -347,8 +347,8 @@ Shared bash script used by GitHub Actions (and local Linux/macOS emergency deplo
 
 | Environment | Server root | Service |
 |-------------|-------------|---------|
-| staging | `/opt/pocketbase/ebegym-staging` | `pocketbase_ebegym-staging.service` |
-| prod | `/opt/pocketbase/ebegym` | `pocketbase_ebegym.service` |
+| staging | `/opt/pocketbase/kyliegym-staging` | `pocketbase_kyliegym-staging.service` |
+| prod | `/opt/pocketbase/kyliegym` | `pocketbase_kyliegym.service` |
 
 ---
 

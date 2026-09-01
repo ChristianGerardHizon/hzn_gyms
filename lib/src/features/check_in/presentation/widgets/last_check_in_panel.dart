@@ -12,9 +12,11 @@ import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/presentation/widgets/member_membership_detail_dialog.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../../memberships/domain/membership_status_colors.dart';
 import '../../domain/check_in.dart';
 import '../../domain/check_in_membership_eligibility.dart';
 import '../../domain/check_in_membership_highlight.dart';
+import '../../domain/membership_expiry_label.dart';
 import '../controllers/member_check_ins_controller.dart';
 
 /// Opens the active membership detail modal for a member, or shows info when
@@ -25,28 +27,40 @@ Future<void> showActiveMembershipFromCheckIn(
   required String memberId,
   required String memberName,
 }) async {
-  final membership = await ref.read(
-    memberActiveMembershipProvider(memberId).future,
+  // Keep the autoDispose provider alive for the duration of this await so a
+  // mid-fetch dispose does not complete as null and flash "No active membership".
+  final subscription = ref.listenManual(
+    memberActiveMembershipProvider(memberId),
+    (_, __) {},
   );
-  if (!context.mounted) return;
+  try {
+    final membership = await ref.read(
+      memberActiveMembershipProvider(memberId).future,
+    );
+    if (!context.mounted) return;
 
-  if (membership == null) {
-    showInfoSnackBar(context, message: 'No active membership');
+    if (membership == null) {
+      showInfoSnackBar(context, message: 'No active membership');
+      return;
+    }
+
+    await showMemberMembershipDetailDialog(
+      context,
+      memberMembership: membership,
+      memberId: memberId,
+      memberName: memberName,
+      showPhoto: true,
+    );
+  } on MemberActiveMembershipCancelled {
     return;
+  } finally {
+    subscription.close();
   }
-
-  await showMemberMembershipDetailDialog(
-    context,
-    memberMembership: membership,
-    memberId: memberId,
-    memberName: memberName,
-    showPhoto: true,
-  );
 }
 
 /// Sidebar panel showing details about the most recent check-in.
 ///
-/// Displays: member avatar, name, membership info, check-in time,
+/// Displays: member avatar, name, membership expiry status,
 /// and their recent check-in history.
 class LastCheckInPanel extends ConsumerWidget {
   const LastCheckInPanel({super.key, required this.checkIn});
@@ -100,7 +114,6 @@ class LastCheckInPanel extends ConsumerWidget {
                   checkIn: checkIn,
                   memberAsync: memberAsync,
                   membershipsAsync: membershipsAsync,
-                  timeFormat: timeFormat,
                   onTap: () => showActiveMembershipFromCheckIn(
                     context,
                     ref,
@@ -215,7 +228,6 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
     required this.checkIn,
     required this.memberAsync,
     required this.membershipsAsync,
-    required this.timeFormat,
     this.onTap,
   });
 
@@ -223,7 +235,6 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
   final CheckIn checkIn;
   final AsyncValue<Member?> memberAsync;
   final AsyncValue<MemberMembership?> membershipsAsync;
-  final DateFormat timeFormat;
   final VoidCallback? onTap;
 
   @override
@@ -232,8 +243,9 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
       data: resolveCheckInMembershipHighlight,
     );
     final statusColor = highlight != null
-        ? _highlightColor(highlight)
+        ? checkInMembershipHighlightColor(highlight)
         : null;
+    final dateFormat = DateFormat('MMM dd, yyyy');
 
     final content = Column(
       children: [
@@ -260,25 +272,44 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
             ),
           ),
           error: (_, __) => const SizedBox.shrink(),
-          data: (membership) => Text(
-            membership != null
-                ? 'Membership: ${membership.membershipName ?? 'Active'}'
-                : 'No Active Membership',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: membership != null
-                  ? theme.colorScheme.onSurfaceVariant
-                  : Colors.red,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Checked in at ${timeFormat.format(checkIn.checkInTime)} Today',
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: statusColor ?? theme.colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
+          data: (membership) {
+            if (membership == null) {
+              return Text(
+                'No Active Membership',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              );
+            }
+            return Column(
+              children: [
+                Text(
+                  'Membership: ${membership.membershipName ?? 'Active'}',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formatMembershipExpiryLabel(
+                    endDate: membership.endDate,
+                    daysRemaining: membership.daysRemaining,
+                    dateFormat: dateFormat,
+                  ),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: membershipLifecycleColor(
+                      daysRemaining: membership.daysRemaining,
+                    ),
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            );
+          },
         ),
       ],
     );
@@ -310,14 +341,6 @@ class _MembershipStatusProfileBlock extends StatelessWidget {
       ),
     );
   }
-}
-
-Color _highlightColor(CheckInMembershipHighlight highlight) {
-  return switch (highlight) {
-    CheckInMembershipHighlight.active => Colors.green,
-    CheckInMembershipHighlight.nearExpiry => Colors.orange,
-    CheckInMembershipHighlight.expired => Colors.red,
-  };
 }
 
 /// A single check-in history entry with timeline-style indicator.
@@ -413,6 +436,13 @@ class _CheckInHistoryTile extends StatelessWidget {
   }
 }
 
+/// Thrown when [memberActiveMembershipProvider] is disposed mid-fetch.
+///
+/// Callers must not treat this as "no active membership".
+class MemberActiveMembershipCancelled implements Exception {
+  const MemberActiveMembershipCancelled();
+}
+
 /// Provider that fetches the first active membership for a member
 /// that is valid at the current branch and paid if linked to a sale.
 /// Used by the sidebar to display membership info without a full controller.
@@ -422,14 +452,20 @@ final memberActiveMembershipProvider = FutureProvider.family.autoDispose((
 ) async {
   final branchId = ref.watch(effectiveBranchIdForWriteProvider);
   final repo = ref.read(memberMembershipRepositoryProvider);
+  final salesRepo = ref.read(salesRepositoryProvider);
+
   final result = await repo.fetchActive(memberId, validAtBranchId: branchId);
+  if (!ref.mounted) throw const MemberActiveMembershipCancelled();
+
   final memberships = result.fold(
     (_) => <MemberMembership>[],
     (list) => list,
   );
   final eligible = await filterCheckInEligibleMemberships(
     memberships: memberships,
-    salesRepo: ref.read(salesRepositoryProvider),
+    salesRepo: salesRepo,
   );
+  if (!ref.mounted) throw const MemberActiveMembershipCancelled();
+
   return eligible.isNotEmpty ? eligible.first : null;
 });

@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/users/presentation/widgets/dialogs/create_user_dialog.dart';
+import 'package:hzn_gyms/src/features/users/presentation/widgets/dialogs/create_user_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

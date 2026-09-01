@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/routing/routes/members.routes.dart';
+import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../memberships/domain/membership_status_colors.dart';
 import '../controllers/expiring_memberships_controller.dart';
@@ -126,11 +127,7 @@ class _ExpiringMembershipTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    days == 0
-                        ? 'Today'
-                        : days == 1
-                            ? '1 day left'
-                            : '$days days left',
+                    formatDaysRemainingLabel(days),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: urgencyColor,
                       fontWeight: FontWeight.w600,

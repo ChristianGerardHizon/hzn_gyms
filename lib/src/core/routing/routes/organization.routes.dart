@@ -7,8 +7,10 @@ import '../../widgets/form_feedback.dart';
 import '../../widgets/state/error_state.dart';
 import '../../../features/organization/presentation/pages/organization_shell.dart';
 import '../../../features/settings/domain/branch.dart';
+import '../../../features/settings/domain/branch_color_preset.dart';
 import '../../../features/settings/presentation/controllers/branches_controller.dart';
 import '../../../features/settings/presentation/widgets/dialogs/branch_form_dialog.dart';
+import '../../widgets/branch_code_pill.dart';
 import '../../../features/users/domain/user_tab.dart';
 import '../../../features/users/presentation/controllers/paginated_users_controller.dart';
 import '../../../features/users/presentation/controllers/user_roles_controller.dart';
@@ -721,32 +723,47 @@ class _OrganizationBranchDetailPage extends ConsumerWidget {
                     ),
                     _buildDetailRow(
                       theme,
+                      icon: Icons.tag,
+                      label: 'Code',
+                      valueWidget: BranchCodePill(
+                        label: branch.pillLabel,
+                        tooltip: branch.name,
+                        color: BranchColorPreset.resolveColor(
+                          branch.color,
+                          fallback: theme.colorScheme.tertiary,
+                        ),
+                      ),
+                    ),
+                    _buildDetailRow(
+                      theme,
+                      icon: Icons.palette_outlined,
+                      label: 'Pill color',
+                      value: BranchColorPreset.byId(branch.color)?.label ?? '—',
+                    ),
+                    _buildDetailRow(
+                      theme,
                       icon: Icons.location_on,
                       label: 'Address',
-                      value: branch.address,
+                      value: branchDetailValue(branch.address),
                     ),
                     _buildDetailRow(
                       theme,
                       icon: Icons.phone,
                       label: 'Contact Number',
-                      value: branch.contactNumber,
+                      value: branchDetailValue(branch.contactNumber),
                     ),
-                    if (branch.operatingHours != null &&
-                        branch.operatingHours!.isNotEmpty)
-                      _buildDetailRow(
-                        theme,
-                        icon: Icons.schedule,
-                        label: 'Operating Hours',
-                        value: branch.operatingHours!,
-                      ),
-                    if (branch.cutOffTime != null &&
-                        branch.cutOffTime!.isNotEmpty)
-                      _buildDetailRow(
-                        theme,
-                        icon: Icons.timer_off,
-                        label: 'Cut-off Time',
-                        value: branch.cutOffTime!,
-                      ),
+                    _buildDetailRow(
+                      theme,
+                      icon: Icons.schedule,
+                      label: 'Operating Hours',
+                      value: branchDetailValue(branch.operatingHours),
+                    ),
+                    _buildDetailRow(
+                      theme,
+                      icon: Icons.timer_off,
+                      label: 'Cut-off Time',
+                      value: branchDetailValue(branch.cutOffTime),
+                    ),
                     if (branch.created != null)
                       _buildDetailRow(
                         theme,
@@ -775,8 +792,10 @@ class _OrganizationBranchDetailPage extends ConsumerWidget {
     ThemeData theme, {
     required IconData icon,
     required String label,
-    required String value,
+    String? value,
+    Widget? valueWidget,
   }) {
+    assert(value != null || valueWidget != null);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -795,10 +814,11 @@ class _OrganizationBranchDetailPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                valueWidget ??
+                    Text(
+                      value!,
+                      style: theme.textTheme.bodyMedium,
+                    ),
               ],
             ),
           ),

@@ -4,7 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../../../core/widgets/select_branch_for_action_dialog.dart';
 import '../../domain/card_check_in_result.dart';
+import '../../domain/check_in_block_reason.dart';
+import '../../domain/check_in_cooldown.dart';
 import '../../domain/editable_text_focus.dart';
 import '../../domain/rfid_keyboard_wedge_decoder.dart';
 import '../../domain/rfid_wedge_candidate_key.dart';
@@ -12,6 +15,10 @@ import '../controllers/check_in_controller.dart';
 import '../controllers/rfid_listener_status.dart';
 import 'check_in_error_dialog.dart';
 import 'check_in_success_dialog.dart';
+
+const _rfidNeedsBranchMessage =
+    'Check-in cannot be done while viewing all branches. '
+    'Select a branch first.';
 
 /// Listens for HID keyboard-wedge RFID/barcode scans on Check-In.
 ///
@@ -201,19 +208,27 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
     _isProcessing = true;
 
     try {
+      _dialogOpen = true;
+      final hasBranch = await ensureWritableBranch(
+        context,
+        ref,
+        message: _rfidNeedsBranchMessage,
+      );
+      if (!hasBranch || !mounted) return;
+
       final result = await ref
           .read(checkInControllerProvider.notifier)
           .cardCheckIn(cardValue: cardValue);
 
       if (!mounted) return;
 
-      _dialogOpen = true;
       switch (result) {
         case CardCheckInSuccess(
           :final memberName,
           :final membershipName,
           :final membershipEndDate,
           :final membershipDaysRemaining,
+          :final memberPhoto,
         ):
           await showCheckInSuccessDialog(
             context,
@@ -222,6 +237,7 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
             membershipName: membershipName,
             membershipEndDate: membershipEndDate,
             membershipDaysRemaining: membershipDaysRemaining,
+            memberPhotoUrl: memberPhoto,
           );
         case CardCheckInCardNotFound():
           await showCheckInErrorDialog(
@@ -234,31 +250,44 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
         case CardCheckInNoActiveMembership(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'No Active Membership',
-            message:
-                '$memberName has no active membership and cannot check in.',
+            title: checkInBlockTitle(CheckInBlockReason.noActiveMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.noActiveMembership,
+              memberName,
+            ),
+          );
+        case CardCheckInUnpaidMembership(:final memberName):
+          await showCheckInErrorDialog(
+            context,
+            title: checkInBlockTitle(CheckInBlockReason.unpaidMembership),
+            message: checkInBlockMessage(
+              CheckInBlockReason.unpaidMembership,
+              memberName,
+            ),
           );
         case CardCheckInMembershipNotValidAtBranch(:final memberName):
           await showCheckInErrorDialog(
             context,
-            title: 'Not Valid at This Branch',
-            message:
-                '$memberName has an active membership, but it is not valid '
-                'at this branch.',
+            title: checkInBlockTitle(CheckInBlockReason.notValidAtBranch),
+            message: checkInBlockMessage(
+              CheckInBlockReason.notValidAtBranch,
+              memberName,
+            ),
           );
         case CardCheckInNoBranch():
-          await showCheckInErrorDialog(
-            context,
-            title: 'Select a Branch',
-            message:
-                'Choose a specific branch before checking in with RFID. '
-                '"All branches" cannot be used for check-in.',
-          );
+          // User already dismissed or race while switching — do nothing.
+          break;
         case CardCheckInFailed():
           await showCheckInErrorDialog(
             context,
             title: 'Check-In Failed',
-            message: 'Something went wrong while recording the check-in.',
+            message: 'Could not record check-in. Try again.',
+          );
+        case CardCheckInCooldown(:final remaining):
+          await showCheckInErrorDialog(
+            context,
+            title: 'Check-In Too Soon',
+            message: checkInCooldownMessage(remaining),
           );
       }
     } finally {
@@ -269,21 +298,108 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
 
   @override
   Widget build(BuildContext context) {
+    final showIndicator = !_windowFocused;
     return Stack(
       fit: StackFit.expand,
       children: [
         widget.child,
-        if (!_windowFocused)
-          Positioned.fill(
-            child: _NotInFocusOverlay(onResume: _requestFocus),
+        Positioned.fill(
+          child: AnimatedOpacity(
+            opacity: showIndicator ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            child: IgnorePointer(
+              ignoring: !showIndicator,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _requestFocus,
+                child: const _InactiveBorderIndicator(),
+              ),
+            ),
           ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: AnimatedSlide(
+            offset: showIndicator ? Offset.zero : const Offset(0, -1),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: AnimatedOpacity(
+              opacity: showIndicator ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              child: IgnorePointer(
+                ignoring: !showIndicator,
+                child: _PausedBanner(onResume: _requestFocus),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _NotInFocusOverlay extends StatelessWidget {
-  const _NotInFocusOverlay({required this.onResume});
+/// Draws an animated pulsing border around the entire screen to indicate
+/// the window is not focused. Content remains fully visible underneath.
+class _InactiveBorderIndicator extends StatefulWidget {
+  const _InactiveBorderIndicator();
+
+  @override
+  State<_InactiveBorderIndicator> createState() =>
+      _InactiveBorderIndicatorState();
+}
+
+class _InactiveBorderIndicatorState extends State<_InactiveBorderIndicator>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.error;
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (context, child) {
+        return IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: color.withValues(alpha: _opacity.value),
+                width: 5,
+              ),
+            ),
+            child: const SizedBox.expand(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A compact top banner indicating RFID scanning is paused.
+class _PausedBanner extends StatelessWidget {
+  const _PausedBanner({required this.onResume});
 
   final VoidCallback onResume;
 
@@ -292,38 +408,39 @@ class _NotInFocusOverlay extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Material(
-      color: colorScheme.surface.withValues(alpha: 0.92),
-      child: InkWell(
-        onTap: onResume,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.desktop_access_disabled_outlined,
-                  size: 72,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Not in focus',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+    return AnimatedOpacity(
+      opacity: 1.0,
+      duration: const Duration(milliseconds: 250),
+      child: Material(
+        color: colorScheme.errorContainer,
+        elevation: 2,
+        child: InkWell(
+          onTap: onResume,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.sensors_off_outlined,
+                    size: 20,
+                    color: colorScheme.onErrorContainer,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Click or tap here to resume RFID scanning',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      'RFID scanning paused \u2014 click anywhere to resume',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

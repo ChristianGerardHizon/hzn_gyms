@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/core/packages/sentry/sentry_config.dart';
+import 'package:hzn_gyms/src/core/packages/sentry/sentry_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -26,6 +26,15 @@ void main() {
       expect(
         sentryDsnFor(environment: 'dev', prodDsn: dsn),
         isEmpty,
+      );
+    });
+  });
+
+  group('sentryReleaseLabel', () {
+    test('joins version and build number with plus', () {
+      expect(
+        sentryReleaseLabel(version: '1.22.0', buildNumber: '30'),
+        '1.22.0+30',
       );
     });
   });

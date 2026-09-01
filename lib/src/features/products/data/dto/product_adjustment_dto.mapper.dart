@@ -73,6 +73,31 @@ class ProductAdjustmentDtoMapper extends ClassMapperBase<ProductAdjustmentDto> {
     _$productLot,
     opt: true,
   );
+  static String? _$sale(ProductAdjustmentDto v) => v.sale;
+  static const Field<ProductAdjustmentDto, String> _f$sale = Field(
+    'sale',
+    _$sale,
+    opt: true,
+  );
+  static bool _$isVoided(ProductAdjustmentDto v) => v.isVoided;
+  static const Field<ProductAdjustmentDto, bool> _f$isVoided = Field(
+    'isVoided',
+    _$isVoided,
+    opt: true,
+    def: false,
+  );
+  static String? _$voidsAdjustment(ProductAdjustmentDto v) => v.voidsAdjustment;
+  static const Field<ProductAdjustmentDto, String> _f$voidsAdjustment = Field(
+    'voidsAdjustment',
+    _$voidsAdjustment,
+    opt: true,
+  );
+  static String? _$voidedBy(ProductAdjustmentDto v) => v.voidedBy;
+  static const Field<ProductAdjustmentDto, String> _f$voidedBy = Field(
+    'voidedBy',
+    _$voidedBy,
+    opt: true,
+  );
   static bool _$isDeleted(ProductAdjustmentDto v) => v.isDeleted;
   static const Field<ProductAdjustmentDto, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -105,6 +130,10 @@ class ProductAdjustmentDtoMapper extends ClassMapperBase<ProductAdjustmentDto> {
     #product: _f$product,
     #productStock: _f$productStock,
     #productLot: _f$productLot,
+    #sale: _f$sale,
+    #isVoided: _f$isVoided,
+    #voidsAdjustment: _f$voidsAdjustment,
+    #voidedBy: _f$voidedBy,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -122,6 +151,10 @@ class ProductAdjustmentDtoMapper extends ClassMapperBase<ProductAdjustmentDto> {
       product: data.dec(_f$product),
       productStock: data.dec(_f$productStock),
       productLot: data.dec(_f$productLot),
+      sale: data.dec(_f$sale),
+      isVoided: data.dec(_f$isVoided),
+      voidsAdjustment: data.dec(_f$voidsAdjustment),
+      voidedBy: data.dec(_f$voidedBy),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -209,6 +242,10 @@ abstract class ProductAdjustmentDtoCopyWith<
     String? product,
     String? productStock,
     String? productLot,
+    String? sale,
+    bool? isVoided,
+    String? voidsAdjustment,
+    String? voidedBy,
     bool? isDeleted,
     String? created,
     String? updated,
@@ -238,6 +275,10 @@ class _ProductAdjustmentDtoCopyWithImpl<$R, $Out>
     Object? product = $none,
     Object? productStock = $none,
     Object? productLot = $none,
+    Object? sale = $none,
+    bool? isVoided,
+    Object? voidsAdjustment = $none,
+    Object? voidedBy = $none,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -253,6 +294,10 @@ class _ProductAdjustmentDtoCopyWithImpl<$R, $Out>
       if (product != $none) #product: product,
       if (productStock != $none) #productStock: productStock,
       if (productLot != $none) #productLot: productLot,
+      if (sale != $none) #sale: sale,
+      if (isVoided != null) #isVoided: isVoided,
+      if (voidsAdjustment != $none) #voidsAdjustment: voidsAdjustment,
+      if (voidedBy != $none) #voidedBy: voidedBy,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -270,6 +315,10 @@ class _ProductAdjustmentDtoCopyWithImpl<$R, $Out>
     product: data.get(#product, or: $value.product),
     productStock: data.get(#productStock, or: $value.productStock),
     productLot: data.get(#productLot, or: $value.productLot),
+    sale: data.get(#sale, or: $value.sale),
+    isVoided: data.get(#isVoided, or: $value.isVoided),
+    voidsAdjustment: data.get(#voidsAdjustment, or: $value.voidsAdjustment),
+    voidedBy: data.get(#voidedBy, or: $value.voidedBy),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

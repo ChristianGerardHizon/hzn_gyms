@@ -7,6 +7,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../features/settings/presentation/controllers/camera_preference_controller.dart';
+import '../packages/sentry/report_camera_failure.dart';
 import '../utils/photo_capture_support.dart';
 import 'cached_avatar.dart';
 
@@ -52,6 +53,9 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     final panelDisposed = useRef(false);
     final isActiveRef = useRef(isActive);
     isActiveRef.value = isActive;
+    // Bumped on every release/init so overlapping async work is ignored.
+    final sessionGeneration = useRef(0);
+    final releaseChain = useRef<Future<void>>(Future<void>.value());
 
     final hasCapturedPhoto = photoBytes.value != null;
     final canUseLiveCamera = isLiveCameraSupported();
@@ -65,24 +69,58 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     bool isSessionCancelled() =>
         panelDisposed.value || !isActiveRef.value;
 
-    void releaseCamera() {
+    /// Serializes controller disposal so init always waits for prior releases.
+    Future<void> enqueueControllerDispose(CameraController? controller) {
+      if (controller == null) return releaseChain.value;
+      final release = releaseChain.value
+          .then((_) => disposeCameraController(controller))
+          .catchError((_) {});
+      releaseChain.value = release;
+      return release;
+    }
+
+    Future<void> releaseCamera() {
+      final generation = ++sessionGeneration.value;
       final controller = cameraController.value;
       cameraController.value = null;
       cameraStarted.value = false;
-      controller?.dispose();
+
+      return enqueueControllerDispose(controller).then((_) {
+        // Ignore if a newer session already started.
+        if (generation != sessionGeneration.value) return;
+      });
     }
 
     Future<void> initCamera({
       bool Function()? isDisposed,
       String? forceCameraName,
       bool useAutomatic = false,
+      String startTrigger = 'auto',
+      bool hadController = false,
     }) async {
+      final generation = ++sessionGeneration.value;
+      bool isStale() =>
+          generation != sessionGeneration.value ||
+          isDisposed?.call() == true ||
+          isSessionCancelled();
+
+      await releaseChain.value;
+      if (isStale()) return;
+
       isInitializing.value = true;
       cameraError.value = null;
 
+      String? attemptedCameraName;
+      var enumerateAttempts = 0;
       try {
-        final cameras = await availableCameras();
-        if (isDisposed?.call() == true) return;
+        final cameras = await availableCamerasWithRetry(
+          isCancelled: isStale,
+          onAttempt: (attempt) => enumerateAttempts = attempt,
+        );
+        if (isStale()) return;
+
+        // Enumerate succeeded — don't attribute its attempts to later failures.
+        enumerateAttempts = 0;
 
         availableCameraList.value = cameras;
 
@@ -100,12 +138,13 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
           cameras,
           preferredName: preferred,
         );
+        attemptedCameraName = camera.name;
         final controller = await createInitializedCameraController(
           camera,
           enableAudio: false,
         );
-        if (isDisposed?.call() == true) {
-          await controller.dispose();
+        if (isStale()) {
+          await enqueueControllerDispose(controller);
           return;
         }
 
@@ -120,16 +159,41 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
               .read(cameraPreferenceControllerProvider.notifier)
               .setPreferredCameraName(camera.name);
         }
-      } on CameraException catch (e) {
-        if (isDisposed?.call() != true) {
+      } on CameraException catch (e, stackTrace) {
+        if (!isStale()) {
+          final reportAttempts =
+              shouldReportCameraRetryAttempts(error: e, attemptsUsed: enumerateAttempts);
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'init',
+            cameraName: attemptedCameraName,
+            exceptionCode: e.code,
+            startTrigger: startTrigger,
+            hadController: hadController,
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           cameraError.value = formatCameraInitError(e);
         }
-      } catch (e) {
-        if (isDisposed?.call() != true) {
+      } catch (e, stackTrace) {
+        if (!isStale()) {
+          final reportAttempts =
+              shouldReportCameraRetryAttempts(error: e, attemptsUsed: enumerateAttempts);
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'init',
+            cameraName: attemptedCameraName,
+            startTrigger: startTrigger,
+            hadController: hadController,
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           cameraError.value = formatCameraInitError(e);
         }
       } finally {
-        if (isDisposed?.call() != true) {
+        if (!isStale()) {
           isInitializing.value = false;
         }
       }
@@ -151,12 +215,30 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       var disposed = false;
 
       Future<void> loadCameras() async {
+        var enumerateAttempts = 0;
         try {
-          final cameras = await availableCameras();
+          final cameras = await availableCamerasWithRetry(
+            isCancelled: () => disposed || isSessionCancelled(),
+            onAttempt: (attempt) => enumerateAttempts = attempt,
+          );
           if (!disposed && !isSessionCancelled()) {
             availableCameraList.value = cameras;
           }
-        } catch (_) {
+        } catch (e, stackTrace) {
+          // Skip cancelled / inactive sessions — not actionable failures.
+          if (disposed || isSessionCancelled()) return;
+          final reportAttempts = shouldReportCameraRetryAttempts(
+            error: e,
+            attemptsUsed: enumerateAttempts,
+          );
+          await reportCameraFailure(
+            e,
+            stackTrace,
+            phase: 'enumerate',
+            startTrigger: 'auto',
+            attempt: reportAttempts ? enumerateAttempts : null,
+            maxAttempts: reportAttempts ? cameraBusyRetryAttempts : null,
+          );
           // Listing can fail before permission; initCamera will surface errors.
         }
       }
@@ -176,7 +258,9 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
 
       if (needsUserGesture) {
         // Web: wait for Start camera; still release when becoming inactive.
-        return () => releaseCamera();
+        return () {
+          releaseCamera();
+        };
       }
 
       var cancelled = false;
@@ -184,6 +268,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       Future<void> autoInit() async {
         await initCamera(
           isDisposed: () => cancelled || isSessionCancelled(),
+          startTrigger: 'auto',
         );
       }
 
@@ -197,13 +282,14 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
 
     Future<void> startCamera() async {
       if (isSessionCancelled()) return;
-
-      final existing = cameraController.value;
-      cameraController.value = null;
-      await existing?.dispose();
-
-      cameraStarted.value = false;
-      await initCamera(isDisposed: isSessionCancelled);
+      final hadController = cameraController.value != null;
+      await releaseCamera();
+      if (isSessionCancelled()) return;
+      await initCamera(
+        isDisposed: isSessionCancelled,
+        startTrigger: 'gesture',
+        hadController: hadController,
+      );
     }
 
     Future<void> restartCamera({
@@ -211,16 +297,15 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
       bool useAutomatic = false,
     }) async {
       if (isSessionCancelled()) return;
-
-      final existing = cameraController.value;
-      cameraController.value = null;
-      await existing?.dispose();
-
-      cameraStarted.value = false;
+      final hadController = cameraController.value != null;
+      await releaseCamera();
+      if (isSessionCancelled()) return;
       await initCamera(
         isDisposed: isSessionCancelled,
         forceCameraName: forceCameraName,
         useAutomatic: useAutomatic,
+        startTrigger: 'restart',
+        hadController: hadController,
       );
     }
 
@@ -243,9 +328,7 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
     }
 
     Future<void> applyCaptured(CapturedPhoto captured) async {
-      final controller = cameraController.value;
-      cameraController.value = null;
-      await controller?.dispose();
+      await releaseCamera();
 
       photoBytes.value = captured.bytes;
       selectedPhoto.value = captured.file;
@@ -283,7 +366,13 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
 
         cameraError.value = null;
         await applyCaptured(captured);
-      } catch (_) {
+      } catch (e, stackTrace) {
+        await reportCameraFailure(
+          e,
+          stackTrace,
+          phase: 'capture',
+          startTrigger: 'picker',
+        );
         cameraError.value =
             'Could not open the camera. Try uploading a photo instead.';
       }
@@ -298,12 +387,20 @@ class MemberPhotoCapturePanel extends HookConsumerWidget {
         final captured = await processPickedOrCapturedImage(image);
         if (captured == null) return;
 
-        cameraController.value = null;
-        await controller.dispose();
+        await releaseCamera();
 
         photoBytes.value = captured.bytes;
         selectedPhoto.value = captured.file;
-      } on CameraException catch (e) {
+      } on CameraException catch (e, stackTrace) {
+        await reportCameraFailure(
+          e,
+          stackTrace,
+          phase: 'capture',
+          cameraName: selectedCameraName.value,
+          exceptionCode: e.code,
+          startTrigger: 'live',
+          hadController: true,
+        );
         cameraError.value = e.description ?? 'Failed to capture photo.';
       }
     }

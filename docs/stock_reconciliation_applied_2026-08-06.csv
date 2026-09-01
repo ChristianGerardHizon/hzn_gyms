@@ -1,0 +1,4 @@
+﻿"status","product_id","name","previous_quantity","expected_old","new_quantity","sold_qty","adjustment_id","note"
+"applied","934ppj5avh3t9p1","pandanon 500ml","106","106","98","8","kuwgbl3n821340t","Applied; revert by setting quantity to previous_quantity and creating reverse adjustment"
+"applied","byd43kbrlemf3tj","pandanon 1000ml","41","41","32","9","2dbwgerf0mpqj9h","Applied; revert by setting quantity to previous_quantity and creating reverse adjustment"
+"applied","p2dc6oro2et9zd4","GYM TOWEL","36","36","35","1","o95jlstskw3hexp","Applied; revert by setting quantity to previous_quantity and creating reverse adjustment"

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-import 'package:ebe_gym/src/features/check_in/domain/check_in_realtime.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/check_in_realtime.dart';
 
 void main() {
   RecordSubscriptionEvent eventWithTime(DateTime time) {

@@ -132,7 +132,13 @@ Business branches or locations.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
-| `name` | String | Yes | Branch name |
+| `name` | String | Yes | Full branch name (e.g. "Bacolod Branch") |
+| `code` | String | Yes | Short pill label, max 5 alphanumeric (e.g. `BCD`, `TAL`); unique |
+| `color` | String | No | Pill accent preset id (`teal`, `blue`, `indigo`, `purple`, `pink`, `orange`, `green`, `cyan`) |
+| `address` | String | No | Branch address |
+| `contactNumber` | String | No | Branch contact number |
+| `operatingHours` | String | No | Operating hours text |
+| `cutOffTime` | String | No | Daily cut-off time |
 | `isDeleted` | bool | Yes | Soft delete flag |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
@@ -305,7 +311,7 @@ Physical ID cards linked to gym members for RFID/barcode check-in. Members can h
 | `cardValue` | String | Yes | Unique identifier on the physical card |
 | `label` | String | No | Human-readable name (e.g., "Primary Card") |
 | `status` | MemberCardStatus | Yes | Current card status |
-| `deactivatedAt` | DateTime | No | When card was deactivated/reported lost |
+| `deactivatedAt` | DateTime | No | When card was disabled (or historically reported lost) |
 | `notes` | String | No | Optional notes |
 | `created` | DateTime | No | Creation timestamp (also serves as issued date) |
 | `updated` | DateTime | No | Last update timestamp |
@@ -339,6 +345,10 @@ Member check-in records.
 | `checkedInBy` | String (FK) | No | FK to User (for manual) |
 | `memberMembership` | String (FK) | No | FK to active MemberMembership |
 | `notes` | String | No | Optional notes |
+| `isVoided` | bool | Yes | Soft-voided duplicate/mistake (default false) |
+| `voidedAt` | DateTime | No | When the check-in was voided |
+| `voidedBy` | String (FK) | No | FK to User who voided |
+| `voidReason` | String | No | Optional void reason |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 
@@ -347,6 +357,7 @@ Member check-in records.
 **Relationships:**
 - `member` -> Member
 - `branch` -> Branch (optional)
+- `voidedBy` -> User (optional)
 
 **Enum:** `CheckInMethod { manual, rfid }`
 
@@ -427,10 +438,17 @@ Stock adjustment records.
 | `newValue` | num | Yes | New value |
 | `product` | String (FK) | Conditional | FK to Product (if type=product) |
 | `productStock` | String (FK) | Conditional | FK to ProductStock (if type=productStock) |
+| `productLot` | String (FK) | Conditional | FK to ProductLot (lot adjustments) |
+| `sale` | String (FK) | No | FK to Sale when caused by POS sale/void |
+| `isVoided` | bool | No | True when this adjustment has been voided |
+| `voidsAdjustment` | String (FK) | No | FK to the adjustment this reverse row voids |
+| `voidedBy` | String (FK) | No | FK to User who voided the adjustment |
 
 **Collection:** `productAdjustments`
 
 **Enum:** `ProductAdjustmentType { product, productStock }`
+
+Manual adjustments can be voided from the product Adjustments tab (requires `inventory.adjust`). Sale-linked rows must be voided via the sale.
 
 ---
 
@@ -491,7 +509,7 @@ System-wide audit trail entries written by PocketBase hooks on record create/upd
 
 **Collection:** `activityLogs`
 
-**Note:** Records are created server-side only (API create/update/delete rules are empty). View access requires the `system.admin` permission.
+**Note:** Records are created server-side only (API create/update/delete rules are empty). View access requires `system.admin` or `activityLog.view`.
 
 ---
 

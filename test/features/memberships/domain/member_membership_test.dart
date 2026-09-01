@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/utils/date_utils.dart';
-import 'package:ebe_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:ebe_gym/src/features/memberships/domain/membership.dart';
+import 'package:hzn_gyms/src/core/utils/date_utils.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership.dart';
 
 import '../../../helpers/fixtures.dart';
 
@@ -30,6 +30,37 @@ void main() {
         endDate: DateTime.now().add(const Duration(days: 32)),
       );
       expect(future.isCurrentlyActive, isFalse);
+    });
+
+    test('isPrimaryActiveList includes active and upcoming, excludes expired',
+        () {
+      final active = buildMemberMembership(
+        startDate: DateTime.now().subtract(const Duration(days: 2)),
+        endDate: DateTime.now().add(const Duration(days: 5)),
+      );
+      expect(active.isPrimaryActiveList, isTrue);
+
+      final upcoming = buildMemberMembership(
+        startDate: DateTime.now().add(const Duration(days: 2)),
+        endDate: DateTime.now().add(const Duration(days: 32)),
+      );
+      expect(upcoming.isPrimaryActiveList, isTrue);
+
+      final dateExpired = buildMemberMembership(
+        startDate: DateTime.now().subtract(const Duration(days: 40)),
+        endDate: DateTime.now().subtract(const Duration(days: 1)),
+      );
+      expect(dateExpired.isPrimaryActiveList, isFalse);
+
+      final cancelled = buildMemberMembership(
+        status: MemberMembershipStatus.cancelled,
+      );
+      expect(cancelled.isPrimaryActiveList, isFalse);
+
+      final pending = buildMemberMembership(
+        status: MemberMembershipStatus.pending,
+      );
+      expect(pending.isPrimaryActiveList, isFalse);
     });
 
     test('isExpired uses inclusive end date', () {

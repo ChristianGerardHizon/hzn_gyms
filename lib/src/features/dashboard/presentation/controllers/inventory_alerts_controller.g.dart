@@ -15,6 +15,9 @@ part of 'inventory_alerts_controller.dart';
 /// - vw_low_stock_lot_products (lot-tracked)
 /// - vw_expired_lots
 /// - vw_near_expiration_lots
+///
+/// Low-stock view rows are split into low stock (qty > 0, ≤ threshold) and
+/// out of stock (qty ≤ 0).
 
 @ProviderFor(inventoryAlertsSummary)
 final inventoryAlertsSummaryProvider = InventoryAlertsSummaryProvider._();
@@ -26,6 +29,9 @@ final inventoryAlertsSummaryProvider = InventoryAlertsSummaryProvider._();
 /// - vw_low_stock_lot_products (lot-tracked)
 /// - vw_expired_lots
 /// - vw_near_expiration_lots
+///
+/// Low-stock view rows are split into low stock (qty > 0, ≤ threshold) and
+/// out of stock (qty ≤ 0).
 
 final class InventoryAlertsSummaryProvider
     extends
@@ -44,6 +50,9 @@ final class InventoryAlertsSummaryProvider
   /// - vw_low_stock_lot_products (lot-tracked)
   /// - vw_expired_lots
   /// - vw_near_expiration_lots
+  ///
+  /// Low-stock view rows are split into low stock (qty > 0, ≤ threshold) and
+  /// out of stock (qty ≤ 0).
   InventoryAlertsSummaryProvider._()
     : super(
         from: null,
@@ -71,19 +80,19 @@ final class InventoryAlertsSummaryProvider
 }
 
 String _$inventoryAlertsSummaryHash() =>
-    r'd99d1aeacb415c1f74c48eeb823ca57de9e6cbfe';
+    r'bb501d45e367a2a7218a6f2ac22ffdf789643584';
 
-/// Count of low stock products (including lot-tracked).
+/// Count of low stock products (qty > 0 and ≤ threshold).
 
 @ProviderFor(lowStockAlertsCount)
 final lowStockAlertsCountProvider = LowStockAlertsCountProvider._();
 
-/// Count of low stock products (including lot-tracked).
+/// Count of low stock products (qty > 0 and ≤ threshold).
 
 final class LowStockAlertsCountProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Count of low stock products (including lot-tracked).
+  /// Count of low stock products (qty > 0 and ≤ threshold).
   LowStockAlertsCountProvider._()
     : super(
         from: null,
@@ -111,6 +120,45 @@ final class LowStockAlertsCountProvider
 
 String _$lowStockAlertsCountHash() =>
     r'275864ab3141ee936764ce35024ac36993d0ffda';
+
+/// Count of out-of-stock products (qty ≤ 0).
+
+@ProviderFor(outOfStockAlertsCount)
+final outOfStockAlertsCountProvider = OutOfStockAlertsCountProvider._();
+
+/// Count of out-of-stock products (qty ≤ 0).
+
+final class OutOfStockAlertsCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  /// Count of out-of-stock products (qty ≤ 0).
+  OutOfStockAlertsCountProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'outOfStockAlertsCountProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$outOfStockAlertsCountHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    return outOfStockAlertsCount(ref);
+  }
+}
+
+String _$outOfStockAlertsCountHash() =>
+    r'eb450b9afa43eb6d2ac637129b44cbd7c99ea436';
 
 /// Count of products/lots near expiration.
 
@@ -235,6 +283,52 @@ final class LowStockAlertsProvider
 }
 
 String _$lowStockAlertsHash() => r'08867d682ceec28dc0a0d5357aaa332b28e15c6c';
+
+/// List of out-of-stock alerts for display.
+
+@ProviderFor(outOfStockAlerts)
+final outOfStockAlertsProvider = OutOfStockAlertsProvider._();
+
+/// List of out-of-stock alerts for display.
+
+final class OutOfStockAlertsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<InventoryAlert>>,
+          List<InventoryAlert>,
+          FutureOr<List<InventoryAlert>>
+        >
+    with
+        $FutureModifier<List<InventoryAlert>>,
+        $FutureProvider<List<InventoryAlert>> {
+  /// List of out-of-stock alerts for display.
+  OutOfStockAlertsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'outOfStockAlertsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$outOfStockAlertsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<InventoryAlert>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<InventoryAlert>> create(Ref ref) {
+    return outOfStockAlerts(ref);
+  }
+}
+
+String _$outOfStockAlertsHash() => r'151860dae6d9f8f392ebf7a40facdd2f58a6232a';
 
 /// List of near expiration alerts for display.
 

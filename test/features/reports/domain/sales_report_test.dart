@@ -1,4 +1,5 @@
-import 'package:ebe_gym/src/features/reports/domain/sales_report.dart';
+import 'package:hzn_gyms/src/features/reports/domain/report_aggregations.dart';
+import 'package:hzn_gyms/src/features/reports/domain/sales_report.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';
@@ -60,6 +61,42 @@ void main() {
       final ignored = populatedCore.mergeExtras(extras);
       expect(ignored.totalRevenue, 900);
       expect(ignored.transactionCount, 3);
+    });
+    test('preserves transactionCountByItemType when merging extras', () {
+      const core = SalesReport(
+        totalRevenue: 1000,
+        transactionCount: 5,
+        averageTransactionValue: 200,
+        revenueTrend: [],
+        revenueByPaymentMethod: {},
+        topSellingProducts: [],
+        revenueByItemType: {'membership': 900},
+        transactionCountByItemType: {'membership': 3},
+      );
+
+      final merged = core.mergeExtras(
+        const SalesReportExtras(unpaidSalesCount: 1, unpaidBalance: 50),
+      );
+      expect(merged.transactionCountByItemType, {'membership': 3});
+      expect(merged.unpaidSalesCount, 1);
+    });
+
+    test('null transactionCountByItemType is safe to read', () {
+      const report = SalesReport(
+        totalRevenue: 0,
+        transactionCount: 0,
+        averageTransactionValue: 0,
+        revenueTrend: [],
+        revenueByPaymentMethod: {},
+        topSellingProducts: [],
+        transactionCountByItemType: null,
+      );
+      expect(report.transactionCountByItemType, isNull);
+      final totals = primarySalesItemTypeTotals(
+        report.revenueByItemType,
+        transactionCountByItemType: report.transactionCountByItemType,
+      );
+      expect(totals.membershipCount, 0);
     });
   });
 }

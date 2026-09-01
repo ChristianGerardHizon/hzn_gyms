@@ -1,4 +1,4 @@
-import 'package:ebe_gym/src/features/users/presentation/controllers/user_search_controller.dart';
+import 'package:hzn_gyms/src/features/users/presentation/controllers/user_search_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

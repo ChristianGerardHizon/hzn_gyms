@@ -42,6 +42,28 @@ abstract class MemberCardRepository {
   void invalidateCache();
 }
 
+/// Builds the PocketBase body for a card status change.
+///
+/// Sets [deactivatedAt] when deactivating or reporting lost; clears it when
+/// reactivating to active.
+Map<String, dynamic> memberCardStatusUpdateBody(
+  MemberCardStatus status, {
+  DateTime? now,
+}) {
+  final body = <String, dynamic>{
+    'status': status.name,
+  };
+
+  if (status == MemberCardStatus.deactivated ||
+      status == MemberCardStatus.lost) {
+    body['deactivatedAt'] = (now ?? DateTime.now()).toUtcIso8601();
+  } else if (status == MemberCardStatus.active) {
+    body['deactivatedAt'] = null;
+  }
+
+  return body;
+}
+
 /// Provides the MemberCardRepository instance.
 @Riverpod(keepAlive: true)
 MemberCardRepository memberCardRepository(Ref ref) {
@@ -81,7 +103,7 @@ class MemberCardRepositoryImpl implements MemberCardRepository {
   }
 
   MemberCard _toEntity(RecordModel record) {
-    return MemberCardDto.fromRecord(record).toEntity();
+    return MemberCardDto.fromRecord(record).toEntity(baseUrl: _pb.baseURL);
   }
 
   @override
@@ -175,17 +197,10 @@ class MemberCardRepositoryImpl implements MemberCardRepository {
       String id, MemberCardStatus status) async {
     return TaskEither.tryCatch(
       () async {
-        final body = <String, dynamic>{
-          'status': status.name,
-        };
-
-        // Set deactivatedAt when deactivating or reporting lost
-        if (status == MemberCardStatus.deactivated ||
-            status == MemberCardStatus.lost) {
-          body['deactivatedAt'] = DateTime.now().toUtcIso8601();
-        }
-
-        final record = await _collection.update(id, body: body);
+        final record = await _collection.update(
+          id,
+          body: memberCardStatusUpdateBody(status),
+        );
         invalidateCache();
         return _toEntity(record);
       },

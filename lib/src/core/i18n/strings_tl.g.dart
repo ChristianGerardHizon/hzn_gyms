@@ -42,6 +42,7 @@ class TranslationsTl with BaseTranslations<AppLocale, Translations> implements T
 	@override late final _Translations$failures$tl failures = _Translations$failures$tl._(_root);
 	@override late final _Translations$fields$tl fields = _Translations$fields$tl._(_root);
 	@override late final _Translations$navigation$tl navigation = _Translations$navigation$tl._(_root);
+	@override late final _Translations$organizations$tl organizations = _Translations$organizations$tl._(_root);
 	@override late final _Translations$sort$tl sort = _Translations$sort$tl._(_root);
 	@override late final _Translations$validation$tl validation = _Translations$validation$tl._(_root);
 }
@@ -84,7 +85,7 @@ class _Translations$common$tl implements Translations$common$en {
 	final TranslationsTl _root; // ignore: unused_field
 
 	// Translations
-	@override String get appName => 'Ebe Gym';
+	@override String get appName => 'HZN Gyms';
 	@override String get placeholderText => 'N/A';
 	@override String get save => 'I-save';
 	@override String get cancel => 'Kanselahin';
@@ -135,7 +136,7 @@ class _Translations$failures$tl implements Translations$failures$en {
 	@override String get conflict => 'May nangyaring conflict. Maaaring umiiral na ang resource.';
 	@override String get timeout => 'Nag-timeout ang request. Pakisubukang muli.';
 	@override String get noInternet => 'Walang koneksyon sa internet.';
-	@override String get invalidCredentials => 'Di-wastong username o password.';
+	@override String get invalidCredentials => 'Di-wastong email o password.';
 	@override String get accountDisabled => 'Ang iyong account ay na-disable.';
 	@override String get accountNotVerified => 'Hindi pa na-verify ang iyong account.';
 	@override String get tooManyRequests => 'Masyadong maraming request. Maghintay ng ilang sandali.';
@@ -166,6 +167,11 @@ class _Translations$fields$tl implements Translations$fields$en {
 	@override String get notes => 'Mga Tala';
 	@override String get description => 'Paglalarawan';
 	@override String get category => 'Kategorya';
+	@override String get statusFilters => 'Status';
+	@override String get statusFiltersHint => 'Ipakita ang mga benta na may mga status na ito';
+	@override String get statusPaid => 'Bayad';
+	@override String get statusVoided => 'Voided';
+	@override String get statusAwaitingPayment => 'Naghihintay ng Bayad';
 }
 
 // Path: navigation
@@ -188,6 +194,7 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get sales => 'Cashier';
 	@override String get salesHistory => 'Mga Benta';
 	@override String get organization => 'Organisasyon';
+	@override String get organizations => 'Mga Organisasyon';
 	@override String get checkIn => 'Check-In';
 	@override String get checkInRecords => 'Kasaysayan ng Check-In';
 	@override String get members => 'Mga Miyembro';
@@ -197,6 +204,39 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get account => 'Account';
 	@override String get noBranch => 'Walang Sangay';
 	@override String get allBranches => 'Lahat ng Sangay';
+}
+
+// Path: organizations
+class _Translations$organizations$tl implements Translations$organizations$en {
+	_Translations$organizations$tl._(this._root);
+
+	final TranslationsTl _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Mga Organisasyon';
+	@override String get create => 'Gumawa ng Organisasyon';
+	@override String get edit => 'I-edit ang Organisasyon';
+	@override String get name => 'Pangalan';
+	@override String get slug => 'Slug';
+	@override String get slugHelper => 'Ginagamit para sa subdomain (hal. slug.hzngyms.com)';
+	@override String get displayNameHint => 'Ipinapakita sa app title/branding';
+	@override String get slugValidationError => 'Lowercase letters, numbers, and hyphens lamang';
+	@override String get seedColorValidationError => 'Gumamit ng hex format tulad ng #1E88E5';
+	@override String get splashColorValidationError => 'Gumamit ng hex format tulad ng #FFFFFF';
+	@override String get displayName => 'Display Name';
+	@override String get seedColor => 'Seed Color';
+	@override String get splashBackgroundColor => 'Splash Background Color';
+	@override String get subdomain => 'Subdomain';
+	@override String get dnsStatus => 'DNS Status';
+	@override String get retryDns => 'Subukang Muli ang DNS';
+	@override String get retryDnsSuccess => 'Sinubukan muli ang DNS provisioning';
+	@override String get retryDnsFailed => 'Hindi na-retry ang DNS provisioning';
+	@override String get createSuccess => 'Matagumpay na nagawa ang organisasyon';
+	@override String get updateSuccess => 'Matagumpay na na-update ang organisasyon';
+	@override String get saveFailed => 'Hindi na-save ang organisasyon. Pakisubukang muli.';
+	@override String get emptyList => 'Walang nahanap na organisasyon';
+	@override String get noOrganization => 'Walang Organisasyon';
+	@override String get switchOrganization => 'Palitan ang Organisasyon';
 }
 
 // Path: sort
@@ -267,7 +307,7 @@ extension on TranslationsTl {
 			'auth.resetLinkSent' => ({required Object email}) => 'Naipadala na ang password reset link sa ${email}',
 			'auth.signInToContinue' => 'Mag-sign in upang magpatuloy',
 			'auth.signingIn' => 'Nagsa-sign in...',
-			'common.appName' => 'Ebe Gym',
+			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'I-save',
 			'common.cancel' => 'Kanselahin',
@@ -309,7 +349,7 @@ extension on TranslationsTl {
 			'failures.conflict' => 'May nangyaring conflict. Maaaring umiiral na ang resource.',
 			'failures.timeout' => 'Nag-timeout ang request. Pakisubukang muli.',
 			'failures.noInternet' => 'Walang koneksyon sa internet.',
-			'failures.invalidCredentials' => 'Di-wastong username o password.',
+			'failures.invalidCredentials' => 'Di-wastong email o password.',
 			'failures.accountDisabled' => 'Ang iyong account ay na-disable.',
 			'failures.accountNotVerified' => 'Hindi pa na-verify ang iyong account.',
 			'failures.tooManyRequests' => 'Masyadong maraming request. Maghintay ng ilang sandali.',
@@ -331,6 +371,11 @@ extension on TranslationsTl {
 			'fields.notes' => 'Mga Tala',
 			'fields.description' => 'Paglalarawan',
 			'fields.category' => 'Kategorya',
+			'fields.statusFilters' => 'Status',
+			'fields.statusFiltersHint' => 'Ipakita ang mga benta na may mga status na ito',
+			'fields.statusPaid' => 'Bayad',
+			'fields.statusVoided' => 'Voided',
+			'fields.statusAwaitingPayment' => 'Naghihintay ng Bayad',
 			'navigation.dashboard' => 'Dashboard',
 			'navigation.products' => 'Mga Produkto',
 			'navigation.inventory' => 'Imbentaryo',
@@ -344,6 +389,7 @@ extension on TranslationsTl {
 			'navigation.sales' => 'Cashier',
 			'navigation.salesHistory' => 'Mga Benta',
 			'navigation.organization' => 'Organisasyon',
+			'navigation.organizations' => 'Mga Organisasyon',
 			'navigation.checkIn' => 'Check-In',
 			'navigation.checkInRecords' => 'Kasaysayan ng Check-In',
 			'navigation.members' => 'Mga Miyembro',
@@ -353,6 +399,30 @@ extension on TranslationsTl {
 			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'Walang Sangay',
 			'navigation.allBranches' => 'Lahat ng Sangay',
+			'organizations.title' => 'Mga Organisasyon',
+			'organizations.create' => 'Gumawa ng Organisasyon',
+			'organizations.edit' => 'I-edit ang Organisasyon',
+			'organizations.name' => 'Pangalan',
+			'organizations.slug' => 'Slug',
+			'organizations.slugHelper' => 'Ginagamit para sa subdomain (hal. slug.hzngyms.com)',
+			'organizations.displayNameHint' => 'Ipinapakita sa app title/branding',
+			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens lamang',
+			'organizations.seedColorValidationError' => 'Gumamit ng hex format tulad ng #1E88E5',
+			'organizations.splashColorValidationError' => 'Gumamit ng hex format tulad ng #FFFFFF',
+			'organizations.displayName' => 'Display Name',
+			'organizations.seedColor' => 'Seed Color',
+			'organizations.splashBackgroundColor' => 'Splash Background Color',
+			'organizations.subdomain' => 'Subdomain',
+			'organizations.dnsStatus' => 'DNS Status',
+			'organizations.retryDns' => 'Subukang Muli ang DNS',
+			'organizations.retryDnsSuccess' => 'Sinubukan muli ang DNS provisioning',
+			'organizations.retryDnsFailed' => 'Hindi na-retry ang DNS provisioning',
+			'organizations.createSuccess' => 'Matagumpay na nagawa ang organisasyon',
+			'organizations.updateSuccess' => 'Matagumpay na na-update ang organisasyon',
+			'organizations.saveFailed' => 'Hindi na-save ang organisasyon. Pakisubukang muli.',
+			'organizations.emptyList' => 'Walang nahanap na organisasyon',
+			'organizations.noOrganization' => 'Walang Organisasyon',
+			'organizations.switchOrganization' => 'Palitan ang Organisasyon',
 			'sort.sortBy' => 'Ayusin Ayon Sa',
 			'sort.direction' => 'Direksyon',
 			'sort.ascending' => 'Pataas',

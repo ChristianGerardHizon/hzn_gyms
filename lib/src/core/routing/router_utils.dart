@@ -11,6 +11,7 @@ import 'pending_redirect_provider.dart';
 import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
+import 'routes/sales.routes.dart';
 
 /// Utility functions for router configuration.
 abstract class RouterUtils {
@@ -55,6 +56,11 @@ abstract class RouterUtils {
       return CheckInRecordsRoute.path;
     }
 
+    // Cashier is dashboard-dialog only — redirect standalone /cashier.
+    if (state.uri.path == SalesRoute.path) {
+      return DashboardRoute.path;
+    }
+
     // Check if this route should skip auth check
     final isIgnored = ignoredRoutes.any(
       (route) => currentPath.startsWith(route),
@@ -72,9 +78,11 @@ abstract class RouterUtils {
     }
 
     // 2. Auth loading + protected route - save URL, go to splash
-    // This prevents login flash and preserves deep links on web
+    // This prevents login flash and preserves deep links on web.
+    // Stash synchronously (safe during redirect/build); sync Riverpod state
+    // in a microtask so splash restore cannot race auth completion.
     if (isAuthLoading && !isIgnored) {
-      // Delay state modification to avoid modifying provider during build
+      PendingRedirect.stash(fullUri);
       Future(() {
         ref.read(pendingRedirectProvider.notifier).set(fullUri);
       });
@@ -84,14 +92,15 @@ abstract class RouterUtils {
     // 3. Splash complete - redirect based on auth result
     if (isOnSplashPage && !isAuthLoading) {
       if (isAuthenticated) {
-        // Read pending URL, then clear it after redirect
-        final pendingUrl = ref.read(pendingRedirectProvider);
+        // peek() includes eager stash if provider set has not run yet
+        final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
         if (pendingUrl != null) {
-          Future(() {
-            ref.read(pendingRedirectProvider.notifier).clear();
-          });
+          // Clear synchronously so a racing auth listener cannot also consume
+          // (or miss and default to dashboard).
+          ref.read(pendingRedirectProvider.notifier).clear();
+          return pendingUrl;
         }
-        return pendingUrl ?? '/';
+        return '/';
       }
       return LoginRoute.path;
     }
@@ -99,14 +108,12 @@ abstract class RouterUtils {
     // 4. Login page - redirect if authenticated
     if (isOnLoginPage) {
       if (isAuthenticated) {
-        // Read pending URL, then clear it after redirect
-        final pendingUrl = ref.read(pendingRedirectProvider);
+        final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
         if (pendingUrl != null) {
-          Future(() {
-            ref.read(pendingRedirectProvider.notifier).clear();
-          });
+          ref.read(pendingRedirectProvider.notifier).clear();
+          return pendingUrl;
         }
-        return pendingUrl ?? '/';
+        return '/';
       }
       return null;
     }
@@ -121,11 +128,10 @@ abstract class RouterUtils {
       final permsAsync = ref.read(currentUserPermissionsProvider);
       final perms = permsAsync.value;
       if (perms == null) {
-        // While the role is loading, block admin-only destinations so a deep
-        // link cannot flash Organization / Reports / Outbox / System tabs.
-        if (isPermissionSensitivePath(currentPath)) {
-          return DashboardRoute.path;
-        }
+        // Wait for permissions. Do not redirect sensitive paths to the
+        // dashboard — that permanently loses deep links on web refresh
+        // (e.g. /system/printers). AppRoot hides admin nav while loading;
+        // once perms resolve, canAccessPath / AppRoot kick unauthorized users.
         return null;
       }
       if (!canAccessPath(currentPath, perms)) {

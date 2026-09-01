@@ -1,6 +1,6 @@
-import 'package:ebe_gym/src/core/i18n/strings.g.dart';
-import 'package:ebe_gym/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
-import 'package:ebe_gym/src/features/member_cards/presentation/widgets/member_card_entry_form.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
+import 'package:hzn_gyms/src/features/member_cards/presentation/widgets/member_card_entry_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';

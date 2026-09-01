@@ -44,13 +44,24 @@ class LineChartWidget extends StatelessWidget {
     if (spots.isEmpty) {
       return SizedBox(
         height: height,
-        child: Center(
-          child: Text(
-            'No data available',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null) ...[
+              Text(title!, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+            ],
+            Expanded(
+              child: Center(
+                child: Text(
+                  'No data available',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       );
     }

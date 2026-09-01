@@ -1,5 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../activity_log/presentation/controllers/todays_activity_logs_controller.dart';
 import '../../../sales/presentation/controllers/paginated_sales_controller.dart';
 import 'active_members_count_controller.dart';
 import 'dashboard_kpi_provider.dart';
@@ -12,25 +13,41 @@ import 'todays_sales_controller.dart';
 
 /// Invalidates today's sales list and KPI so Recent Transactions stay current.
 void refreshTodaysSales(WidgetRef ref) {
-  ref.invalidate(todaySalesSummaryProvider);
-  ref.invalidate(todaySalesProvider);
+  refreshTodaysSalesOnContainer(ref.container);
+}
+
+/// Same as [refreshTodaysSales] using a [ProviderContainer] (safe after async gaps).
+void refreshTodaysSalesOnContainer(ProviderContainer container) {
+  container.invalidate(todaySalesSummaryProvider);
+  container.invalidate(todaySalesProvider);
 }
 
 /// Refreshes dashboard sales KPIs and the paginated sales list.
 void refreshSalesData(WidgetRef ref) {
-  refreshTodaysSales(ref);
-  ref.read(paginatedSalesControllerProvider.notifier).refresh();
+  refreshSalesDataOnContainer(ref.container);
+}
+
+/// Same as [refreshSalesData] using a [ProviderContainer] (safe after async gaps).
+void refreshSalesDataOnContainer(ProviderContainer container) {
+  refreshTodaysSalesOnContainer(container);
+  container.read(paginatedSalesControllerProvider.notifier).refresh();
 }
 
 /// Invalidates membership/sales dashboard cards after create or renew.
 void refreshDashboardAfterMemberChange(WidgetRef ref) {
-  refreshSalesData(ref);
-  ref.invalidate(activeMembersCountProvider);
-  ref.invalidate(activeMembersListProvider);
-  ref.invalidate(todaysNewMembersCountProvider);
-  ref.invalidate(todaysNewMembersListProvider);
-  ref.invalidate(expiringMembershipsProvider);
-  ref.invalidate(dashboardMembersPageProvider);
+  refreshDashboardAfterMemberChangeOnContainer(ref.container);
+}
+
+/// Same as [refreshDashboardAfterMemberChange] using a [ProviderContainer]
+/// (safe after async gaps / dialog dispose).
+void refreshDashboardAfterMemberChangeOnContainer(ProviderContainer container) {
+  refreshSalesDataOnContainer(container);
+  container.invalidate(activeMembersCountProvider);
+  container.invalidate(activeMembersListProvider);
+  container.invalidate(todaysNewMembersCountProvider);
+  container.invalidate(todaysNewMembersListProvider);
+  container.invalidate(expiringMembershipsProvider);
+  container.invalidate(dashboardMembersPageProvider);
 }
 
 /// Invalidates all dashboard data providers so KPI, members, sales, and alerts
@@ -48,4 +65,5 @@ Future<void> refreshDashboard(WidgetRef ref) async {
   ref.invalidate(productsNearExpirationCountProvider);
   ref.invalidate(productsExpiredCountProvider);
   ref.invalidate(lowStockProductsCountProvider);
+  ref.invalidate(todaysActivityLogsControllerProvider);
 }

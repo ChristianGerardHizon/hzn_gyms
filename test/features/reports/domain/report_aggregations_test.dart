@@ -1,5 +1,5 @@
-import 'package:ebe_gym/src/features/reports/domain/report_aggregations.dart';
-import 'package:ebe_gym/src/features/reports/domain/report_period.dart';
+import 'package:hzn_gyms/src/features/reports/domain/report_aggregations.dart';
+import 'package:hzn_gyms/src/features/reports/domain/report_period.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -280,6 +280,114 @@ void main() {
     });
   });
 
+  group('primarySalesItemTypeTotals', () {
+    test('sums product, membership, and walkIn; ignores addon', () {
+      final totals = primarySalesItemTypeTotals({
+        'product': 400,
+        'membership': 900,
+        'walkIn': 200,
+        'addon': 50,
+        '': 25,
+      });
+      expect(totals.productTotal, 425);
+      expect(totals.membershipTotal, 900);
+      expect(totals.walkInTotal, 200);
+      expect(totals.productCount, 0);
+      expect(totals.membershipCount, 0);
+      expect(totals.walkInCount, 0);
+    });
+
+    test('sums transaction counts with revenue; ignores addon counts', () {
+      final totals = primarySalesItemTypeTotals(
+        {
+          'product': 400,
+          'membership': 900,
+          'walkIn': 200,
+          'addon': 50,
+        },
+        transactionCountByItemType: {
+          'product': 4,
+          'membership': 2,
+          'walkIn': 5,
+          'addon': 9,
+          '': 1,
+        },
+      );
+      expect(totals.productCount, 5);
+      expect(totals.membershipCount, 2);
+      expect(totals.walkInCount, 5);
+    });
+
+    test('returns zeros for empty map', () {
+      final totals = primarySalesItemTypeTotals(const {});
+      expect(totals.productTotal, 0);
+      expect(totals.membershipTotal, 0);
+      expect(totals.walkInTotal, 0);
+      expect(totals.productCount, 0);
+      expect(totals.membershipCount, 0);
+      expect(totals.walkInCount, 0);
+    });
+
+    test('treats null transaction counts as empty', () {
+      final totals = primarySalesItemTypeTotals(
+        {'membership': 100},
+        transactionCountByItemType: null,
+      );
+      expect(totals.membershipTotal, 100);
+      expect(totals.membershipCount, 0);
+    });
+  });
+
+  group('aggregateScopedTransactionCountByItemType', () {
+    test('counts distinct sales per type within reportable set', () {
+      final counts = aggregateScopedTransactionCountByItemType(
+        [
+          (saleId: 's1', itemType: 'membership'),
+          (saleId: 's1', itemType: 'membership'),
+          (saleId: 's2', itemType: 'walkIn'),
+          (saleId: 's3', itemType: 'product'),
+          (saleId: 's4', itemType: 'product'), // excluded
+          (saleId: 's5', itemType: 'addon'),
+        ],
+        {'s1', 's2', 's3', 's5'},
+      );
+      expect(counts['membership'], 1);
+      expect(counts['walkIn'], 1);
+      expect(counts['product'], 1);
+      expect(counts['addon'], 1);
+    });
+  });
+
+  group('aggregateScopedItemTypeMetrics', () {
+    test('returns matching revenue and distinct sale counts together', () {
+      final metrics = aggregateScopedItemTypeMetrics(
+        [
+          (saleId: 's1', itemType: 'membership', subtotal: 500),
+          (saleId: 's1', itemType: 'membership', subtotal: 100),
+          (saleId: 's2', itemType: 'walkIn', subtotal: 150),
+          (saleId: 's3', itemType: 'product', subtotal: 40),
+          (saleId: 's3', itemType: '', subtotal: 10),
+          (saleId: 's4', itemType: 'product', subtotal: 99), // excluded
+        ],
+        {'s1', 's2', 's3'},
+      );
+      expect(metrics.revenueByItemType['membership'], 600);
+      expect(metrics.revenueByItemType['walkIn'], 150);
+      expect(metrics.revenueByItemType['product'], 50);
+      expect(metrics.transactionCountByItemType['membership'], 1);
+      expect(metrics.transactionCountByItemType['walkIn'], 1);
+      expect(metrics.transactionCountByItemType['product'], 1);
+    });
+  });
+
+  group('salesCountLabel', () {
+    test('singular and plural', () {
+      expect(salesCountLabel(1), '1 sale');
+      expect(salesCountLabel(0), '0 sales');
+      expect(salesCountLabel(12), '12 sales');
+    });
+  });
+
   group('usesPeriodScopedSalesFetch', () {
     test('is true for day, week, and month', () {
       expect(usesPeriodScopedSalesFetch(ReportPeriod.day), isTrue);
@@ -557,6 +665,91 @@ void main() {
       final ids = List.generate(3, (i) => 'id$i');
       final filters = buildIdOrFilters('member', ids, chunkSize: 2);
       expect(filters.length, 2);
+    });
+  });
+
+  group('saleItemMatchesPrimaryType', () {
+    test('membership and walkIn match exact type', () {
+      expect(saleItemMatchesPrimaryType('membership', 'membership'), isTrue);
+      expect(saleItemMatchesPrimaryType('walkIn', 'walkIn'), isTrue);
+      expect(saleItemMatchesPrimaryType('product', 'membership'), isFalse);
+      expect(saleItemMatchesPrimaryType('addon', 'membership'), isFalse);
+    });
+
+    test('empty/null item type matches product only', () {
+      expect(saleItemMatchesPrimaryType(null, 'product'), isTrue);
+      expect(saleItemMatchesPrimaryType('', 'product'), isTrue);
+      expect(saleItemMatchesPrimaryType('product', 'product'), isTrue);
+      expect(saleItemMatchesPrimaryType('addon', 'product'), isFalse);
+      expect(saleItemMatchesPrimaryType(null, 'membership'), isFalse);
+    });
+  });
+
+  group('saleItemsRawFilterForPrimaryType', () {
+    test('builds expected filters', () {
+      expect(
+        saleItemsRawFilterForPrimaryType('membership'),
+        "itemType = 'membership'",
+      );
+      expect(
+        saleItemsRawFilterForPrimaryType('walkIn'),
+        "itemType = 'walkIn'",
+      );
+      expect(
+        saleItemsRawFilterForPrimaryType('product'),
+        "(itemType = 'product' || itemType = '')",
+      );
+    });
+  });
+
+  group('distinctSaleIdsForPrimaryItemType', () {
+    test('returns distinct matching sale ids', () {
+      final items = [
+        (saleId: 's1', itemType: 'membership'),
+        (saleId: 's1', itemType: 'addon'),
+        (saleId: 's2', itemType: 'product'),
+        (saleId: 's3', itemType: ''),
+        (saleId: 's4', itemType: 'walkIn'),
+        (saleId: '', itemType: 'membership'),
+      ];
+      expect(
+        distinctSaleIdsForPrimaryItemType(items, 'membership'),
+        ['s1'],
+      );
+      expect(
+        distinctSaleIdsForPrimaryItemType(items, 'product'),
+        ['s2', 's3'],
+      );
+      expect(
+        distinctSaleIdsForPrimaryItemType(items, 'walkIn'),
+        ['s4'],
+      );
+    });
+  });
+
+  group('descriptorDetailAfterCustomerName', () {
+    test('returns plan fragment after name', () {
+      expect(
+        descriptorDetailAfterCustomerName('Juan Dela Cruz · Monthly Plan'),
+        'Monthly Plan',
+      );
+      expect(
+        descriptorDetailAfterCustomerName('Juan · Plan · Extra'),
+        'Plan · Extra',
+      );
+      expect(descriptorDetailAfterCustomerName('WATER'), isNull);
+      expect(descriptorDetailAfterCustomerName(null), isNull);
+      expect(descriptorDetailAfterCustomerName(' · Plan'), isNull);
+    });
+  });
+
+  group('shouldCapSalesByItemType', () {
+    test('caps year and allTime only', () {
+      expect(shouldCapSalesByItemType(ReportPeriod.day), isFalse);
+      expect(shouldCapSalesByItemType(ReportPeriod.weekly), isFalse);
+      expect(shouldCapSalesByItemType(ReportPeriod.monthly), isFalse);
+      expect(shouldCapSalesByItemType(ReportPeriod.yearly), isTrue);
+      expect(shouldCapSalesByItemType(ReportPeriod.allTime), isTrue);
     });
   });
 

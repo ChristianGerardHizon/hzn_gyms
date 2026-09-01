@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy ebe-gym to the PocketBase server via SSH + rsync.
+# HZN Gyms deploy — web assets to PocketBase via SSH + rsync.
 # Designed for GitHub Actions (ubuntu runners). Mirrors sannjose_animal_clinic deploy flow.
 #
 # Prerequisites (CI):
@@ -111,12 +111,12 @@ fi
 
 case "$ENVIRONMENT" in
   staging)
-    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/ebegym-staging}"
-    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_ebegym-staging.service}"
+    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/kyliegym-staging}"
+    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_kyliegym-staging.service}"
     ;;
   prod)
-    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/ebegym}"
-    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_ebegym.service}"
+    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/kyliegym}"
+    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_kyliegym.service}"
     ;;
 esac
 
@@ -130,7 +130,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "$REPO_ROOT"
 
 echo "========================================"
-echo " ebe-gym deploy"
+echo " hzn-gyms deploy"
 echo " Environment : ${ENVIRONMENT}"
 echo " SSH         : ${REMOTE}"
 echo " Server root : ${SERVER_ROOT}"

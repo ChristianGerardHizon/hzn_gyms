@@ -5,6 +5,8 @@
 email: test@test.com  
 password: password101
 
+> This is a normal app `users` account, **not** a PocketBase superuser. Admin hooks like `POST /api/ebe/update-created` require `_superusers` credentials — see [update_created_endpoint.md](update_created_endpoint.md).
+
 ## Unit tests
 
 Run the suite:

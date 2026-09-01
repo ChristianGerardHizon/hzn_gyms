@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/features/pos/domain/cart_item.dart';
-import 'package:ebe_gym/src/features/pos/presentation/cart_controller.dart';
+import 'package:hzn_gyms/src/features/pos/domain/cart_item.dart';
+import 'package:hzn_gyms/src/features/pos/presentation/cart_controller.dart';
 
 import '../../../helpers/fixtures.dart';
 

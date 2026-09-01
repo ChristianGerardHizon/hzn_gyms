@@ -4,9 +4,13 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../members/presentation/controllers/member_provider.dart';
+import '../../../settings/domain/branch.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../domain/check_in.dart';
 import '../controllers/check_in_records_controller.dart';
 import '../controllers/check_in_records_date_controller.dart';
@@ -23,6 +27,8 @@ class CheckInRecordsPage extends ConsumerWidget {
     final horizontalPad = isMobile ? 16.0 : 24.0;
     final selectedDate = ref.watch(checkInRecordsDateControllerProvider);
     final checkInsAsync = ref.watch(checkInRecordsControllerProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
     final dateFormat = DateFormat('EEE, MMM d, yyyy');
     final timeFormat = DateFormat('hh:mm a');
     final isToday = selectedDate == toLocalDateOnly(DateTime.now());
@@ -52,7 +58,8 @@ class CheckInRecordsPage extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: checkInsAsync.whenOrNull(
+                  child:
+                      checkInsAsync.whenOrNull(
                         data: (checkIns) => Text(
                           '${checkIns.length} check-in'
                           '${checkIns.length == 1 ? '' : 's'}',
@@ -131,6 +138,8 @@ class CheckInRecordsPage extends ConsumerWidget {
                       return _CheckInRecordTile(
                         checkIn: checkIn,
                         timeFormat: timeFormat,
+                        showBranch: viewingAll,
+                        branches: branches,
                       );
                     },
                   ),
@@ -216,15 +225,29 @@ class _DateSelector extends ConsumerWidget {
 }
 
 class _CheckInRecordTile extends ConsumerWidget {
-  const _CheckInRecordTile({required this.checkIn, required this.timeFormat});
+  const _CheckInRecordTile({
+    required this.checkIn,
+    required this.timeFormat,
+    required this.showBranch,
+    required this.branches,
+  });
 
   final CheckIn checkIn;
   final DateFormat timeFormat;
+  final bool showBranch;
+  final List<Branch> branches;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final memberAsync = ref.watch(memberProvider(checkIn.memberId));
+    final branchPill = showBranch
+        ? BranchCodePill.fromBranches(
+            branchId: checkIn.branchId,
+            branches: branches,
+            dense: true,
+          )
+        : null;
 
     return ListTile(
       leading: CachedAvatar(
@@ -232,12 +255,44 @@ class _CheckInRecordTile extends ConsumerWidget {
         radius: 20,
         thumbSize: 80,
       ),
-      title: Text(checkIn.memberName ?? 'Unknown Member'),
-      subtitle: Text(
-        '${timeFormat.format(checkIn.checkInTime)} · ${checkIn.method.displayName}',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              checkIn.memberName ?? 'Unknown Member',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (checkIn.isVoided) ...[
+            const SizedBox(width: 8),
+            Chip(
+              label: const Text('Voided'),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: EdgeInsets.zero,
+              labelStyle: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+              backgroundColor: theme.colorScheme.errorContainer,
+            ),
+          ],
+        ],
+      ),
+      subtitle: Row(
+        children: [
+          Flexible(
+            child: Text(
+              '${timeFormat.format(checkIn.checkInTime)} · ${checkIn.method.displayName}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          if (branchPill != null) ...[const SizedBox(width: 6), branchPill],
+        ],
       ),
       trailing: Icon(
         Icons.chevron_right,

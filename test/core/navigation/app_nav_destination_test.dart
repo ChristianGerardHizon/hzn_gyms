@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ebe_gym/src/core/navigation/app_nav_destination.dart';
-import 'package:ebe_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:ebe_gym/src/features/users/domain/user_role.dart';
+import 'package:hzn_gyms/src/core/navigation/app_nav_destination.dart';
+import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
+import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 
 void main() {
   group('visibleAppNavDestinations', () {
@@ -24,7 +24,7 @@ void main() {
 
         expect(ids, contains(AppNavId.dashboard));
         expect(ids, contains(AppNavId.checkIn));
-        expect(ids, contains(AppNavId.cashier));
+        expect(ids, isNot(contains(AppNavId.cashier)));
         expect(ids, contains(AppNavId.sales));
         expect(ids, contains(AppNavId.products));
         expect(ids, contains(AppNavId.members));
@@ -67,7 +67,7 @@ void main() {
       expect(ids, contains(AppNavId.organization));
       expect(ids, isNot(contains(AppNavId.profile)));
       expect(ids, contains(AppNavId.reports));
-      expect(ids, contains(AppNavId.outbox));
+      expect(ids, isNot(contains(AppNavId.outbox)));
     });
   });
 
@@ -99,14 +99,17 @@ void main() {
       expect(canAccessPath('/outbox', staff), isFalse);
     });
 
-    test('allows appearance and camera but not other system tabs for staff', () {
-      expect(canAccessPath('/system', staff), isTrue);
-      expect(canAccessPath('/system/appearance', staff), isTrue);
-      expect(canAccessPath('/system/camera', staff), isTrue);
-      expect(canAccessPath('/system/product-categories', staff), isFalse);
-      expect(canAccessPath('/system/printers', staff), isFalse);
-      expect(canAccessPath('/system/activity-log', staff), isFalse);
-    });
+    test(
+      'allows appearance and camera but not other system tabs for staff',
+      () {
+        expect(canAccessPath('/system', staff), isTrue);
+        expect(canAccessPath('/system/appearance', staff), isTrue);
+        expect(canAccessPath('/system/camera', staff), isTrue);
+        expect(canAccessPath('/system/product-categories', staff), isFalse);
+        expect(canAccessPath('/system/printers', staff), isFalse);
+        expect(canAccessPath('/system/activity-log', staff), isFalse);
+      },
+    );
 
     test('allows appearance and camera without settings.view', () {
       const noSettings = CurrentUserPermissions(
@@ -118,14 +121,14 @@ void main() {
       expect(canAccessPath('/system/product-categories', noSettings), isFalse);
     });
 
-    test('keeps activity log admin-only', () {
+    test('allows activity log for staff with activityLog.view', () {
       final withActivityLog = CurrentUserPermissions(
-        permissions: {...staff.permissions, 'activityLog.view'},
+        permissions: {...staff.permissions, Permissions.activityLogView},
       );
-      expect(canAccessPath('/system/activity-log', withActivityLog), isFalse);
+      expect(canAccessPath('/system/activity-log', withActivityLog), isTrue);
       expect(
         canAccessPath('/system/activity-log/abc', withActivityLog),
-        isFalse,
+        isTrue,
       );
       expect(
         canAccessPath('/system/product-categories', withActivityLog),
@@ -194,11 +197,27 @@ void main() {
   });
 
   group('CurrentUserPermissions', () {
-    test('isAdmin grants has() checks but not sales void without sales.void', () {
-      const perms = CurrentUserPermissions(isAdmin: true);
-      expect(perms.has(Permissions.salesVoid), isTrue);
-      expect(perms.canVoidSales, isFalse);
-      expect(perms.canViewActivityLog, isTrue);
+    test(
+      'isAdmin grants has() checks but not sales void without sales.void',
+      () {
+        const perms = CurrentUserPermissions(isAdmin: true);
+        expect(perms.has(Permissions.salesVoid), isTrue);
+        expect(perms.canVoidSales, isFalse);
+        expect(perms.canEditProductQuantity, isTrue);
+        expect(perms.canViewActivityLog, isTrue);
+      },
+    );
+
+    test('canEditProductQuantity requires products.editQuantity or admin', () {
+      const withPerm = CurrentUserPermissions(
+        permissions: {Permissions.productsEditQuantity},
+      );
+      expect(withPerm.canEditProductQuantity, isTrue);
+
+      const staff = CurrentUserPermissions(
+        permissions: {Permissions.productsEdit},
+      );
+      expect(staff.canEditProductQuantity, isFalse);
     });
 
     test('canVoidSales requires explicit sales.void permission', () {
@@ -214,11 +233,19 @@ void main() {
       expect(adminOnly.canVoidSales, isFalse);
     });
 
-    test('activity log requires system admin', () {
-      const legacyViewer = CurrentUserPermissions(
-        permissions: {'activityLog.view'},
+    test('activity log is granted to admins and activityLog.view', () {
+      const viewer = CurrentUserPermissions(
+        permissions: {Permissions.activityLogView},
       );
-      expect(legacyViewer.canViewActivityLog, isFalse);
+      expect(viewer.canViewActivityLog, isTrue);
+
+      const staff = CurrentUserPermissions(
+        permissions: {Permissions.membersView},
+      );
+      expect(staff.canViewActivityLog, isFalse);
+
+      const admin = CurrentUserPermissions(isAdmin: true);
+      expect(admin.canViewActivityLog, isTrue);
     });
 
     test('fromRole sets sales.void only when present', () {
@@ -263,6 +290,32 @@ void main() {
       const admin = CurrentUserPermissions(isAdmin: true);
       expect(admin.canEditMemberships, isTrue);
     });
+
+    test(
+      'canExcludeMembershipFromSales follows memberships.excludeFromSales',
+      () {
+        final withPerm = CurrentUserPermissions.fromRole(
+          const UserRole(
+            id: '1',
+            name: 'Manager',
+            permissions: [Permissions.membershipsExcludeFromSales],
+          ),
+        );
+        expect(withPerm.canExcludeMembershipFromSales, isTrue);
+
+        final withoutPerm = CurrentUserPermissions.fromRole(
+          const UserRole(
+            id: '2',
+            name: 'Staff',
+            permissions: [Permissions.membershipsCreate],
+          ),
+        );
+        expect(withoutPerm.canExcludeMembershipFromSales, isFalse);
+
+        const admin = CurrentUserPermissions(isAdmin: true);
+        expect(admin.canExcludeMembershipFromSales, isTrue);
+      },
+    );
   });
 
   group('selectedNavIndexForPath', () {

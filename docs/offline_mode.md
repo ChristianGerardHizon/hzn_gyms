@@ -6,7 +6,7 @@ Status: **partial** — outbox implemented for member create/update (with photo)
 
 - Generic Drift `outbox` table + sync worker (FIFO, `dependsOnId` ordering)
 - Member create/update offline with local photo attachments
-- Membership renew offline (sale → saleItems → memberMembership → addOns chain; sale steps skipped when “Exclude from sales” is checked)
+- Membership renew/assign offline (sale → saleItems → memberMembership → addOns chain; sale steps skipped when “Exclude from sales” is checked and the user has `memberships.excludeFromSales`)
 - Drift read cache for membership plans + add-ons (required for offline renew)
 - Pending sync count UI in app shell; member list pending badge
 - Client-generated PocketBase ids (15-char) on creates to avoid ID remapping

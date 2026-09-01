@@ -3,8 +3,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../pos/domain/sale.dart';
 import '../../../sales/presentation/widgets/sale_status_chip.dart';
+import '../../../settings/domain/branch.dart';
+import '../../../settings/presentation/controllers/branches_controller.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/todays_sales_controller.dart';
 import 'kpi_breakdown_dialogs.dart';
 import 'sale_quick_view_dialog.dart';
@@ -13,15 +17,17 @@ import 'sale_quick_view_dialog.dart';
 class RecentTransactionsSection extends HookConsumerWidget {
   const RecentTransactionsSection({super.key});
 
-  static const _maxPreview = 5;
-  static const _cardWidth = 168.0;
-  static const _listHeight = 148.0;
+  static const _maxPreview = 10;
+  static const _cardWidth = 200.0;
+  static const _listHeight = 160.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isExpanded = useState(true);
     final salesAsync = ref.watch(todaySalesProvider);
+    final viewingAll = ref.watch(viewingAllBranchesProvider);
+    final branches = ref.watch(branchesControllerProvider).value ?? const [];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -91,6 +97,7 @@ class RecentTransactionsSection extends HookConsumerWidget {
                 final preview = sales.take(_maxPreview).toList();
                 return SizedBox(
                   height: _listHeight,
+                  width: double.infinity,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: preview.length,
@@ -101,6 +108,8 @@ class RecentTransactionsSection extends HookConsumerWidget {
                         width: _cardWidth,
                         child: _RecentTransactionCard(
                           sale: sale,
+                          showBranchPill: viewingAll,
+                          branches: branches,
                           onTap: () => showSaleQuickViewDialog(
                             context,
                             saleId: sale.id,
@@ -114,6 +123,7 @@ class RecentTransactionsSection extends HookConsumerWidget {
               },
               loading: () => const SizedBox(
                 height: _listHeight,
+                width: double.infinity,
                 child: Center(
                   child: SizedBox(
                     width: 24,
@@ -152,10 +162,14 @@ class _RecentTransactionCard extends StatelessWidget {
   const _RecentTransactionCard({
     required this.sale,
     required this.onTap,
+    required this.showBranchPill,
+    required this.branches,
   });
 
   final Sale sale;
   final VoidCallback onTap;
+  final bool showBranchPill;
+  final List<Branch> branches;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +178,13 @@ class _RecentTransactionCard extends StatelessWidget {
     final timeFormat = DateFormat('hh:mm a');
     final timeLabel =
         sale.created != null ? timeFormat.format(sale.created!) : '—';
+    final branchPill = showBranchPill
+        ? BranchCodePill.fromBranches(
+            branchId: sale.branchId,
+            branches: branches,
+            dense: true,
+          )
+        : null;
 
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
@@ -207,11 +228,22 @@ class _RecentTransactionCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Text(
-                timeLabel,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              Row(
+                children: [
+                  if (branchPill != null) ...[
+                    branchPill,
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text(
+                      timeLabel,
+                      textAlign: TextAlign.end,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

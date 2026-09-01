@@ -238,6 +238,167 @@ String normalizeSalesItemType(String? itemType) {
   return itemType;
 }
 
+/// Primary sales KPI totals from a `revenueByItemType` map.
+///
+/// Sums `product` / `membership` / `walkIn` only (add-ons excluded). Empty or
+/// unknown keys that normalize to `product` count toward products.
+///
+/// When [transactionCountByItemType] is provided, sums matching counts the
+/// same way (add-ons excluded).
+({
+  num productTotal,
+  num membershipTotal,
+  num walkInTotal,
+  int productCount,
+  int membershipCount,
+  int walkInCount,
+})
+primarySalesItemTypeTotals(
+  Map<String, num> revenueByItemType, {
+  Map<String, int>? transactionCountByItemType,
+}) {
+  num productTotal = 0;
+  num membershipTotal = 0;
+  num walkInTotal = 0;
+  var productCount = 0;
+  var membershipCount = 0;
+  var walkInCount = 0;
+  for (final entry in revenueByItemType.entries) {
+    final type = normalizeSalesItemType(entry.key);
+    if (type == 'product') {
+      productTotal += entry.value;
+    } else if (type == 'membership') {
+      membershipTotal += entry.value;
+    } else if (type == 'walkIn') {
+      walkInTotal += entry.value;
+    }
+  }
+  for (final entry in (transactionCountByItemType ?? const {}).entries) {
+    final type = normalizeSalesItemType(entry.key);
+    if (type == 'product') {
+      productCount += entry.value;
+    } else if (type == 'membership') {
+      membershipCount += entry.value;
+    } else if (type == 'walkIn') {
+      walkInCount += entry.value;
+    }
+  }
+  return (
+    productTotal: productTotal,
+    membershipTotal: membershipTotal,
+    walkInTotal: walkInTotal,
+    productCount: productCount,
+    membershipCount: membershipCount,
+    walkInCount: walkInCount,
+  );
+}
+
+/// Distinct reportable sales per item type (for period-scoped fetches).
+Map<String, int> aggregateScopedTransactionCountByItemType(
+  Iterable<({String saleId, String? itemType})> items,
+  Set<String> reportableSaleIds,
+) {
+  return aggregateScopedItemTypeMetrics(
+    items.map(
+      (i) => (saleId: i.saleId, itemType: i.itemType, subtotal: 0),
+    ),
+    reportableSaleIds,
+  ).transactionCountByItemType;
+}
+
+/// Item-type revenue + distinct sale counts from period-scoped sale lines.
+///
+/// Only includes lines on [reportableSaleIds]. Keys are normalized the same
+/// way for both maps (`product` / `membership` / `walkIn` / `addon`).
+({
+  Map<String, num> revenueByItemType,
+  Map<String, int> transactionCountByItemType,
+})
+aggregateScopedItemTypeMetrics(
+  Iterable<({String saleId, String? itemType, num subtotal})> items,
+  Set<String> reportableSaleIds,
+) {
+  final revenueByItemType = <String, num>{};
+  final saleIdsByType = <String, Set<String>>{};
+  for (final item in items) {
+    if (!reportableSaleIds.contains(item.saleId)) continue;
+    final type = normalizeSalesItemType(item.itemType);
+    revenueByItemType[type] = (revenueByItemType[type] ?? 0) + item.subtotal;
+    (saleIdsByType[type] ??= <String>{}).add(item.saleId);
+  }
+  return (
+    revenueByItemType: revenueByItemType,
+    transactionCountByItemType: {
+      for (final entry in saleIdsByType.entries) entry.key: entry.value.length,
+    },
+  );
+}
+
+/// Display label for a sale count (e.g. `1 sale`, `12 sales`).
+String salesCountLabel(int count) =>
+    '$count ${count == 1 ? 'sale' : 'sales'}';
+
+/// Max transactions returned for Year / All Time KPI drill-down dialogs.
+const kSalesByItemTypeYearCap = 200;
+
+/// Whether [getSalesByItemType] should cap results for this period.
+bool shouldCapSalesByItemType(ReportPeriod period) =>
+    period == ReportPeriod.yearly || period == ReportPeriod.allTime;
+
+/// Whether a sale line matches a primary Sales KPI type.
+///
+/// [targetType] is one of `membership` / `walkIn` / `product`. Add-ons never
+/// match. Empty/null item types match `product` (same as KPI aggregation).
+bool saleItemMatchesPrimaryType(String? itemType, String targetType) {
+  final normalized = normalizeSalesItemType(itemType);
+  if (normalized == 'addon') return false;
+  if (targetType == 'product') return normalized == 'product';
+  return normalized == targetType;
+}
+
+/// PocketBase raw filter for saleItems matching a primary KPI type.
+String saleItemsRawFilterForPrimaryType(String targetType) {
+  switch (targetType) {
+    case 'membership':
+      return "itemType = 'membership'";
+    case 'walkIn':
+      return "itemType = 'walkIn'";
+    case 'product':
+      // Empty/null lines normalize to product in KPI aggregation.
+      return "(itemType = 'product' || itemType = '')";
+    default:
+      return "itemType = '$targetType'";
+  }
+}
+
+/// Distinct sale IDs whose lines match [targetType] (membership/walkIn/product).
+List<String> distinctSaleIdsForPrimaryItemType(
+  Iterable<({String saleId, String? itemType})> items,
+  String targetType,
+) {
+  final ids = <String>{};
+  for (final item in items) {
+    if (item.saleId.isEmpty) continue;
+    if (saleItemMatchesPrimaryType(item.itemType, targetType)) {
+      ids.add(item.saleId);
+    }
+  }
+  return ids.toList(growable: false);
+}
+
+/// Plan / item fragment from a membership descriptor (`Name · Plan`).
+///
+/// Returns null when there is no ` · ` separator after a non-empty name.
+String? descriptorDetailAfterCustomerName(String? descriptor) {
+  final value = descriptor?.trim();
+  if (value == null || value.isEmpty) return null;
+  const sep = ' · ';
+  final index = value.indexOf(sep);
+  if (index <= 0) return null;
+  final detail = value.substring(index + sep.length).trim();
+  return detail.isEmpty ? null : detail;
+}
+
 /// Whether Day/Week/Month should fetch period-scoped raw rows instead of
 /// all-history SQL views.
 ///
@@ -354,11 +515,8 @@ Map<String, num> aggregateScopedRevenueByItemType(
   Iterable<({String saleId, String? itemType, num subtotal})> items,
   Set<String> reportableSaleIds,
 ) {
-  return aggregateRevenueByItemType(
-    items
-        .where((i) => reportableSaleIds.contains(i.saleId))
-        .map((i) => (itemType: i.itemType, subtotal: i.subtotal)),
-  );
+  return aggregateScopedItemTypeMetrics(items, reportableSaleIds)
+      .revenueByItemType;
 }
 
 /// Counts unpaid / AR sales (excludes voided and legacy refunded).

@@ -53,7 +53,7 @@ final class PendingRedirectProvider
   }
 }
 
-String _$pendingRedirectHash() => r'8adadcc2dbad6c37eb148a9f5101c423cecda7e9';
+String _$pendingRedirectHash() => r'03ed44262d56c720c992661c48f9cab12ea79eb7';
 
 /// Stores the URL user intended to visit before auth resolved.
 ///

@@ -25,17 +25,33 @@ abstract class CheckInRepository {
     String? notes,
   });
 
-  /// Fetches today's check-ins for a branch, or all branches when [branchId] is null.
+  /// Soft-voids a check-in (audit trail; excluded from today's active list).
+  FutureEither<CheckIn> voidCheckIn({
+    required String id,
+    required String voidedById,
+    String? reason,
+  });
+
+  /// Fetches today's non-voided check-ins for a branch, or all branches when
+  /// [branchId] is null.
   FutureEither<List<CheckIn>> fetchTodaysCheckIns(String? branchId);
 
-  /// Fetches check-ins for a local calendar [date], optionally scoped to [branchId].
+  /// Fetches check-ins for a local calendar [date], optionally scoped to
+  /// [branchId]. Includes voided rows by default (for records UI).
   FutureEither<List<CheckIn>> fetchByDate({
     required DateTime date,
     String? branchId,
+    bool includeVoided = true,
   });
 
   /// Fetches check-ins for a specific member.
   FutureEither<List<CheckIn>> fetchByMember(String memberId);
+
+  /// Latest non-voided check-in for [memberId] at [branchId], if any.
+  FutureEither<CheckIn?> fetchLatestForMember({
+    required String memberId,
+    required String branchId,
+  });
 
   /// Subscribes to check-in create/update/delete events.
   ///
@@ -107,9 +123,31 @@ class CheckInRepositoryImpl implements CheckInRepository {
         'checkedInBy': checkedInBy,
         'memberMembership': memberMembershipId,
         'notes': notes,
+        'isVoided': false,
       };
 
       final record = await _collection.create(body: body);
+      invalidateCache();
+      return _toEntity(record);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<CheckIn> voidCheckIn({
+    required String id,
+    required String voidedById,
+    String? reason,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final body = <String, dynamic>{
+        'isVoided': true,
+        'voidedAt': DateTime.now().toUtcIso8601(),
+        'voidedBy': voidedById,
+        if (reason != null && reason.trim().isNotEmpty)
+          'voidReason': reason.trim(),
+      };
+
+      final record = await _collection.update(id, body: body);
       invalidateCache();
       return _toEntity(record);
     }, Failure.handle).run();
@@ -122,7 +160,11 @@ class CheckInRepositoryImpl implements CheckInRepository {
       return Right(_cachedTodaysCheckIns!);
     }
 
-    final result = await fetchByDate(date: DateTime.now(), branchId: branchId);
+    final result = await fetchByDate(
+      date: DateTime.now(),
+      branchId: branchId,
+      includeVoided: false,
+    );
 
     return result.map((checkIns) {
       _cachedTodaysCheckIns = checkIns;
@@ -136,6 +178,7 @@ class CheckInRepositoryImpl implements CheckInRepository {
   FutureEither<List<CheckIn>> fetchByDate({
     required DateTime date,
     String? branchId,
+    bool includeVoided = true,
   }) async {
     return TaskEither.tryCatch(() async {
       final localDate = toLocalDateOnly(date);
@@ -151,6 +194,9 @@ class CheckInRepositoryImpl implements CheckInRepository {
           .before('checkInTime', endOfDay);
       if (branchId != null && branchId.isNotEmpty) {
         filter = filter.relation('branch', branchId);
+      }
+      if (!includeVoided) {
+        filter = filter.isFalse('isVoided');
       }
 
       final records = await _collection.getFullList(
@@ -179,6 +225,30 @@ class CheckInRepositoryImpl implements CheckInRepository {
   }
 
   @override
+  FutureEither<CheckIn?> fetchLatestForMember({
+    required String memberId,
+    required String branchId,
+  }) async {
+    return TaskEither.tryCatch(() async {
+      final filter = PBFilter()
+          .relation('member', memberId)
+          .relation('branch', branchId)
+          .isFalse('isVoided');
+
+      final records = await _collection.getList(
+        page: 1,
+        perPage: 1,
+        filter: filter.build(),
+        sort: '-checkInTime',
+        expand: 'member',
+      );
+
+      if (records.items.isEmpty) return null;
+      return _toEntity(records.items.first);
+    }, Failure.handle).run();
+  }
+
+  @override
   Future<UnsubscribeFunc> subscribeCheckIns({
     String? branchId,
     required void Function(RecordSubscriptionEvent event) onEvent,
@@ -187,10 +257,6 @@ class CheckInRepositoryImpl implements CheckInRepository {
         ? PBFilter().relation('branch', branchId).build()
         : null;
 
-    return _collection.subscribe(
-      '*',
-      onEvent,
-      filter: filter,
-    );
+    return _collection.subscribe('*', onEvent, filter: filter);
   }
 }

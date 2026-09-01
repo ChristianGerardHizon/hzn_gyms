@@ -22,6 +22,10 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
   final String? product;
   final String? productStock;
   final String? productLot;
+  final String? sale;
+  final bool isVoided;
+  final String? voidsAdjustment;
+  final String? voidedBy;
   final bool isDeleted;
   final String? created;
   final String? updated;
@@ -37,6 +41,10 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
     this.product,
     this.productStock,
     this.productLot,
+    this.sale,
+    this.isVoided = false,
+    this.voidsAdjustment,
+    this.voidedBy,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -57,6 +65,10 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
       product: json['product'] as String?,
       productStock: json['productStock'] as String?,
       productLot: json['productLot'] as String?,
+      sale: json['sale'] as String?,
+      isVoided: json['isVoided'] as bool? ?? false,
+      voidsAdjustment: json['voidsAdjustment'] as String?,
+      voidedBy: json['voidedBy'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
@@ -74,6 +86,10 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
       productId: product,
       productStockId: productStock,
       productLotId: productLot,
+      saleId: sale,
+      isVoided: isVoided,
+      voidsAdjustmentId: voidsAdjustment,
+      voidedById: voidedBy,
       isDeleted: isDeleted,
       created: parseToLocal(created),
       updated: parseToLocal(updated),
@@ -100,6 +116,9 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
     String? productId,
     String? productStockId,
     String? productLotId,
+    String? saleId,
+    String? voidsAdjustmentId,
+    String? voidedById,
   }) {
     return {
       'type': type.name,
@@ -111,6 +130,10 @@ class ProductAdjustmentDto with ProductAdjustmentDtoMappable {
         'productStock': productStockId,
       if (productLotId != null && productLotId.isNotEmpty)
         'productLot': productLotId,
+      if (saleId != null && saleId.isNotEmpty) 'sale': saleId,
+      if (voidsAdjustmentId != null && voidsAdjustmentId.isNotEmpty)
+        'voidsAdjustment': voidsAdjustmentId,
+      if (voidedById != null && voidedById.isNotEmpty) 'voidedBy': voidedById,
     };
   }
 }

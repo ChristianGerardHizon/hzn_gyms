@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:ebe_gym/src/features/check_in/presentation/controllers/rfid_listener_status.dart';
+import 'package:hzn_gyms/src/features/check_in/presentation/controllers/rfid_listener_status.dart';
 
 void main() {
   test('RFID status defaults off and supports enable/pause/disable', () {

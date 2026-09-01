@@ -6,6 +6,8 @@ import '../../../../core/routing/routes/products.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
+import '../../../settings/presentation/controllers/current_branch_controller.dart';
+import '../../domain/product_branch_visibility.dart';
 import '../../domain/product_tab.dart';
 import '../controllers/paginated_products_controller.dart';
 import '../controllers/product_provider.dart';
@@ -31,13 +33,85 @@ class ProductDetailPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productProvider(productId));
+    final currentBranchId = ref.watch(currentBranchIdProvider);
+    final viewingAllBranches = ref.watch(viewingAllBranchesProvider);
     final isTablet = Breakpoints.isTabletOrLarger(context);
+    final mismatchDialogShown = useRef(false);
 
     // Tab controller
     final tabController = useTabController(
       initialLength: ProductTab.values.length,
       initialIndex: initialTab.index,
     );
+
+    final product = productAsync.asData?.value;
+    final productBranchId = product?.branch;
+    final isVisible = product == null ||
+        isProductVisibleForBranch(
+          productBranchId: productBranchId,
+          currentBranchId: currentBranchId,
+          viewingAllBranches: viewingAllBranches,
+        );
+
+    useEffect(() {
+      if (product == null) return null;
+
+      // Reset guard when the product becomes visible again (e.g. switch back).
+      if (isVisible) {
+        mismatchDialogShown.value = false;
+        return null;
+      }
+
+      if (mismatchDialogShown.value) return null;
+      mismatchDialogShown.value = true;
+
+      var cancelled = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+
+        // Re-read providers: branch may have changed before this frame runs.
+        final latestProduct =
+            ref.read(productProvider(productId)).asData?.value;
+        final proceed = shouldProceedWithBranchMismatchRedirect(
+          cancelled: cancelled,
+          productBranchId: latestProduct?.branch,
+          currentBranchId: ref.read(currentBranchIdProvider),
+          viewingAllBranches: ref.read(viewingAllBranchesProvider),
+        );
+        if (!proceed) {
+          mismatchDialogShown.value = false;
+          return;
+        }
+
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Product not available'),
+            content: const Text(
+              'This product is not available in the selected branch.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+
+        if (context.mounted) {
+          const ProductsRoute().go(context);
+        }
+      });
+
+      return () {
+        cancelled = true;
+        // Allow a later mismatch (or the same one after a brief visible
+        // window) to schedule again if this callback never ran.
+        mismatchDialogShown.value = false;
+      };
+    }, [product?.id, productBranchId, currentBranchId, viewingAllBranches]);
 
     return productAsync.when(
       data: (product) {
@@ -104,7 +178,11 @@ class ProductDetailPage extends HookConsumerWidget {
           body: TabBarView(
             controller: tabController,
             children: [
-              ProductOverviewTab(product: product),
+              ProductOverviewTab(
+                product: product,
+                onViewSales: () =>
+                    tabController.animateTo(ProductTab.sales.index),
+              ),
               ProductDetailsTab(product: product),
               ProductStockTab(product: product),
               ProductAdjustmentsTab(product: product),
