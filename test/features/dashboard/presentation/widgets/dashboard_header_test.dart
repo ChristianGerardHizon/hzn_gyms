@@ -37,8 +37,8 @@ void main() {
             ),
             appInfoProvider.overrideWith(
               (ref) async => PackageInfo(
-                appName: 'kylie_gym',
-                packageName: 'com.example.kylie_gym',
+                appName: 'hzn_gyms',
+                packageName: 'com.example.hzn_gyms',
                 version: '1.27.2',
                 buildNumber: '42',
               ),
@@ -79,8 +79,8 @@ void main() {
           ),
           appInfoProvider.overrideWith(
             (ref) async => PackageInfo(
-              appName: 'kylie_gym',
-              packageName: 'com.example.kylie_gym',
+              appName: 'hzn_gyms',
+              packageName: 'com.example.hzn_gyms',
               version: '1.27.2',
               buildNumber: '42',
             ),

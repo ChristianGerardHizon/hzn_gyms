@@ -218,6 +218,11 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get edit => 'I-edit ang Organisasyon';
 	@override String get name => 'Pangalan';
 	@override String get slug => 'Slug';
+	@override String get slugHelper => 'Ginagamit para sa subdomain (hal. slug.hzngyms.com)';
+	@override String get displayNameHint => 'Ipinapakita sa app title/branding';
+	@override String get slugValidationError => 'Lowercase letters, numbers, and hyphens lamang';
+	@override String get seedColorValidationError => 'Gumamit ng hex format tulad ng #1E88E5';
+	@override String get splashColorValidationError => 'Gumamit ng hex format tulad ng #FFFFFF';
 	@override String get displayName => 'Display Name';
 	@override String get seedColor => 'Seed Color';
 	@override String get splashBackgroundColor => 'Splash Background Color';
@@ -399,6 +404,11 @@ extension on TranslationsTl {
 			'organizations.edit' => 'I-edit ang Organisasyon',
 			'organizations.name' => 'Pangalan',
 			'organizations.slug' => 'Slug',
+			'organizations.slugHelper' => 'Ginagamit para sa subdomain (hal. slug.hzngyms.com)',
+			'organizations.displayNameHint' => 'Ipinapakita sa app title/branding',
+			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens lamang',
+			'organizations.seedColorValidationError' => 'Gumamit ng hex format tulad ng #1E88E5',
+			'organizations.splashColorValidationError' => 'Gumamit ng hex format tulad ng #FFFFFF',
 			'organizations.displayName' => 'Display Name',
 			'organizations.seedColor' => 'Seed Color',
 			'organizations.splashBackgroundColor' => 'Splash Background Color',

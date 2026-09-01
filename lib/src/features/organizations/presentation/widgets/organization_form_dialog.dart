@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../domain/organization.dart';
@@ -22,6 +23,7 @@ class OrganizationFormDialog extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = Translations.of(context);
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final dirtyGuard = useFormDirtyGuard(
       formKey: formKey,
@@ -37,12 +39,19 @@ class OrganizationFormDialog extends HookConsumerWidget {
           : null,
     );
     final isSaving = useState(false);
+    final fieldLabels = {
+      'name': t.organizations.name,
+      'slug': t.organizations.slug,
+      'displayName': t.organizations.displayName,
+      'seedColor': t.organizations.seedColor,
+      'splashBackgroundColor': t.organizations.splashBackgroundColor,
+    };
 
     Future<void> handleSave() async {
       final isValid = formKey.currentState!.saveAndValidate();
       if (!isValid) {
         final errors = formKey.currentState?.errors ?? {};
-        final errorMessages = formatFormErrors(errors, _fieldLabels);
+        final errorMessages = formatFormErrors(errors, fieldLabels);
         if (errorMessages.isNotEmpty) {
           showFormErrorDialog(context, errors: errorMessages);
         }
@@ -75,7 +84,7 @@ class OrganizationFormDialog extends HookConsumerWidget {
           isSaving.value = false;
           showFormErrorDialog(
             context,
-            errors: ['Failed to save organization. Please try again.'],
+            errors: [t.organizations.saveFailed],
           );
         }
         return;
@@ -87,14 +96,14 @@ class OrganizationFormDialog extends HookConsumerWidget {
         showSuccessSnackBar(
           context,
           message: isEditing
-              ? 'Organization updated successfully'
-              : 'Organization created successfully',
+              ? t.organizations.updateSuccess
+              : t.organizations.createSuccess,
         );
       }
     }
 
     return FormDialogScaffold(
-      title: isEditing ? 'Edit Organization' : 'Create Organization',
+      title: isEditing ? t.organizations.edit : t.organizations.create,
       formKey: formKey,
       dirtyGuard: dirtyGuard,
       isSaving: isSaving.value,
@@ -105,10 +114,10 @@ class OrganizationFormDialog extends HookConsumerWidget {
           FormBuilderTextField(
             name: 'name',
             initialValue: organization?.name,
-            decoration: const InputDecoration(
-              labelText: 'Name *',
+            decoration: InputDecoration(
+              labelText: '${t.organizations.name} *',
               hintText: 'Kylie Gym',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
             enabled: !isSaving.value,
             validator: FormBuilderValidators.compose([
@@ -120,11 +129,11 @@ class OrganizationFormDialog extends HookConsumerWidget {
           FormBuilderTextField(
             name: 'slug',
             initialValue: organization?.slug,
-            decoration: const InputDecoration(
-              labelText: 'Slug *',
+            decoration: InputDecoration(
+              labelText: '${t.organizations.slug} *',
               hintText: 'kyliegym',
-              helperText: 'Used for subdomain (e.g. slug.hzngyms.com)',
-              border: OutlineInputBorder(),
+              helperText: t.organizations.slugHelper,
+              border: const OutlineInputBorder(),
             ),
             enabled: !isSaving.value,
             inputFormatters: [
@@ -134,7 +143,7 @@ class OrganizationFormDialog extends HookConsumerWidget {
               FormBuilderValidators.required(),
               FormBuilderValidators.match(
                 RegExp(r'^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'),
-                errorText: 'Lowercase letters, numbers, and hyphens only',
+                errorText: t.organizations.slugValidationError,
               ),
             ]),
           ),
@@ -142,10 +151,10 @@ class OrganizationFormDialog extends HookConsumerWidget {
           FormBuilderTextField(
             name: 'displayName',
             initialValue: organization?.displayName,
-            decoration: const InputDecoration(
-              labelText: 'Display Name',
-              hintText: 'Shown in app title/branding',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: t.organizations.displayName,
+              hintText: t.organizations.displayNameHint,
+              border: const OutlineInputBorder(),
             ),
             enabled: !isSaving.value,
           ),
@@ -153,17 +162,17 @@ class OrganizationFormDialog extends HookConsumerWidget {
           FormBuilderTextField(
             name: 'seedColor',
             initialValue: organization?.seedColor,
-            decoration: const InputDecoration(
-              labelText: 'Seed Color',
+            decoration: InputDecoration(
+              labelText: t.organizations.seedColor,
               hintText: '#1E88E5',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
             enabled: !isSaving.value,
             validator: (value) {
               final trimmed = value?.trim() ?? '';
               if (trimmed.isEmpty) return null;
               if (!RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(trimmed)) {
-                return 'Use hex format like #1E88E5';
+                return t.organizations.seedColorValidationError;
               }
               return null;
             },
@@ -172,17 +181,17 @@ class OrganizationFormDialog extends HookConsumerWidget {
           FormBuilderTextField(
             name: 'splashBackgroundColor',
             initialValue: organization?.splashBackgroundColor,
-            decoration: const InputDecoration(
-              labelText: 'Splash Background Color',
+            decoration: InputDecoration(
+              labelText: t.organizations.splashBackgroundColor,
               hintText: '#FFFFFF',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
             ),
             enabled: !isSaving.value,
             validator: (value) {
               final trimmed = value?.trim() ?? '';
               if (trimmed.isEmpty) return null;
               if (!RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(trimmed)) {
-                return 'Use hex format like #FFFFFF';
+                return t.organizations.splashColorValidationError;
               }
               return null;
             },
@@ -197,11 +206,3 @@ String? _nullIfEmpty(String? value) {
   final trimmed = value?.trim() ?? '';
   return trimmed.isEmpty ? null : trimmed;
 }
-
-const _fieldLabels = {
-  'name': 'Name',
-  'slug': 'Slug',
-  'displayName': 'Display Name',
-  'seedColor': 'Seed Color',
-  'splashBackgroundColor': 'Splash Background Color',
-};

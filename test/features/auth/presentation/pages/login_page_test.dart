@@ -108,8 +108,8 @@ _baseOverrides() => [
   pbConnectivityProvider.overrideWith(_FakePbConnectivity.new),
   appInfoProvider.overrideWith(
     (ref) async => PackageInfo(
-      appName: 'kylie_gym',
-      packageName: 'com.test.kylie_gym',
+      appName: 'hzn_gyms',
+      packageName: 'com.test.hzn_gyms',
       version: '1.0.0',
       buildNumber: '1',
     ),

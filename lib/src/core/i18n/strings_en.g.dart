@@ -445,6 +445,21 @@ class Translations$organizations$en {
 	/// en: 'Slug'
 	String get slug => 'Slug';
 
+	/// en: 'Used for subdomain (e.g. slug.hzngyms.com)'
+	String get slugHelper => 'Used for subdomain (e.g. slug.hzngyms.com)';
+
+	/// en: 'Shown in app title/branding'
+	String get displayNameHint => 'Shown in app title/branding';
+
+	/// en: 'Lowercase letters, numbers, and hyphens only'
+	String get slugValidationError => 'Lowercase letters, numbers, and hyphens only';
+
+	/// en: 'Use hex format like #1E88E5'
+	String get seedColorValidationError => 'Use hex format like #1E88E5';
+
+	/// en: 'Use hex format like #FFFFFF'
+	String get splashColorValidationError => 'Use hex format like #FFFFFF';
+
 	/// en: 'Display Name'
 	String get displayName => 'Display Name';
 
@@ -701,6 +716,11 @@ extension on Translations {
 			'organizations.edit' => 'Edit Organization',
 			'organizations.name' => 'Name',
 			'organizations.slug' => 'Slug',
+			'organizations.slugHelper' => 'Used for subdomain (e.g. slug.hzngyms.com)',
+			'organizations.displayNameHint' => 'Shown in app title/branding',
+			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens only',
+			'organizations.seedColorValidationError' => 'Use hex format like #1E88E5',
+			'organizations.splashColorValidationError' => 'Use hex format like #FFFFFF',
 			'organizations.displayName' => 'Display Name',
 			'organizations.seedColor' => 'Seed Color',
 			'organizations.splashBackgroundColor' => 'Splash Background Color',

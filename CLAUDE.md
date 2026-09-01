@@ -24,12 +24,16 @@ See the `pocketbase-schema-change` skill for the Admin API authentication/patch 
 
 ```bash
 # Run code generation (mappers, serializers, routes)
-# IMPORTANT: Always use --low-resources-mode to prevent memory issues
-dart run build_runner build --delete-conflicting-outputs --low-resources-mode
+dart run build_runner build --delete-conflicting-outputs
+
+# After editing assets/i18n/**/*.i18n.json
+dart run slang
 
 # Or use watch mode for continuous rebuilds
-dart run build_runner watch -d --low-resources-mode
+dart run build_runner watch -d
 ```
+
+**Note:** If `build_runner` fails with `InvalidOutputException` on `strings.g.dart` (`Asset already exists`), run `dart run slang` separately for i18n changes; use `build_runner` only for Riverpod/GoRouter/mappers.
 
 ## Key Patterns
 

@@ -10,8 +10,8 @@ void main() {
     'configureSentryFlutterOptions sets release and dist from package info',
     () async {
       PackageInfo.setMockInitialValues(
-        appName: 'kylie_gym',
-        packageName: 'kylie_gym',
+        appName: 'hzn_gyms',
+        packageName: 'hzn_gyms',
         version: '1.22.0',
         buildNumber: '30',
         buildSignature: '',
