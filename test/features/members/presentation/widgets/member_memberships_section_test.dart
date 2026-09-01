@@ -1,9 +1,9 @@
-import 'package:kylie_gym/src/core/widgets/branch_code_pill.dart';
-import 'package:kylie_gym/src/features/members/presentation/widgets/member_memberships_section.dart';
-import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:kylie_gym/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
-import 'package:kylie_gym/src/features/settings/domain/branch.dart';
-import 'package:kylie_gym/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:hzn_gyms/src/core/widgets/branch_code_pill.dart';
+import 'package:hzn_gyms/src/features/members/presentation/widgets/member_memberships_section.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/member_memberships_controller.dart';
+import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/branches_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

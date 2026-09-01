@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/products/presentation/controllers/product_search_controller.dart';
+import 'package:hzn_gyms/src/features/products/presentation/controllers/product_search_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

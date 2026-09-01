@@ -61,7 +61,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       Field('revenueByItemType', _$revenueByItemType, opt: true, def: const {});
   static Map<String, int>? _$transactionCountByItemType(SalesReport v) =>
       v.transactionCountByItemType;
-  static const Field<SalesReport, Map<String, int>?>
+  static const Field<SalesReport, Map<String, int>>
   _f$transactionCountByItemType = Field(
     'transactionCountByItemType',
     _$transactionCountByItemType,
@@ -202,7 +202,7 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
   get topSellingProducts;
   MapCopyWith<$R, String, num, ObjectCopyWith<$R, num, num>>
   get revenueByItemType;
-  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>
+  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
   get transactionCountByItemType;
   ListCopyWith<
     $R,
@@ -273,12 +273,14 @@ class _SalesReportCopyWithImpl<$R, $Out>
     (v) => call(revenueByItemType: v),
   );
   @override
-  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>
-  get transactionCountByItemType => MapCopyWith(
-    $value.transactionCountByItemType ?? const {},
-    (v, t) => ObjectCopyWith(v, $identity, t),
-    (v) => call(transactionCountByItemType: v),
-  );
+  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
+  get transactionCountByItemType => $value.transactionCountByItemType != null
+      ? MapCopyWith(
+          $value.transactionCountByItemType!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(transactionCountByItemType: v),
+        )
+      : null;
   @override
   ListCopyWith<
     $R,
@@ -306,7 +308,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
     Map<String, num>? revenueByPaymentMethod,
     List<ProductSalesSummary>? topSellingProducts,
     Map<String, num>? revenueByItemType,
-    Map<String, int>? transactionCountByItemType,
+    Object? transactionCountByItemType = $none,
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
@@ -322,7 +324,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
         #revenueByPaymentMethod: revenueByPaymentMethod,
       if (topSellingProducts != null) #topSellingProducts: topSellingProducts,
       if (revenueByItemType != null) #revenueByItemType: revenueByItemType,
-      if (transactionCountByItemType != null)
+      if (transactionCountByItemType != $none)
         #transactionCountByItemType: transactionCountByItemType,
       if (unpaidSalesCount != null) #unpaidSalesCount: unpaidSalesCount,
       if (unpaidBalance != null) #unpaidBalance: unpaidBalance,

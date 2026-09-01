@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/reports/presentation/widgets/report_kpi_card.dart';
+import 'package:hzn_gyms/src/features/reports/presentation/widgets/report_kpi_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,7 +1,7 @@
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/features/member_cards/data/repositories/member_card_repository.dart';
-import 'package:kylie_gym/src/features/member_cards/domain/member_card.dart';
-import 'package:kylie_gym/src/features/member_cards/presentation/controllers/member_cards_controller.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/member_cards/data/repositories/member_card_repository.dart';
+import 'package:hzn_gyms/src/features/member_cards/domain/member_card.dart';
+import 'package:hzn_gyms/src/features/member_cards/presentation/controllers/member_cards_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
-import 'package:kylie_gym/src/core/utils/photo_capture_support.dart';
+import 'package:hzn_gyms/src/core/utils/photo_capture_support.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

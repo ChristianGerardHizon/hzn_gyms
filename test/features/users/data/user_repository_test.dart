@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:kylie_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:kylie_gym/src/features/users/data/repositories/user_repository.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:hzn_gyms/src/features/users/data/repositories/user_repository.dart';
 
 import '../../../helpers/pb_test_helpers.dart';
 

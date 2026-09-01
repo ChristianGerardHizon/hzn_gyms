@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/dashboard/presentation/widgets/todays_sales_breakdown_header.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/widgets/todays_sales_breakdown_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

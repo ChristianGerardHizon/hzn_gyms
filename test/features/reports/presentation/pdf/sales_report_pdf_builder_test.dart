@@ -1,7 +1,7 @@
-import 'package:kylie_gym/src/features/reports/domain/report_period.dart';
-import 'package:kylie_gym/src/features/reports/domain/sales_report.dart';
-import 'package:kylie_gym/src/features/reports/presentation/pdf/report_pdf_constants.dart';
-import 'package:kylie_gym/src/features/reports/presentation/pdf/sales_report_pdf_builder.dart';
+import 'package:hzn_gyms/src/features/reports/domain/report_period.dart';
+import 'package:hzn_gyms/src/features/reports/domain/sales_report.dart';
+import 'package:hzn_gyms/src/features/reports/presentation/pdf/report_pdf_constants.dart';
+import 'package:hzn_gyms/src/features/reports/presentation/pdf/sales_report_pdf_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 

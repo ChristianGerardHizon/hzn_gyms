@@ -37,7 +37,7 @@ concurrency:
 permissions:
   contents: write # REQUIRED for creating GitHub Releases
 
-# Kylie Gym ships web only — skip Android APK builds and keystore requirements.
+# HZN Gyms ships web only — skip Android APK builds and keystore requirements.
 env:
   DEPLOY_WEB_ONLY: "true"
 

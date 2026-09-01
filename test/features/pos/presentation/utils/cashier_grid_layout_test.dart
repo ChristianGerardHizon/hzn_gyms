@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/pos/presentation/utils/cashier_grid_layout.dart';
+import 'package:hzn_gyms/src/features/pos/presentation/utils/cashier_grid_layout.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

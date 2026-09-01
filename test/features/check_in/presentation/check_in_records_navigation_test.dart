@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/core/routing/routes/check_in.routes.dart';
-import 'package:kylie_gym/src/features/check_in/domain/check_in.dart';
+import 'package:hzn_gyms/src/core/routing/routes/check_in.routes.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/check_in.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';

@@ -1,7 +1,7 @@
-import 'package:kylie_gym/src/core/i18n/strings.g.dart';
-import 'package:kylie_gym/src/core/widgets/branch_code_pill.dart';
-import 'package:kylie_gym/src/features/sales/presentation/widgets/sale_list_tile.dart';
-import 'package:kylie_gym/src/features/sales/presentation/widgets/sale_status_chip.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/widgets/branch_code_pill.dart';
+import 'package:hzn_gyms/src/features/sales/presentation/widgets/sale_list_tile.dart';
+import 'package:hzn_gyms/src/features/sales/presentation/widgets/sale_status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';

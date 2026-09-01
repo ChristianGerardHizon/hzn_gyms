@@ -1,11 +1,11 @@
 {
-    "name": "Kylie Gym",
-    "short_name": "Kylie Gym",
+    "name": "HZN Gyms",
+    "short_name": "HZN Gyms",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",
-    "description": "Kylie Gym",
+    "description": "HZN Gyms",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

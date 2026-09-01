@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/core/i18n/strings.g.dart';
-import 'package:kylie_gym/src/core/widgets/form/form_dialog_header.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/widgets/form/form_dialog_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

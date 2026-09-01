@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/members/domain/member_active_branch_list_filter.dart';
+import 'package:hzn_gyms/src/features/members/domain/member_active_branch_list_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 

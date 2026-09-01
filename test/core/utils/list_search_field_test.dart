@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/core/utils/list_search_field.dart';
+import 'package:hzn_gyms/src/core/utils/list_search_field.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

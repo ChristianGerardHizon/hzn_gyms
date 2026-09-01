@@ -1,8 +1,8 @@
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/features/organizations/data/repositories/organization_repository.dart';
-import 'package:kylie_gym/src/features/organizations/domain/organization.dart';
-import 'package:kylie_gym/src/features/organizations/domain/organization_dns_status.dart';
-import 'package:kylie_gym/src/features/organizations/presentation/controllers/organizations_controller.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/organizations/data/repositories/organization_repository.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization_dns_status.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organizations_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

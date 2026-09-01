@@ -1,14 +1,14 @@
-import 'package:kylie_gym/src/application.dart';
-import 'package:kylie_gym/src/core/i18n/strings.g.dart';
-import 'package:kylie_gym/src/core/packages/sentry/sentry_config.dart';
-import 'package:kylie_gym/src/core/packages/sentry/sentry_flutter_options.dart';
-import 'package:kylie_gym/src/core/packages/sentry/sentry_startup_error_buffer.dart';
-import 'package:kylie_gym/src/core/utils/window_utils.dart';
+import 'package:hzn_gyms/src/application.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/packages/sentry/sentry_config.dart';
+import 'package:hzn_gyms/src/core/packages/sentry/sentry_flutter_options.dart';
+import 'package:hzn_gyms/src/core/packages/sentry/sentry_startup_error_buffer.dart';
+import 'package:hzn_gyms/src/core/utils/window_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-void runKylieGymApp({Widget? appChild}) {
+void runHznGymsApp({Widget? appChild}) {
   WindowUtils.register();
   LocaleSettings.useDeviceLocale();
 
@@ -20,7 +20,7 @@ void runKylieGymApp({Widget? appChild}) {
 Future<void> main() async {
   if (!isSentryEnabled) {
     WidgetsFlutterBinding.ensureInitialized();
-    runKylieGymApp();
+    runHznGymsApp();
     return;
   }
 
@@ -35,7 +35,7 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
-      runKylieGymApp(appChild: SentryWidget(child: const Application()));
+      runHznGymsApp(appChild: SentryWidget(child: const Application()));
 
       await SentryFlutter.init(configureSentryFlutterOptions);
       await startupErrors.markReadyAndFlush();

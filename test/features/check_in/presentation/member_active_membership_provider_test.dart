@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/features/check_in/presentation/widgets/last_check_in_panel.dart';
-import 'package:kylie_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
-import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:kylie_gym/src/features/pos/data/repositories/sales_repository.dart';
-import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/check_in/presentation/widgets/last_check_in_panel.dart';
+import 'package:hzn_gyms/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/pos/data/repositories/sales_repository.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

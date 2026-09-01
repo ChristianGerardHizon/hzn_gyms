@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:kylie_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:kylie_gym/src/features/pos/data/repositories/payment_repository.dart';
-import 'package:kylie_gym/src/features/pos/domain/payment_method.dart';
-import 'package:kylie_gym/src/features/pos/domain/payment_type.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:hzn_gyms/src/features/pos/data/repositories/payment_repository.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment_method.dart';
+import 'package:hzn_gyms/src/features/pos/domain/payment_type.dart';
 
 import '../../../helpers/pb_test_helpers.dart';
 

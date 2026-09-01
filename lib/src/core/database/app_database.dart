@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'app_database_name.dart';
+
 import 'daos/app_preferences_dao.dart';
 import 'daos/members_dao.dart';
 import 'daos/membership_cache_dao.dart';
@@ -40,13 +42,16 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.defaults()
     : super(
-        driftDatabase(
-          name: 'kylie_gym',
-          web: DriftWebOptions(
-            sqlite3Wasm: Uri.parse('sqlite3.wasm'),
-            driftWorker: Uri.parse('drift_worker.js'),
-          ),
-        ),
+        LazyDatabase(() async {
+          await migrateLegacyDriftDatabaseFileIfNeeded();
+          return driftDatabase(
+            name: driftDatabaseName,
+            web: DriftWebOptions(
+              sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+              driftWorker: Uri.parse('drift_worker.js'),
+            ),
+          );
+        }),
       );
 
   @override

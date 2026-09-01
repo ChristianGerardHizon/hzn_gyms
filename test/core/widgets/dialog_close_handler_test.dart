@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/core/widgets/dialog_close_handler.dart';
+import 'package:hzn_gyms/src/core/widgets/dialog_close_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

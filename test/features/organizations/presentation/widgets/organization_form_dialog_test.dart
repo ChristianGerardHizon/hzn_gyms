@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/core/i18n/strings.g.dart';
-import 'package:kylie_gym/src/features/organizations/presentation/widgets/organization_form_dialog.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/widgets/organization_form_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

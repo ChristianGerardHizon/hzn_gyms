@@ -1,6 +1,6 @@
-import 'package:kylie_gym/src/core/widgets/branch_code_pill.dart';
-import 'package:kylie_gym/src/features/settings/domain/branch.dart';
-import 'package:kylie_gym/src/features/settings/domain/branch_color_preset.dart';
+import 'package:hzn_gyms/src/core/widgets/branch_code_pill.dart';
+import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
+import 'package:hzn_gyms/src/features/settings/domain/branch_color_preset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

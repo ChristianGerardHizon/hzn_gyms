@@ -2,8 +2,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:kylie_gym/src/core/packages/storage/secure_storage_provider.dart';
-import 'package:kylie_gym/src/features/settings/presentation/controllers/camera_preference_controller.dart';
+import 'package:hzn_gyms/src/core/packages/storage/secure_storage_provider.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/camera_preference_controller.dart';
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 

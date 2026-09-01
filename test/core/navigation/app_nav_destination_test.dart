@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kylie_gym/src/core/navigation/app_nav_destination.dart';
-import 'package:kylie_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:kylie_gym/src/features/users/domain/user_role.dart';
+import 'package:hzn_gyms/src/core/navigation/app_nav_destination.dart';
+import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
+import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 
 void main() {
   group('visibleAppNavDestinations', () {

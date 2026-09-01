@@ -1,7 +1,7 @@
-import 'package:kylie_gym/src/core/sync/sync_status.dart';
-import 'package:kylie_gym/src/features/members/domain/member.dart';
-import 'package:kylie_gym/src/features/members/presentation/widgets/member_list_tile.dart';
-import 'package:kylie_gym/src/features/memberships/domain/member_branch_activity.dart';
+import 'package:hzn_gyms/src/core/sync/sync_status.dart';
+import 'package:hzn_gyms/src/features/members/domain/member.dart';
+import 'package:hzn_gyms/src/features/members/presentation/widgets/member_list_tile.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_branch_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

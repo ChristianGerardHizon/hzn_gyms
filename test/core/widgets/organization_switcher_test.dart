@@ -1,10 +1,10 @@
-import 'package:kylie_gym/src/core/i18n/strings.g.dart';
-import 'package:kylie_gym/src/core/permissions/current_user_permissions.dart';
-import 'package:kylie_gym/src/core/widgets/organization_switcher.dart';
-import 'package:kylie_gym/src/features/organizations/domain/organization.dart';
-import 'package:kylie_gym/src/features/organizations/presentation/controllers/current_organization_controller.dart';
-import 'package:kylie_gym/src/features/organizations/presentation/controllers/organizations_controller.dart';
-import 'package:kylie_gym/src/features/users/domain/user_role.dart';
+import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
+import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
+import 'package:hzn_gyms/src/core/widgets/organization_switcher.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organizations_controller.dart';
+import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

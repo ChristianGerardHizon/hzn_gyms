@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/features/memberships/data/repositories/membership_repository.dart';
-import 'package:kylie_gym/src/features/memberships/presentation/controllers/membership_purchase_catalog_provider.dart';
-import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/memberships/data/repositories/membership_repository.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/controllers/membership_purchase_catalog_provider.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

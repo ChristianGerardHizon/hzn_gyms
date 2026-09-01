@@ -1,8 +1,8 @@
-import 'package:kylie_gym/src/core/packages/app_info/app_info_provider.dart';
-import 'package:kylie_gym/src/core/packages/pocketbase/pb_connectivity_provider.dart';
-import 'package:kylie_gym/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:kylie_gym/src/features/dashboard/domain/dashboard_greeting.dart';
-import 'package:kylie_gym/src/features/dashboard/presentation/widgets/dashboard_header.dart';
+import 'package:hzn_gyms/src/core/packages/app_info/app_info_provider.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pb_connectivity_provider.dart';
+import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/domain/dashboard_greeting.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/widgets/dashboard_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

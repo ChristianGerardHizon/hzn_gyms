@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/members/presentation/widgets/member_picker_dialog.dart';
+import 'package:hzn_gyms/src/features/members/presentation/widgets/member_picker_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

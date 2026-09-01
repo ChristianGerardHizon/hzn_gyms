@@ -1,4 +1,4 @@
-name: kylie_gym
+name: hzn_gyms
 description: "A template application"
 
 publish_to: 'none' 
@@ -123,7 +123,7 @@ scripts:
 sentry:
   upload_debug_symbols: true
   upload_source_maps: true
-  project: kyliegym
+  project: hzngyms
   org: christian-hizon
   # Shallow CI clones can't always resolve the previous release SHA
   ignore_missing: true

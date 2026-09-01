@@ -118,8 +118,8 @@ class Translations$common$en {
 
 	// Translations
 
-	/// en: 'Kylie Gym'
-	String get appName => 'Kylie Gym';
+	/// en: 'HZN Gyms'
+	String get appName => 'HZN Gyms';
 
 	/// en: 'N/A'
 	String get placeholderText => 'N/A';
@@ -604,7 +604,7 @@ extension on Translations {
 			'auth.resetLinkSent' => ({required Object email}) => 'Password reset link has been sent to ${email}',
 			'auth.signInToContinue' => 'Sign in to continue',
 			'auth.signingIn' => 'Signing in...',
-			'common.appName' => 'Kylie Gym',
+			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'Save',
 			'common.cancel' => 'Cancel',

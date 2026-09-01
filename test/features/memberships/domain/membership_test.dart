@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/memberships/domain/membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';

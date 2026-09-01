@@ -1,8 +1,8 @@
-import 'package:kylie_gym/src/core/packages/pocketbase/pb_filter.dart';
-import 'package:kylie_gym/src/core/packages/pocketbase/pocketbase_collections.dart';
-import 'package:kylie_gym/src/core/utils/date_utils.dart';
-import 'package:kylie_gym/src/features/memberships/data/repositories/member_membership_repository.dart';
-import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pb_filter.dart';
+import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
+import 'package:hzn_gyms/src/core/utils/date_utils.dart';
+import 'package:hzn_gyms/src/features/memberships/data/repositories/member_membership_repository.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';

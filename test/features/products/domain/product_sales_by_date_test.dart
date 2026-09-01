@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/pos/domain/product_sale_line.dart';
-import 'package:kylie_gym/src/features/products/domain/product_sales_by_date.dart';
+import 'package:hzn_gyms/src/features/pos/domain/product_sale_line.dart';
+import 'package:hzn_gyms/src/features/products/domain/product_sales_by_date.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ProductSaleLine _line({

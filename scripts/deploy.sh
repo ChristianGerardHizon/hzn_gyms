@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy kylie-gym to the PocketBase server via SSH + rsync.
+# HZN Gyms deploy — web assets to PocketBase via SSH + rsync.
 # Designed for GitHub Actions (ubuntu runners). Mirrors sannjose_animal_clinic deploy flow.
 #
 # Prerequisites (CI):
@@ -130,7 +130,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "$REPO_ROOT"
 
 echo "========================================"
-echo " kylie-gym deploy"
+echo " hzn-gyms deploy"
 echo " Environment : ${ENVIRONMENT}"
 echo " SSH         : ${REMOTE}"
 echo " Server root : ${SERVER_ROOT}"
