@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/packages/storage/secure_storage_provider.dart';
-import '../../../../core/packages/theme/app_themes.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../domain/app_theme_mode.dart';
 
@@ -31,26 +29,6 @@ class ThemeController extends _$ThemeController {
       return AppThemeMode.system;
     }
     return await _loadPersistedTheme(userId) ?? AppThemeMode.system;
-  }
-
-  /// Gets the current effective theme ID based on mode and system brightness.
-  ///
-  /// Ignores a previous user's mode while a reload is in progress after auth
-  /// changes, so shared devices do not keep the stale light/dark choice.
-  String getEffectiveThemeId(Brightness systemBrightness) {
-    final mode =
-        state.unwrapPrevious().value ?? AppThemeMode.system;
-
-    switch (mode) {
-      case AppThemeMode.light:
-        return AppThemes.lightId;
-      case AppThemeMode.dark:
-        return AppThemes.darkId;
-      case AppThemeMode.system:
-        return systemBrightness == Brightness.dark
-            ? AppThemes.darkId
-            : AppThemes.lightId;
-    }
   }
 
   /// Sets the theme mode and persists the preference for the signed-in user.

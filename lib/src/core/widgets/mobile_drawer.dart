@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
-import '../assets/assets.gen.dart';
+import '../../features/organizations/presentation/controllers/organization_branding_providers.dart';
 import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
 import 'branch_switcher.dart';
+import 'org_logo.dart';
 import 'outbox_queue_badge.dart';
 
 /// Mobile drawer with permission-filtered navigation.
@@ -44,17 +45,16 @@ class MobileDrawer extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Assets.icons.appIconTransparent.image(
-                        width: 96,
-                        height: 96,
-                        fit: BoxFit.contain,
-                      ),
+                      child: OrgLogo(width: 96, height: 96),
                     ),
                   ),
-                  Text('Kylie Gym', style: theme.textTheme.titleLarge),
+                  Text(
+                    ref.watch(effectiveAppTitleProvider),
+                    style: theme.textTheme.titleLarge,
+                  ),
                   Text(
                     'Gym Management System',
                     style: theme.textTheme.bodyMedium?.copyWith(

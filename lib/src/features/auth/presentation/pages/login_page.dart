@@ -4,9 +4,10 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-import '../../../../core/assets/assets.gen.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/widgets/app_version_indicator.dart';
+import '../../../../core/widgets/org_logo.dart';
+import '../../../organizations/presentation/controllers/organization_branding_providers.dart';
 import '../controllers/auth_controller.dart';
 
 /// Login page for user authentication.
@@ -55,13 +56,10 @@ class LoginPage extends HookConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Logo
-                  Assets.icons.appIconTransparent.image(
-                    width: 150,
-                    height: 150,
-                  ),
+                  const OrgLogo(width: 150, height: 150),
                   const SizedBox(height: 16),
                   Text(
-                    t.common.appName,
+                    ref.watch(effectiveAppTitleProvider),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),

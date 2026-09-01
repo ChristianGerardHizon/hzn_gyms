@@ -45,4 +45,19 @@ enum AppThemeMode {
         return 'Follow device settings';
     }
   }
+
+  /// Maps to Flutter's [ThemeMode] for `MaterialApp.router(themeMode:)`.
+  ///
+  /// Values line up 1:1, so `MaterialApp` itself resolves `system` against
+  /// the platform brightness — no manual `MediaQuery` check needed.
+  ThemeMode get toThemeMode {
+    switch (this) {
+      case light:
+        return ThemeMode.light;
+      case dark:
+        return ThemeMode.dark;
+      case system:
+        return ThemeMode.system;
+    }
+  }
 }

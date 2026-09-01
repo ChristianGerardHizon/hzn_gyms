@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
-import '../assets/assets.gen.dart';
 import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
 import '../sync/outbox_sync_worker.dart';
 import '../utils/breakpoints.dart';
+import 'org_logo.dart';
 import 'outbox_queue_badge.dart';
 
 /// Navigation rail for tablet and desktop layouts.
@@ -68,11 +68,7 @@ class TabletNavRail extends ConsumerWidget {
                 : NavigationRailLabelType.selected,
             leading: Padding(
               padding: const EdgeInsets.fromLTRB(0, 12, 0, 16),
-              child: Assets.icons.appIconTransparent.image(
-                width: 64,
-                height: 64,
-                fit: BoxFit.contain,
-              ),
+              child: const OrgLogo(width: 64, height: 64),
             ),
             trailing: Expanded(
               child: Align(
