@@ -44,6 +44,13 @@ class CurrentUserPermissions {
 
   /// Requires explicit [Permissions.checkInsVoid]; not granted by [isAdmin] alone.
   bool get canVoidCheckIns => permissions.contains(Permissions.checkInsVoid);
+
+  /// Cross-org ("super-admin") access to the Organizations platform screen
+  /// and org switcher. Requires explicit [Permissions.organizationsManage];
+  /// deliberately NOT granted by [isAdmin] alone, so existing branch/org
+  /// admins don't automatically gain visibility into other organizations.
+  bool get canManageOrganizations =>
+      permissions.contains(Permissions.organizationsManage);
   bool get canEditMemberships => has(Permissions.membershipsEdit);
   bool get canExcludeMembershipFromSales =>
       has(Permissions.membershipsExcludeFromSales);

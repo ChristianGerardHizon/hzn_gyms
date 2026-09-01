@@ -153,6 +153,11 @@ abstract class Permissions {
   static const systemAdmin = 'system.admin';
   static const activityLogView = 'activityLog.view';
 
+  // Organizations permissions (cross-org platform management — deliberately
+  // NOT granted by systemAdmin; see CurrentUserPermissions.canManageOrganizations)
+  static const organizationsView = 'organizations.view';
+  static const organizationsManage = 'organizations.manage';
+
   /// All permissions grouped by category (keys only).
   static const Map<String, List<String>> allByCategory = {
     'Members': [membersView, membersCreate, membersEdit, membersDelete],
@@ -185,6 +190,7 @@ abstract class Permissions {
     'Branches': [branchesView, branchesCreate, branchesEdit, branchesDelete],
     'Settings': [settingsView, settingsEdit],
     'System': [systemAdmin, activityLogView],
+    'Organizations': [organizationsView, organizationsManage],
   };
 
   /// All permissions with full metadata.
@@ -541,6 +547,23 @@ abstract class Permissions {
         description:
             'View system-wide change history and today\'s activity logs',
         icon: Icons.history,
+      ),
+      // Organizations
+      const Permission(
+        key: organizationsView,
+        name: 'View Organizations',
+        category: 'Organizations',
+        description: 'View this organization\'s branding and DNS status',
+        icon: Icons.visibility,
+      ),
+      const Permission(
+        key: organizationsManage,
+        name: 'Manage Organizations',
+        category: 'Organizations',
+        description:
+            'Create, switch between, and manage all organizations (platform '
+            'super-admin) — not granted by System Admin alone',
+        icon: Icons.corporate_fare,
       ),
     ];
   }
