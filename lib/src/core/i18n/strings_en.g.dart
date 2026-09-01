@@ -252,8 +252,8 @@ class Translations$failures$en {
 	/// en: 'No internet connection.'
 	String get noInternet => 'No internet connection.';
 
-	/// en: 'Invalid username or password.'
-	String get invalidCredentials => 'Invalid username or password.';
+	/// en: 'Invalid email or password.'
+	String get invalidCredentials => 'Invalid email or password.';
 
 	/// en: 'Your account has been disabled.'
 	String get accountDisabled => 'Your account has been disabled.';
@@ -576,7 +576,7 @@ extension on Translations {
 			'failures.conflict' => 'A conflict occurred. The resource may already exist.',
 			'failures.timeout' => 'Request timed out. Please try again.',
 			'failures.noInternet' => 'No internet connection.',
-			'failures.invalidCredentials' => 'Invalid username or password.',
+			'failures.invalidCredentials' => 'Invalid email or password.',
 			'failures.accountDisabled' => 'Your account has been disabled.',
 			'failures.accountNotVerified' => 'Your account has not been verified.',
 			'failures.tooManyRequests' => 'Too many requests. Please wait a moment.',

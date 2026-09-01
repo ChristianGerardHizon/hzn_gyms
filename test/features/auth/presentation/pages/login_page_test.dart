@@ -29,7 +29,7 @@ class _FakeAuthController extends AuthController {
   Future<AuthState?> build() async => null;
 
   @override
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(String email, String password) async {
     state = const AsyncLoading();
     await Future<void>.delayed(Duration.zero);
     if (shouldFail) {
@@ -118,7 +118,7 @@ _baseOverrides() => [
 ];
 
 Future<void> _fillAndSubmit(WidgetTester tester) async {
-  await tester.enterText(find.byType(TextField).at(0), 'cashier');
+  await tester.enterText(find.byType(TextField).at(0), 'cashier@test.com');
   await tester.enterText(find.byType(TextField).at(1), 'secret123');
   await tester.tap(find.byType(FilledButton));
   await tester.pumpAndSettle();
@@ -202,7 +202,7 @@ void main() {
 
       await _fillAndSubmit(tester);
 
-      expect(find.text('Invalid username or password.'), findsOneWidget);
+      expect(find.text('Invalid email or password.'), findsOneWidget);
       expect(find.byType(LoginPage), findsOneWidget);
       expect(find.text('DASHBOARD'), findsNothing);
     });
