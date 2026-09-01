@@ -59,14 +59,16 @@ Required for `<slug>.hzngyms.com` pre-auth branding.
 
 | Step | Action |
 |------|--------|
-| DNS delegation | Point `hzngyms.com` NS to Porkbun (or manage records at Porkbun) |
+| DNS delegation | Register **`hzngyms.com`** on Porkbun (available as of Sep 2026) or point NS to Porkbun |
 | Wildcard DNS | `*.hzngyms.com` → reverse-proxy server IP |
 | Reverse proxy | Caddy/nginx: route `*.hzngyms.com` + apex to Flutter web + PocketBase API |
 | Wildcard TLS | Certificate for `*.hzngyms.com` (Caddy on-demand or pre-provisioned) |
-| Porkbun env | On PocketBase systemd unit: `PORKBUN_API_KEY`, `PORKBUN_API_SECRET`, `PORKBUN_DNS_TARGET`, `PORKBUN_BASE_DOMAIN` |
+| Porkbun env | On PocketBase systemd unit (configured): `/etc/pocketbase/kyliegym-porkbun.env` with `PORKBUN_API_KEY`, `PORKBUN_API_SECRET`, `PORKBUN_DNS_TARGET`, `PORKBUN_BASE_DOMAIN` |
 | Sentry | Create/migrate project `hzngyms` (see `pubspec.yaml` sentry.project) |
 
 Hook reference: `server/pb_hooks/organizations.pb.js` — `POST /api/organizations/:id/retry-dns`
+
+Caddy example: [caddy-hzngyms.com.example.caddy](caddy-hzngyms.com.example.caddy)
 
 ### Example Caddy snippet (adjust paths/hosts)
 

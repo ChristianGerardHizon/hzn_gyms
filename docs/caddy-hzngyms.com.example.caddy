@@ -1,0 +1,37 @@
+# Append to /etc/caddy/Caddyfile after hzngyms.com is registered on Porkbun and
+# NS/delegation points to Porkbun. Requires Caddy built with Porkbun DNS module
+# (or use pre-provisioned wildcard cert).
+#
+# Tenant subdomains → PocketBase staging (8103) until per-env routing is needed.
+*.hzngyms.com {
+	tls {
+		dns porkbun {env.PORKBUN_API_KEY} {env.PORKBUN_API_SECRET}
+	}
+	request_body {
+		max_size 10MB
+	}
+	reverse_proxy 127.0.0.1:8103 {
+		header_up Accept-Encoding identity
+		transport http {
+			read_timeout 360s
+		}
+	}
+	encode gzip
+}
+
+hzngyms.com {
+	redir https://www.hzngyms.com/{uri} permanent
+}
+
+www.hzngyms.com {
+	request_body {
+		max_size 10MB
+	}
+	reverse_proxy 127.0.0.1:8102 {
+		header_up Accept-Encoding identity
+		transport http {
+			read_timeout 360s
+		}
+	}
+	encode gzip
+}
