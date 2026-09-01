@@ -1,12 +1,30 @@
 import 'package:kylie_gym/src/core/i18n/strings.g.dart';
+import 'package:kylie_gym/src/features/members/data/local/member_local_data_source.dart';
+import 'package:kylie_gym/src/features/members/data/repositories/member_repository.dart';
+import 'package:kylie_gym/src/features/members/domain/member.dart';
+import 'package:kylie_gym/src/features/memberships/domain/membership_add_on.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/controllers/membership_add_ons_controller.dart';
+import 'package:kylie_gym/src/features/memberships/presentation/controllers/membership_purchase_catalog_provider.dart';
 import 'package:kylie_gym/src/features/members/presentation/widgets/member_form_dialog.dart';
-import 'package:kylie_gym/src/features/memberships/domain/membership.dart';
-import 'package:kylie_gym/src/features/memberships/presentation/controllers/memberships_controller.dart';
+import 'package:kylie_gym/src/features/settings/domain/branch.dart';
+import 'package:kylie_gym/src/features/settings/presentation/controllers/branches_controller.dart';
 import 'package:kylie_gym/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../../../../helpers/mocks.dart';
+
+const _testBranch = Branch(
+  id: 'branch-1',
+  name: 'Main Branch',
+  code: 'MAIN',
+  address: '123 Gym St',
+  contactNumber: '555-0100',
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -72,13 +90,42 @@ Future<void> _pumpWizard(WidgetTester tester) async {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
+  final local = MockMemberLocalDataSource();
+  final repo = MockMemberRepository();
+  when(
+    () => local.searchQuick(
+      any(),
+      fields: any(named: 'fields'),
+      limit: any(named: 'limit'),
+    ),
+  ).thenAnswer((_) async => <Member>[]);
+  when(
+    () => repo.searchQuick(
+      any(),
+      fields: any(named: 'fields'),
+      limit: any(named: 'limit'),
+    ),
+  ).thenAnswer((_) async => right(<Member>[]));
+
   await tester.pumpWidget(
     TranslationProvider(
       child: ProviderScope(
         overrides: [
           effectiveBranchIdForWriteProvider.overrideWithValue('branch-1'),
-          membershipsControllerProvider.overrideWith(
-            () => _FakeMembershipsController(const []),
+          currentBranchIdProvider.overrideWithValue('branch-1'),
+          memberLocalDataSourceProvider.overrideWithValue(local),
+          memberRepositoryProvider.overrideWithValue(repo),
+          branchesControllerProvider.overrideWith(
+            () => _FakeBranchesController(const [_testBranch]),
+          ),
+          membershipPurchaseCatalogProvider(false).overrideWith(
+            (ref) async => const [],
+          ),
+          membershipPurchaseCatalogProvider(true).overrideWith(
+            (ref) async => const [],
+          ),
+          membershipAddOnsControllerProvider.overrideWith(
+            () => _FakeMembershipAddOnsController(),
           ),
         ],
         child: const MaterialApp(
@@ -93,20 +140,24 @@ Future<void> _pumpWizard(WidgetTester tester) async {
 }
 
 Future<void> _completeDetailsStep(WidgetTester tester) async {
-  await tester.enterText(
-    find.byType(FormBuilderTextField).first,
-    'Jane Doe',
-  );
+  final fields = find.byType(FormBuilderTextField);
+  await tester.enterText(fields.at(0), 'Jane Doe');
+  await tester.enterText(fields.at(1), '09171234567');
   await tester.pumpAndSettle();
   await tester.tap(find.text('Next'));
   await tester.pumpAndSettle();
 }
 
-class _FakeMembershipsController extends MembershipsController {
-  _FakeMembershipsController(this._plans);
+class _FakeBranchesController extends BranchesController {
+  _FakeBranchesController(this._branches);
 
-  final List<Membership> _plans;
+  final List<Branch> _branches;
 
   @override
-  Future<List<Membership>> build() async => _plans;
+  Future<List<Branch>> build() async => _branches;
+}
+
+class _FakeMembershipAddOnsController extends MembershipAddOnsController {
+  @override
+  Future<List<MembershipAddOn>> build(String membershipId) async => const [];
 }
