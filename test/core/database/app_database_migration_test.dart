@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:kylie_gym/src/core/database/app_database.dart';
+import 'package:hzn_gyms/src/core/database/app_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 

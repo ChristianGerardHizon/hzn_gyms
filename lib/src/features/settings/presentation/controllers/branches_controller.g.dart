@@ -10,19 +10,22 @@ part of 'branches_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Controller for managing branch list state.
 ///
-/// Provides methods for fetching and CRUD operations on branches.
+/// Provides methods for fetching and CRUD operations on branches, scoped to
+/// the current organization once resolved.
 
 @ProviderFor(BranchesController)
 final branchesControllerProvider = BranchesControllerProvider._();
 
 /// Controller for managing branch list state.
 ///
-/// Provides methods for fetching and CRUD operations on branches.
+/// Provides methods for fetching and CRUD operations on branches, scoped to
+/// the current organization once resolved.
 final class BranchesControllerProvider
     extends $AsyncNotifierProvider<BranchesController, List<Branch>> {
   /// Controller for managing branch list state.
   ///
-  /// Provides methods for fetching and CRUD operations on branches.
+  /// Provides methods for fetching and CRUD operations on branches, scoped to
+  /// the current organization once resolved.
   BranchesControllerProvider._()
     : super(
         from: null,
@@ -43,11 +46,12 @@ final class BranchesControllerProvider
 }
 
 String _$branchesControllerHash() =>
-    r'9fd58c2e672509ee72627ad2cc977d4610b35669';
+    r'f42bdb9b4a3cea3e71e4e16ff121c4bf57ce6ec3';
 
 /// Controller for managing branch list state.
 ///
-/// Provides methods for fetching and CRUD operations on branches.
+/// Provides methods for fetching and CRUD operations on branches, scoped to
+/// the current organization once resolved.
 
 abstract class _$BranchesController extends $AsyncNotifier<List<Branch>> {
   FutureOr<List<Branch>> build();

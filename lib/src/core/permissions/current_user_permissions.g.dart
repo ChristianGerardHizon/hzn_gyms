@@ -52,7 +52,7 @@ final class CurrentUserPermissionsControllerProvider
 }
 
 String _$currentUserPermissionsControllerHash() =>
-    r'ce2685cc1fcad1ad223b25fa0149da6981dee301';
+    r'789a2a1796826f037de746047418fb53bb247b81';
 
 /// Loads and silently refreshes the current user's role permissions.
 ///

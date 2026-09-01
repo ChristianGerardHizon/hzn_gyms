@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kylie_gym/src/features/memberships/domain/days_remaining_label.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/days_remaining_label.dart';
 
 void main() {
   group('formatDaysRemainingLabel', () {

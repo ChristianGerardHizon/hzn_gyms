@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/reports/domain/report_aggregations.dart';
-import 'package:kylie_gym/src/features/reports/domain/sales_report.dart';
+import 'package:hzn_gyms/src/features/reports/domain/report_aggregations.dart';
+import 'package:hzn_gyms/src/features/reports/domain/sales_report.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';

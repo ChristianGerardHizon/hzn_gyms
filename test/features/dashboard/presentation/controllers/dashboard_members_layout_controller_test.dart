@@ -1,10 +1,10 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:kylie_gym/src/core/database/app_database.dart';
-import 'package:kylie_gym/src/core/database/database_provider.dart';
-import 'package:kylie_gym/src/features/dashboard/domain/dashboard_members_layout.dart';
-import 'package:kylie_gym/src/features/dashboard/presentation/controllers/dashboard_members_layout_controller.dart';
+import 'package:hzn_gyms/src/core/database/app_database.dart';
+import 'package:hzn_gyms/src/core/database/database_provider.dart';
+import 'package:hzn_gyms/src/features/dashboard/domain/dashboard_members_layout.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/dashboard_members_layout_controller.dart';
 
 void main() {
   late AppDatabase db;

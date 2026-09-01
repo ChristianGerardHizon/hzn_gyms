@@ -1,9 +1,9 @@
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/features/products/data/repositories/product_adjustment_repository.dart';
-import 'package:kylie_gym/src/features/products/data/void_stock_adjustment.dart';
-import 'package:kylie_gym/src/features/products/domain/product_adjustment.dart';
-import 'package:kylie_gym/src/features/products/domain/product_adjustment_type.dart';
-import 'package:kylie_gym/src/features/products/domain/stock_quantity_change.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/features/products/data/repositories/product_adjustment_repository.dart';
+import 'package:hzn_gyms/src/features/products/data/void_stock_adjustment.dart';
+import 'package:hzn_gyms/src/features/products/domain/product_adjustment.dart';
+import 'package:hzn_gyms/src/features/products/domain/product_adjustment_type.dart';
+import 'package:hzn_gyms/src/features/products/domain/stock_quantity_change.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';

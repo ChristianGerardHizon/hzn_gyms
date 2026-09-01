@@ -281,6 +281,13 @@ abstract class PBFilters {
   static PBFilter forBranch(String branchId) =>
       PBFilter().relation('branch', branchId).notDeleted();
 
+  /// Filter for organization-scoped queries with soft delete.
+  ///
+  /// Example: `PBFilters.forOrganization(organizationId).build()`
+  /// Result: `organization = "id" && isDeleted = false`
+  static PBFilter forOrganization(String organizationId) =>
+      PBFilter().relation('organization', organizationId).notDeleted();
+
   /// Currently active member subscriptions.
   ///
   /// `startDate <= now` and `endDate >= start of today` (local). The end

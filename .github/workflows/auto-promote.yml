@@ -1,6 +1,6 @@
 name: Auto Promote to Main
 
-# Match deploy.yml — Kylie Gym is web-only.
+# Match deploy.yml — HZN Gyms is web-only.
 env:
   DEPLOY_WEB_ONLY: "true"
 

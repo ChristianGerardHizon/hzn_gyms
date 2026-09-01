@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:kylie_gym/src/core/database/app_database.dart';
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/core/sync/outbox_service.dart';
-import 'package:kylie_gym/src/features/memberships/data/membership_purchase_orchestrator.dart';
-import 'package:kylie_gym/src/features/memberships/domain/membership_add_on.dart';
+import 'package:hzn_gyms/src/core/database/app_database.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/core/sync/outbox_service.dart';
+import 'package:hzn_gyms/src/features/memberships/data/membership_purchase_orchestrator.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership_add_on.dart';
 
 import '../../../helpers/fixtures.dart';
 import '../../../helpers/mocks.dart';

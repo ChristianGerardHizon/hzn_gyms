@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kylie_gym/src/features/pos/domain/sale_payment_status.dart';
+import 'package:hzn_gyms/src/features/pos/domain/sale_payment_status.dart';
 
 void main() {
   group('calculateNetPaidAmount', () {

@@ -53,6 +53,12 @@ class BranchMapper extends ClassMapperBase<Branch> {
     _$color,
     opt: true,
   );
+  static String? _$organization(Branch v) => v.organization;
+  static const Field<Branch, String> _f$organization = Field(
+    'organization',
+    _$organization,
+    opt: true,
+  );
   static bool _$isDeleted(Branch v) => v.isDeleted;
   static const Field<Branch, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -83,6 +89,7 @@ class BranchMapper extends ClassMapperBase<Branch> {
     #operatingHours: _f$operatingHours,
     #cutOffTime: _f$cutOffTime,
     #color: _f$color,
+    #organization: _f$organization,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -98,6 +105,7 @@ class BranchMapper extends ClassMapperBase<Branch> {
       operatingHours: data.dec(_f$operatingHours),
       cutOffTime: data.dec(_f$cutOffTime),
       color: data.dec(_f$color),
+      organization: data.dec(_f$organization),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -159,6 +167,7 @@ abstract class BranchCopyWith<$R, $In extends Branch, $Out>
     String? operatingHours,
     String? cutOffTime,
     String? color,
+    String? organization,
     bool? isDeleted,
     DateTime? created,
     DateTime? updated,
@@ -182,6 +191,7 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
     Object? operatingHours = $none,
     Object? cutOffTime = $none,
     Object? color = $none,
+    Object? organization = $none,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -195,6 +205,7 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
       if (operatingHours != $none) #operatingHours: operatingHours,
       if (cutOffTime != $none) #cutOffTime: cutOffTime,
       if (color != $none) #color: color,
+      if (organization != $none) #organization: organization,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -210,6 +221,7 @@ class _BranchCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Branch, $Out>
     operatingHours: data.get(#operatingHours, or: $value.operatingHours),
     cutOffTime: data.get(#cutOffTime, or: $value.cutOffTime),
     color: data.get(#color, or: $value.color),
+    organization: data.get(#organization, or: $value.organization),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

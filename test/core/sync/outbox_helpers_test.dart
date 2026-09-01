@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:kylie_gym/src/core/foundation/failure.dart';
-import 'package:kylie_gym/src/core/sync/outbox_service.dart';
-import 'package:kylie_gym/src/core/sync/sync_status.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
+import 'package:hzn_gyms/src/core/sync/outbox_service.dart';
+import 'package:hzn_gyms/src/core/sync/sync_status.dart';
 
 void main() {
   group('generateClientId', () {

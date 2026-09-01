@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kylie_gym/src/core/database/app_database.dart';
-import 'package:kylie_gym/src/core/sync/sync_status.dart';
-import 'package:kylie_gym/src/features/members/data/dto/member_dto.dart';
-import 'package:kylie_gym/src/features/members/data/local/member_local_data_source.dart';
-import 'package:kylie_gym/src/features/members/domain/member.dart';
+import 'package:hzn_gyms/src/core/database/app_database.dart';
+import 'package:hzn_gyms/src/core/sync/sync_status.dart';
+import 'package:hzn_gyms/src/features/members/data/dto/member_dto.dart';
+import 'package:hzn_gyms/src/features/members/data/local/member_local_data_source.dart';
+import 'package:hzn_gyms/src/features/members/domain/member.dart';
 
 import '../../../../helpers/mocks.dart';
 

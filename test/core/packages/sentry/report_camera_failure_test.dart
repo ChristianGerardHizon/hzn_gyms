@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/core/packages/sentry/report_camera_failure.dart';
+import 'package:hzn_gyms/src/core/packages/sentry/report_camera_failure.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/pos/presentation/components/checkout_dialog.dart';
+import 'package:hzn_gyms/src/features/pos/presentation/components/checkout_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

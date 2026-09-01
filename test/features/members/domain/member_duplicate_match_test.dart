@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/members/domain/member.dart';
-import 'package:kylie_gym/src/features/members/domain/member_duplicate_match.dart';
+import 'package:hzn_gyms/src/features/members/domain/member.dart';
+import 'package:hzn_gyms/src/features/members/domain/member_duplicate_match.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

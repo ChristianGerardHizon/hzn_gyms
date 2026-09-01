@@ -1,4 +1,4 @@
-package com.kyliegym.app
+package com.hzngyms.app
 
 import io.flutter.embedding.android.FlutterActivity
 

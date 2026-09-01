@@ -7,7 +7,7 @@ library;
 /// Application metadata and configuration
 abstract class AppConstants {
   /// Application name
-  static const String appName = 'Kylie Gym';
+  static const String appName = 'HZN Gyms';
 
   /// Application version (synced with pubspec.yaml)
   static const String version = '1.0.0';

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:kylie_gym/src/features/member_cards/data/dto/member_card_dto.dart';
+import 'package:hzn_gyms/src/features/member_cards/data/dto/member_card_dto.dart';
 
 void main() {
   group('MemberCardDto member photo', () {

@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/memberships/domain/member_membership.dart';
-import 'package:kylie_gym/src/features/memberships/domain/membership_payment_lifecycle.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_membership.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/membership_payment_lifecycle.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

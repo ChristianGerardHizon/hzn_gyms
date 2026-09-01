@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/pos/domain/sale.dart';
-import 'package:kylie_gym/src/features/sales/domain/open_unpaid_sale.dart';
+import 'package:hzn_gyms/src/features/pos/domain/sale.dart';
+import 'package:hzn_gyms/src/features/sales/domain/open_unpaid_sale.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fixtures.dart';

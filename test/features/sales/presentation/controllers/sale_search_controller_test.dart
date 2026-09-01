@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/sales/domain/sale_status_filter.dart';
-import 'package:kylie_gym/src/features/sales/presentation/controllers/sale_search_controller.dart';
+import 'package:hzn_gyms/src/features/sales/domain/sale_status_filter.dart';
+import 'package:hzn_gyms/src/features/sales/presentation/controllers/sale_search_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

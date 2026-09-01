@@ -3,6 +3,7 @@ import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/memberships.routes.dart';
 import '../routing/routes/members.routes.dart';
 import '../routing/routes/organization.routes.dart';
+import '../routing/routes/organizations.routes.dart';
 import '../routing/routes/outbox.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/profile.routes.dart';
@@ -24,6 +25,7 @@ enum AppNavId {
   memberships,
   reports,
   organization,
+  organizations,
   profile,
   outbox,
   system,
@@ -48,6 +50,7 @@ const List<AppNavDestination> allAppNavDestinations = [
   AppNavDestination(id: AppNavId.memberships, path: MembershipsRoute.path),
   AppNavDestination(id: AppNavId.reports, path: ReportsRoute.path),
   AppNavDestination(id: AppNavId.organization, path: OrganizationRoute.path),
+  AppNavDestination(id: AppNavId.organizations, path: OrganizationsRoute.path),
   AppNavDestination(id: AppNavId.profile, path: ProfileRoute.path),
   AppNavDestination(id: AppNavId.outbox, path: OutboxRoute.path),
   AppNavDestination(id: AppNavId.system, path: SystemRoute.path),
@@ -83,6 +86,8 @@ List<AppNavDestination> visibleAppNavDestinations(
             return permissions.has(Permissions.reportsView);
           case AppNavId.organization:
             return permissions.canManageUsers;
+          case AppNavId.organizations:
+            return permissions.canManageOrganizations;
           case AppNavId.profile:
             return !permissions.canManageUsers;
           case AppNavId.outbox:
@@ -152,6 +157,9 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   if (matchesRoutePath(location, OrganizationRoute.path)) {
     return permissions.canManageUsers;
   }
+  if (matchesRoutePath(location, OrganizationsRoute.path)) {
+    return permissions.canManageOrganizations;
+  }
   if (matchesRoutePath(location, OutboxRoute.path)) {
     return permissions.canManageSystem;
   }
@@ -173,6 +181,7 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
 /// Paths that must not be reached before role permissions resolve.
 bool isPermissionSensitivePath(String location) {
   return matchesRoutePath(location, OrganizationRoute.path) ||
+      matchesRoutePath(location, OrganizationsRoute.path) ||
       matchesRoutePath(location, ReportsRoute.path) ||
       matchesRoutePath(location, OutboxRoute.path) ||
       (matchesRoutePath(location, SystemRoute.path) &&

@@ -78,6 +78,12 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
     opt: true,
     def: const [],
   );
+  static String? _$organization(AuthDto v) => v.organization;
+  static const Field<AuthDto, String> _f$organization = Field(
+    'organization',
+    _$organization,
+    opt: true,
+  );
 
   @override
   final MappableFields<AuthDto> fields = const {
@@ -93,6 +99,7 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
     #role: _f$role,
     #branch: _f$branch,
     #allowedBranches: _f$allowedBranches,
+    #organization: _f$organization,
   };
 
   static AuthDto _instantiate(DecodingData data) {
@@ -109,6 +116,7 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
       role: data.dec(_f$role),
       branch: data.dec(_f$branch),
       allowedBranches: data.dec(_f$allowedBranches),
+      organization: data.dec(_f$organization),
     );
   }
 
@@ -184,6 +192,7 @@ abstract class AuthDtoCopyWith<$R, $In extends AuthDto, $Out>
     String? role,
     String? branch,
     List<String>? allowedBranches,
+    String? organization,
   });
   AuthDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -217,6 +226,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
     Object? role = $none,
     Object? branch = $none,
     List<String>? allowedBranches,
+    Object? organization = $none,
   }) => $apply(
     FieldCopyWithData({
       if (token != null) #token: token,
@@ -231,6 +241,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
       if (role != $none) #role: role,
       if (branch != $none) #branch: branch,
       if (allowedBranches != null) #allowedBranches: allowedBranches,
+      if (organization != $none) #organization: organization,
     }),
   );
   @override
@@ -247,6 +258,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
     role: data.get(#role, or: $value.role),
     branch: data.get(#branch, or: $value.branch),
     allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
+    organization: data.get(#organization, or: $value.organization),
   );
 
   @override

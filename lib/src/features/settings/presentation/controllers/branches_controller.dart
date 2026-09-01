@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../data/repositories/branch_repository.dart';
 import '../../domain/branch.dart';
 
@@ -7,14 +8,16 @@ part 'branches_controller.g.dart';
 
 /// Controller for managing branch list state.
 ///
-/// Provides methods for fetching and CRUD operations on branches.
+/// Provides methods for fetching and CRUD operations on branches, scoped to
+/// the current organization once resolved.
 @Riverpod(keepAlive: true)
 class BranchesController extends _$BranchesController {
   BranchRepository get _repository => ref.read(branchRepositoryProvider);
 
   @override
   Future<List<Branch>> build() async {
-    final result = await _repository.fetchAll();
+    final organizationId = ref.watch(currentOrganizationIdProvider);
+    final result = await _repository.fetchAll(organizationId: organizationId);
     return result.fold(
       (failure) => throw failure,
       (branches) => branches,
@@ -28,7 +31,8 @@ class BranchesController extends _$BranchesController {
       state = const AsyncLoading();
     }
 
-    final result = await _repository.fetchAll();
+    final organizationId = ref.read(currentOrganizationIdProvider);
+    final result = await _repository.fetchAll(organizationId: organizationId);
 
     state = result.fold(
       (failure) => AsyncError(failure, StackTrace.current),
@@ -36,9 +40,14 @@ class BranchesController extends _$BranchesController {
     );
   }
 
-  /// Creates a new branch.
+  /// Creates a new branch, always scoped to the current organization
+  /// (branches belong to whichever org the caller is currently in — not
+  /// user-selectable).
   Future<bool> createBranch(Branch branch) async {
-    final result = await _repository.create(branch);
+    final organizationId = ref.read(currentOrganizationIdProvider);
+    final result = await _repository.create(
+      branch.copyWith(organization: organizationId),
+    );
 
     return result.fold(
       (failure) => false,

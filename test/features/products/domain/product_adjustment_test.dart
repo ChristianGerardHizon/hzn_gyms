@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/products/domain/product_adjustment.dart';
-import 'package:kylie_gym/src/features/products/domain/product_adjustment_type.dart';
+import 'package:hzn_gyms/src/features/products/domain/product_adjustment.dart';
+import 'package:hzn_gyms/src/features/products/domain/product_adjustment_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

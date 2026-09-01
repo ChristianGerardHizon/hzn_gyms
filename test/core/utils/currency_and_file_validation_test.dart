@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kylie_gym/src/core/utils/currency_format.dart';
-import 'package:kylie_gym/src/core/utils/file_validation.dart';
+import 'package:hzn_gyms/src/core/utils/currency_format.dart';
+import 'package:hzn_gyms/src/core/utils/file_validation.dart';
 
 void main() {
   group('formatCurrency', () {

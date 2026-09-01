@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kylie_gym/src/features/check_in/domain/card_check_in_result.dart';
-import 'package:kylie_gym/src/features/check_in/domain/check_in_chime.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/card_check_in_result.dart';
+import 'package:hzn_gyms/src/features/check_in/domain/check_in_chime.dart';
 
 import '../../../helpers/fixtures.dart';
 

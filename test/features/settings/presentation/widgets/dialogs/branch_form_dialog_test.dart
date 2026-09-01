@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/settings/presentation/widgets/dialogs/branch_form_dialog.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/widgets/dialogs/branch_form_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

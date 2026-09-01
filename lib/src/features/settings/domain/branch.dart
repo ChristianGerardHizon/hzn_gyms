@@ -16,6 +16,7 @@ class Branch with BranchMappable {
     this.operatingHours,
     this.cutOffTime,
     this.color,
+    this.organization,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -44,6 +45,9 @@ class Branch with BranchMappable {
 
   /// Pill accent preset id (e.g. `teal`, `indigo`). See [BranchColorPreset].
   final String? color;
+
+  /// FK to Organization (PocketBase `organization` relation id).
+  final String? organization;
 
   /// Soft delete flag.
   final bool isDeleted;

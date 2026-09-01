@@ -1,8 +1,8 @@
-import 'package:kylie_gym/src/features/activity_log/domain/activity_log.dart';
-import 'package:kylie_gym/src/features/activity_log/domain/activity_log_action.dart';
-import 'package:kylie_gym/src/features/activity_log/domain/activity_log_change.dart';
-import 'package:kylie_gym/src/features/activity_log/domain/activity_log_filter.dart';
-import 'package:kylie_gym/src/features/activity_log/domain/activity_log_formatters.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log_action.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log_change.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log_filter.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log_formatters.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 

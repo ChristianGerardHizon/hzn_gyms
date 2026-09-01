@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/core/utils/date_utils.dart';
-import 'package:kylie_gym/src/features/memberships/presentation/widgets/membership_form_dialog.dart';
+import 'package:hzn_gyms/src/core/utils/date_utils.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/widgets/membership_form_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/core/packages/sentry/sentry_flutter_options.dart';
+import 'package:hzn_gyms/src/core/packages/sentry/sentry_flutter_options.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -10,8 +10,8 @@ void main() {
     'configureSentryFlutterOptions sets release and dist from package info',
     () async {
       PackageInfo.setMockInitialValues(
-        appName: 'kylie_gym',
-        packageName: 'kylie_gym',
+        appName: 'hzn_gyms',
+        packageName: 'hzn_gyms',
         version: '1.22.0',
         buildNumber: '30',
         buildSignature: '',

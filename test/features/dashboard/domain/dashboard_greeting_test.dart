@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/dashboard/domain/dashboard_greeting.dart';
+import 'package:hzn_gyms/src/features/dashboard/domain/dashboard_greeting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

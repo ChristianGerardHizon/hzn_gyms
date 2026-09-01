@@ -1,7 +1,7 @@
-import 'package:kylie_gym/src/core/utils/breakpoints.dart';
-import 'package:kylie_gym/src/features/dashboard/domain/inventory_alert.dart';
-import 'package:kylie_gym/src/features/dashboard/presentation/controllers/inventory_alerts_controller.dart';
-import 'package:kylie_gym/src/features/dashboard/presentation/widgets/inventory_alerts_section.dart';
+import 'package:hzn_gyms/src/core/utils/breakpoints.dart';
+import 'package:hzn_gyms/src/features/dashboard/domain/inventory_alert.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/inventory_alerts_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/widgets/inventory_alerts_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

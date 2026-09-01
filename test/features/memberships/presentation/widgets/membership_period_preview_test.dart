@@ -1,4 +1,4 @@
-import 'package:kylie_gym/src/features/memberships/presentation/widgets/membership_period_preview.dart';
+import 'package:hzn_gyms/src/features/memberships/presentation/widgets/membership_period_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';

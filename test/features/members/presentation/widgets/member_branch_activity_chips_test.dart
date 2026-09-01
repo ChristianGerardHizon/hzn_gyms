@@ -1,5 +1,5 @@
-import 'package:kylie_gym/src/features/members/presentation/widgets/member_branch_activity_chips.dart';
-import 'package:kylie_gym/src/features/memberships/domain/member_branch_activity.dart';
+import 'package:hzn_gyms/src/features/members/presentation/widgets/member_branch_activity_chips.dart';
+import 'package:hzn_gyms/src/features/memberships/domain/member_branch_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
