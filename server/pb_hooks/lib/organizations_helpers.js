@@ -304,16 +304,25 @@ function requireOrganizationsManage(e) {
     if (!authRecord) {
         throw new ForbiddenError("authentication required")
     }
-    const roles = e.app.findRecordsByFilter(
-        "userRoles",
-        "user = {:userId}",
-        "",
-        1,
-        0,
-        { userId: authRecord.id },
-    )
-    const role = roles.length > 0 ? roles[0] : null
-    const permissions = role ? role.get("permissions") : []
+    try {
+        if (authRecord.collection().name === "_superusers") {
+            e.next()
+            return
+        }
+    } catch (_) {
+        // fall through to role check
+    }
+    const roleId = authRecord.getString("role")
+    if (!roleId) {
+        throw new ForbiddenError("organizations.manage permission required")
+    }
+    let permissions = []
+    try {
+        const role = e.app.findRecordById("userRoles", roleId)
+        permissions = role.get("permissions") || []
+    } catch (_) {
+        throw new ForbiddenError("organizations.manage permission required")
+    }
     if (!Array.isArray(permissions) || permissions.indexOf("organizations.manage") === -1) {
         throw new ForbiddenError("organizations.manage permission required")
     }

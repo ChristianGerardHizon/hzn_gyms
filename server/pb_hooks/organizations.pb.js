@@ -9,6 +9,7 @@
 
 onRecordCreateRequest((e) => {
     require(`${__hooks}/lib/organizations_helpers.js`).onCreateRequest(e);
+    require(`${__hooks}/lib/organization_setup_helpers.js`).onOrganizationCreateRequest(e);
 }, "organizations");
 
 onRecordUpdateRequest((e) => {
@@ -41,3 +42,21 @@ routerAdd(
 cronAdd("organizationsDnsRetry", "*/30 * * * *", () => {
     require(`${__hooks}/lib/organizations_helpers.js`).retryFailed();
 });
+
+// Public branding resolve for pre-auth subdomain theming.
+routerAdd("GET", "/api/public/organizations/resolve", (e) => {
+    return require(`${__hooks}/lib/organization_setup_helpers.js`).resolvePublic(e);
+});
+
+// Mark organization setup complete after server-side checklist validation.
+routerAdd(
+    "POST",
+    "/api/organizations/{id}/complete-setup",
+    (e) => {
+        return require(`${__hooks}/lib/organization_setup_helpers.js`).completeSetup(e);
+    },
+    $apis.requireAuth("users"),
+    (e) => {
+        require(`${__hooks}/lib/organizations_helpers.js`).requireOrganizationsManage(e);
+    },
+);
