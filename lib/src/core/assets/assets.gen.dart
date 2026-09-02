@@ -21,12 +21,31 @@ class $AssetsIconsGen {
   AssetGenImage get appIconMac =>
       const AssetGenImage('assets/icons/app_icon_mac.png');
 
+  /// File path: assets/icons/app_icon_mark.png
+  AssetGenImage get appIconMark =>
+      const AssetGenImage('assets/icons/app_icon_mark.png');
+
   /// File path: assets/icons/app_icon_transparent.png
   AssetGenImage get appIconTransparent =>
       const AssetGenImage('assets/icons/app_icon_transparent.png');
 
+  /// File path: assets/icons/hzn_systems_logo.jpg
+  AssetGenImage get hznSystemsLogoJpg =>
+      const AssetGenImage('assets/icons/hzn_systems_logo.jpg');
+
+  /// File path: assets/icons/hzn_systems_logo.png
+  AssetGenImage get hznSystemsLogoPng =>
+      const AssetGenImage('assets/icons/hzn_systems_logo.png');
+
   /// List of all assets
-  List<AssetGenImage> get values => [appIcon, appIconMac, appIconTransparent];
+  List<AssetGenImage> get values => [
+    appIcon,
+    appIconMac,
+    appIconMark,
+    appIconTransparent,
+    hznSystemsLogoJpg,
+    hznSystemsLogoPng,
+  ];
 }
 
 class $AssetsSoundsGen {
@@ -49,9 +68,7 @@ class $AssetsSoundsGen {
   ];
 }
 
-class Assets {
-  const Assets._();
-
+abstract final class Assets {
   static const $AssetsIconsGen icons = $AssetsIconsGen();
   static const $AssetsSoundsGen sounds = $AssetsSoundsGen();
 }
