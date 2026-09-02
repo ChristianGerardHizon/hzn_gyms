@@ -132,7 +132,9 @@ sentry:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
+  remove_alpha_ios: true
   image_path: "assets/icons/app_icon_mark.png"
+  image_path_ios: "assets/icons/app_icon_mark_opaque.png"
   web:
     generate: true
     image_path: "assets/icons/app_icon_mark.png"
@@ -146,6 +148,7 @@ flutter_launcher_icons:
     image_path: "assets/icons/app_icon_mac.png"
   adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/icons/app_icon_mark.png"
+  adaptive_icon_monochrome: "assets/icons/app_icon_mark.png"
 
 
   

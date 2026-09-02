@@ -9,7 +9,8 @@ flutter_launcher_icons:
   adaptive_icon_monochrome: "assets/icons/app_icon_mark.png"
 
   ios: true
-  remove_alpha_channel_ios: true
+  image_path_ios: "assets/icons/app_icon_mark_opaque.png"
+  remove_alpha_ios: true
 
   web:
     generate: true

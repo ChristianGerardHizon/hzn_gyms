@@ -4,6 +4,7 @@ Generated from the HZN Systems logo (`assets/icons/hzn_systems_logo.png`).
 
 - **In-app / splash:** full logo (`app_icon_transparent.png`, `app_icon.png`, `app_icon_mac.png`)
 - **Launcher / favicon / adaptive foreground:** cloud mark only (`app_icon_mark.png`) for legibility at small sizes
+- **iOS launcher:** opaque mark on black (`app_icon_mark_opaque.png`) — Apple rejects alpha; avoid white composite from `remove_alpha_ios`
 
 Regenerate all assets from the source logo:
 
@@ -29,5 +30,6 @@ The `icon_pack/` folder is a **reference snapshot** of web/Android/iOS icon layo
 ## Notes
 
 - Source master: `hzn_systems_logo.png` (preferred) or `.jpg` at repo root — black (`#000000`) background, neon green cloud + `</>` mark, white “HZN” + green “systems” wordmark. Upscaled PNG with alpha is supported.
-- `app_icon_mark.png` crops the cloud mark with a transparent background for adaptive icons and favicons.
+- `app_icon_mark.png` extracts the first content band (cloud + `</>`), trims to content, and pads ~21% for Android adaptive safe zone.
+- `app_icon_mark_opaque.png` is the same mark flattened onto black for iOS.
 - Per-organization logos uploaded in PocketBase still override the bundled default in-app via `OrgLogo`.
