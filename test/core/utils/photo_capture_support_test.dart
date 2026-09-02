@@ -542,6 +542,14 @@ void main() {
     });
   });
 
+  group('paymentProofFilename', () {
+    test('includes payment_proof prefix and jpg extension', () {
+      final name = paymentProofFilename(DateTime.utc(2026, 3, 15));
+      expect(name, startsWith('payment_proof_'));
+      expect(name, endsWith('.jpg'));
+    });
+  });
+
   group('processPickedOrCapturedImage', () {
     test('returns null for empty bytes', () async {
       final file = XFile.fromData(Uint8List(0), name: 'empty.jpg');
@@ -557,6 +565,20 @@ void main() {
       expect(result, isNotNull);
       expect(result!.bytes, bytes);
       expect(result.file.mimeType, 'image/jpeg');
+      expect(result.file.name, startsWith('member_photo_'));
+    });
+
+    test('uses custom filename when provided', () async {
+      final bytes = Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0]);
+      final file = XFile.fromData(bytes, name: 'original.png');
+
+      final result = await processPickedOrCapturedImage(
+        file,
+        filename: 'payment_proof_custom.jpg',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.file.name, 'payment_proof_custom.jpg');
     });
   });
 }

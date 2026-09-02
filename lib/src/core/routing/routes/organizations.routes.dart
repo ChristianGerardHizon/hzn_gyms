@@ -5,12 +5,17 @@ import '../../../features/organizations/presentation/pages/organizations_page.da
 
 part 'organizations.routes.g.dart';
 
-/// Organizations management route (super-admin).
+/// Legacy redirect: `/organizations` → `/platform/organizations`.
 @TypedGoRoute<OrganizationsRoute>(path: OrganizationsRoute.path)
 class OrganizationsRoute extends GoRouteData with $OrganizationsRoute {
   const OrganizationsRoute();
 
   static const path = '/organizations';
+
+  @override
+  String? redirect(BuildContext context, GoRouterState state) {
+    return '/platform/organizations';
+  }
 
   @override
   Widget build(BuildContext context, GoRouterState state) {

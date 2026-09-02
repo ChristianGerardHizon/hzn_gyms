@@ -6,6 +6,8 @@ import '../../features/organizations/presentation/controllers/organization_brand
 import '../i18n/strings.g.dart';
 import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pocketbase_provider.dart';
+import '../permissions/current_user_permissions.dart';
+import '../routing/routes/platform.routes.dart';
 import 'branch_switcher.dart';
 import 'organization_switcher.dart';
 import 'org_logo.dart';
@@ -32,6 +34,7 @@ class MobileDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final theme = Theme.of(context);
+    final canSwitchOrg = ref.watch(canUseOrganizationSwitcherProvider);
 
     return Drawer(
       child: SafeArea(
@@ -78,7 +81,7 @@ class MobileDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-            const OrganizationSwitcher(),
+            if (canSwitchOrg) const OrganizationSwitcher(),
             const BranchSwitcher(),
             for (var i = 0; i < destinations.length; i++) ...[
               if (_shouldInsertDividerBefore(destinations, i)) const Divider(),
@@ -90,6 +93,19 @@ class MobileDrawer extends ConsumerWidget {
                 leading: destinations[i].id == AppNavId.outbox
                     ? const OutboxQueueBadge(child: Icon(Icons.cloud_sync))
                     : null,
+              ),
+            ],
+            if (ref.watch(currentUserPermissionsProvider).value?.canManageOrganizations ??
+                false) ...[
+              const Divider(),
+              _DrawerItem(
+                icon: Icons.admin_panel_settings_outlined,
+                label: t.organizations.platformTitle,
+                selected: false,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  const PlatformDashboardRoute().go(context);
+                },
               ),
             ],
             const Divider(),
@@ -112,7 +128,9 @@ class MobileDrawer extends ConsumerWidget {
     if (index == 0) return false;
     const secondary = {
       AppNavId.reports,
-      AppNavId.organization,
+      AppNavId.users,
+      AppNavId.roles,
+      AppNavId.branches,
       AppNavId.organizations,
       AppNavId.profile,
       AppNavId.outbox,
@@ -141,8 +159,12 @@ class MobileDrawer extends ConsumerWidget {
         return Icons.card_membership;
       case AppNavId.reports:
         return Icons.analytics;
-      case AppNavId.organization:
-        return Icons.business;
+      case AppNavId.users:
+        return Icons.people;
+      case AppNavId.roles:
+        return Icons.admin_panel_settings;
+      case AppNavId.branches:
+        return Icons.store;
       case AppNavId.organizations:
         return Icons.apartment;
       case AppNavId.profile:
@@ -172,8 +194,12 @@ class MobileDrawer extends ConsumerWidget {
         return t.navigation.memberships;
       case AppNavId.reports:
         return t.navigation.reports;
-      case AppNavId.organization:
-        return t.navigation.organization;
+      case AppNavId.users:
+        return t.navigation.users;
+      case AppNavId.roles:
+        return t.navigation.roles;
+      case AppNavId.branches:
+        return t.navigation.branches;
       case AppNavId.organizations:
         return t.navigation.organizations;
       case AppNavId.profile:

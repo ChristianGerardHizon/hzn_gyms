@@ -10,13 +10,10 @@ part of 'current_organization_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Controller for resolving/switching the current organization.
 ///
-/// Resolution order:
-/// 1. Web: `Uri.base.host` matched against an organization's `subdomain`/
-///    `slug` — wins whenever it matches, even before the user is signed in,
-///    so login/branding can render for the right org immediately.
-/// 2. The signed-in user's `organization` field.
-/// 3. A persisted choice in secure storage (native/desktop, or local dev
-///    where the hostname won't match any subdomain).
+/// Login is organization-agnostic — no tenant is resolved from the URL/hostname
+/// before sign-in. After authentication, resolution order is:
+/// 1. The signed-in user's `organization` field.
+/// 2. A persisted choice in secure storage (super-admin org switcher).
 
 @ProviderFor(CurrentOrganizationController)
 final currentOrganizationControllerProvider =
@@ -24,25 +21,19 @@ final currentOrganizationControllerProvider =
 
 /// Controller for resolving/switching the current organization.
 ///
-/// Resolution order:
-/// 1. Web: `Uri.base.host` matched against an organization's `subdomain`/
-///    `slug` — wins whenever it matches, even before the user is signed in,
-///    so login/branding can render for the right org immediately.
-/// 2. The signed-in user's `organization` field.
-/// 3. A persisted choice in secure storage (native/desktop, or local dev
-///    where the hostname won't match any subdomain).
+/// Login is organization-agnostic — no tenant is resolved from the URL/hostname
+/// before sign-in. After authentication, resolution order is:
+/// 1. The signed-in user's `organization` field.
+/// 2. A persisted choice in secure storage (super-admin org switcher).
 final class CurrentOrganizationControllerProvider
     extends
         $AsyncNotifierProvider<CurrentOrganizationController, Organization?> {
   /// Controller for resolving/switching the current organization.
   ///
-  /// Resolution order:
-  /// 1. Web: `Uri.base.host` matched against an organization's `subdomain`/
-  ///    `slug` — wins whenever it matches, even before the user is signed in,
-  ///    so login/branding can render for the right org immediately.
-  /// 2. The signed-in user's `organization` field.
-  /// 3. A persisted choice in secure storage (native/desktop, or local dev
-  ///    where the hostname won't match any subdomain).
+  /// Login is organization-agnostic — no tenant is resolved from the URL/hostname
+  /// before sign-in. After authentication, resolution order is:
+  /// 1. The signed-in user's `organization` field.
+  /// 2. A persisted choice in secure storage (super-admin org switcher).
   CurrentOrganizationControllerProvider._()
     : super(
         from: null,
@@ -63,17 +54,14 @@ final class CurrentOrganizationControllerProvider
 }
 
 String _$currentOrganizationControllerHash() =>
-    r'aec4c8a5baf675255b472751fa0fcd39503d40c8';
+    r'affa330fa3b8fa2601372d2e516dd47c7cceba5a';
 
 /// Controller for resolving/switching the current organization.
 ///
-/// Resolution order:
-/// 1. Web: `Uri.base.host` matched against an organization's `subdomain`/
-///    `slug` — wins whenever it matches, even before the user is signed in,
-///    so login/branding can render for the right org immediately.
-/// 2. The signed-in user's `organization` field.
-/// 3. A persisted choice in secure storage (native/desktop, or local dev
-///    where the hostname won't match any subdomain).
+/// Login is organization-agnostic — no tenant is resolved from the URL/hostname
+/// before sign-in. After authentication, resolution order is:
+/// 1. The signed-in user's `organization` field.
+/// 2. A persisted choice in secure storage (super-admin org switcher).
 
 abstract class _$CurrentOrganizationController
     extends $AsyncNotifier<Organization?> {

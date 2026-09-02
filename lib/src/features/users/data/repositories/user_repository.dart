@@ -55,6 +55,7 @@ abstract class UserRepository {
     List<String>? fields,
     int page = 1,
     int perPage = Pagination.defaultPageSize,
+    String? filter,
   });
 
   /// Updates a user's avatar image.
@@ -202,6 +203,7 @@ class UserRepositoryImpl implements UserRepository {
       final body = <String, dynamic>{
         'username': user.username,
         'name': user.name,
+        'email': user.email,
         'password': password,
         'passwordConfirm': password,
         'role': user.roleId,
@@ -209,6 +211,9 @@ class UserRepositoryImpl implements UserRepository {
         'allowedBranches': user.allowedBranchIds,
         'isDeleted': false,
       };
+      if (user.organizationId != null && user.organizationId!.isNotEmpty) {
+        body['organization'] = user.organizationId;
+      }
 
       final record = await _collection.create(body: body, expand: _expand);
       invalidateCache();
@@ -226,6 +231,12 @@ class UserRepositoryImpl implements UserRepository {
         'branch': user.branchId,
         'allowedBranches': user.allowedBranchIds,
       };
+      if (user.email != null && user.email!.isNotEmpty) {
+        body['email'] = user.email;
+      }
+      if (user.organizationId != null && user.organizationId!.isNotEmpty) {
+        body['organization'] = user.organizationId;
+      }
 
       final record = await _collection.update(
         user.id,
@@ -290,19 +301,23 @@ class UserRepositoryImpl implements UserRepository {
     List<String>? fields,
     int page = 1,
     int perPage = Pagination.defaultPageSize,
+    String? filter,
   }) async {
     return TaskEither.tryCatch(() async {
       final searchFields = fields ?? ['name', 'username'];
-      final filter = PBFilter()
+      final searchFilter = PBFilter()
           .notDeleted()
           .searchFields(query, searchFields)
           .build();
+      final filterString = filter != null
+          ? '$filter && $searchFilter'
+          : searchFilter;
 
       final result = await _collection.getList(
         page: page,
         perPage: perPage,
         expand: _expand,
-        filter: filter,
+        filter: filterString,
         sort: 'name',
       );
 

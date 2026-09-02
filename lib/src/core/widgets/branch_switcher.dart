@@ -6,6 +6,7 @@ import '../../features/settings/domain/branch.dart';
 import '../../features/settings/presentation/controllers/branches_controller.dart';
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../i18n/strings.g.dart';
+import 'scope_switcher_bar.dart';
 
 /// Branch switcher widget for the sidebar/drawer and tablet bar.
 ///
@@ -13,10 +14,17 @@ import '../i18n/strings.g.dart';
 /// - Non-admins with multiple allowed branches: dropdown of allowed set
 /// - Non-admins with one (or zero) branch: display-only
 class BranchSwitcher extends HookConsumerWidget {
-  const BranchSwitcher({super.key, this.compact = false});
+  const BranchSwitcher({
+    super.key,
+    this.compact = false,
+    this.embedded = false,
+  });
 
   /// When true, uses tighter padding for the tablet top bar.
   final bool compact;
+
+  /// When true, omits outer pill chrome (used inside [ScopeSwitcherBar]).
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,9 +72,17 @@ class BranchSwitcher extends HookConsumerWidget {
 
         if (!preferDropdown) {
           if (currentBranch == null) {
-            return _NoBranchDisplay(theme: theme, compact: compact);
+            return _NoBranchDisplay(
+              theme: theme,
+              compact: compact,
+              embedded: embedded,
+            );
           }
-          return _BranchDisplay(branch: currentBranch, compact: compact);
+          return _BranchDisplay(
+            branch: currentBranch,
+            compact: compact,
+            embedded: embedded,
+          );
         }
 
         return branchesAsync.when(
@@ -78,6 +94,7 @@ class BranchSwitcher extends HookConsumerWidget {
               if (viewingAllSelection && showAllOption) {
                 return _BranchDropdown(
                   compact: compact,
+                  embedded: embedded,
                   selectedValue: allBranchesSentinel,
                   showAllOption: showAllOption,
                   allLabel: t.navigation.allBranches,
@@ -96,8 +113,9 @@ class BranchSwitcher extends HookConsumerWidget {
                       branch: currentBranch,
                       isLoading: true,
                       compact: compact,
+                      embedded: embedded,
                     )
-                  : const _BranchLoadingState();
+                  : _BranchLoadingState(embedded: embedded);
             }
 
             final options = allBranches
@@ -105,7 +123,11 @@ class BranchSwitcher extends HookConsumerWidget {
                 .toList();
 
             if (options.isEmpty && !showAllOption) {
-              return _NoBranchDisplay(theme: theme, compact: compact);
+              return _NoBranchDisplay(
+                theme: theme,
+                compact: compact,
+                embedded: embedded,
+              );
             }
 
             final selectedValue = viewingAllSelection
@@ -114,6 +136,7 @@ class BranchSwitcher extends HookConsumerWidget {
 
             return _BranchDropdown(
               compact: compact,
+              embedded: embedded,
               selectedValue: selectedValue,
               showAllOption: showAllOption,
               allLabel: t.navigation.allBranches,
@@ -131,6 +154,7 @@ class BranchSwitcher extends HookConsumerWidget {
             if (viewingAllSelection && showAllOption) {
               return _BranchDropdown(
                 compact: compact,
+                embedded: embedded,
                 selectedValue: allBranchesSentinel,
                 showAllOption: showAllOption,
                 allLabel: t.navigation.allBranches,
@@ -149,13 +173,15 @@ class BranchSwitcher extends HookConsumerWidget {
                     branch: currentBranch,
                     isLoading: true,
                     compact: compact,
+                    embedded: embedded,
                   )
-                : const _BranchLoadingState();
+                : _BranchLoadingState(embedded: embedded);
           },
           error: (_, __) {
             if (viewingAllSelection && showAllOption) {
               return _BranchDropdown(
                 compact: compact,
+                embedded: embedded,
                 selectedValue: allBranchesSentinel,
                 showAllOption: showAllOption,
                 allLabel: t.navigation.allBranches,
@@ -170,12 +196,20 @@ class BranchSwitcher extends HookConsumerWidget {
               );
             }
             return currentBranch != null
-                ? _BranchDisplay(branch: currentBranch, compact: compact)
-                : _NoBranchDisplay(theme: theme, compact: compact);
+                ? _BranchDisplay(
+                    branch: currentBranch,
+                    compact: compact,
+                    embedded: embedded,
+                  )
+                : _NoBranchDisplay(
+                    theme: theme,
+                    compact: compact,
+                    embedded: embedded,
+                  );
           },
         );
       },
-      loading: () => const _BranchLoadingState(),
+      loading: () => _BranchLoadingState(embedded: embedded),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
@@ -189,6 +223,7 @@ class _BranchDropdown extends StatelessWidget {
     required this.showAllOption,
     required this.allLabel,
     this.compact = false,
+    this.embedded = false,
   });
 
   final String? selectedValue;
@@ -197,6 +232,7 @@ class _BranchDropdown extends StatelessWidget {
   final bool showAllOption;
   final String allLabel;
   final bool compact;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
@@ -236,19 +272,10 @@ class _BranchDropdown extends StatelessWidget {
         ? selectedValue
         : (showAllOption ? allBranchesSentinel : branches.firstOrNull?.id);
 
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 4 : 8,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 0 : 4,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return wrapSwitcherChrome(
+      theme: theme,
+      compact: compact,
+      embedded: embedded,
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
@@ -268,29 +295,22 @@ class _BranchDisplay extends StatelessWidget {
     required this.branch,
     this.isLoading = false,
     this.compact = false,
+    this.embedded = false,
   });
 
   final Branch branch;
   final bool isLoading;
   final bool compact;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 4 : 8,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 8 : 12,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return wrapSwitcherChrome(
+      theme: theme,
+      compact: compact,
+      embedded: embedded,
       child: Row(
         children: [
           Icon(
@@ -319,28 +339,24 @@ class _BranchDisplay extends StatelessWidget {
 }
 
 class _NoBranchDisplay extends StatelessWidget {
-  const _NoBranchDisplay({required this.theme, this.compact = false});
+  const _NoBranchDisplay({
+    required this.theme,
+    this.compact = false,
+    this.embedded = false,
+  });
 
   final ThemeData theme;
   final bool compact;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final t = Translations.of(context);
 
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 4 : 8,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 8 : 12,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return wrapSwitcherChrome(
+      theme: theme,
+      compact: compact,
+      embedded: embedded,
       child: Row(
         children: [
           Icon(
@@ -368,13 +384,18 @@ class _NoBranchDisplay extends StatelessWidget {
 }
 
 class _BranchLoadingState extends StatelessWidget {
-  const _BranchLoadingState();
+  const _BranchLoadingState({this.embedded = false});
+
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    final theme = Theme.of(context);
+
+    return wrapSwitcherChrome(
+      theme: theme,
+      compact: true,
+      embedded: embedded,
       child: const Center(
         child: SizedBox(
           width: 20,

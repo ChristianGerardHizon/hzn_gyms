@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/routing/routes/users.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_users_controller.dart';
@@ -16,8 +17,10 @@ class UsersListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final paginatedAsync = ref.watch(paginatedUsersControllerProvider);
+    final t = Translations.of(context);
 
     return Scaffold(
+      appBar: AppBar(title: Text(t.navigation.users)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showCreateUserDialog(context),
         tooltip: 'Add User',

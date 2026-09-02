@@ -13,10 +13,12 @@ RouteBase get $membershipsShellRoute => ShellRouteData.$route(
   routes: [
     GoRouteData.$route(
       path: '/memberships',
+      hasOverriddenOnExit: false,
       factory: $MembershipsRoute._fromState,
       routes: [
         GoRouteData.$route(
           path: ':id',
+          hasOverriddenOnExit: false,
           factory: $MembershipDetailRoute._fromState,
         ),
       ],

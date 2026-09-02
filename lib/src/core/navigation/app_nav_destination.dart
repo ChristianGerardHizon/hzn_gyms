@@ -1,16 +1,19 @@
+import '../routing/routes/branches.routes.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/memberships.routes.dart';
 import '../routing/routes/members.routes.dart';
-import '../routing/routes/organization.routes.dart';
 import '../routing/routes/organizations.routes.dart';
 import '../routing/routes/outbox.routes.dart';
+import '../routing/routes/platform.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/profile.routes.dart';
 import '../routing/routes/reports.routes.dart';
+import '../routing/routes/roles.routes.dart';
 import '../routing/routes/sales.routes.dart';
 import '../routing/routes/sales_history.routes.dart';
 import '../routing/routes/system.routes.dart';
+import '../routing/routes/users.routes.dart';
 import '../../features/users/domain/user_role.dart';
 import '../permissions/current_user_permissions.dart';
 
@@ -24,7 +27,9 @@ enum AppNavId {
   members,
   memberships,
   reports,
-  organization,
+  users,
+  roles,
+  branches,
   organizations,
   profile,
   outbox,
@@ -49,7 +54,9 @@ const List<AppNavDestination> allAppNavDestinations = [
   AppNavDestination(id: AppNavId.members, path: MembersRoute.path),
   AppNavDestination(id: AppNavId.memberships, path: MembershipsRoute.path),
   AppNavDestination(id: AppNavId.reports, path: ReportsRoute.path),
-  AppNavDestination(id: AppNavId.organization, path: OrganizationRoute.path),
+  AppNavDestination(id: AppNavId.users, path: UsersRoute.path),
+  AppNavDestination(id: AppNavId.roles, path: RolesRoute.path),
+  AppNavDestination(id: AppNavId.branches, path: BranchesRoute.path),
   AppNavDestination(id: AppNavId.organizations, path: OrganizationsRoute.path),
   AppNavDestination(id: AppNavId.profile, path: ProfileRoute.path),
   AppNavDestination(id: AppNavId.outbox, path: OutboxRoute.path),
@@ -58,8 +65,8 @@ const List<AppNavDestination> allAppNavDestinations = [
 
 /// Returns destinations visible for [permissions].
 ///
-/// Organization and Profile are mutually exclusive: users with
-/// [Permissions.usersView] see Organization; everyone else sees Profile.
+/// Profile is shown for users without [Permissions.usersView]; admins with
+/// user management permissions see Users/Roles/Branches instead.
 List<AppNavDestination> visibleAppNavDestinations(
   CurrentUserPermissions permissions,
 ) {
@@ -84,10 +91,15 @@ List<AppNavDestination> visibleAppNavDestinations(
             return permissions.has(Permissions.membershipsView);
           case AppNavId.reports:
             return permissions.has(Permissions.reportsView);
-          case AppNavId.organization:
+          case AppNavId.users:
             return permissions.canManageUsers;
+          case AppNavId.roles:
+            return permissions.has(Permissions.rolesView);
+          case AppNavId.branches:
+            return permissions.has(Permissions.branchesView);
           case AppNavId.organizations:
-            return permissions.canManageOrganizations;
+            // Platform org management lives under /platform/* shell.
+            return false;
           case AppNavId.profile:
             return !permissions.canManageUsers;
           case AppNavId.outbox:
@@ -154,8 +166,18 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
   if (matchesRoutePath(location, ReportsRoute.path)) {
     return permissions.has(Permissions.reportsView);
   }
-  if (matchesRoutePath(location, OrganizationRoute.path)) {
+  if (matchesRoutePath(location, UsersRoute.path)) {
     return permissions.canManageUsers;
+  }
+  if (matchesRoutePath(location, RolesRoute.path)) {
+    return permissions.has(Permissions.rolesView);
+  }
+  if (matchesRoutePath(location, BranchesRoute.path)) {
+    return permissions.has(Permissions.branchesView);
+  }
+  if (location == PlatformDashboardRoute.path ||
+      matchesRoutePath(location, PlatformOrganizationsRoute.path)) {
+    return permissions.canManageOrganizations;
   }
   if (matchesRoutePath(location, OrganizationsRoute.path)) {
     return permissions.canManageOrganizations;
@@ -180,7 +202,11 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
 
 /// Paths that must not be reached before role permissions resolve.
 bool isPermissionSensitivePath(String location) {
-  return matchesRoutePath(location, OrganizationRoute.path) ||
+  return matchesRoutePath(location, UsersRoute.path) ||
+      matchesRoutePath(location, RolesRoute.path) ||
+      matchesRoutePath(location, BranchesRoute.path) ||
+      matchesRoutePath(location, PlatformOrganizationsRoute.path) ||
+      location == PlatformDashboardRoute.path ||
       matchesRoutePath(location, OrganizationsRoute.path) ||
       matchesRoutePath(location, ReportsRoute.path) ||
       matchesRoutePath(location, OutboxRoute.path) ||
@@ -192,6 +218,9 @@ bool isPermissionSensitivePath(String location) {
 
 /// First fallback path when access is denied.
 String fallbackPathFor(CurrentUserPermissions permissions) {
+  if (permissions.canManageOrganizations) {
+    return PlatformDashboardRoute.path;
+  }
   final visible = visibleAppNavDestinations(permissions);
   if (visible.isEmpty) return DashboardRoute.path;
   return visible.first.path;

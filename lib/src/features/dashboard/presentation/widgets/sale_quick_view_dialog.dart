@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/dialog_close_handler.dart';
@@ -17,6 +18,7 @@ import '../../../sales/presentation/controllers/sale_items_provider.dart';
 import '../../../sales/presentation/controllers/sale_provider.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../../sales/presentation/widgets/sale_status_chip.dart';
+import '../../../users/presentation/controllers/user_provider.dart';
 import '../controllers/todays_sales_controller.dart';
 
 /// Shows a quick-view dialog with sale details, items, and payment actions.
@@ -193,7 +195,7 @@ class SaleQuickViewDialog extends ConsumerWidget {
   }
 }
 
-class _SaleHeader extends StatelessWidget {
+class _SaleHeader extends ConsumerWidget {
   const _SaleHeader({
     required this.sale,
     required this.dateFormat,
@@ -207,8 +209,13 @@ class _SaleHeader extends StatelessWidget {
   final bool isLoading;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final cashierName = sale.cashierId.isEmpty
+        ? null
+        : ref.watch(userProvider(sale.cashierId)).value?.name;
+    final hasCustomerId =
+        sale.customerId != null && sale.customerId!.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +288,23 @@ class _SaleHeader extends StatelessWidget {
           value: sale.isPaid ? 'Paid' : 'No payment yet',
           valueColor: sale.isPaid ? Colors.green : Colors.orange,
         ),
-        _InfoRow(label: 'Customer', value: sale.customerDisplay),
+        _InfoRow(
+          label: 'Customer',
+          value: sale.customerDisplay,
+          onValueTap: hasCustomerId
+              ? () {
+                  final router = GoRouter.of(context);
+                  final location =
+                      MemberDetailRoute(id: sale.customerId!).location;
+                  Navigator.of(context, rootNavigator: true).popUntil(
+                    (route) => route is! PopupRoute,
+                  );
+                  router.push(location);
+                }
+              : null,
+        ),
+        if (cashierName != null && cashierName.isNotEmpty)
+          _InfoRow(label: 'Sold by', value: cashierName),
         if (sale.notes != null && sale.notes!.isNotEmpty)
           _InfoRow(label: 'Notes', value: sale.notes!),
       ],
@@ -589,15 +612,29 @@ class _InfoRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.valueColor,
+    this.onValueTap,
   });
 
   final String label;
   final String value;
   final Color? valueColor;
+  final VoidCallback? onValueTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLink = onValueTap != null;
+    final linkColor = theme.colorScheme.primary;
+
+    final valueText = Text(
+      value,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        fontWeight: FontWeight.w500,
+        color: isLink ? linkColor : valueColor,
+        decoration: isLink ? TextDecoration.underline : null,
+        decorationColor: isLink ? linkColor : null,
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -614,13 +651,27 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: valueColor,
-              ),
-            ),
+            child: isLink
+                ? InkWell(
+                    onTap: onValueTap,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(child: valueText),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.open_in_new,
+                            size: 14,
+                            color: linkColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : valueText,
           ),
         ],
       ),

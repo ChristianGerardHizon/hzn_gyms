@@ -28,6 +28,12 @@ class UserMapper extends ClassMapperBase<User> {
   static const Field<User, String> _f$name = Field('name', _$name);
   static String _$username(User v) => v.username;
   static const Field<User, String> _f$username = Field('username', _$username);
+  static String? _$email(User v) => v.email;
+  static const Field<User, String> _f$email = Field(
+    'email',
+    _$email,
+    opt: true,
+  );
   static String? _$avatar(User v) => v.avatar;
   static const Field<User, String> _f$avatar = Field(
     'avatar',
@@ -63,6 +69,12 @@ class UserMapper extends ClassMapperBase<User> {
   static const Field<User, String> _f$branchName = Field(
     'branchName',
     _$branchName,
+    opt: true,
+  );
+  static String? _$organizationId(User v) => v.organizationId;
+  static const Field<User, String> _f$organizationId = Field(
+    'organizationId',
+    _$organizationId,
     opt: true,
   );
   static List<String> _$allowedBranchIds(User v) => v.allowedBranchIds;
@@ -104,12 +116,14 @@ class UserMapper extends ClassMapperBase<User> {
     #id: _f$id,
     #name: _f$name,
     #username: _f$username,
+    #email: _f$email,
     #avatar: _f$avatar,
     #verified: _f$verified,
     #roleId: _f$roleId,
     #roleName: _f$roleName,
     #branchId: _f$branchId,
     #branchName: _f$branchName,
+    #organizationId: _f$organizationId,
     #allowedBranchIds: _f$allowedBranchIds,
     #allowedBranchNames: _f$allowedBranchNames,
     #isDeleted: _f$isDeleted,
@@ -122,12 +136,14 @@ class UserMapper extends ClassMapperBase<User> {
       id: data.dec(_f$id),
       name: data.dec(_f$name),
       username: data.dec(_f$username),
+      email: data.dec(_f$email),
       avatar: data.dec(_f$avatar),
       verified: data.dec(_f$verified),
       roleId: data.dec(_f$roleId),
       roleName: data.dec(_f$roleName),
       branchId: data.dec(_f$branchId),
       branchName: data.dec(_f$branchName),
+      organizationId: data.dec(_f$organizationId),
       allowedBranchIds: data.dec(_f$allowedBranchIds),
       allowedBranchNames: data.dec(_f$allowedBranchNames),
       isDeleted: data.dec(_f$isDeleted),
@@ -190,12 +206,14 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     String? id,
     String? name,
     String? username,
+    String? email,
     String? avatar,
     bool? verified,
     String? roleId,
     String? roleName,
     String? branchId,
     String? branchName,
+    String? organizationId,
     List<String>? allowedBranchIds,
     List<String>? allowedBranchNames,
     bool? isDeleted,
@@ -230,12 +248,14 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     String? id,
     String? name,
     String? username,
+    Object? email = $none,
     Object? avatar = $none,
     bool? verified,
     Object? roleId = $none,
     Object? roleName = $none,
     Object? branchId = $none,
     Object? branchName = $none,
+    Object? organizationId = $none,
     List<String>? allowedBranchIds,
     List<String>? allowedBranchNames,
     bool? isDeleted,
@@ -246,12 +266,14 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (id != null) #id: id,
       if (name != null) #name: name,
       if (username != null) #username: username,
+      if (email != $none) #email: email,
       if (avatar != $none) #avatar: avatar,
       if (verified != null) #verified: verified,
       if (roleId != $none) #roleId: roleId,
       if (roleName != $none) #roleName: roleName,
       if (branchId != $none) #branchId: branchId,
       if (branchName != $none) #branchName: branchName,
+      if (organizationId != $none) #organizationId: organizationId,
       if (allowedBranchIds != null) #allowedBranchIds: allowedBranchIds,
       if (allowedBranchNames != null) #allowedBranchNames: allowedBranchNames,
       if (isDeleted != null) #isDeleted: isDeleted,
@@ -264,12 +286,14 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     id: data.get(#id, or: $value.id),
     name: data.get(#name, or: $value.name),
     username: data.get(#username, or: $value.username),
+    email: data.get(#email, or: $value.email),
     avatar: data.get(#avatar, or: $value.avatar),
     verified: data.get(#verified, or: $value.verified),
     roleId: data.get(#roleId, or: $value.roleId),
     roleName: data.get(#roleName, or: $value.roleName),
     branchId: data.get(#branchId, or: $value.branchId),
     branchName: data.get(#branchName, or: $value.branchName),
+    organizationId: data.get(#organizationId, or: $value.organizationId),
     allowedBranchIds: data.get(#allowedBranchIds, or: $value.allowedBranchIds),
     allowedBranchNames: data.get(
       #allowedBranchNames,

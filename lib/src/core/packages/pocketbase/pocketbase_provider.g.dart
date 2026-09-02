@@ -71,6 +71,11 @@ abstract class _$PbDebugController extends $AsyncNotifier<bool> {
 /// The instance uses the URL resolved from --dart-define=ENV or falls back
 /// to kDebugMode-based selection.
 ///
+/// Uses [PocketBase.reuseHTTPClient] so the SDK does not call [http.Client.close]
+/// after every request. Without that, our shared [TimeoutHttpClient] inner
+/// client would be closed on the first API call and all later requests (including
+/// `/api/health` polling) would fail — showing "Offline" on the login screen.
+///
 /// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
 /// very slow connection fails fast with an error instead of leaving the UI
 /// spinning indefinitely.
@@ -83,6 +88,11 @@ final pocketbaseProvider = PocketbaseProvider._();
 /// The instance uses the URL resolved from --dart-define=ENV or falls back
 /// to kDebugMode-based selection.
 ///
+/// Uses [PocketBase.reuseHTTPClient] so the SDK does not call [http.Client.close]
+/// after every request. Without that, our shared [TimeoutHttpClient] inner
+/// client would be closed on the first API call and all later requests (including
+/// `/api/health` polling) would fail — showing "Offline" on the login screen.
+///
 /// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
 /// very slow connection fails fast with an error instead of leaving the UI
 /// spinning indefinitely.
@@ -94,6 +104,11 @@ final class PocketbaseProvider
   ///
   /// The instance uses the URL resolved from --dart-define=ENV or falls back
   /// to kDebugMode-based selection.
+  ///
+  /// Uses [PocketBase.reuseHTTPClient] so the SDK does not call [http.Client.close]
+  /// after every request. Without that, our shared [TimeoutHttpClient] inner
+  /// client would be closed on the first API call and all later requests (including
+  /// `/api/health` polling) would fail — showing "Offline" on the login screen.
   ///
   /// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
   /// very slow connection fails fast with an error instead of leaving the UI
@@ -131,4 +146,4 @@ final class PocketbaseProvider
   }
 }
 
-String _$pocketbaseHash() => r'c3a8cc2ec43292c31c15705e88b4ddb6f495e15d';
+String _$pocketbaseHash() => r'e23c2006f7282816a9641d8bc5f3e5f2e133a4ec';

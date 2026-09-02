@@ -310,6 +310,12 @@ String memberPhotoFilename([DateTime? now]) {
   return 'member_photo_$timestamp.jpg';
 }
 
+/// Builds a stable filename for payment proof uploads.
+String paymentProofFilename([DateTime? now]) {
+  final timestamp = (now ?? DateTime.now()).millisecondsSinceEpoch;
+  return 'payment_proof_$timestamp.jpg';
+}
+
 /// Square camera preview size that fits within [maxWidth] × [maxHeight].
 ///
 /// [chromeHeight] reserves space for the camera switcher, action buttons, and
@@ -336,13 +342,23 @@ double fittedMemberPhotoPreviewSize({
 }
 
 /// Reads image bytes and normalizes to a JPEG [XFile] for upload.
-Future<CapturedPhoto?> processPickedOrCapturedImage(XFile file) async {
+Future<CapturedPhoto?> processPickedOrCapturedImage(
+  XFile file, {
+  String? filename,
+}) async {
   final bytes = await file.readAsBytes();
   if (bytes.isEmpty) return null;
 
-  final filename = memberPhotoFilename();
+  final name = filename ?? memberPhotoFilename();
   return CapturedPhoto(
     bytes: bytes,
-    file: XFile.fromData(bytes, name: filename, mimeType: 'image/jpeg'),
+    // Pass path as well as name: dart:io XFile ignores [name] and derives
+    // `.name` from [path]; web uses [name] directly.
+    file: XFile.fromData(
+      bytes,
+      name: name,
+      path: name,
+      mimeType: 'image/jpeg',
+    ),
   );
 }

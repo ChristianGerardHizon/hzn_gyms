@@ -21,12 +21,7 @@ class OrganizationsPage extends ConsumerWidget {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showDialog<void>(
-            context: context,
-            builder: (context) => const OrganizationFormDialog(),
-          );
-        },
+        onPressed: () => showOrganizationFormDialog(context),
         icon: const Icon(Icons.add),
         label: Text(t.organizations.create),
       ),

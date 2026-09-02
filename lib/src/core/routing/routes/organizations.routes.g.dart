@@ -10,6 +10,7 @@ List<RouteBase> get $appRoutes => [$organizationsRoute];
 
 RouteBase get $organizationsRoute => GoRouteData.$route(
   path: '/organizations',
+  hasOverriddenOnExit: false,
   factory: $OrganizationsRoute._fromState,
 );
 

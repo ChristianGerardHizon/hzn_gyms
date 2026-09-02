@@ -5,23 +5,27 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../pages/app_root.dart';
+import '../pages/platform_root.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'router_utils.dart';
 import 'routes/auth.routes.dart';
+import 'routes/branches.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
-import 'routes/organization.routes.dart';
 import 'routes/outbox.routes.dart';
 import 'routes/products.routes.dart';
 import 'routes/members.routes.dart';
 import 'routes/memberships.routes.dart';
+import 'routes/organizations.routes.dart';
 import 'routes/profile.routes.dart';
 import 'routes/sales.routes.dart';
 import 'routes/sales_history.routes.dart';
 import 'routes/reports.routes.dart';
-import 'routes/organizations.routes.dart';
+import 'routes/roles.routes.dart';
+import 'routes/platform.routes.dart';
 import 'routes/system.routes.dart';
+import 'routes/users.routes.dart';
 
 part 'router.g.dart';
 
@@ -53,6 +57,12 @@ GoRouter router(Ref ref) {
       $forgotPasswordRoute,
       $authLoadingRoute,
 
+      // Legacy org path redirect
+      $organizationsRoute,
+
+      // Platform super-admin shell
+      $platformShellRoute,
+
       // Main app shell with navigation
       ShellRoute(
         builder: (context, state, child) => AppRoot(child: child),
@@ -65,8 +75,9 @@ GoRouter router(Ref ref) {
           $salesRoute,
           $salesShellRoute,
           $reportsRoute,
-          $organizationShellRoute,
-          $organizationsRoute,
+          $usersShellRoute,
+          $rolesRoute,
+          $branchesShellRoute,
           $profileRoute,
           $outboxRoute,
           $systemShellRoute,
@@ -93,7 +104,16 @@ GoRouter router(Ref ref) {
           // Login success: restore deep link or go home.
           final pendingUrl =
               ref.read(pendingRedirectProvider.notifier).consume();
-          router.go(pendingUrl ?? DashboardRoute.path);
+          if (pendingUrl != null) {
+            router.go(pendingUrl);
+            return;
+          }
+          final perms = ref.read(currentUserPermissionsProvider).value;
+          if (perms?.canManageOrganizations ?? false) {
+            router.go(PlatformDashboardRoute.path);
+          } else {
+            router.go(DashboardRoute.path);
+          }
         } else if (isAuthenticated && location == SplashRoute.path) {
           // Do not router.go(Dashboard) here — that races redirect restore and
           // can wipe a pending deep link. Let [RouterUtils.redirect] step 3

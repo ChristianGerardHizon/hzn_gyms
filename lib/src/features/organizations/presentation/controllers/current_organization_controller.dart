@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/packages/pocketbase/pb_filter.dart';
@@ -14,13 +13,10 @@ const _currentOrganizationStorageKey = 'CURRENT_ORGANIZATION_ID';
 
 /// Controller for resolving/switching the current organization.
 ///
-/// Resolution order:
-/// 1. Web: `Uri.base.host` matched against an organization's `subdomain`/
-///    `slug` — wins whenever it matches, even before the user is signed in,
-///    so login/branding can render for the right org immediately.
-/// 2. The signed-in user's `organization` field.
-/// 3. A persisted choice in secure storage (native/desktop, or local dev
-///    where the hostname won't match any subdomain).
+/// Login is organization-agnostic — no tenant is resolved from the URL/hostname
+/// before sign-in. After authentication, resolution order is:
+/// 1. The signed-in user's `organization` field.
+/// 2. A persisted choice in secure storage (super-admin org switcher).
 @Riverpod(keepAlive: true)
 class CurrentOrganizationController extends _$CurrentOrganizationController {
   OrganizationRepository get _repository =>
@@ -28,11 +24,10 @@ class CurrentOrganizationController extends _$CurrentOrganizationController {
 
   @override
   Future<Organization?> build() async {
-    final byHostname = await _resolveByHostname();
-    if (byHostname != null) return byHostname;
-
     final auth = ref.watch(currentAuthProvider);
-    final orgId = auth?.user.organization;
+    if (auth == null) return null;
+
+    final orgId = auth.user.organization;
     if (orgId != null && orgId.isNotEmpty) {
       final org = await _fetchOrganization(orgId);
       if (org != null) return org;
@@ -52,16 +47,6 @@ class CurrentOrganizationController extends _$CurrentOrganizationController {
     await _persistOrganizationId(organizationId);
     final org = await _fetchOrganization(organizationId);
     state = AsyncData(org);
-  }
-
-  Future<Organization?> _resolveByHostname() async {
-    if (!kIsWeb) return null;
-
-    final host = Uri.base.host;
-    if (host.isEmpty) return null;
-
-    final result = await _repository.fetchBySlugOrHostname(host);
-    return result.fold((_) => null, (org) => org);
   }
 
   Future<Organization?> _fetchOrganization(String id) async {

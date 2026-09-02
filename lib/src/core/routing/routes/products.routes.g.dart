@@ -13,10 +13,12 @@ RouteBase get $productsShellRoute => ShellRouteData.$route(
   routes: [
     GoRouteData.$route(
       path: '/products',
+      hasOverriddenOnExit: false,
       factory: $ProductsRoute._fromState,
       routes: [
         GoRouteData.$route(
           path: ':id',
+          hasOverriddenOnExit: false,
           factory: $ProductDetailRoute._fromState,
         ),
       ],

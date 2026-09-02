@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/routing/routes/organization.routes.dart';
+import '../../../../core/routing/routes/branches.routes.dart';
 import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../domain/branch.dart';
@@ -62,7 +63,13 @@ class BranchDetailPanel extends ConsumerWidget {
         title: Text(branch.name),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => const OrganizationBranchesRoute().go(context),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              const BranchesRoute().go(context);
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -114,7 +121,11 @@ class BranchDetailPanel extends ConsumerWidget {
     if (context.mounted) {
       if (success) {
         showSuccessSnackBar(context, message: 'Branch deleted successfully');
-        const OrganizationBranchesRoute().go(context);
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          const BranchesRoute().go(context);
+        }
       } else {
         showFormErrorDialog(
           context,

@@ -8,8 +8,11 @@ part of 'sales.routes.dart';
 
 List<RouteBase> get $appRoutes => [$salesRoute];
 
-RouteBase get $salesRoute =>
-    GoRouteData.$route(path: '/cashier', factory: $SalesRoute._fromState);
+RouteBase get $salesRoute => GoRouteData.$route(
+  path: '/cashier',
+  hasOverriddenOnExit: false,
+  factory: $SalesRoute._fromState,
+);
 
 mixin $SalesRoute on GoRouteData {
   static SalesRoute _fromState(GoRouterState state) => const SalesRoute();

@@ -38,6 +38,19 @@ bool shouldSkipMembershipSale({
 }) =>
     !guestMode && excludeFromSales && canExcludeFromSales;
 
+/// Returns the only active plan in [catalogPlans], or null if zero/multiple.
+///
+/// Used to auto-select when purchase/renew (and walk-in) have a single option.
+Membership? soleAvailableMembershipPlan(Iterable<Membership> catalogPlans) {
+  Membership? sole;
+  for (final plan in catalogPlans) {
+    if (!plan.isActive) continue;
+    if (sole != null) return null;
+    sole = plan;
+  }
+  return sole;
+}
+
 /// Reusable membership plan selection + add-on content.
 ///
 /// Two modes:
@@ -234,7 +247,7 @@ class MembershipPurchaseContent extends HookConsumerWidget {
       customStartDate.value = defaultStart;
     }
 
-    // Pre-select the membership plan when renewing.
+    // Pre-select the membership plan when renewing a known plan.
     useEffect(() {
       if (preselectedMembershipId == null) return null;
 
@@ -254,6 +267,29 @@ class MembershipPurchaseContent extends HookConsumerWidget {
 
       return null;
     }, [preselectedMembershipId, membershipsAsync]);
+
+    // Auto-select when the catalog has exactly one active plan.
+    useEffect(() {
+      if (preselectedMembershipId != null) return null;
+      if (membershipState.value != null) return null;
+
+      final memberships = membershipsAsync.asData?.value;
+      if (memberships == null) return null;
+
+      final catalogPlans = memberships.where(
+        (m) => guestMode ? m.memberNotRequired : !m.memberNotRequired,
+      );
+      final sole = soleAvailableMembershipPlan(catalogPlans);
+      if (sole == null) return null;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (membershipState.value == null) {
+          membershipState.value = sole;
+        }
+      });
+
+      return null;
+    }, [preselectedMembershipId, membershipsAsync, guestMode]);
 
     // Reset add-on selections when membership changes.
     // Scheduled post-frame to avoid setState during build when using

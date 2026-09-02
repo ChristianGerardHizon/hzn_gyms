@@ -4,12 +4,11 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../../../../core/assets/assets.gen.dart';
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/widgets/app_version_indicator.dart';
-import '../../../../core/widgets/org_logo.dart';
-import '../../../organizations/presentation/controllers/organization_branding_providers.dart';
 import '../controllers/auth_controller.dart';
-
 /// Login page for user authentication.
 class LoginPage extends HookConsumerWidget {
   const LoginPage({super.key});
@@ -44,140 +43,161 @@ class LoginPage extends HookConsumerWidget {
     }
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: FormBuilder(
-              key: formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo
-                  const OrgLogo(width: 150, height: 150),
-                  const SizedBox(height: 16),
-                  Text(
-                    ref.watch(effectiveAppTitleProvider),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    t.auth.signInToContinue,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 48),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const padding = EdgeInsets.all(24);
 
-                  // Error message
-                  if (errorMessage.value != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                      child: Row(
+            return SingleChildScrollView(
+              padding: padding,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - padding.vertical,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: FormBuilder(
+                      key: formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: Theme.of(context).colorScheme.error,
+                          // Generic app branding — org is chosen only after login.
+                          Assets.icons.appIconTransparent.image(
+                            width: 150,
+                            height: 150,
+                            fit: BoxFit.contain,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              errorMessage.value!,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
+                          const SizedBox(height: 16),
+                          Text(
+                            appTitle,                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            t.auth.signInToContinue,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 48),
+
+                          // Error message
+                          if (errorMessage.value != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.error.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      errorMessage.value!,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Email field
+                          FormBuilderTextField(
+                            name: 'email',
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
+                              labelText: t.fields.email,
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: const OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(),
+                              FormBuilderValidators.email(),
+                            ]),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Password field
+                          FormBuilderTextField(
+                            name: 'password',
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
+                              labelText: t.fields.password,
+                              prefixIcon: const Icon(Icons.lock_outlined),
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscurePassword.value
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: isLoading
+                                    ? null
+                                    : () {
+                                        obscurePassword.value =
+                                            !obscurePassword.value;
+                                      },
+                              ),
+                            ),
+                            obscureText: obscurePassword.value,
+                            textInputAction: TextInputAction.done,
+                            validator: FormBuilderValidators.required(),
+                            onSubmitted: isLoading
+                                ? null
+                                : (_) => handleLogin(),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Login button
+                          FilledButton(
+                            onPressed: isLoading ? null : handleLogin,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(t.auth.loginButton),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // App version indicator
+                          const AppVersionIndicator(),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Email field
-                  FormBuilderTextField(
-                    name: 'email',
-                    enabled: !isLoading,
-                    decoration: InputDecoration(
-                      labelText: t.fields.email,
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    validator: FormBuilderValidators.compose([
-                      FormBuilderValidators.required(),
-                      FormBuilderValidators.email(),
-                    ]),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Password field
-                  FormBuilderTextField(
-                    name: 'password',
-                    enabled: !isLoading,
-                    decoration: InputDecoration(
-                      labelText: t.fields.password,
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscurePassword.value
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                obscurePassword.value = !obscurePassword.value;
-                              },
-                      ),
-                    ),
-                    obscureText: obscurePassword.value,
-                    textInputAction: TextInputAction.done,
-                    validator: FormBuilderValidators.required(),
-                    onSubmitted: isLoading ? null : (_) => handleLogin(),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Login button
-                  FilledButton(
-                    onPressed: isLoading ? null : handleLogin,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(t.auth.loginButton),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // App version indicator
-                  const AppVersionIndicator(),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

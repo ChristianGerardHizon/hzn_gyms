@@ -52,7 +52,7 @@ final class CurrentUserPermissionsControllerProvider
 }
 
 String _$currentUserPermissionsControllerHash() =>
-    r'789a2a1796826f037de746047418fb53bb247b81';
+    r'4b416f991a5ab6f3e20bb1ed3468de17c6530d51';
 
 /// Loads and silently refreshes the current user's role permissions.
 ///
@@ -82,3 +82,63 @@ abstract class _$CurrentUserPermissionsController
     element.handleCreate(ref, build);
   }
 }
+
+/// Whether the signed-in user may use the organization switcher.
+///
+/// Platform super-admins need [Permissions.organizationsManage] and must not
+/// be linked to a tenant on their user record (org-scoped staff stay on their
+/// tenant even if their role incorrectly includes organizations.manage).
+
+@ProviderFor(canUseOrganizationSwitcher)
+final canUseOrganizationSwitcherProvider =
+    CanUseOrganizationSwitcherProvider._();
+
+/// Whether the signed-in user may use the organization switcher.
+///
+/// Platform super-admins need [Permissions.organizationsManage] and must not
+/// be linked to a tenant on their user record (org-scoped staff stay on their
+/// tenant even if their role incorrectly includes organizations.manage).
+
+final class CanUseOrganizationSwitcherProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Whether the signed-in user may use the organization switcher.
+  ///
+  /// Platform super-admins need [Permissions.organizationsManage] and must not
+  /// be linked to a tenant on their user record (org-scoped staff stay on their
+  /// tenant even if their role incorrectly includes organizations.manage).
+  CanUseOrganizationSwitcherProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'canUseOrganizationSwitcherProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$canUseOrganizationSwitcherHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return canUseOrganizationSwitcher(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$canUseOrganizationSwitcherHash() =>
+    r'dbda7ceef60df99fdd0bb9f89a138c0a79ef1a20';

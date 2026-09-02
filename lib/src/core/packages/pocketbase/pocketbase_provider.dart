@@ -98,14 +98,24 @@ class PbDebugController extends _$PbDebugController {
 /// The instance uses the URL resolved from --dart-define=ENV or falls back
 /// to kDebugMode-based selection.
 ///
+/// Uses [PocketBase.reuseHTTPClient] so the SDK does not call [http.Client.close]
+/// after every request. Without that, our shared [TimeoutHttpClient] inner
+/// client would be closed on the first API call and all later requests (including
+/// `/api/health` polling) would fail — showing "Offline" on the login screen.
+///
 /// Every request is wrapped with [ApiConstants.requestTimeout] so a dead or
 /// very slow connection fails fast with an error instead of leaving the UI
 /// spinning indefinitely.
 @Riverpod(keepAlive: true)
 PocketBase pocketbase(Ref ref) {
-  return PocketBase(
+  final pb = PocketBase(
     pocketbaseUrl,
-    httpClientFactory: () =>
-        TimeoutHttpClient(http.Client(), ApiConstants.requestTimeout),
+    reuseHTTPClient: true,
+    httpClientFactory: () => TimeoutHttpClient(
+      http.Client(),
+      ApiConstants.requestTimeout,
+    ),
   );
+  ref.onDispose(pb.close);
+  return pb;
 }

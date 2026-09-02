@@ -17,8 +17,8 @@ enum PaymentType {
   ];
 
   String get displayName => switch (this) {
-        PaymentType.payment => 'Cash',
-        PaymentType.deposit => 'GCash/Bank',
+        PaymentType.payment => 'Payment',
+        PaymentType.deposit => 'Deposit',
         PaymentType.refund => 'Refund',
       };
 }

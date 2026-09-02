@@ -5,91 +5,140 @@ import '../../features/organizations/presentation/controllers/current_organizati
 import '../../features/organizations/presentation/controllers/organizations_controller.dart';
 import '../i18n/strings.g.dart';
 import '../permissions/current_user_permissions.dart';
+import 'cached_avatar.dart';
+import 'scope_switcher_bar.dart';
+/// Width used when the switcher sits in unbounded parents (e.g. AppBar actions).
+const _compactUnboundedWidth = 180.0;
+const _regularUnboundedWidth = 260.0;
 
 /// Organization switcher for super-admins to change the active tenant.
 class OrganizationSwitcher extends ConsumerWidget {
-  const OrganizationSwitcher({super.key, this.compact = false});
+  const OrganizationSwitcher({
+    super.key,
+    this.compact = false,
+    this.embedded = false,
+  });
 
   /// When true, uses tighter padding for the tablet/mobile top bar.
   final bool compact;
+
+  /// When true, omits outer pill chrome (used inside [ScopeSwitcherBar]).
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
     final theme = Theme.of(context);
-    final permissions = ref.watch(currentUserPermissionsProvider).value;
-    final canManage = permissions?.canManageOrganizations ?? false;
+    final canSwitch = ref.watch(canUseOrganizationSwitcherProvider);
 
-    if (!canManage) {
+    if (!canSwitch) {
       return const SizedBox.shrink();
     }
 
     final currentOrgAsync = ref.watch(currentOrganizationControllerProvider);
     final organizationsAsync = ref.watch(organizationsControllerProvider);
 
-    return currentOrgAsync.when(
-      skipLoadingOnReload: true,
-      data: (currentOrg) {
-        return organizationsAsync.when(
-          data: (organizations) {
-            if (organizations.isEmpty) {
-              return _OrganizationDisplay(
-                label: t.organizations.noOrganization,
-                compact: compact,
-              );
-            }
+    Widget buildBody() {
+      return currentOrgAsync.when(
+          skipLoadingOnReload: true,
+          data: (currentOrg) {
+            return organizationsAsync.when(
+              data: (organizations) {
+                if (organizations.isEmpty) {
+                  return _OrganizationDisplay(
+                    label: t.organizations.noOrganization,
+                    compact: compact,
+                    embedded: embedded,
+                  );
+                }
 
-            final selectedId = organizations.any((o) => o.id == currentOrg?.id)
-                ? currentOrg?.id
-                : organizations.first.id;
+                final selectedId =
+                    organizations.any((o) => o.id == currentOrg?.id)
+                    ? currentOrg?.id
+                    : organizations.first.id;
 
-            return Container(
-              margin: EdgeInsets.symmetric(
-                horizontal: compact ? 8 : 12,
-                vertical: compact ? 4 : 8,
-              ),
-              padding: EdgeInsets.symmetric(
-                horizontal: compact ? 8 : 12,
-                vertical: compact ? 0 : 4,
-              ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: selectedId,
-                  isExpanded: true,
-                  isDense: compact,
-                  icon: const Icon(Icons.swap_horiz, size: 20),
-                  hint: Text(t.organizations.switchOrganization),
-                  items: organizations
-                      .map(
-                        (org) => DropdownMenuItem(
-                          value: org.id,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.apartment, size: 18),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  org.effectiveDisplayName,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                final selectedOrg = organizations.firstWhere(
+                  (o) => o.id == selectedId,
+                  orElse: () => organizations.first,
+                );
+
+                return wrapSwitcherChrome(
+                  theme: theme,
+                  compact: compact,
+                  embedded: embedded,
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedId,
+                      isExpanded: true,
+                      isDense: compact,
+                      icon: const Icon(Icons.swap_horiz, size: 20),
+                      hint: Text(t.organizations.switchOrganization),
+                      selectedItemBuilder: (context) {
+                        return organizations
+                            .map(
+                              (_) => Row(
+                                children: [
+                                  _OrganizationSwitcherLogo(
+                                    logoUrl: selectedOrg.logoTransparentUrl,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      selectedOrg.effectiveDisplayName,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref
-                          .read(currentOrganizationControllerProvider.notifier)
-                          .switchOrganization(value);
-                    }
-                  },
-                ),
+                            )
+                            .toList();
+                      },
+                      items: organizations
+                          .map(
+                            (org) => DropdownMenuItem(
+                              value: org.id,
+                              child: Row(
+                                children: [
+                                  _OrganizationSwitcherLogo(
+                                    logoUrl: org.logoTransparentUrl,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      org.effectiveDisplayName,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          ref
+                              .read(
+                                currentOrganizationControllerProvider.notifier,
+                              )
+                              .switchOrganization(value);
+                        }
+                      },
+                    ),
+                  ),
+                );
+              },
+              loading: () => _OrganizationDisplay(
+                label: t.common.loading,
+                isLoading: true,
+                compact: compact,
+                embedded: embedded,
+              ),
+              error: (_, __) => _OrganizationDisplay(
+                label:
+                    currentOrg?.effectiveDisplayName ??
+                    t.organizations.noOrganization,
+                compact: compact,
+                embedded: embedded,
               ),
             );
           },
@@ -97,20 +146,54 @@ class OrganizationSwitcher extends ConsumerWidget {
             label: t.common.loading,
             isLoading: true,
             compact: compact,
+            embedded: embedded,
           ),
-          error: (_, __) => _OrganizationDisplay(
-            label: currentOrg?.effectiveDisplayName ??
-                t.organizations.noOrganization,
-            compact: compact,
-          ),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+    }
+
+    if (embedded) return buildBody();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return _capUnboundedWidth(
+          constraints: constraints,
+          compact: compact,
+          child: buildBody(),
         );
       },
-      loading: () => _OrganizationDisplay(
-        label: t.common.loading,
-        isLoading: true,
-        compact: compact,
+    );
+  }
+}
+
+Widget _capUnboundedWidth({
+  required BoxConstraints constraints,
+  required bool compact,
+  required Widget child,
+}) {
+  if (constraints.maxWidth.isFinite) return child;
+  return SizedBox(
+    width: compact ? _compactUnboundedWidth : _regularUnboundedWidth,
+    child: child,
+  );
+}
+
+class _OrganizationSwitcherLogo extends StatelessWidget {
+  const _OrganizationSwitcherLogo({this.logoUrl});
+
+  final String? logoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 18,
+      height: 18,
+      child: CachedAvatar(
+        imageUrl: logoUrl,
+        radius: 9,
+        placeholderIcon: Icons.apartment,
+        thumbSize: 36,
       ),
-      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }
@@ -120,29 +203,22 @@ class _OrganizationDisplay extends StatelessWidget {
     required this.label,
     this.isLoading = false,
     this.compact = false,
+    this.embedded = false,
   });
 
   final String label;
   final bool isLoading;
   final bool compact;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 4 : 8,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 8 : 12,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return wrapSwitcherChrome(
+      theme: theme,
+      compact: compact,
+      embedded: embedded,
       child: Row(
         children: [
           Icon(

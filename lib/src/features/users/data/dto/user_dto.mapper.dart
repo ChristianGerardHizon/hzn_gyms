@@ -68,6 +68,12 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     _$branch,
     opt: true,
   );
+  static String? _$organization(UserDto v) => v.organization;
+  static const Field<UserDto, String> _f$organization = Field(
+    'organization',
+    _$organization,
+    opt: true,
+  );
   static List<String> _$allowedBranches(UserDto v) => v.allowedBranches;
   static const Field<UserDto, List<String>> _f$allowedBranches = Field(
     'allowedBranches',
@@ -126,6 +132,7 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     #verified: _f$verified,
     #role: _f$role,
     #branch: _f$branch,
+    #organization: _f$organization,
     #allowedBranches: _f$allowedBranches,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
@@ -147,6 +154,7 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
       verified: data.dec(_f$verified),
       role: data.dec(_f$role),
       branch: data.dec(_f$branch),
+      organization: data.dec(_f$organization),
       allowedBranches: data.dec(_f$allowedBranches),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
@@ -229,6 +237,7 @@ abstract class UserDtoCopyWith<$R, $In extends UserDto, $Out>
     bool? verified,
     String? role,
     String? branch,
+    String? organization,
     List<String>? allowedBranches,
     bool? isDeleted,
     String? created,
@@ -274,6 +283,7 @@ class _UserDtoCopyWithImpl<$R, $Out>
     bool? verified,
     Object? role = $none,
     Object? branch = $none,
+    Object? organization = $none,
     List<String>? allowedBranches,
     bool? isDeleted,
     Object? created = $none,
@@ -293,6 +303,7 @@ class _UserDtoCopyWithImpl<$R, $Out>
       if (verified != null) #verified: verified,
       if (role != $none) #role: role,
       if (branch != $none) #branch: branch,
+      if (organization != $none) #organization: organization,
       if (allowedBranches != null) #allowedBranches: allowedBranches,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
@@ -314,6 +325,7 @@ class _UserDtoCopyWithImpl<$R, $Out>
     verified: data.get(#verified, or: $value.verified),
     role: data.get(#role, or: $value.role),
     branch: data.get(#branch, or: $value.branch),
+    organization: data.get(#organization, or: $value.organization),
     allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),

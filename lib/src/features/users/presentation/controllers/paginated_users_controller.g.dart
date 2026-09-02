@@ -38,7 +38,7 @@ final class PaginatedUsersControllerProvider
 }
 
 String _$paginatedUsersControllerHash() =>
-    r'7af2ed27d7032518377887ba41c0a04d5454a5a3';
+    r'909a34a4ff34c47d701d6f6e055b1061b06cd7e5';
 
 /// Controller for managing paginated users list.
 
