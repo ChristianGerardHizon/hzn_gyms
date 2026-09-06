@@ -143,9 +143,10 @@ Optional: add a classic/fine-grained PAT as secret `GH_PAT` and use it in `auto-
 | `KEYSTORE_PASSWORD` | Keystore store password |
 | `KEY_ALIAS` | Key alias (e.g. `hzngyms`) |
 | `KEY_PASSWORD` | Key password |
+| `PLAYSTORE_SERVICE_ACCOUNT_JSON` | **Optional** — Play Console service-account JSON for Internal testing AAB upload; if unset, Play step is skipped |
 | `GH_PAT` | **Optional** — PAT that can create PRs (auto-promote); only needed if Actions setting stays off |
 
-Local `.env` should mirror the URLs (`STAGING_URL` / `PROD_URL` / `VERSION_MANAGER_*`) and may include `KEYSTORE_*` for reference. Never commit `.env`, `pb_token.txt`, `*.jks`, `key.properties`, or `keystore-secrets.txt`.
+Local `.env` should mirror the URLs (`STAGING_URL` / `PROD_URL` / `VERSION_MANAGER_*`) and may include `KEYSTORE_*` plus `PLAYSTORE_SERVICE_ACCOUNT_JSON_PATH` for reference. Never commit `.env`, `pb_token.txt`, `*.jks`, `key.properties`, `keystore-secrets.txt`, or `android/keystore/`.
 
 ---
 
@@ -170,6 +171,14 @@ Do these once; CI cannot finish them alone.
 
 - [x] Upload keystore generated; GitHub `KEYSTORE_*` secrets set; local `keystore-secrets.txt` + `android/key.properties` gitignored
 - [ ] Keep a secure offline backup of the `.jks` + passwords (losing them blocks Play Store updates for that signing key)
+
+### C2. Google Play Internal testing
+
+- [x] Repo secret `PLAYSTORE_SERVICE_ACCOUNT_JSON` set (from HZN service account JSON)
+- [ ] Add the same secret on the **Production** environment if env-scoped secrets are required (PAT may lack env secret write)
+- [ ] Grant the Play service account access to the **HZN Gyms** app (`com.hznsystems.hzngyms`) with release-to-testing
+- [ ] First AAB uploaded manually in Play Console if the API rejects an empty Internal track
+- [ ] Local `.env` has `PLAYSTORE_SERVICE_ACCOUNT_JSON_PATH`; JSON lives under gitignored `android/keystore/`
 
 ### D. App / PocketBase smoke (new hosts)
 

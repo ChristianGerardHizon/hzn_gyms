@@ -136,6 +136,8 @@ PR merged to main
   │   │
   │   ├─ Build APK (--release, signed) — skipped when PR has `web-only`
   │   │
+  │   ├─ Build App Bundle / AAB (--release, signed) — skipped when `web-only`
+  │   │
   │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
   │   ├─ Strip `*.map` from `build/web`
   │   │
@@ -145,7 +147,8 @@ PR merged to main
   │   ├─ rsync hooks → production server pb_hooks/
   │   ├─ Restart PocketBase production service
   │   │
-  │   └─ Upload APK as GitHub Actions artifact
+  │   ├─ Upload APK + AAB as GitHub Actions artifacts
+  │   └─ Upload AAB to Google Play Internal testing (if `PLAYSTORE_SERVICE_ACCOUNT_JSON` set)
   │
   └─ [release-and-sync job] (depends on deploy-production)
       ├─ Download APK artifact
@@ -187,6 +190,7 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `KEYSTORE_PASSWORD` | When not `web-only` | Staging & Production | Keystore store password |
 | `KEY_ALIAS` | When not `web-only` | Staging & Production | Key alias within the keystore |
 | `KEY_PASSWORD` | When not `web-only` | Staging & Production | Key password |
+| `PLAYSTORE_SERVICE_ACCOUNT_JSON` | Optional | Production | Play Console service-account JSON. If unset, Play upload is skipped (see [Google Play Store](#google-play-store)). |
 | `SSH_HOST` | Yes | Staging & Production | Server hostname or IP for SSH deployment |
 | `SSH_USER` | Yes | Staging & Production | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Yes | Staging & Production | Ed25519 or RSA private key (PEM format) for SSH authentication |
@@ -277,6 +281,32 @@ To encode your keystore for the secret:
 base64 -i your-keystore.jks | pbcopy   # macOS (copies to clipboard)
 base64 -w 0 your-keystore.jks          # Linux (outputs to stdout)
 ```
+
+---
+
+## Google Play Store
+
+Play Console does **not** accept APKs for new uploads. Production deploys therefore build a signed **Android App Bundle** (`.aab`) and upload it with the Play Developer API when credentials are present.
+
+**Package name:** `com.hznsystems.hzngyms` (must match `applicationId` in `android/app/build.gradle.kts` and the Play Console app).
+
+The AAB is uploaded to **Internal testing** with `status: completed` (published to testers). Staging deploys do **not** upload to Play. If `PLAYSTORE_SERVICE_ACCOUNT_JSON` is unset, production still deploys web and GitHub Releases; the Play step is skipped.
+
+### One-time setup (Play Console + GitHub)
+
+1. Create the **HZN Gyms** app in [Play Console](https://play.google.com/console) with package `com.hznsystems.hzngyms` if it does not exist.
+2. Enroll in **Play App Signing** using the same upload keystore as `KEYSTORE_BASE64`.
+3. Upload the **first** AAB manually to Internal testing if the API rejects an empty track.
+4. Link a Google Cloud service account with **Google Play Android Developer API** enabled, and grant it access to HZN Gyms with at least **Release apps to testing tracks**.
+5. Set GitHub Actions secret `PLAYSTORE_SERVICE_ACCOUNT_JSON` to the full service-account JSON (repo secret; also add on the **Production** environment if that environment restricts secrets).
+6. Locally (gitignored): keep the JSON under `android/keystore/` and set in `.env`:
+   `PLAYSTORE_SERVICE_ACCOUNT_JSON_PATH=android/keystore/<service-account>.json`
+
+### After each production deploy
+
+1. Wait for `deploy-production` to finish (including Play upload when enabled).
+2. Testers already on the Internal testing list get the new version (`X.Y.Z`, version code = GitHub run number).
+3. New testers need the Internal testing opt-in URL from Play Console.
 
 ---
 

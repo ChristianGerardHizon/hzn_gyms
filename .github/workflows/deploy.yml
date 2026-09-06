@@ -497,6 +497,19 @@ jobs:
           SENTRY_DIST: ${{ github.run_number }}
         run: flutter build apk --release --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
 
+      - name: Build App Bundle (Release)
+        if: steps.bump_type.outputs.web_only != 'true'
+        env:
+          CI: "true"
+          CM_KEYSTORE_PATH: ${{ github.workspace }}/android/app/upload-keystore.jks
+          CM_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          CM_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          CM_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ env.PROD_VER }}+${{ github.run_number }}
+          SENTRY_DIST: ${{ github.run_number }}
+        run: flutter build appbundle --release --build-name=${{ env.PROD_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=prod --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
+
       - name: Upload debug symbols to Sentry
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -536,6 +549,38 @@ jobs:
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB Artifact
+        if: steps.bump_type.outputs.web_only != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 1
+
+      - name: Detect Play upload credentials
+        if: steps.bump_type.outputs.web_only != 'true'
+        id: play_upload
+        env:
+          PLAYSTORE_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAYSTORE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$PLAYSTORE_SERVICE_ACCOUNT_JSON" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::PLAYSTORE_SERVICE_ACCOUNT_JSON unset — skipping Play upload"
+          fi
+
+      - name: Upload to Google Play (internal testing)
+        if: steps.bump_type.outputs.web_only != 'true' && steps.play_upload.outputs.enabled == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAYSTORE_SERVICE_ACCOUNT_JSON }}
+          packageName: com.hznsystems.hzngyms
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+          releaseName: ${{ env.PROD_VER }}
 
   # ==========================================
   # JOB 3: RELEASE & SYNC
