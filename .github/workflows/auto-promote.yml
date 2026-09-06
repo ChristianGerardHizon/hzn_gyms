@@ -108,18 +108,20 @@ jobs:
             ADD_ARGS+=(--add-label "deploy")
           fi
 
+          # Keep heredoc body indented so YAML `run: |` stays valid, then strip indent.
           BODY=$(cat <<EOF
-## Production Deployment — v${VERSION}
+          ## Production Deployment — v${VERSION}
 
-This PR tracks \`staging\` → \`main\` for production release **v${VERSION}**.
+          This PR tracks \`staging\` → \`main\` for production release **v${VERSION}**.
 
-**Latest staging merge:** PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
+          **Latest staging merge:** PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
 
-Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
+          Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
 
-> Auto-updated when another \`deploy\`-labeled PR merges to staging.
-EOF
-)
+          > Auto-updated when another \`deploy\`-labeled PR merges to staging.
+          EOF
+          )
+          BODY=$(printf '%s\n' "$BODY" | sed 's/^          //')
 
           if [ -n "$EXISTING" ]; then
             echo "PR #$EXISTING from staging to main already exists — updating title, body, and labels for v${VERSION}."
