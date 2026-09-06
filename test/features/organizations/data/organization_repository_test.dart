@@ -1,10 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
 import 'package:hzn_gyms/src/features/organizations/data/repositories/organization_repository.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 import '../../../helpers/pb_test_helpers.dart';
 

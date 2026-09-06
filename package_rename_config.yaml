@@ -1,21 +1,21 @@
 package_rename_config:
   android:
     app_name: HZN Gyms
-    package_name: com.hzngyms.app
+    package_name: com.hznsystems.hzngyms
 
   ios:
     app_name: HZN Gyms
-    bundle_name: com.hzngyms.app
-    package_name: com.hzngyms.app
+    bundle_name: com.hznsystems.hzngyms
+    package_name: com.hznsystems.hzngyms
 
   linux:
     app_name: HZN Gyms
-    package_name: com.hzngyms.app
+    package_name: com.hznsystems.hzngyms
     exe_name: hzn_gyms
 
   macos:
     app_name: HZN Gyms
-    package_name: com.hzngyms.app
+    package_name: com.hznsystems.hzngyms
     copyright_notice: HZN Gyms
 
   web:

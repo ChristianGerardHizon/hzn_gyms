@@ -81,6 +81,7 @@ app.*.map.json
 
 # FVM local SDK link (machine-specific)
 .fvm/flutter_sdk
+.fvm/versions/
 
 # Local scratch/test artifacts (auth tokens, one-off exports)
 .pbtoken

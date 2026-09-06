@@ -1,5 +1,4 @@
 import 'package:hzn_gyms/src/core/utils/date_utils.dart';
-import 'package:hzn_gyms/src/features/memberships/domain/membership.dart';
 import 'package:hzn_gyms/src/features/memberships/domain/membership_add_on.dart';
 import 'package:hzn_gyms/src/features/memberships/presentation/controllers/membership_add_ons_controller.dart';
 import 'package:hzn_gyms/src/features/memberships/presentation/controllers/membership_purchase_catalog_provider.dart';
@@ -72,10 +71,19 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       final walkInPlan = buildMembership(
+        id: 'walk-in-1',
         name: 'NEW RATE WALK-IN REGULAR',
         durationValue: 1,
         durationUnit: MembershipDurationUnit.days,
         price: 100,
+        memberNotRequired: true,
+      );
+      final otherWalkIn = buildMembership(
+        id: 'walk-in-2',
+        name: 'WALK-IN STUDENT',
+        durationValue: 1,
+        durationUnit: MembershipDurationUnit.days,
+        price: 80,
         memberNotRequired: true,
       );
 
@@ -87,12 +95,10 @@ void main() {
             branchesControllerProvider.overrideWith(
               () => _FakeBranchesController(const [_testBranch]),
             ),
-            membershipPurchaseCatalogProvider(false).overrideWith(
-              (ref) async => [walkInPlan],
-            ),
-            membershipPurchaseCatalogProvider(true).overrideWith(
-              (ref) async => [walkInPlan],
-            ),
+            membershipPurchaseCatalogProvider(false)
+                .overrideWith((ref) async => [walkInPlan, otherWalkIn]),
+            membershipPurchaseCatalogProvider(true)
+                .overrideWith((ref) async => [walkInPlan, otherWalkIn]),
             membershipAddOnsControllerProvider.overrideWith(
               () => _FakeMembershipAddOnsController(),
             ),

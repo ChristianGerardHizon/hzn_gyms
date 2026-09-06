@@ -43,7 +43,7 @@ void main() {
         brightness: Brightness.dark,
       );
 
-      expect(scheme.primary.blue, greaterThan(scheme.primary.red));
+      expect(scheme.primary.b, greaterThan(scheme.primary.r));
     });
   });
 }
