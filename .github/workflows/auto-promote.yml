@@ -108,14 +108,51 @@ jobs:
             ADD_ARGS+=(--add-label "deploy")
           fi
 
+          BODY=$(cat <<EOF
+## Production Deployment — v${VERSION}
+
+This PR tracks \`staging\` → \`main\` for production release **v${VERSION}**.
+
+**Latest staging merge:** PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
+
+Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
+
+> Auto-updated when another \`deploy\`-labeled PR merges to staging.
+EOF
+)
+
           if [ -n "$EXISTING" ]; then
-            echo "PR #$EXISTING from staging to main already exists — syncing forwarded labels."
+            echo "PR #$EXISTING from staging to main already exists — updating title, body, and labels for v${VERSION}."
+            EDIT_ARGS=(--title "$TITLE" --body "$BODY")
             if [ ${#ADD_ARGS[@]} -gt 0 ]; then
-              gh pr edit "$EXISTING" \
-                --repo "${{ github.repository }}" \
-                "${ADD_ARGS[@]}"
-              echo "Forwarded labels onto #$EXISTING: ${ADD_ARGS[*]}"
+              EDIT_ARGS+=("${ADD_ARGS[@]}")
             fi
+            gh pr edit "$EXISTING" \
+              --repo "${{ github.repository }}" \
+              "${EDIT_ARGS[@]}"
+
+            # Drop stale labels not present on the latest source PR
+            if [ "$WEB_ONLY" != true ]; then
+              gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "web-only" 2>/dev/null || true
+            fi
+            CURRENT_VERSION_LABEL=""
+            if echo "$LABELS" | grep -q '"version:major"'; then CURRENT_VERSION_LABEL="version:major"
+            elif echo "$LABELS" | grep -q '"version:minor"'; then CURRENT_VERSION_LABEL="version:minor"
+            elif echo "$LABELS" | grep -q '"version:patch"'; then CURRENT_VERSION_LABEL="version:patch"
+            fi
+            for L in version:major version:minor version:patch; do
+              if [ "$L" != "$CURRENT_VERSION_LABEL" ]; then
+                gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "$L" 2>/dev/null || true
+              fi
+            done
+            if ! echo "$LABELS" | grep -q '"deploy"'; then
+              gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "deploy" 2>/dev/null || true
+            fi
+            if ! echo "$LABELS" | grep -q '"minimum version"'; then
+              gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "minimum version" 2>/dev/null || true
+            fi
+
+            echo "Updated existing staging→main PR #$EXISTING to v${VERSION} (commits follow the staging branch tip)."
             exit 0
           fi
 
@@ -125,16 +162,7 @@ jobs:
             --head staging \
             --base main \
             --title "$TITLE" \
-            --body "$(cat <<EOF
-          ## Production Deployment — v${VERSION}
-
-          This PR was automatically created after merging PR #${{ github.event.pull_request.number }} into staging.
-
-          **Source PR:** ${{ github.event.pull_request.title }}
-
-          Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
-          EOF
-          )" 2>&1)
+            --body "$BODY" 2>&1)
           CREATE_STATUS=$?
           set -e
 

@@ -66,7 +66,7 @@ Same model as sannjose_animal_clinic:
 | Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK (APK omitted when `web-only`) | `Deploy X.Y.Z to Staging` |
 | Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) | `vX.Y.Z` |
 
-Auto-promote opens the staging→main PR as **`vX.Y.Z`** (adds `(web-only)` when applicable). The Actions run name uses that PR title.
+Auto-promote opens the staging→main PR as **`vX.Y.Z`** (adds `(web-only)` when applicable). The Actions run name uses that PR title. If a staging→main PR already exists, auto-promote **updates** its title, body, and labels for the latest staging merge (the PR head is the `staging` branch, so commits stay current).
 
 Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`) and optional `web_only`.
 
