@@ -15,13 +15,13 @@
 
 ## Remaining (manual)
 
-- [ ] **Register `hzngyms.com`** on Porkbun (~$11/yr — currently available, not in account). Then:
-  - Wildcard DNS `*.hzngyms.com` → `157.245.154.214`
-  - Append `server/caddy/hzngyms.com.caddy` to `/etc/caddy/Caddyfile` and `systemctl reload caddy`
-  - Retry DNS from `/organizations` or `POST /api/organizations/:id/retry-dns`
-- [ ] **GitHub CI secrets** (copy from `kylie-gym` repo or regenerate): `SSH_PRIVATE_KEY`, `VERSION_MANAGER_URL`, `VERSION_COLLECTION_ID`, `SENTRY_*` (prod)
-- [ ] **Staging credentials in `.env`**: `STAGING_EMAIL`/`STAGING_PASSWORD` are stale; prod superuser creds work for admin API until updated
-- [ ] Full UI QA on staging (login, org switcher, branch scoping) — API/back-end verified
+See the full checklist in [hzngyms-initial-setup.md](hzngyms-initial-setup.md). Highlights:
+
+- [ ] **Version manager** record not left at `0.0.0` (staging already tagged `staging-0.0.1` by mistake)
+- [ ] **Auto-promote**: enable Actions “create and approve pull requests”, or set `GH_PAT`
+- [ ] **Register `hzngyms.com`** on Porkbun for tenant wildcards (later; temporary hosts use `*.hzngyms.hznsystems.com`)
+- [ ] Full UI QA on https://staging.hzngyms.hznsystems.com
+- [ ] Decide prod data strategy (laptop seed vs clean restore)
 
 See [hzngyms-infra-runbook.md](hzngyms-infra-runbook.md).
 
@@ -35,4 +35,4 @@ See [hzngyms-infra-runbook.md](hzngyms-infra-runbook.md).
 - `kyliegym` org slug in backfill docs
 - `legacyDriftDatabaseName = 'kylie_gym'`
 - `kylieGymSwCleanupDone` in `web/flutter_bootstrap.js`
-- Server paths `/opt/pocketbase/kyliegym*`
+- Legacy server paths `/opt/pocketbase/kyliegym*` (HZN Gyms now uses `/opt/pocketbase/hzn_gyms*`)

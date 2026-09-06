@@ -2,6 +2,8 @@
 
 This document describes the GitHub Actions deployment pipeline, branching strategy, and required configuration.
 
+For the **HZN Gyms cutover** (new hosts, secrets, pitfalls, and remaining manual steps), see [hzngyms-initial-setup.md](hzngyms-initial-setup.md).
+
 ---
 
 ## Table of Contents
