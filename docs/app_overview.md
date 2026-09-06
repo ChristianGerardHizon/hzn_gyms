@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 6 | Sentry project | Prod DSN and `sentry_dart_plugin` now target Sentry project `hzn-gyms` |
 | Sep 2 | Sale/member account attribution | Sale quick view + detail show Sold by cashier; customer name links to member detail; member detail shows Added by |
 | Sep 2 | Organization logo upload | Edit/create organization form supports uploading a logo (PNG/WebP); used in sidebar, login, and org list |
 | Sep 2 | Organization onboarding | Platform shell (`/platform`), setup wizard, `setupStatus` lifecycle, public branding resolve, org-scoped user/branch rules |

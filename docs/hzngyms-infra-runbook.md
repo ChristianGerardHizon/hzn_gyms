@@ -67,7 +67,7 @@ Required for `<slug>.hzngyms.com` pre-auth branding.
 | Reverse proxy | Caddy/nginx: route `*.hzngyms.com` + apex to Flutter web + PocketBase API |
 | Wildcard TLS | Certificate for `*.hzngyms.com` (Caddy on-demand or pre-provisioned) |
 | Porkbun env | On PocketBase systemd unit (configured): `/etc/pocketbase/kyliegym-porkbun.env` with `PORKBUN_API_KEY`, `PORKBUN_API_SECRET`, `PORKBUN_DNS_TARGET`, `PORKBUN_BASE_DOMAIN` |
-| Sentry | Create/migrate project `hzngyms` (see `pubspec.yaml` sentry.project) |
+| Sentry | Flutter project `hzn-gyms` (see `pubspec.yaml` sentry.project) |
 
 Hook reference: `server/pb_hooks/organizations.pb.js` — `POST /api/organizations/:id/retry-dns`
 

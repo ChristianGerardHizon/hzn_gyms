@@ -124,7 +124,7 @@ scripts:
 sentry:
   upload_debug_symbols: true
   upload_source_maps: true
-  project: hzngyms
+  project: hzn-gyms
   org: christian-hizon
   # Shallow CI clones can't always resolve the previous release SHA
   ignore_missing: true

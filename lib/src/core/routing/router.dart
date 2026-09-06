@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../packages/sentry/sentry_config.dart';
 import '../pages/app_root.dart';
 import '../pages/platform_root.dart';
 import '../permissions/current_user_permissions.dart';
@@ -48,6 +50,7 @@ GoRouter router(Ref ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: SplashRoute.path,
     debugLogDiagnostics: true,
+    observers: [if (isSentryEnabled) SentryNavigatorObserver()],
     redirect: (context, state) => RouterUtils.redirect(context, state, ref),
     errorBuilder: RouterUtils.errorBuilder,
     routes: [
@@ -102,8 +105,9 @@ GoRouter router(Ref ref) {
 
         if (isAuthenticated && location == LoginRoute.path) {
           // Login success: restore deep link or go home.
-          final pendingUrl =
-              ref.read(pendingRedirectProvider.notifier).consume();
+          final pendingUrl = ref
+              .read(pendingRedirectProvider.notifier)
+              .consume();
           if (pendingUrl != null) {
             router.go(pendingUrl);
             return;

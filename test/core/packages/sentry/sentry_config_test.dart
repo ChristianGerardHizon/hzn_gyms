@@ -15,18 +15,16 @@ void main() {
     const dsn = 'https://example.ingest.sentry.io/123';
 
     test('returns prod DSN only for prod environment', () {
-      expect(
-        sentryDsnFor(environment: 'prod', prodDsn: dsn),
-        dsn,
-      );
-      expect(
-        sentryDsnFor(environment: 'staging', prodDsn: dsn),
-        isEmpty,
-      );
-      expect(
-        sentryDsnFor(environment: 'dev', prodDsn: dsn),
-        isEmpty,
-      );
+      expect(sentryDsnFor(environment: 'prod', prodDsn: dsn), dsn);
+      expect(sentryDsnFor(environment: 'staging', prodDsn: dsn), isEmpty);
+      expect(sentryDsnFor(environment: 'dev', prodDsn: dsn), isEmpty);
+    });
+  });
+
+  group('prodSentryDsn', () {
+    test('defaults to the hzn-gyms ingest project', () {
+      expect(prodSentryDsn, contains('o418473.ingest.us.sentry.io'));
+      expect(prodSentryDsn, contains('4512037316919296'));
     });
   });
 
