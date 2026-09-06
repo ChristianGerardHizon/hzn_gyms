@@ -85,15 +85,15 @@ Ports **8104/8105** belong to HZN Laundry — do not reuse them.
 
 **Fix:** Full collection URL + record id (`VERSION_MANAGER_URL` + `VERSION_COLLECTION_ID`).
 
-### 6. Staging released as `staging-0.0.1`
+### 6. Staging released as `staging-0.0.1` / `0.0.2`
 
-**Symptom:** Staging tag/release `staging-0.0.1` after a successful deploy.
+**Symptom:** Staging tags like `staging-0.0.1` after deploys.
 
-**Cause:** Version-manager record `r2yh4ny7e34182b` is literally `major=0 minor=0 patch=0`. Patch bump → `0.0.1`.
+**Cause:** Version-manager record `r2yh4ny7e34182b` started at `0.0.0` and only patch-bumps.
 
-**Fix (manual):** PATCH that record (or point secrets at the correct app’s version row) to the intended baseline (e.g. continue from prior product line `2.0.0`). See checklist below.
+**Fix (manual):** PATCH that record to the intended baseline (e.g. `2.0.0`). Still outstanding as of Sep 2026 (record was at `0.0.1` after early deploys).
 
-### 7. Auto Promote to Main failed
+### 7. Auto Promote to Main failed (Actions cannot create PRs)
 
 **Symptom:** [Auto Promote run](https://github.com/ChristianGerardHizon/hzn_gyms/actions/runs/34057431107) —  
 `GitHub Actions is not permitted to create or approve pull requests`.
@@ -104,7 +104,25 @@ Ports **8104/8105** belong to HZN Laundry — do not reuse them.
 **Settings → Actions → General → Workflow permissions** → enable **Allow GitHub Actions to create and approve pull requests** (and Read and write permissions).  
 Optional: add a classic/fine-grained PAT as secret `GH_PAT` and use it in `auto-promote.yml` (workflow supports `GH_PAT` when set).
 
-Until fixed, open `staging` → `main` PRs manually after a `deploy`-labeled merge.
+### 8. Missing keystore secrets on non-`web-only` deploy
+
+**Symptom:** Staging deploy fails at “Verify deploy secrets exist” with `KEYSTORE_*` missing ([example](https://github.com/ChristianGerardHizon/hzn_gyms/actions/runs/34060109389)).
+
+**Cause:** After removing forced `DEPLOY_WEB_ONLY`, APK builds require keystore secrets whenever the PR lacks `web-only`.
+
+**Fix:** Generate an upload keystore locally, store passwords in gitignored `keystore-secrets.txt` / `.env` / `android/key.properties`, and set GitHub secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. **Done** for this repo (Sep 2026).
+
+### 9. Invalid `auto-promote.yml` after heredoc edit
+
+**Symptom:** [Workflow file invalid on line 114](https://github.com/ChristianGerardHizon/hzn_gyms/actions/runs/34060109267).
+
+**Cause:** Unindented `##` lines inside a `run: |` block terminated the YAML scalar early.
+
+**Fix:** Keep heredoc body indented under the block, then `sed` strip indent (PR #9).
+
+### 10. `web-only` is label-gated (not global)
+
+`DEPLOY_WEB_ONLY=true` was removed. Web-only mode runs **only** when the PR has `web-only` (or manual dispatch `web_only=true`). Auto-promote forwards `web-only` and `deploy` from feature→staging onto staging→main, and refreshes an existing promote PR’s title/body/labels.
 
 ---
 
@@ -121,9 +139,13 @@ Until fixed, open `staging` → `main` PRs manually after a `deploy`-labeled mer
 | `VERSION_COLLECTION_ID` | Record id for **this** app (today: `r2yh4ny7e34182b` — must not stay at 0.0.0) |
 | `SENTRY_AUTH_TOKEN` | Org CI token for release/source-map upload |
 | `SENTRY_DSN_PROD` | Prod DSN for in-app SDK (`ENV=prod`) |
+| `KEYSTORE_BASE64` | Android upload keystore (required for non-`web-only` deploys) |
+| `KEYSTORE_PASSWORD` | Keystore store password |
+| `KEY_ALIAS` | Key alias (e.g. `hzngyms`) |
+| `KEY_PASSWORD` | Key password |
 | `GH_PAT` | **Optional** — PAT that can create PRs (auto-promote); only needed if Actions setting stays off |
 
-Local `.env` should mirror the URLs (`STAGING_URL` / `PROD_URL` / `VERSION_MANAGER_*`). Never commit `.env` or `pb_token.txt`.
+Local `.env` should mirror the URLs (`STAGING_URL` / `PROD_URL` / `VERSION_MANAGER_*`) and may include `KEYSTORE_*` for reference. Never commit `.env`, `pb_token.txt`, `*.jks`, `key.properties`, or `keystore-secrets.txt`.
 
 ---
 
@@ -134,31 +156,36 @@ Do these once; CI cannot finish them alone.
 ### A. Version manager baseline
 
 - [ ] Confirm `VERSION_COLLECTION_ID` is the HZN Gyms row (not another product’s id).
-- [ ] Set `major` / `minor` / `patch` to the intended baseline (recommended if continuing the old line: `2.0.0` so the next patch deploy is `2.0.1`).
+- [ ] Set `major` / `minor` / `patch` to the intended baseline (recommended if continuing the old line: `2.0.0` so the next patch deploy is `2.0.1`). **Still on `0.0.x` as of Sep 2026.**
 - [ ] Optionally set `minimumMajor` / `minimumMinor` / `minimumPatch` for force-update policy.
 - [ ] Re-run or merge a `version:patch` staging deploy and confirm the release tag is **not** `staging-0.0.x` unless intentional.
 
 ### B. Auto-promote / production PR path
 
-- [ ] Enable **Allow GitHub Actions to create and approve pull requests** on the repo.
-- [ ] Or create secret `GH_PAT` with `repo` (or equivalent) scope and keep `auto-promote.yml` using it.
-- [ ] Merge a staging PR labeled `version:patch` + `deploy` and confirm Auto Promote opens `staging` → `main`.
+- [x] Auto-promote can open/update `staging` → `main` (e.g. [PR #10](https://github.com/ChristianGerardHizon/hzn_gyms/pull/10)) — ensure Actions “create and approve pull requests” stays enabled, or keep `GH_PAT`
+- [x] Auto-promote refreshes an existing promote PR (title/body/labels) on later `deploy` merges
+- [x] `web-only` / `deploy` labels forward from feature→staging → staging→main
 
-### C. App / PocketBase smoke (new hosts)
+### C. Android signing
+
+- [x] Upload keystore generated; GitHub `KEYSTORE_*` secrets set; local `keystore-secrets.txt` + `android/key.properties` gitignored
+- [ ] Keep a secure offline backup of the `.jks` + passwords (losing them blocks Play Store updates for that signing key)
+
+### D. App / PocketBase smoke (new hosts)
 
 - [ ] https://staging.hzngyms.hznsystems.com — login, org branding, branch list.
 - [ ] PocketBase Admin on staging (superuser from seeded DB / reset if needed).
 - [ ] Confirm migrations/hooks landed after CI deploy.
 - [ ] Same smoke on https://hzngyms.hznsystems.com **only after** a deliberate prod promote (do not treat seeded laptop DB as final prod forever).
 
-### D. Data / ops (optional but recommended)
+### E. Data / ops (optional but recommended)
 
 - [ ] Decide whether prod should keep the laptop seed or be re-seeded / restored from a known backup.
 - [ ] Configure Backblaze/S3 filesystem in **prod** admin if file uploads must persist off-box.
 - [ ] Rotate or document `deploy-hzngyms` SSH key backup location.
 - [ ] Confirm kyliegym still healthy if tenants still use `*.kyliegym.hznsystems.com`; plan sunset separately.
 
-### E. Later product work (not blocking CI)
+### F. Later product work (not blocking CI)
 
 - [ ] Register `hzngyms.com` + wildcard DNS / Caddy for tenant subdomains (see infra runbook).
 - [ ] Re-enable Porkbun env on systemd if org DNS automation is required.
