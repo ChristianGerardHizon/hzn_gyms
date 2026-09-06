@@ -119,6 +119,7 @@ jobs:
           if [ -z "${{ secrets.SSH_HOST }}" ]; then MISSING="$MISSING SSH_HOST"; fi
           if [ -z "${{ secrets.SSH_USER }}" ]; then MISSING="$MISSING SSH_USER"; fi
           if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then MISSING="$MISSING SSH_PRIVATE_KEY"; fi
+          if [ -z "${{ secrets.SENTRY_AUTH_TOKEN }}" ]; then MISSING="$MISSING SENTRY_AUTH_TOKEN"; fi
           if [ "$WEB_ONLY" != "true" ]; then
             if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then MISSING="$MISSING KEYSTORE_BASE64"; fi
             if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then MISSING="$MISSING KEYSTORE_PASSWORD"; fi
@@ -234,8 +235,12 @@ jobs:
 
       # BUILD WEB (& APK unless web-only)
       - name: Build Web
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ env.STAGING_VER }}+${{ github.run_number }}
+          SENTRY_DIST: ${{ github.run_number }}
         run: |
-          flutter build web --release --pwa-strategy=none --build-name=${{ env.STAGING_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=staging --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
+          flutter build web --release --pwa-strategy=none --source-maps --build-name=${{ env.STAGING_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=staging --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
           cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
       - name: Build APK (Release)
@@ -247,6 +252,18 @@ jobs:
           CM_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           CM_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release --build-name=${{ env.STAGING_VER }} --build-number=${{ github.run_number }} --dart-define=ENV=staging --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
+
+      - name: Upload debug symbols and source maps to Sentry
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: ${{ env.STAGING_VER }}+${{ github.run_number }}
+          SENTRY_DIST: ${{ github.run_number }}
+        run: dart run sentry_dart_plugin
+
+      - name: Strip source maps from web bundle
+        run: |
+          chmod +x scripts/strip-web-source-maps.sh
+          ./scripts/strip-web-source-maps.sh
 
       # --- SSH DEPLOY START ---
       - name: Setup SSH agent
@@ -498,6 +515,11 @@ jobs:
           SENTRY_RELEASE: ${{ env.PROD_VER }}+${{ github.run_number }}
           SENTRY_DIST: ${{ github.run_number }}
         run: dart run sentry_dart_plugin
+
+      - name: Strip source maps from web bundle
+        run: |
+          chmod +x scripts/strip-web-source-maps.sh
+          ./scripts/strip-web-source-maps.sh
 
       # --- SSH DEPLOY START ---
       - name: Setup SSH agent

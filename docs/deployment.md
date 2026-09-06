@@ -86,17 +86,19 @@ PR merged to staging (or manual dispatch)
   │
   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
   │
-  ├─ Build Web (--release)
+  ├─ Build Web (--release --source-maps)
   │   --dart-define=ENV=staging
   │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
   │
-  ├─ Build APK (--release, signed)
-  │   --dart-define=ENV=staging
-  │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
+  ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  │
+  ├─ dart run sentry_dart_plugin (source maps + debug symbols → Sentry project `hzn-gyms`)
+  ├─ Strip `*.map` from `build/web` so they are not served from pb_public
   │
   ├─ Setup SSH agent + known_hosts
   ├─ rsync web build → staging server pb_public/
   ├─ rsync migrations → staging server pb_migrations/
+  ├─ rsync hooks → staging server pb_hooks/
   ├─ Restart PocketBase staging service
   │
   └─ Create GitHub Release (prerelease)
@@ -125,17 +127,20 @@ PR merged to main
   │   │
   │   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
   │   │
-  │   ├─ Build Web (--release)
+  │   ├─ Build Web (--release --source-maps)
   │   │   --dart-define=ENV=prod
   │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
+  │   │   --dart-define=SENTRY_DSN=$SENTRY_DSN_PROD
   │   │
-  │   ├─ Build APK (--release, signed)
-  │   │   --dart-define=ENV=prod
-  │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
+  │   ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  │   │
+  │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
+  │   ├─ Strip `*.map` from `build/web`
   │   │
   │   ├─ Setup SSH agent + known_hosts
   │   ├─ rsync web build → production server pb_public/
   │   ├─ rsync migrations → production server pb_migrations/
+  │   ├─ rsync hooks → production server pb_hooks/
   │   ├─ Restart PocketBase production service
   │   │
   │   └─ Upload APK as GitHub Actions artifact
@@ -183,6 +188,8 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `SSH_HOST` | Yes | Staging & Production | Server hostname or IP for SSH deployment |
 | `SSH_USER` | Yes | Staging & Production | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Yes | Staging & Production | Ed25519 or RSA private key (PEM format) for SSH authentication |
+| `SENTRY_AUTH_TOKEN` | Yes | Staging & Production | Sentry auth token for `sentry_dart_plugin` (org `christian-hizon`, project `hzn-gyms`) |
+| `SENTRY_DSN_PROD` | Yes | Production | Production Sentry DSN (`--dart-define=SENTRY_DSN`). Staging builds do not initialize the SDK. |
 | `PB_TOKEN` | Optional | Production (release-and-sync) | Auth token for PATCH-ing the Version Manager after release |
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions.

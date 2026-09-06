@@ -1,4 +1,4 @@
-package com.hzngyms.app
+package com.hznsystems.hzngyms
 
 import io.flutter.embedding.android.FlutterActivity
 
