@@ -1,6 +1,8 @@
 # Multi-Client Deploy Plan — kylie-gym
 
-Status as of 2026-08-23: **server provisioned**. Prod and staging PocketBase instances run on `sannjosevet-cicd`; this repo’s [`scripts/deploy.sh`](../scripts/deploy.sh) defaults to kyliegym paths (not ebegym).
+Status as of 2026-08-23: **server provisioned**. Prod and staging PocketBase instances run on `sannjosevet-cicd`.
+
+**Update 2026-09-07:** This repo’s [`scripts/deploy.sh`](../scripts/deploy.sh) now defaults to **HZN Gyms** paths (`/opt/pocketbase/hzn_gyms*`). Legacy kyliegym instances below remain on the server untouched. See [`hzngyms-provision.md`](hzngyms-provision.md).
 
 ## Background
 

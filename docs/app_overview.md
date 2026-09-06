@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 7 | HZN Gyms PocketBase | New staging/prod instances at `*.hzngyms.hznsystems.com` (`/opt/pocketbase/hzn_gyms*`); kyliegym left untouched |
 | Sep 6 | Deploy uploads | Staging and production both upload Sentry source maps, then rsync web + migrations + hooks (`scripts/deploy.sh`) |
 | Sep 6 | Sentry project | Prod DSN and `sentry_dart_plugin` now target Sentry project `hzn-gyms` |
 | Sep 2 | Sale/member account attribution | Sale quick view + detail show Sold by cashier; customer name links to member detail; member detail shows Added by |

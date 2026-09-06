@@ -220,20 +220,22 @@ The SSH user needs write access to:
 
 | Path | Purpose |
 |------|---------|
-| `/opt/pocketbase/kyliegym-staging/pb_public/` | Staging web build |
-| `/opt/pocketbase/kyliegym-staging/pb_migrations/` | Staging PocketBase migrations |
-| `/opt/pocketbase/kyliegym/pb_public/` | Production web build |
-| `/opt/pocketbase/kyliegym/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/hzn_gyms_staging/pb_public/` | Staging web build |
+| `/opt/pocketbase/hzn_gyms_staging/pb_migrations/` | Staging PocketBase migrations |
+| `/opt/pocketbase/hzn_gyms_staging/pb_hooks/` | Staging PocketBase hooks |
+| `/opt/pocketbase/hzn_gyms/pb_public/` | Production web build |
+| `/opt/pocketbase/hzn_gyms/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/hzn_gyms/pb_hooks/` | Production PocketBase hooks |
 
 ### Passwordless Sudo
 
-The SSH user needs passwordless sudo for restarting PocketBase services. Add to `/etc/sudoers.d/deploy`:
+The SSH user needs passwordless sudo for restarting PocketBase services. Configured on the server as `/etc/sudoers.d/deploy-hzn-gyms`:
 
 ```
-deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_kyliegym.service, /bin/systemctl restart pocketbase_kyliegym-staging.service
+deploy-hzngyms ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_hzn_gyms.service, /bin/systemctl restart pocketbase_hzn_gyms_staging.service
 ```
 
-Configured on the server as `/etc/sudoers.d/deploy-kyliegym`.
+Legacy Kylie Gym paths/services remain on the same host but are **not** deploy targets for this repo.
 
 ---
 
@@ -352,10 +354,10 @@ Shared bash script used by GitHub Actions (and local Linux/macOS emergency deplo
 ./scripts/deploy.sh prod --restart-only
 ```
 
-| Environment | Server root | Service |
-|-------------|-------------|---------|
-| staging | `/opt/pocketbase/kyliegym-staging` | `pocketbase_kyliegym-staging.service` |
-| prod | `/opt/pocketbase/kyliegym` | `pocketbase_kyliegym.service` |
+| Environment | Server root | Service | Port | URL |
+|-------------|-------------|---------|------|-----|
+| staging | `/opt/pocketbase/hzn_gyms_staging` | `pocketbase_hzn_gyms_staging.service` | 8107 | https://staging.hzngyms.hznsystems.com |
+| prod | `/opt/pocketbase/hzn_gyms` | `pocketbase_hzn_gyms.service` | 8106 | https://hzngyms.hznsystems.com |
 
 ---
 

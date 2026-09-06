@@ -84,7 +84,7 @@ Caddy example: [caddy-hzngyms.com.example.caddy](caddy-hzngyms.com.example.caddy
         reverse_proxy 127.0.0.1:8090
     }
     handle {
-        root * /opt/pocketbase/kyliegym-staging/pb_public
+        root * /opt/pocketbase/hzn_gyms_staging/pb_public
         try_files {path} /index.html
         file_server
     }
@@ -103,6 +103,6 @@ After staging sign-off:
 
 ## 8. Optional later
 
-- Rename server paths `/opt/pocketbase/kyliegym*` → `hzngyms` (coordinate with `scripts/deploy.sh`)
+- Sunsetting legacy `/opt/pocketbase/kyliegym*` (new stack live — see [`hzngyms-provision.md`](hzngyms-provision.md))
 - Rebrand `icon_pack/` assets
 - Backblaze bucket / email alias updates

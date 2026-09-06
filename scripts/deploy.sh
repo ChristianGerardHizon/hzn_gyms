@@ -111,12 +111,12 @@ fi
 
 case "$ENVIRONMENT" in
   staging)
-    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/kyliegym-staging}"
-    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_kyliegym-staging.service}"
+    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/hzn_gyms_staging}"
+    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_hzn_gyms_staging.service}"
     ;;
   prod)
-    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/kyliegym}"
-    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_kyliegym.service}"
+    SERVER_ROOT="${DEPLOY_SERVER_ROOT:-/opt/pocketbase/hzn_gyms}"
+    SERVICE_NAME="${DEPLOY_SERVICE_NAME:-pocketbase_hzn_gyms.service}"
     ;;
 esac
 
