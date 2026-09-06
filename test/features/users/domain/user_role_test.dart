@@ -57,6 +57,16 @@ void main() {
         'System',
       );
     });
+
+    test('Organization Members category includes members.manage', () {
+      final orgMemberPermissions =
+          Permissions.allByCategory['Organization Members']!;
+      expect(orgMemberPermissions, contains(Permissions.membersManage));
+      expect(
+        Permissions.getByKey(Permissions.membersManage)?.category,
+        'Organization Members',
+      );
+    });
   });
 
   group('Permission', () {
