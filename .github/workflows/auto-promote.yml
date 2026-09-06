@@ -1,9 +1,5 @@
 name: Auto Promote to Main
 
-# Match deploy.yml — HZN Gyms is web-only.
-env:
-  DEPLOY_WEB_ONLY: "true"
-
 on:
   pull_request:
     types: [closed]
@@ -76,50 +72,20 @@ jobs:
             --json number \
             --jq '.[0].number')
 
-          if [ -n "$EXISTING" ]; then
-            echo "PR #$EXISTING from staging to main already exists. Skipping."
-            exit 0
+          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          WEB_ONLY=false
+          if echo "$LABELS" | grep -q '"web-only"'; then
+            WEB_ONLY=true
           fi
 
-          LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
           WEB_ONLY_NOTE=""
           TITLE="v${VERSION}"
-          if echo "$LABELS" | grep -q '"web-only"' || [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
+          if [ "$WEB_ONLY" = true ]; then
             WEB_ONLY_NOTE=" (**web only** — Android APK skipped)"
             TITLE="v${VERSION} (web-only)"
           fi
 
-          set +e
-          PR_URL=$(gh pr create \
-            --repo "${{ github.repository }}" \
-            --head staging \
-            --base main \
-            --title "$TITLE" \
-            --body "$(cat <<EOF
-          ## Production Deployment — v${VERSION}
-
-          This PR was automatically created after merging PR #${{ github.event.pull_request.number }} into staging.
-
-          **Source PR:** ${{ github.event.pull_request.title }}
-
-          Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
-          EOF
-          )" 2>&1)
-          CREATE_STATUS=$?
-          set -e
-
-          if [ $CREATE_STATUS -ne 0 ]; then
-            echo "::error::Failed to create staging→main PR: $PR_URL"
-            echo "::error::Enable Actions 'Allow GitHub Actions to create and approve pull requests', or set secret GH_PAT. See docs/hzngyms-initial-setup.md"
-            exit 1
-          fi
-
-          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
-
-          echo "Created PR #$PR_NUMBER"
-
-          # Forward version, minimum version, and web-only labels from source PR.
-          # Pass each label as its own --add-label (comma-joined names are one label).
+          # Labels forwarded from feature→staging: version:*, web-only, deploy, minimum version
           ADD_ARGS=()
 
           if echo "$LABELS" | grep -q '"version:major"'; then
@@ -134,9 +100,83 @@ jobs:
             ADD_ARGS+=(--add-label "minimum version")
           fi
 
-          if echo "$LABELS" | grep -q '"web-only"' || [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
+          if [ "$WEB_ONLY" = true ]; then
             ADD_ARGS+=(--add-label "web-only")
           fi
+
+          if echo "$LABELS" | grep -q '"deploy"'; then
+            ADD_ARGS+=(--add-label "deploy")
+          fi
+
+          # Keep heredoc body indented so YAML `run: |` stays valid, then strip indent.
+          BODY=$(cat <<EOF
+          ## Production Deployment — v${VERSION}
+
+          This PR tracks \`staging\` → \`main\` for production release **v${VERSION}**.
+
+          **Latest staging merge:** PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
+
+          Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
+
+          > Auto-updated when another \`deploy\`-labeled PR merges to staging.
+          EOF
+          )
+          BODY=$(printf '%s\n' "$BODY" | sed 's/^          //')
+
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING from staging to main already exists — updating title, body, and labels for v${VERSION}."
+            EDIT_ARGS=(--title "$TITLE" --body "$BODY")
+            if [ ${#ADD_ARGS[@]} -gt 0 ]; then
+              EDIT_ARGS+=("${ADD_ARGS[@]}")
+            fi
+            gh pr edit "$EXISTING" \
+              --repo "${{ github.repository }}" \
+              "${EDIT_ARGS[@]}"
+
+            # Drop stale labels not present on the latest source PR
+            if [ "$WEB_ONLY" != true ]; then
+              gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "web-only" 2>/dev/null || true
+            fi
+            CURRENT_VERSION_LABEL=""
+            if echo "$LABELS" | grep -q '"version:major"'; then CURRENT_VERSION_LABEL="version:major"
+            elif echo "$LABELS" | grep -q '"version:minor"'; then CURRENT_VERSION_LABEL="version:minor"
+            elif echo "$LABELS" | grep -q '"version:patch"'; then CURRENT_VERSION_LABEL="version:patch"
+            fi
+            for L in version:major version:minor version:patch; do
+              if [ "$L" != "$CURRENT_VERSION_LABEL" ]; then
+                gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "$L" 2>/dev/null || true
+              fi
+            done
+            if ! echo "$LABELS" | grep -q '"deploy"'; then
+              gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "deploy" 2>/dev/null || true
+            fi
+            if ! echo "$LABELS" | grep -q '"minimum version"'; then
+              gh pr edit "$EXISTING" --repo "${{ github.repository }}" --remove-label "minimum version" 2>/dev/null || true
+            fi
+
+            echo "Updated existing staging→main PR #$EXISTING to v${VERSION} (commits follow the staging branch tip)."
+            exit 0
+          fi
+
+          set +e
+          PR_URL=$(gh pr create \
+            --repo "${{ github.repository }}" \
+            --head staging \
+            --base main \
+            --title "$TITLE" \
+            --body "$BODY" 2>&1)
+          CREATE_STATUS=$?
+          set -e
+
+          if [ $CREATE_STATUS -ne 0 ]; then
+            echo "::error::Failed to create staging→main PR: $PR_URL"
+            echo "::error::Enable Actions 'Allow GitHub Actions to create and approve pull requests', or set secret GH_PAT. See docs/hzngyms-initial-setup.md"
+            exit 1
+          fi
+
+          PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+
+          echo "Created PR #$PR_NUMBER"
 
           if [ ${#ADD_ARGS[@]} -gt 0 ]; then
             gh pr edit "$PR_NUMBER" \

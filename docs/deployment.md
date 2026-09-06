@@ -57,7 +57,7 @@ Same model as sannjose_animal_clinic:
 | `version:minor` | Bump minor, deploy staging |
 | `version:major` | Bump major, deploy staging |
 | `deploy` | After merge to staging, open staging→main PR (**requires a `version:*` label too**) |
-| `web-only` | Build/deploy **web only** — skip Java, keystore, Android APK, and APK release artifacts. Forwarded to the staging→main PR by auto-promote. |
+| `web-only` | Build/deploy **web only** — skip Java, keystore, Android APK, and APK release artifacts. **Required for web-only mode** (not forced globally). Auto-promote forwards `web-only` and `deploy` to the staging→main PR when present on the feature→staging PR. |
 | *(none, staging only)* | Merge without deploy |
 | `minimum version` | *(main only)* Also set minimum required app version |
 
@@ -66,7 +66,7 @@ Same model as sannjose_animal_clinic:
 | Staging | `staging-X.Y.Z` (or `staging-X.Y.Z-build.N` if tag exists) — prerelease + APK (APK omitted when `web-only`) | `Deploy X.Y.Z to Staging` |
 | Production | `vX.Y.Z` — full release + APK (APK omitted when `web-only`) | `vX.Y.Z` |
 
-Auto-promote opens the staging→main PR as **`vX.Y.Z`** (adds `(web-only)` when applicable). The Actions run name uses that PR title.
+Auto-promote opens the staging→main PR as **`vX.Y.Z`** (adds `(web-only)` when applicable). The Actions run name uses that PR title. If a staging→main PR already exists, auto-promote **updates** its title, body, and labels for the latest staging merge (the PR head is the `staging` branch, so commits stay current).
 
 Manual **Actions → Deploy System → Run workflow** also asks for `version_bump` (`patch` / `minor` / `major`) and optional `web_only`.
 
@@ -92,7 +92,7 @@ PR merged to staging (or manual dispatch)
   │   --dart-define=ENV=staging
   │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
   │
-  ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  ├─ Build APK (--release, signed) — skipped when PR has `web-only` (or manual dispatch `web_only=true`)
   │
   ├─ dart run sentry_dart_plugin (source maps + debug symbols → Sentry project `hzn-gyms`)
   ├─ Strip `*.map` from `build/web` so they are not served from pb_public
@@ -134,7 +134,7 @@ PR merged to main
   │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
   │   │   --dart-define=SENTRY_DSN=$SENTRY_DSN_PROD
   │   │
-  │   ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  │   ├─ Build APK (--release, signed) — skipped when PR has `web-only`
   │   │
   │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
   │   ├─ Strip `*.map` from `build/web`
@@ -183,10 +183,10 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `VERSION_COLLECTION_ID` | Yes | Staging & Production | Record ID in the version collection |
 | `POCKETBASE_URL_STAGING` | Yes | Staging | Staging PocketBase backend URL |
 | `POCKETBASE_URL_PROD` | Yes | Production | Production PocketBase backend URL |
-| `KEYSTORE_BASE64` | Yes | Staging & Production | Base64-encoded Android signing keystore (`.jks`) |
-| `KEYSTORE_PASSWORD` | Yes | Staging & Production | Keystore store password |
-| `KEY_ALIAS` | Yes | Staging & Production | Key alias within the keystore |
-| `KEY_PASSWORD` | Yes | Staging & Production | Key password |
+| `KEYSTORE_BASE64` | When not `web-only` | Staging & Production | Base64-encoded Android signing keystore (`.jks`) |
+| `KEYSTORE_PASSWORD` | When not `web-only` | Staging & Production | Keystore store password |
+| `KEY_ALIAS` | When not `web-only` | Staging & Production | Key alias within the keystore |
+| `KEY_PASSWORD` | When not `web-only` | Staging & Production | Key password |
 | `SSH_HOST` | Yes | Staging & Production | Server hostname or IP for SSH deployment |
 | `SSH_USER` | Yes | Staging & Production | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Yes | Staging & Production | Ed25519 or RSA private key (PEM format) for SSH authentication |
@@ -326,7 +326,7 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 
 | Platform | CI/CD Status | Notes |
 |----------|-------------|-------|
-| Android (APK) | Disabled | `DEPLOY_WEB_ONLY=true` in deploy workflows — HZN Gyms is web-only |
+| Android (APK) | Label-gated | Built unless the PR (or manual dispatch) sets `web-only` |
 | Web | Fully automated | Standard builds for both environments. Auto-deployed via SSH/rsync to PocketBase `pb_public/`. |
 | iOS | Not configured | Would require macOS runner + signing certificates |
 | macOS | Not configured | Would require macOS runner |
