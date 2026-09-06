@@ -1,0 +1,19 @@
+# Temporary tenant hostnames under hznsystems.com (until hzngyms.com is registered).
+# Pattern: {slug}.gyms.hznsystems.com → PocketBase (staging 8103 / prod 8102).
+
+*.gyms.hznsystems.com {
+	request_body {
+		max_size 10MB
+	}
+	reverse_proxy 127.0.0.1:8102 {
+		header_up Accept-Encoding identity
+		transport http {
+			read_timeout 360s
+		}
+	}
+	encode gzip
+}
+
+# Optional: separate staging wildcard (if you point staging tenants at 8103 instead)
+# staging.gyms.hznsystems.com uses a single host; per-tenant staging subdomains
+# can share prod PocketBase port or add a second block with a different matcher.

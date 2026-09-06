@@ -693,7 +693,7 @@ class _MemberCardLabels extends StatelessWidget {
         Text(
           name,
           style: theme.textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -709,6 +709,7 @@ class _MemberCardLabels extends StatelessWidget {
                 ? theme.colorScheme.error
                 : theme.colorScheme.onSurfaceVariant,
             fontSize: 10,
+            fontWeight: FontWeight.bold,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

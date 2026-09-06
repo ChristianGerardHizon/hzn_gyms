@@ -189,12 +189,14 @@ Member buildMember({
   String name = 'Jane Doe',
   String? rfidCardId,
   String? mobileNumber,
+  String? addedBy,
 }) {
   return Member(
     id: id,
     name: name,
     rfidCardId: rfidCardId,
     mobileNumber: mobileNumber,
+    addedBy: addedBy,
   );
 }
 

@@ -14,9 +14,8 @@ import 'features/settings/presentation/controllers/theme_controller.dart';
 /// Main application widget.
 ///
 /// Sets up MaterialApp with GoRouter navigation and localization. Gates on
-/// current-organization resolution first (hostname/auth/persisted choice)
-/// so branding (seed color, title) is correct from the very first frame —
-/// see `CurrentOrganizationController`.
+/// current-organization resolution for signed-in users so branding (seed color,
+/// title) is correct before the main shell renders.
 class Application extends HookConsumerWidget {
   const Application({super.key});
 

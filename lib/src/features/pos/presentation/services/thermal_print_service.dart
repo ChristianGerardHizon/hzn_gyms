@@ -119,9 +119,9 @@ class ThermalPrintService extends _$ThermalPrintService {
   Future<PrintResult> _printBytes(PrinterConfig config, List<int> bytes) async {
     try {
       if (config.isBluetooth) {
-        return _printViaBluetooth(config.address!, bytes);
+        return await _printViaBluetooth(config.address!, bytes);
       } else {
-        return _printViaNetwork(config.address!, config.port, bytes);
+        return await _printViaNetwork(config.address!, config.port, bytes);
       }
     } catch (e) {
       return PrintFailure('Print error: $e');
@@ -130,7 +130,9 @@ class ThermalPrintService extends _$ThermalPrintService {
 
   /// Prints via Bluetooth connection.
   Future<PrintResult> _printViaBluetooth(
-      String macAddress, List<int> bytes) async {
+    String macAddress,
+    List<int> bytes,
+  ) async {
     try {
       // Ensure Bluetooth permissions are granted before printing
       try {
@@ -146,15 +148,17 @@ class ThermalPrintService extends _$ThermalPrintService {
       }
 
       // Connect to the printer
-      final connected =
-          await PrintBluetoothThermal.connect(macPrinterAddress: macAddress);
+      final connected = await PrintBluetoothThermal.connect(
+        macPrinterAddress: macAddress,
+      );
       if (!connected) {
         return const PrintFailure('Failed to connect to Bluetooth printer');
       }
 
       // Print the data
-      final result =
-          await PrintBluetoothThermal.writeBytes(Uint8List.fromList(bytes));
+      final result = await PrintBluetoothThermal.writeBytes(
+        Uint8List.fromList(bytes),
+      );
 
       // Disconnect
       await PrintBluetoothThermal.disconnect;
@@ -171,7 +175,10 @@ class ThermalPrintService extends _$ThermalPrintService {
 
   /// Prints via network connection.
   Future<PrintResult> _printViaNetwork(
-      String ipAddress, int port, List<int> bytes) async {
+    String ipAddress,
+    int port,
+    List<int> bytes,
+  ) async {
     try {
       final printer = PrinterNetworkManager(ipAddress, port: port);
       final result = await printer.connect();
@@ -258,11 +265,7 @@ class ThermalPrintService extends _$ThermalPrintService {
 
     // Column headers
     bytes += generator.row([
-      PosColumn(
-        text: 'ITEM',
-        width: 6,
-        styles: const PosStyles(bold: true),
-      ),
+      PosColumn(text: 'ITEM', width: 6, styles: const PosStyles(bold: true)),
       PosColumn(
         text: 'QTY',
         width: 2,
@@ -305,11 +308,7 @@ class ThermalPrintService extends _$ThermalPrintService {
 
     // Total
     bytes += generator.row([
-      PosColumn(
-        text: 'TOTAL:',
-        width: 6,
-        styles: const PosStyles(bold: true),
-      ),
+      PosColumn(text: 'TOTAL:', width: 6, styles: const PosStyles(bold: true)),
       PosColumn(text: '', width: 2),
       PosColumn(
         text: currencyFormat.format(sale.totalAmount),
@@ -392,5 +391,4 @@ class ThermalPrintService extends _$ThermalPrintService {
 
     return bytes;
   }
-
 }

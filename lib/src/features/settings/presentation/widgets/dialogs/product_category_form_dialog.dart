@@ -166,6 +166,8 @@ class ProductCategoryFormDialog extends HookConsumerWidget {
                   hintText: 'Select parent (optional)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.account_tree),
+                  // Keep label floated: null (root) is treated as empty otherwise.
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
                 ),
                 enabled: !isSaving.value,
                 items: [

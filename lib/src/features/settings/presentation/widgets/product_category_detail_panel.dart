@@ -172,6 +172,7 @@ class ProductCategoryDetailPanel extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(isCreating ? 'New Category' : 'Edit Category'),
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => const ProductCategoriesRoute().go(context),
@@ -188,8 +189,11 @@ class ProductCategoryDetailPanel extends HookConsumerWidget {
                   : const Icon(Icons.delete_outline),
               onPressed: isDeleting.value ? null : handleDelete,
             ),
-          const SizedBox(width: 8),
           FilledButton(
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
             onPressed: isSaving.value ? null : handleSave,
             child: isSaving.value
                 ? const SizedBox(
@@ -199,7 +203,7 @@ class ProductCategoryDetailPanel extends HookConsumerWidget {
                   )
                 : const Text('Save'),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
         ],
       ),
       body: categoriesAsync.when(
@@ -250,6 +254,8 @@ class ProductCategoryDetailPanel extends HookConsumerWidget {
                     decoration: const InputDecoration(
                       labelText: 'Parent Category',
                       hintText: 'Select parent (optional)',
+                      // Keep label floated: null (root) is treated as empty otherwise.
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
                     ),
                     items: [
                       const DropdownMenuItem(

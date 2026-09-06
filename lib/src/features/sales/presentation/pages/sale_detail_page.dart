@@ -220,6 +220,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                         customerName: sale.customerDisplay,
                         customerId: sale.customerId,
                       ),
+                      _SoldByInfoRow(cashierId: sale.cashierId),
                       if (sale.notes != null && sale.notes!.isNotEmpty)
                         _InfoRow(
                           icon: Icons.note,
@@ -737,7 +738,9 @@ class _SaleDetailContent extends HookConsumerWidget {
                                   ),
                                 ),
                                 title: Text(
-                                  '${payment.type.displayName} - ${payment.paymentMethod.displayName}',
+                                  isRefund
+                                      ? 'Refund · ${payment.paymentMethod.displayName}'
+                                      : payment.paymentMethod.displayName,
                                   style: theme.textTheme.bodyMedium,
                                 ),
                                 subtitle: Column(
@@ -754,7 +757,7 @@ class _SaleDetailContent extends HookConsumerWidget {
                                             theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
-                                    // Show reference for GCash/Bank payments
+                                    // Show reference for non-cash (deposit) payments
                                     if (isGcashBank &&
                                         payment.paymentRef != null &&
                                         payment.paymentRef!.isNotEmpty)
@@ -1159,6 +1162,29 @@ class _CustomerInfoRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Shows the cashier account that created the sale.
+class _SoldByInfoRow extends ConsumerWidget {
+  const _SoldByInfoRow({required this.cashierId});
+
+  final String cashierId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (cashierId.trim().isEmpty) return const SizedBox.shrink();
+
+    final cashierName = ref.watch(userProvider(cashierId)).value?.name;
+    if (cashierName == null || cashierName.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _InfoRow(
+      icon: Icons.badge_outlined,
+      label: 'Sold by',
+      value: cashierName,
     );
   }
 }

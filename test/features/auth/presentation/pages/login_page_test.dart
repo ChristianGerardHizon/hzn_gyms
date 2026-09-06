@@ -126,6 +126,26 @@ Future<void> _fillAndSubmit(WidgetTester tester) async {
 
 void main() {
   group('LoginPage', () {
+    testWidgets('shows generic app branding before sign-in', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          ..._baseOverrides(),
+          authControllerProvider.overrideWith(_FakeAuthController.new),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: _testRouter(container)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('HZN Gyms [Dev]'), findsOneWidget);
+    });
+
     testWidgets('navigates straight to dashboard on successful login '
         '(no manual refresh required)', (tester) async {
       final container = ProviderContainer(

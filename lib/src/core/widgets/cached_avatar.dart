@@ -1,5 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import '../../features/organizations/presentation/controllers/organization_branding_providers.dart';
 
 /// A reusable cached avatar widget that displays an image from a URL
 /// with a customizable placeholder.
@@ -108,7 +111,7 @@ class CachedAvatar extends StatelessWidget {
 /// image that fills its parent using [BoxFit.cover].
 ///
 /// Uses [CachedNetworkImage] for efficient disk/memory caching.
-class CachedImage extends StatelessWidget {
+class CachedImage extends ConsumerWidget {
   const CachedImage({
     super.key,
     this.imageUrl,
@@ -120,8 +123,8 @@ class CachedImage extends StatelessWidget {
   /// The URL of the image to display. If null, shows the placeholder.
   final String? imageUrl;
 
-  /// Custom placeholder widget. If null, uses a default container with
-  /// the app icon.
+  /// Custom placeholder widget. If null, uses the current organization's
+  /// transparent logo (see [effectiveLogoUrlProvider]).
   final Widget? placeholder;
 
   /// Optional border radius for the image.
@@ -131,22 +134,11 @@ class CachedImage extends StatelessWidget {
   final BoxFit fit;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final orgLogoUrl = ref.watch(effectiveLogoUrlProvider);
 
     final placeholderWidget = placeholder ??
-        Container(
-          color: theme.colorScheme.primaryContainer,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Image.asset(
-                'assets/icons/app_icon_transparent.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        );
+        _OrgLogoImagePlaceholder(logoUrl: orgLogoUrl);
 
     if (imageUrl == null || imageUrl!.isEmpty) {
       return placeholderWidget;
@@ -157,17 +149,9 @@ class CachedImage extends StatelessWidget {
       fit: fit,
       width: double.infinity,
       height: double.infinity,
-      placeholder: (context, url) => Container(
-        color: theme.colorScheme.surfaceContainerHighest,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Image.asset(
-              'assets/icons/app_icon_transparent.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
+      placeholder: (context, url) => _OrgLogoImagePlaceholder(
+        logoUrl: orgLogoUrl,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       errorWidget: (context, url, error) => placeholderWidget,
     );
@@ -180,5 +164,56 @@ class CachedImage extends StatelessWidget {
     }
 
     return image;
+  }
+}
+
+/// Default [CachedImage] placeholder — organization logo when configured,
+/// otherwise a person icon.
+class _OrgLogoImagePlaceholder extends StatelessWidget {
+  const _OrgLogoImagePlaceholder({
+    required this.logoUrl,
+    this.backgroundColor,
+  });
+
+  final String? logoUrl;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final url = logoUrl;
+
+    return Container(
+      color: backgroundColor ?? theme.colorScheme.primaryContainer,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final logoSize = constraints.biggest.shortestSide * 0.72;
+
+          return Center(
+            child: SizedBox(
+              width: logoSize,
+              height: logoSize,
+              child: url != null && url.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: url,
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => _iconFallback(theme, logoSize * 0.55),
+                      errorWidget: (_, __, ___) =>
+                          _iconFallback(theme, logoSize * 0.55),
+                    )
+                  : _iconFallback(theme, logoSize * 0.55),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _iconFallback(ThemeData theme, double size) {
+    return Icon(
+      Icons.person,
+      size: size,
+      color: theme.colorScheme.primary,
+    );
   }
 }

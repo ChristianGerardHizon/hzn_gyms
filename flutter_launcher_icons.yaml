@@ -1,20 +1,21 @@
 # dart run flutter_launcher_icons
 flutter_launcher_icons:
-  image_path: "assets/icons/app_icon_transparent.png"
+  image_path: "assets/icons/app_icon_mark.png"
 
   android: "launcher_icon"
   min_sdk_android: 21
   adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/icons/app_icon_transparent.png"
-  adaptive_icon_monochrome: "assets/icons/app_icon_transparent.png"
+  adaptive_icon_foreground: "assets/icons/app_icon_mark.png"
+  adaptive_icon_monochrome: "assets/icons/app_icon_mark.png"
 
   ios: true
-  remove_alpha_channel_ios: true
+  image_path_ios: "assets/icons/app_icon_mark_opaque.png"
+  remove_alpha_ios: true
 
   web:
     generate: true
-    background_color: "#ffffff"
-    theme_color: "#ffffff"
+    background_color: "#000000"
+    theme_color: "#000000"
 
   windows:
     generate: true

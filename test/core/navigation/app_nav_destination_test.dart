@@ -31,7 +31,9 @@ void main() {
         expect(ids, contains(AppNavId.memberships));
         expect(ids, contains(AppNavId.profile));
         expect(ids, contains(AppNavId.system));
-        expect(ids, isNot(contains(AppNavId.organization)));
+        expect(ids, isNot(contains(AppNavId.users)));
+        expect(ids, isNot(contains(AppNavId.roles)));
+        expect(ids, isNot(contains(AppNavId.branches)));
         expect(ids, isNot(contains(AppNavId.reports)));
         expect(ids, isNot(contains(AppNavId.outbox)));
       },
@@ -46,10 +48,12 @@ void main() {
       expect(ids, contains(AppNavId.profile));
     });
 
-    test('Admin with users.view sees Organization instead of Profile', () {
+    test('Admin with users.view sees Users instead of Profile', () {
       final admin = CurrentUserPermissions(
         permissions: {
           Permissions.usersView,
+          Permissions.rolesView,
+          Permissions.branchesView,
           Permissions.reportsView,
           Permissions.settingsView,
           Permissions.systemAdmin,
@@ -64,7 +68,9 @@ void main() {
       );
 
       final ids = visibleAppNavDestinations(admin).map((d) => d.id).toList();
-      expect(ids, contains(AppNavId.organization));
+      expect(ids, contains(AppNavId.users));
+      expect(ids, contains(AppNavId.roles));
+      expect(ids, contains(AppNavId.branches));
       expect(ids, isNot(contains(AppNavId.profile)));
       expect(ids, contains(AppNavId.reports));
       expect(ids, isNot(contains(AppNavId.outbox)));
@@ -92,9 +98,11 @@ void main() {
       },
     );
 
-    test('blocks organization and reports for staff', () {
-      expect(canAccessPath('/organization', staff), isFalse);
-      expect(canAccessPath('/organization/users', staff), isFalse);
+    test('blocks users, roles, branches, and reports for staff', () {
+      expect(canAccessPath('/users', staff), isFalse);
+      expect(canAccessPath('/users/abc', staff), isFalse);
+      expect(canAccessPath('/roles', staff), isFalse);
+      expect(canAccessPath('/branches', staff), isFalse);
       expect(canAccessPath('/reports', staff), isFalse);
       expect(canAccessPath('/outbox', staff), isFalse);
     });
@@ -184,7 +192,9 @@ void main() {
 
   group('isPermissionSensitivePath', () {
     test('flags admin destinations that must wait for role load', () {
-      expect(isPermissionSensitivePath('/organization'), isTrue);
+      expect(isPermissionSensitivePath('/users'), isTrue);
+      expect(isPermissionSensitivePath('/roles'), isTrue);
+      expect(isPermissionSensitivePath('/branches'), isTrue);
       expect(isPermissionSensitivePath('/reports'), isTrue);
       expect(isPermissionSensitivePath('/outbox'), isTrue);
       expect(isPermissionSensitivePath('/system/product-categories'), isTrue);

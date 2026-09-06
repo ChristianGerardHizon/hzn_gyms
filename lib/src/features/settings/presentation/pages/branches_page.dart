@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../../core/routing/routes/organization.routes.dart';
+import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/routes/branches.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/branch.dart';
 import '../controllers/branches_controller.dart';
@@ -18,7 +19,7 @@ class BranchesPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Branches'),
+        title: Text(Translations.of(context).navigation.branches),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => showBranchFormDialog(context),
@@ -104,8 +105,7 @@ class BranchesPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  onTap: () => OrganizationBranchDetailRoute(id: branch.id)
-                      .push(context),
+                  onTap: () => BranchDetailRoute(id: branch.id).push(context),
                 );
               },
             ),

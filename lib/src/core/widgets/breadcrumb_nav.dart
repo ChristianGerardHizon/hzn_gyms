@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../i18n/strings.g.dart';
-import '../routing/routes/organization.routes.dart';
+import '../routing/routes/branches.routes.dart';
 import '../routing/routes/products.routes.dart';
+import '../routing/routes/roles.routes.dart';
 import '../routing/routes/sales.routes.dart';
 import '../routing/routes/system.routes.dart';
+import '../routing/routes/users.routes.dart';
 
 /// A breadcrumb item representing a navigation point.
 class BreadcrumbItem {
@@ -164,11 +166,25 @@ class BreadcrumbNav extends StatelessWidget {
           onTap: () => const SalesRoute().go(context),
         );
 
-      case 'organization':
+      case 'users':
         return BreadcrumbItem(
-          label: t.navigation.organization,
-          path: OrganizationRoute.path,
-          onTap: () => const OrganizationRoute().go(context),
+          label: t.navigation.users,
+          path: UsersRoute.path,
+          onTap: () => const UsersRoute().go(context),
+        );
+
+      case 'roles':
+        return BreadcrumbItem(
+          label: t.navigation.roles,
+          path: RolesRoute.path,
+          onTap: () => const RolesRoute().go(context),
+        );
+
+      case 'branches':
+        return BreadcrumbItem(
+          label: t.navigation.branches,
+          path: BranchesRoute.path,
+          onTap: () => const BranchesRoute().go(context),
         );
 
       case 'system':

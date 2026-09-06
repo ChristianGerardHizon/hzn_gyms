@@ -2,6 +2,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/foundation/paginated_state.dart';
+import '../../../../core/packages/pocketbase/pb_filter.dart';
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../domain/user.dart';
 
@@ -16,6 +18,12 @@ class PaginatedUsersController extends _$PaginatedUsersController {
   String? _currentSearchQuery;
   List<String>? _currentSearchFields;
 
+  String? get _organizationListFilter {
+    final orgId = ref.read(currentOrganizationIdProvider);
+    if (orgId == null || orgId.isEmpty) return null;
+    return PBFilters.forOrganization(orgId).build();
+  }
+
   @override
   Future<PaginatedState<User>> build() async {
     _currentSearchQuery = null;
@@ -24,6 +32,7 @@ class PaginatedUsersController extends _$PaginatedUsersController {
     final result = await _repository.fetchPaginated(
       page: 1,
       perPage: Pagination.defaultPageSize,
+      filter: _organizationListFilter,
     );
 
     return result.fold(
@@ -64,10 +73,12 @@ class PaginatedUsersController extends _$PaginatedUsersController {
             fields: _currentSearchFields,
             page: nextPage,
             perPage: Pagination.defaultPageSize,
+            filter: _organizationListFilter,
           )
         : await _repository.fetchPaginated(
             page: nextPage,
             perPage: Pagination.defaultPageSize,
+            filter: _organizationListFilter,
           );
 
     result.fold(
@@ -100,10 +111,12 @@ class PaginatedUsersController extends _$PaginatedUsersController {
             fields: _currentSearchFields,
             page: 1,
             perPage: Pagination.defaultPageSize,
+            filter: _organizationListFilter,
           )
         : await _repository.fetchPaginated(
             page: 1,
             perPage: Pagination.defaultPageSize,
+            filter: _organizationListFilter,
           );
 
     state = result.fold(
@@ -135,6 +148,7 @@ class PaginatedUsersController extends _$PaginatedUsersController {
       fields: fields,
       page: 1,
       perPage: Pagination.defaultPageSize,
+      filter: _organizationListFilter,
     );
 
     state = result.fold(

@@ -13,9 +13,14 @@ RouteBase get $membersShellRoute => ShellRouteData.$route(
   routes: [
     GoRouteData.$route(
       path: '/members',
+      hasOverriddenOnExit: false,
       factory: $MembersRoute._fromState,
       routes: [
-        GoRouteData.$route(path: ':id', factory: $MemberDetailRoute._fromState),
+        GoRouteData.$route(
+          path: ':id',
+          hasOverriddenOnExit: false,
+          factory: $MemberDetailRoute._fromState,
+        ),
       ],
     ),
   ],

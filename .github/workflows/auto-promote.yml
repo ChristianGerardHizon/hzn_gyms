@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-      contents: read
+      contents: write
     steps:
       - name: Calculate next version
         id: get_version
@@ -61,7 +61,10 @@ jobs:
 
       - name: Create PR from staging to main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer GH_PAT when Actions cannot create PRs with GITHUB_TOKEN.
+          # Repo: Settings → Actions → General → allow creating/approving PRs.
+          # See docs/hzngyms-initial-setup.md
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.get_version.outputs.version }}
         run: |
           # Check if an open PR from staging to main already exists
@@ -86,6 +89,7 @@ jobs:
             TITLE="v${VERSION} (web-only)"
           fi
 
+          set +e
           PR_URL=$(gh pr create \
             --repo "${{ github.repository }}" \
             --head staging \
@@ -100,7 +104,15 @@ jobs:
 
           Merging this PR will build and deploy **v${VERSION}** to production${WEB_ONLY_NOTE}.
           EOF
-          )")
+          )" 2>&1)
+          CREATE_STATUS=$?
+          set -e
+
+          if [ $CREATE_STATUS -ne 0 ]; then
+            echo "::error::Failed to create staging→main PR: $PR_URL"
+            echo "::error::Enable Actions 'Allow GitHub Actions to create and approve pull requests', or set secret GH_PAT. See docs/hzngyms-initial-setup.md"
+            exit 1
+          fi
 
           PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
 

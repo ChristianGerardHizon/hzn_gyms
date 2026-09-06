@@ -12,12 +12,14 @@ class User with UserMappable {
     required this.id,
     required this.name,
     required this.username,
+    this.email,
     this.avatar,
     this.verified = false,
     this.roleId,
     this.roleName,
     this.branchId,
     this.branchName,
+    this.organizationId,
     this.allowedBranchIds = const [],
     this.allowedBranchNames = const [],
     this.isDeleted = false,
@@ -31,8 +33,11 @@ class User with UserMappable {
   /// User's display name.
   final String name;
 
-  /// User's username (used for login).
+  /// User's username.
   final String username;
+
+  /// Login email (PocketBase password auth identity).
+  final String? email;
 
   /// Avatar URL (full path).
   final String? avatar;
@@ -51,6 +56,9 @@ class User with UserMappable {
 
   /// Default branch name (expanded from FK).
   final String? branchName;
+
+  /// FK to Organization (tenant).
+  final String? organizationId;
 
   /// Branch IDs the user may switch to.
   final List<String> allowedBranchIds;

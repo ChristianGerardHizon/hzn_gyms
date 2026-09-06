@@ -57,7 +57,7 @@ void main() {
         container.read(organizationsControllerProvider.notifier);
 
     final success = await controller.createOrganization(created);
-    expect(success, isTrue);
+    expect(success, created);
     expect(
       container.read(organizationsControllerProvider).value,
       [created, orgA, orgB],
@@ -86,7 +86,7 @@ void main() {
     );
   });
 
-  test('createOrganization returns false on failure', () async {
+  test('createOrganization returns null on failure', () async {
     const created = Organization(id: 'org-c', name: 'Org C', slug: 'org-c');
     when(() => repo.create(created)).thenAnswer(
       (_) async => left(const DataFailure('fail', null, 'create_failed')),
@@ -97,7 +97,7 @@ void main() {
         container.read(organizationsControllerProvider.notifier);
 
     final success = await controller.createOrganization(created);
-    expect(success, isFalse);
+    expect(success, isNull);
     expect(
       container.read(organizationsControllerProvider).value,
       [orgA, orgB],

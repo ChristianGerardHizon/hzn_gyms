@@ -1,6 +1,8 @@
 # Multi-Client Deploy Plan — kylie-gym
 
-Status as of 2026-08-23: **server provisioned**. Prod and staging PocketBase instances run on `sannjosevet-cicd`; this repo’s [`scripts/deploy.sh`](../scripts/deploy.sh) defaults to kyliegym paths (not ebegym).
+Status as of 2026-08-23: **server provisioned**. Prod and staging PocketBase instances run on `sannjosevet-cicd`.
+
+**Update 2026-09-07:** This repo’s [`scripts/deploy.sh`](../scripts/deploy.sh) now defaults to **HZN Gyms** paths (`/opt/pocketbase/hzn_gyms*`). Legacy kyliegym instances below remain on the server untouched. See [`hzngyms-provision.md`](hzngyms-provision.md).
 
 ## Background
 
@@ -17,24 +19,21 @@ kylie-gym is a separate PocketBase instance per client (own data dir / DB), not 
 - systemd units + Caddy reverse proxy for both hosts
 - DNS A records → `157.245.154.214`
 - `/etc/sudoers.d/deploy-kyliegym` for `deploy-imbak` restarts
-- `scripts/deploy.sh` defaults to kyliegym staging/prod roots and services
+- Legacy kyliegym roots remain on disk; **this repo no longer deploys to them**
 
-## Remaining (CI activation)
+## Status (2026-09)
 
-1. Add/confirm GitHub Actions secrets for kyliegym URLs and SSH (`POCKETBASE_URL_STAGING` / `POCKETBASE_URL_PROD` or dedicated kyliegym secrets as used by the workflow).
-2. Point CI `SSH_HOST` / `SSH_USER` / `SSH_PRIVATE_KEY` at deploy-imbak on this server (same host as other hznsystems apps).
-3. Configure Backblaze/S3 filesystem in prod admin (manual; not done at provision time).
-4. Optional: enable any kyliegym-specific deploy job / `KYLIEGYM_DEPLOY_ENABLED` if still present in workflows.
+HZN Gyms CI deploys to `/opt/pocketbase/hzn_gyms*` via `deploy-hzngyms`. See [hzngyms-provision.md](hzngyms-provision.md) and [hzngyms-initial-setup.md](hzngyms-initial-setup.md).
 
-## Deploy usage
+To touch **legacy kyliegym** only (not the default for this repo):
 
 ```bash
-SSH_HOST=157.245.154.214 SSH_USER=deploy-imbak ./scripts/deploy.sh staging
-SSH_HOST=157.245.154.214 SSH_USER=deploy-imbak ./scripts/deploy.sh prod --hooks-only
+SSH_HOST=157.245.154.214 SSH_USER=deploy-imbak \
+  DEPLOY_SERVER_ROOT=/opt/pocketbase/kyliegym-staging \
+  DEPLOY_SERVICE_NAME=pocketbase_kyliegym-staging.service \
+  ./scripts/deploy.sh staging
 ```
-
-Overrides still work: `DEPLOY_SERVER_ROOT`, `DEPLOY_SERVICE_NAME`.
 
 ## Reference
 
-See [`docs/deployment.md`](deployment.md) for the full deploy pipeline and sudoers/path tables.
+See [`docs/deployment.md`](deployment.md) and [`docs/hzngyms-initial-setup.md`](hzngyms-initial-setup.md).

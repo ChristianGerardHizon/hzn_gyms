@@ -8,8 +8,11 @@ part of 'outbox.routes.dart';
 
 List<RouteBase> get $appRoutes => [$outboxRoute];
 
-RouteBase get $outboxRoute =>
-    GoRouteData.$route(path: '/outbox', factory: $OutboxRoute._fromState);
+RouteBase get $outboxRoute => GoRouteData.$route(
+  path: '/outbox',
+  hasOverriddenOnExit: false,
+  factory: $OutboxRoute._fromState,
+);
 
 mixin $OutboxRoute on GoRouteData {
   static OutboxRoute _fromState(GoRouterState state) => const OutboxRoute();

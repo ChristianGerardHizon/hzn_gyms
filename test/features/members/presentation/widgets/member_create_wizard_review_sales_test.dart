@@ -111,31 +111,33 @@ void main() {
       },
     );
 
-    testWidgets(
-      'hides Exclude from sales when no membership is selected',
-      (tester) async {
-        await _pumpWizard(
-          tester,
-          plans: [buildMembership(name: 'Monthly')],
-          permissions: const CurrentUserPermissions(
-            permissions: {Permissions.membershipsExcludeFromSales},
-          ),
-        );
+    testWidgets('hides Exclude from sales when no membership is selected', (
+      tester,
+    ) async {
+      await _pumpWizard(
+        tester,
+        plans: [
+          buildMembership(id: 'plan-1', name: 'Monthly'),
+          buildMembership(id: 'plan-2', name: 'Annual'),
+        ],
+        permissions: const CurrentUserPermissions(
+          permissions: {Permissions.membershipsExcludeFromSales},
+        ),
+      );
 
-        await _completeDetailsStep(tester);
-        await tester.tap(find.text('Skip'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Skip'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Skip'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Continue'));
-        await tester.pumpAndSettle();
+      await _completeDetailsStep(tester);
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Exclude from sales'), findsNothing);
-        expect(find.text('No membership selected'), findsOneWidget);
-      },
-    );
+      expect(find.text('Exclude from sales'), findsNothing);
+      expect(find.text('No membership selected'), findsOneWidget);
+    });
   });
 }
 
@@ -180,21 +182,15 @@ Future<void> _pumpWizard(
           branchesControllerProvider.overrideWith(
             () => _FakeBranchesController(const [_testBranch]),
           ),
-          membershipPurchaseCatalogProvider(false).overrideWith(
-            (ref) async => plans,
-          ),
-          membershipPurchaseCatalogProvider(true).overrideWith(
-            (ref) async => plans,
-          ),
+          membershipPurchaseCatalogProvider(false)
+              .overrideWith((ref) async => plans),
+          membershipPurchaseCatalogProvider(true)
+              .overrideWith((ref) async => plans),
           membershipAddOnsControllerProvider.overrideWith(
             () => _FakeMembershipAddOnsController(),
           ),
         ],
-        child: const MaterialApp(
-          home: Scaffold(
-            body: MemberFormDialog(),
-          ),
-        ),
+        child: const MaterialApp(home: Scaffold(body: MemberFormDialog())),
       ),
     ),
   );

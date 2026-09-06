@@ -2,26 +2,31 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../packages/sentry/sentry_config.dart';
 import '../pages/app_root.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'router_utils.dart';
 import 'routes/auth.routes.dart';
+import 'routes/branches.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
-import 'routes/organization.routes.dart';
 import 'routes/outbox.routes.dart';
 import 'routes/products.routes.dart';
 import 'routes/members.routes.dart';
 import 'routes/memberships.routes.dart';
+import 'routes/organizations.routes.dart';
 import 'routes/profile.routes.dart';
 import 'routes/sales.routes.dart';
 import 'routes/sales_history.routes.dart';
 import 'routes/reports.routes.dart';
-import 'routes/organizations.routes.dart';
+import 'routes/roles.routes.dart';
+import 'routes/platform.routes.dart';
 import 'routes/system.routes.dart';
+import 'routes/users.routes.dart';
 
 part 'router.g.dart';
 
@@ -44,6 +49,7 @@ GoRouter router(Ref ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: SplashRoute.path,
     debugLogDiagnostics: true,
+    observers: [if (isSentryEnabled) SentryNavigatorObserver()],
     redirect: (context, state) => RouterUtils.redirect(context, state, ref),
     errorBuilder: RouterUtils.errorBuilder,
     routes: [
@@ -52,6 +58,12 @@ GoRouter router(Ref ref) {
       $loginRoute,
       $forgotPasswordRoute,
       $authLoadingRoute,
+
+      // Legacy org path redirect
+      $organizationsRoute,
+
+      // Platform super-admin shell
+      $platformShellRoute,
 
       // Main app shell with navigation
       ShellRoute(
@@ -65,8 +77,9 @@ GoRouter router(Ref ref) {
           $salesRoute,
           $salesShellRoute,
           $reportsRoute,
-          $organizationShellRoute,
-          $organizationsRoute,
+          $usersShellRoute,
+          $rolesRoute,
+          $branchesShellRoute,
           $profileRoute,
           $outboxRoute,
           $systemShellRoute,
@@ -91,9 +104,19 @@ GoRouter router(Ref ref) {
 
         if (isAuthenticated && location == LoginRoute.path) {
           // Login success: restore deep link or go home.
-          final pendingUrl =
-              ref.read(pendingRedirectProvider.notifier).consume();
-          router.go(pendingUrl ?? DashboardRoute.path);
+          final pendingUrl = ref
+              .read(pendingRedirectProvider.notifier)
+              .consume();
+          if (pendingUrl != null) {
+            router.go(pendingUrl);
+            return;
+          }
+          final perms = ref.read(currentUserPermissionsProvider).value;
+          if (perms?.canManageOrganizations ?? false) {
+            router.go(PlatformDashboardRoute.path);
+          } else {
+            router.go(DashboardRoute.path);
+          }
         } else if (isAuthenticated && location == SplashRoute.path) {
           // Do not router.go(Dashboard) here — that races redirect restore and
           // can wipe a pending deep link. Let [RouterUtils.redirect] step 3

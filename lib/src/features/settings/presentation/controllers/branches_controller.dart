@@ -17,6 +17,9 @@ class BranchesController extends _$BranchesController {
   @override
   Future<List<Branch>> build() async {
     final organizationId = ref.watch(currentOrganizationIdProvider);
+    if (organizationId == null || organizationId.isEmpty) {
+      return const [];
+    }
     final result = await _repository.fetchAll(organizationId: organizationId);
     return result.fold(
       (failure) => throw failure,

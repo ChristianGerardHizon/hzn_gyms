@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:hzn_gyms/src/core/packages/pocketbase/pocketbase_collections.dart';
 import 'package:hzn_gyms/src/features/users/data/repositories/user_repository.dart';
+import 'package:hzn_gyms/src/features/users/domain/user.dart';
 
 import '../../../helpers/pb_test_helpers.dart';
 
@@ -70,5 +71,47 @@ void main() {
     );
 
     expect(result.isLeft(), isTrue);
+  });
+
+  test('create sends email and organization fields', () async {
+    when(
+      () => users.create(body: any(named: 'body'), expand: any(named: 'expand')),
+    ).thenAnswer(
+      (_) async => buildRecord(
+        id: 'user-1',
+        collectionName: 'users',
+        data: {
+          'name': 'Admin',
+          'username': 'admin',
+          'email': 'admin@example.com',
+          'organization': 'org-1',
+          'role': 'role-admin',
+          'branch': 'branch-1',
+        },
+      ),
+    );
+
+    final result = await repo.create(
+      const User(
+        id: '',
+        name: 'Admin',
+        username: 'admin',
+        email: 'admin@example.com',
+        organizationId: 'org-1',
+        roleId: 'role-admin',
+        branchId: 'branch-1',
+      ),
+      'secret123',
+    );
+
+    expect(result.isRight(), isTrue);
+
+    final body = verify(
+      () => users.create(body: captureAny(named: 'body'), expand: any(named: 'expand')),
+    ).captured.single as Map<String, dynamic>;
+
+    expect(body['email'], 'admin@example.com');
+    expect(body['organization'], 'org-1');
+    expect(body['password'], 'secret123');
   });
 }

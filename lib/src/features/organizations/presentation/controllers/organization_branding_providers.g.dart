@@ -111,22 +111,22 @@ final class EffectiveAppTitleProvider
 String _$effectiveAppTitleHash() => r'cc08c24892cb19e61ef4b18c730b3367f716efae';
 
 /// The transparent-background logo URL for the current organization, or
-/// null when unresolved/unset — callers should fall back to the bundled
-/// default asset (e.g. via `CachedImage`'s built-in placeholder).
+/// null when unresolved/unset — used as the default image placeholder in
+/// member photo cards and org branding widgets.
 
 @ProviderFor(effectiveLogoUrl)
 final effectiveLogoUrlProvider = EffectiveLogoUrlProvider._();
 
 /// The transparent-background logo URL for the current organization, or
-/// null when unresolved/unset — callers should fall back to the bundled
-/// default asset (e.g. via `CachedImage`'s built-in placeholder).
+/// null when unresolved/unset — used as the default image placeholder in
+/// member photo cards and org branding widgets.
 
 final class EffectiveLogoUrlProvider
     extends $FunctionalProvider<String?, String?, String?>
     with $Provider<String?> {
   /// The transparent-background logo URL for the current organization, or
-  /// null when unresolved/unset — callers should fall back to the bundled
-  /// default asset (e.g. via `CachedImage`'s built-in placeholder).
+  /// null when unresolved/unset — used as the default image placeholder in
+  /// member photo cards and org branding widgets.
   EffectiveLogoUrlProvider._()
     : super(
         from: null,

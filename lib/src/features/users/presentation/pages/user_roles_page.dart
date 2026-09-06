@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/routes/roles.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
@@ -59,11 +61,16 @@ class UserRolesPage extends HookConsumerWidget {
               ref.read(userRolesControllerProvider.notifier).refresh(),
           onEdit: (role) => showEditRoleDialog(context, role),
           onDelete: (role) => _showDeleteConfirmation(context, ref, role),
-          onRoleTap: isTablet ? (role) => selectedRoleId.value = role.id : null,
+          onRoleTap: isTablet
+              ? (role) => selectedRoleId.value = role.id
+              : (role) => RoleDetailRoute(id: role.id).push(context),
         );
 
         if (!isTablet) {
-          return listPanel;
+          return Scaffold(
+            appBar: AppBar(title: Text(Translations.of(context).navigation.roles)),
+            body: listPanel,
+          );
         }
 
         return Row(

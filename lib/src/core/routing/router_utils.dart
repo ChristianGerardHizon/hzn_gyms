@@ -11,6 +11,8 @@ import 'pending_redirect_provider.dart';
 import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
+import 'routes/organizations.routes.dart';
+import 'routes/platform.routes.dart';
 import 'routes/sales.routes.dart';
 
 /// Utility functions for router configuration.
@@ -37,6 +39,38 @@ abstract class RouterUtils {
     return config.lastOrNull?.matchedLocation ?? config.uri.path;
   }
 
+  /// Former nested organization paths (users/roles/branches under /organization).
+  static String? legacyOrganizationRedirect(String path) {
+    if (path == '/organization' || path == '/organization/users') {
+      return '/users';
+    }
+    if (path.startsWith('/organization/users/')) {
+      final id = path.split('/').elementAtOrNull(3);
+      if (id != null && id.isNotEmpty) {
+        return '/users/$id';
+      }
+    }
+    if (path == '/organization/roles') {
+      return '/roles';
+    }
+    if (path.startsWith('/organization/roles/')) {
+      final id = path.split('/').elementAtOrNull(3);
+      if (id != null && id.isNotEmpty) {
+        return '/roles/$id';
+      }
+    }
+    if (path == '/organization/branches') {
+      return '/branches';
+    }
+    if (path.startsWith('/organization/branches/')) {
+      final id = path.split('/').elementAtOrNull(3);
+      if (id != null && id.isNotEmpty) {
+        return '/branches/$id';
+      }
+    }
+    return null;
+  }
+
   /// Global redirect function for auth guards.
   ///
   /// Redirects unauthenticated users to login and
@@ -49,6 +83,17 @@ abstract class RouterUtils {
   ) {
     final currentPath = state.matchedLocation;
     final fullUri = state.uri.toString();
+
+    // Legacy organization nested paths → top-level users/roles/branches.
+    final legacyOrgRedirect = legacyOrganizationRedirect(state.uri.path);
+    if (legacyOrgRedirect != null) {
+      return legacyOrgRedirect;
+    }
+
+    // Legacy /organizations → platform org list.
+    if (state.uri.path == OrganizationsRoute.path) {
+      return PlatformOrganizationsRoute.path;
+    }
 
     // Legacy bookmark/deep link → nested records route.
     // Use uri.path: unmatched locations may not set matchedLocation.
@@ -100,7 +145,11 @@ abstract class RouterUtils {
           ref.read(pendingRedirectProvider.notifier).clear();
           return pendingUrl;
         }
-        return '/';
+        final perms = ref.read(currentUserPermissionsProvider).value;
+        if (perms?.canManageOrganizations ?? false) {
+          return PlatformDashboardRoute.path;
+        }
+        return DashboardRoute.path;
       }
       return LoginRoute.path;
     }
@@ -113,7 +162,11 @@ abstract class RouterUtils {
           ref.read(pendingRedirectProvider.notifier).clear();
           return pendingUrl;
         }
-        return '/';
+        final perms = ref.read(currentUserPermissionsProvider).value;
+        if (perms?.canManageOrganizations ?? false) {
+          return PlatformDashboardRoute.path;
+        }
+        return DashboardRoute.path;
       }
       return null;
     }

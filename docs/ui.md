@@ -40,8 +40,8 @@ This document outlines the responsive UI structure for tablet and mobile devices
 |------------|-------|-------------|------------|
 | Mobile     | 0-599px | Single column | Bottom Nav + Drawer |
 | Tablet Medium | 600-899px | Master-detail (optional) | Navigation Rail (icons) |
-| Tablet Large | 900-1199px | Master-detail (always) | Expanded Rail (icons + labels) |
-| Desktop | 1200px+ | Multi-panel | Collapsible Side Menu |
+| Tablet Large | 900-1199px | Master-detail (always) | Firebase-style sidebar (260px, collapsible) |
+| Desktop | 1200px+ | Multi-panel | Firebase-style sidebar (260px, collapsible) |
 
 ---
 
@@ -149,6 +149,47 @@ Navigation Rail (72px width, icons only)
  Rail    List Panel          Detail Panel
 (72px)    (320px)            (Remaining)
 ```
+
+### Tablet Large / Desktop Sidebar (>= 900px)
+
+Firebase-inspired grouped sidebar with hover flyouts for categories.
+
+```
+┌────────────────────────┬──────────────────────────────────────────┐
+│  LOGO  Test Gym        │  Org | Branch scope bar                  │
+├────────────────────────┼──────────────────────────────────────────┤
+│ ● Dashboard            │                                          │
+│                        │                                          │
+│ SHORTCUTS              │                                          │
+│   Check-In             │              CONTENT AREA                │
+│   Members              │                                          │
+│   Sales                │                                          │
+│   Products             │                                          │
+│   Show more            │                                          │
+│                        │                                          │
+│ CATEGORIES             │                                          │
+│   People            >  │──► Flyout: Memberships                   │
+│   Administration    >  │──► Flyout: Users, Roles, Branches        │
+│                        │                                          │
+│   System            >  │                                          │
+├────────────────────────┤                                          │
+│ Logout                 │                                          │
+│ ◀ Collapse             │                                          │
+└────────────────────────┴──────────────────────────────────────────┘
+ 260px (72px collapsed)              Remaining
+```
+
+**Sidebar sections**
+
+| Section | Contents |
+|---------|----------|
+| Overview | Dashboard (pill highlight when active) |
+| Shortcuts | Check-In, Members, Sales, Products (+ Show more for extra destinations) |
+| Categories | Operations, People, Insights, Administration, Account — hover/tap flyout for items not already in shortcuts |
+| System | Direct link to `/system` |
+| Footer | Platform admin (super-admin), Logout, Collapse toggle |
+
+Org/branch switching stays in the top `ScopeSwitcherBar` above content (not in the sidebar).
 
 ---
 
@@ -260,23 +301,26 @@ AppRoot (adaptive shell)
 │   │   ├── BottomNavigationBar (3 items + More)
 │   │   └── Drawer (MobileDrawer)
 │
-├── TabletShell (600px - 1200px)
+├── TabletShell (600px - 899px)
 │   ├── Row
-│   │   ├── NavigationRail
+│   │   ├── NavigationRail (icons only)
 │   │   │   ├── Leading (Logo)
-│   │   │   ├── Destinations (10 items)
-│   │   │   └── Trailing (User Avatar)
+│   │   │   ├── Destinations (permission-filtered)
+│   │   │   └── Trailing (Platform admin, Logout)
 │   │   └── Expanded
 │   │       └── Scaffold
-│   │           ├── AppBar
+│   │           ├── ScopeSwitcherBar
 │   │           └── Body (content or Master-Detail)
 │
-└── DesktopShell (> 1200px)
+└── DesktopSideNavShell (>= 900px)
     └── Row
-        ├── Expanded Rail (icons + labels, 160px)
+        ├── DesktopSideNav (260px, collapsible to 72px)
+        │   ├── Header (Logo + app title)
+        │   ├── Dashboard + Shortcuts + Categories + System
+        │   └── Footer (Platform admin, Logout, Collapse)
         └── Expanded
             └── Scaffold
-                ├── AppBar
+                ├── ScopeSwitcherBar
                 └── Body (content)
 ```
 
@@ -366,7 +410,9 @@ Member (master)
 | File | Purpose |
 |------|---------|
 | `lib/src/core/pages/app_root.dart` | Main shell widget with navigation |
+| `lib/src/core/navigation/app_nav_presentation.dart` | Shared nav icons, labels, categories, shortcuts |
 | `lib/src/core/widgets/mobile_bottom_nav.dart` | Bottom navigation (3 items + More) |
 | `lib/src/core/widgets/mobile_drawer.dart` | Mobile drawer (permission-filtered destinations) |
-| `lib/src/core/widgets/tablet_nav_rail.dart` | Tablet navigation rail |
+| `lib/src/core/widgets/tablet_nav_rail.dart` | Tablet-medium navigation rail (600–899px) |
+| `lib/src/core/widgets/desktop_side_nav.dart` | Firebase-style sidebar (>=900px) |
 | `lib/src/core/utils/breakpoints.dart` | Centralized breakpoint definitions |

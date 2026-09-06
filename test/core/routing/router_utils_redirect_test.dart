@@ -83,6 +83,37 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
 void main() {
   tearDown(PendingRedirect.clearStash);
 
+  group('legacyOrganizationRedirect', () {
+    test('maps nested organization paths to top-level routes', () {
+      expect(RouterUtils.legacyOrganizationRedirect('/organization'), '/users');
+      expect(
+        RouterUtils.legacyOrganizationRedirect('/organization/users'),
+        '/users',
+      );
+      expect(
+        RouterUtils.legacyOrganizationRedirect('/organization/users/u1'),
+        '/users/u1',
+      );
+      expect(
+        RouterUtils.legacyOrganizationRedirect('/organization/roles'),
+        '/roles',
+      );
+      expect(
+        RouterUtils.legacyOrganizationRedirect('/organization/roles/r1'),
+        '/roles/r1',
+      );
+      expect(
+        RouterUtils.legacyOrganizationRedirect('/organization/branches'),
+        '/branches',
+      );
+      expect(
+        RouterUtils.legacyOrganizationRedirect('/organization/branches/b1'),
+        '/branches/b1',
+      );
+      expect(RouterUtils.legacyOrganizationRedirect('/members'), isNull);
+    });
+  });
+
   group('RouterUtils.redirect', () {
     testWidgets(
       'stays on permission-sensitive path while role permissions load',

@@ -10,10 +10,12 @@ List<RouteBase> get $appRoutes => [$checkInRoute];
 
 RouteBase get $checkInRoute => GoRouteData.$route(
   path: '/check-in',
+  hasOverriddenOnExit: false,
   factory: $CheckInRoute._fromState,
   routes: [
     GoRouteData.$route(
       path: 'records',
+      hasOverriddenOnExit: false,
       factory: $CheckInRecordsRoute._fromState,
     ),
   ],

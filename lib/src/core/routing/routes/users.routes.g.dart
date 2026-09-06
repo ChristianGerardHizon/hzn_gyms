@@ -13,10 +13,14 @@ RouteBase get $usersShellRoute => ShellRouteData.$route(
   routes: [
     GoRouteData.$route(
       path: '/users',
+      hasOverriddenOnExit: false,
       factory: $UsersRoute._fromState,
       routes: [
-        GoRouteData.$route(path: ':id', factory: $UserDetailRoute._fromState),
-        GoRouteData.$route(path: 'roles', factory: $UserRolesRoute._fromState),
+        GoRouteData.$route(
+          path: ':id',
+          hasOverriddenOnExit: false,
+          factory: $UserDetailRoute._fromState,
+        ),
       ],
     ),
   ],
@@ -60,27 +64,6 @@ mixin $UserDetailRoute on GoRouteData {
     '/users/${Uri.encodeComponent(_self.id)}',
     queryParams: {if (_self.tab != null) 'tab': _self.tab},
   );
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-mixin $UserRolesRoute on GoRouteData {
-  static UserRolesRoute _fromState(GoRouterState state) =>
-      const UserRolesRoute();
-
-  @override
-  String get location => GoRouteData.$location('/users/roles');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -19,7 +19,7 @@
 			<string>en</string>
 		</array>
 		<key>CFBundleName</key>
-	<string>com.hzngyms.app</string>
+	<string>com.hznsystems.hzngyms</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -75,7 +75,7 @@
 				<string>Editor</string>
 				<key>CFBundleURLName</key>
 				<!-- You can find it on /ios/project.pbxproj - 'PRODUCT_BUNDLE_IDENTIFIER' -->
-				<string>com.kyliegym.app</string>
+				<string>com.hznsystems.hzngyms</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<!-- Your app title -->

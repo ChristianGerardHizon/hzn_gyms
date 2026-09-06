@@ -2,6 +2,8 @@
 
 This document describes the GitHub Actions deployment pipeline, branching strategy, and required configuration.
 
+For the **HZN Gyms cutover** (new hosts, secrets, pitfalls, and remaining manual steps), see [hzngyms-initial-setup.md](hzngyms-initial-setup.md).
+
 ---
 
 ## Table of Contents
@@ -38,7 +40,7 @@ feature branch → staging → main
 |------|---------|
 | `.github/workflows/deploy.yml` | Main deployment — staging + production builds and releases |
 | `scripts/deploy.sh` | SSH/rsync deploy helper invoked by `deploy.yml` |
-| `.github/workflows/auto-promote.yml` | Auto-creates a PR from `staging` → `main` when a merged PR has the `deploy` label |
+| `.github/workflows/auto-promote.yml` | Auto-creates a PR from `staging` → `main` when a merged PR has the `deploy` label. Requires repo setting **Allow GitHub Actions to create and approve pull requests**, or optional secret `GH_PAT` (see [hzngyms-initial-setup.md](hzngyms-initial-setup.md)). |
 | `.github/workflows/branch-protection.yml` | Blocks PRs to `main` that don't originate from `staging` |
 
 ---
@@ -86,17 +88,19 @@ PR merged to staging (or manual dispatch)
   │
   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
   │
-  ├─ Build Web (--release)
+  ├─ Build Web (--release --source-maps)
   │   --dart-define=ENV=staging
   │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
   │
-  ├─ Build APK (--release, signed)
-  │   --dart-define=ENV=staging
-  │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
+  ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  │
+  ├─ dart run sentry_dart_plugin (source maps + debug symbols → Sentry project `hzn-gyms`)
+  ├─ Strip `*.map` from `build/web` so they are not served from pb_public
   │
   ├─ Setup SSH agent + known_hosts
   ├─ rsync web build → staging server pb_public/
   ├─ rsync migrations → staging server pb_migrations/
+  ├─ rsync hooks → staging server pb_hooks/
   ├─ Restart PocketBase staging service
   │
   └─ Create GitHub Release (prerelease)
@@ -125,17 +129,20 @@ PR merged to main
   │   │
   │   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
   │   │
-  │   ├─ Build Web (--release)
+  │   ├─ Build Web (--release --source-maps)
   │   │   --dart-define=ENV=prod
   │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
+  │   │   --dart-define=SENTRY_DSN=$SENTRY_DSN_PROD
   │   │
-  │   ├─ Build APK (--release, signed)
-  │   │   --dart-define=ENV=prod
-  │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
+  │   ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  │   │
+  │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
+  │   ├─ Strip `*.map` from `build/web`
   │   │
   │   ├─ Setup SSH agent + known_hosts
   │   ├─ rsync web build → production server pb_public/
   │   ├─ rsync migrations → production server pb_migrations/
+  │   ├─ rsync hooks → production server pb_hooks/
   │   ├─ Restart PocketBase production service
   │   │
   │   └─ Upload APK as GitHub Actions artifact
@@ -183,9 +190,12 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `SSH_HOST` | Yes | Staging & Production | Server hostname or IP for SSH deployment |
 | `SSH_USER` | Yes | Staging & Production | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Yes | Staging & Production | Ed25519 or RSA private key (PEM format) for SSH authentication |
+| `SENTRY_AUTH_TOKEN` | Yes | Staging & Production | Sentry auth token for `sentry_dart_plugin` (org `christian-hizon`, project `hzn-gyms`) |
+| `SENTRY_DSN_PROD` | Yes | Production | Production Sentry DSN (`--dart-define=SENTRY_DSN`). Staging builds do not initialize the SDK. |
 | `PB_TOKEN` | Optional | Production (release-and-sync) | Auth token for PATCH-ing the Version Manager after release |
+| `GH_PAT` | Optional | Auto-promote | PAT that can create PRs if Actions is not allowed to create/approve PRs with `GITHUB_TOKEN` |
 
-`GITHUB_TOKEN` is provided automatically by GitHub Actions.
+`GITHUB_TOKEN` is provided automatically by GitHub Actions. Auto-promote also needs **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** (unless `GH_PAT` is set).
 
 ---
 
@@ -213,20 +223,22 @@ The SSH user needs write access to:
 
 | Path | Purpose |
 |------|---------|
-| `/opt/pocketbase/kyliegym-staging/pb_public/` | Staging web build |
-| `/opt/pocketbase/kyliegym-staging/pb_migrations/` | Staging PocketBase migrations |
-| `/opt/pocketbase/kyliegym/pb_public/` | Production web build |
-| `/opt/pocketbase/kyliegym/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/hzn_gyms_staging/pb_public/` | Staging web build |
+| `/opt/pocketbase/hzn_gyms_staging/pb_migrations/` | Staging PocketBase migrations |
+| `/opt/pocketbase/hzn_gyms_staging/pb_hooks/` | Staging PocketBase hooks |
+| `/opt/pocketbase/hzn_gyms/pb_public/` | Production web build |
+| `/opt/pocketbase/hzn_gyms/pb_migrations/` | Production PocketBase migrations |
+| `/opt/pocketbase/hzn_gyms/pb_hooks/` | Production PocketBase hooks |
 
 ### Passwordless Sudo
 
-The SSH user needs passwordless sudo for restarting PocketBase services. Add to `/etc/sudoers.d/deploy`:
+The SSH user needs passwordless sudo for restarting PocketBase services. Configured on the server as `/etc/sudoers.d/deploy-hzn-gyms`:
 
 ```
-deploy-imbak ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_kyliegym.service, /bin/systemctl restart pocketbase_kyliegym-staging.service
+deploy-hzngyms ALL=(root) NOPASSWD: /bin/systemctl restart pocketbase_hzn_gyms.service, /bin/systemctl restart pocketbase_hzn_gyms_staging.service
 ```
 
-Configured on the server as `/etc/sudoers.d/deploy-kyliegym`.
+Legacy Kylie Gym paths/services remain on the same host but are **not** deploy targets for this repo.
 
 ---
 
@@ -345,10 +357,10 @@ Shared bash script used by GitHub Actions (and local Linux/macOS emergency deplo
 ./scripts/deploy.sh prod --restart-only
 ```
 
-| Environment | Server root | Service |
-|-------------|-------------|---------|
-| staging | `/opt/pocketbase/kyliegym-staging` | `pocketbase_kyliegym-staging.service` |
-| prod | `/opt/pocketbase/kyliegym` | `pocketbase_kyliegym.service` |
+| Environment | Server root | Service | Port | URL |
+|-------------|-------------|---------|------|-----|
+| staging | `/opt/pocketbase/hzn_gyms_staging` | `pocketbase_hzn_gyms_staging.service` | 8107 | https://staging.hzngyms.hznsystems.com |
+| prod | `/opt/pocketbase/hzn_gyms` | `pocketbase_hzn_gyms.service` | 8106 | https://hzngyms.hznsystems.com |
 
 ---
 

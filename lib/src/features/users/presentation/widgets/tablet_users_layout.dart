@@ -28,13 +28,6 @@ class TabletUsersLayout extends ConsumerWidget {
     final routerState = GoRouterState.of(context);
     final selectedUserId = routerState.pathParameters['id'];
 
-    // Check if we're on the roles page
-    final isRolesPage = routerState.uri.path.endsWith('/roles');
-
-    if (isRolesPage) {
-      return detailChild;
-    }
-
     return Row(
       children: [
         // List panel
@@ -69,7 +62,7 @@ class TabletUsersLayout extends ConsumerWidget {
         const VerticalDivider(width: 1),
         // Detail panel from router
         Expanded(
-          child: (selectedUserId != null || isRolesPage)
+          child: selectedUserId != null
               ? detailChild
               : const EmptyUserDetailState(),
         ),

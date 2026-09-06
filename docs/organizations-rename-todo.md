@@ -1,39 +1,38 @@
 # Organizations + HZN Gyms Rename — Status
 
-Branch: `feat/organizations-and-hzn-gyms-rename` (off `staging`).
+**Shipped:** `staging` and `main` (PR #1 → staging, PR #2 → main).
 
-## Code complete (committed)
+## Done
 
-- PocketBase `organizations` collection + Porkbun DNS hook (`server/pb_hooks/`)
-- Email-based login (`users.passwordAuth.identityFields = ["email"]`)
-- Organization domain/data layer + `CurrentOrganizationController` + branch scoping
-- Dynamic branding (theme, logo, app title, org splash)
-- Super-admin `/organizations` page + `OrganizationSwitcher`
-- Package rename `kylie_gym` → `hzn_gyms` + platform IDs + SQLite legacy shim
-- Local "Kylie Gym" org backfill documented in [backfill-organizations.md](backfill-organizations.md)
+- [x] PR #1 merged to `staging` (organizations + HZN Gyms rename)
+- [x] PocketBase migrations/hooks deployed to staging + prod servers
+- [x] Backfill: `Kylie Gym` org (`slug=kyliegym`) on staging + prod — `scripts/backfill-organizations.sh`
+- [x] `organizations.manage` on **Admin** role (staging + prod)
+- [x] Web builds deployed to staging + prod (`HZN Gyms` in `index.html`)
+- [x] `PORKBUN_*` on PocketBase systemd (`/etc/pocketbase/kyliegym-porkbun.env`)
+- [x] GitHub secrets: `POCKETBASE_URL_*`, `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `VERSION_MANAGER_URL`, `VERSION_COLLECTION_ID`, `SENTRY_AUTH_TOKEN`, `SENTRY_DSN_PROD`
+- [x] PR #2 merged `staging` → `main` (`version:minor`)
 
-## Remaining (manual / post-merge)
+## Remaining (manual)
 
-See [hzngyms-infra-runbook.md](hzngyms-infra-runbook.md) for staging/prod PocketBase setup, DNS, and promotion checklist.
+See the full checklist in [hzngyms-initial-setup.md](hzngyms-initial-setup.md). Highlights:
 
-### Quick checklist
+- [ ] **Version manager** record not left at `0.0.0` (staging already tagged `staging-0.0.1` by mistake)
+- [ ] **Auto-promote**: enable Actions “create and approve pull requests”, or set `GH_PAT`
+- [ ] **Register `hzngyms.com`** on Porkbun for tenant wildcards (later; temporary hosts use `*.hzngyms.hznsystems.com`)
+- [ ] Full UI QA on https://staging.hzngyms.hznsystems.com
+- [ ] Decide prod data strategy (laptop seed vs clean restore)
 
-- [ ] PR merged to `staging` and deploy succeeded
-- [ ] Staging PocketBase: migrations applied, backfill run, `organizations.manage` on platform admin role
-- [ ] Staging QA (auth, branding, branch scoping, `/organizations`, org switcher, rename)
-- [ ] `hzngyms.com` DNS + wildcard TLS + reverse proxy
-- [ ] `PORKBUN_*` env vars on staging/prod PocketBase systemd units
-- [ ] Production backfill + permissions
-- [ ] `staging` → `main` with `version:minor` after sign-off
+See [hzngyms-infra-runbook.md](hzngyms-infra-runbook.md).
 
 ### Toolchain note
 
-- **i18n:** use `dart run slang` after editing `assets/i18n/**/*.i18n.json`
-- **Codegen:** `dart run build_runner build --delete-conflicting-outputs` may fail on `strings.g.dart` (`Asset already exists`); run slang separately for i18n-only changes
+- **i18n:** `dart run slang`
+- **Codegen:** `build_runner` may fail on `strings.g.dart`; use slang for i18n-only changes
 
-### Intentional `kylie` references (do not rename)
+### Intentional `kylie` references
 
-- `kyliegym` org slug in backfill docs (live tenant data)
-- `legacyDriftDatabaseName = 'kylie_gym'` in `app_database_name.dart`
+- `kyliegym` org slug in backfill docs
+- `legacyDriftDatabaseName = 'kylie_gym'`
 - `kylieGymSwCleanupDone` in `web/flutter_bootstrap.js`
-- Server deploy paths `/opt/pocketbase/kyliegym*` until infra rename
+- Legacy server paths `/opt/pocketbase/kyliegym*` (HZN Gyms now uses `/opt/pocketbase/hzn_gyms*`)

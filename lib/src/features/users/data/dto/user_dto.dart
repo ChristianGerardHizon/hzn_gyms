@@ -21,6 +21,7 @@ class UserDto with UserDtoMappable {
   final bool verified;
   final String? role;
   final String? branch;
+  final String? organization;
   final List<String> allowedBranches;
   final bool isDeleted;
   final String? created;
@@ -42,6 +43,7 @@ class UserDto with UserDtoMappable {
     this.verified = false,
     this.role,
     this.branch,
+    this.organization,
     this.allowedBranches = const [],
     this.isDeleted = false,
     this.created,
@@ -77,6 +79,7 @@ class UserDto with UserDtoMappable {
       verified: json['verified'] as bool? ?? false,
       role: json['role'] as String?,
       branch: json['branch'] as String?,
+      organization: json['organization'] as String?,
       allowedBranches: allowedBranches,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
@@ -123,12 +126,14 @@ class UserDto with UserDtoMappable {
       id: id,
       name: name,
       username: username,
+      email: email.isNotEmpty ? email : null,
       avatar: _buildAvatarUrl(baseUrl),
       verified: verified,
       roleId: role,
       roleName: roleName,
       branchId: branch,
       branchName: branchName,
+      organizationId: organization,
       allowedBranchIds: allowedBranches,
       allowedBranchNames: allowedBranchNames,
       isDeleted: isDeleted,
