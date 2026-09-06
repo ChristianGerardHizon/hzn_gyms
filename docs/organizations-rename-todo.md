@@ -10,7 +10,7 @@
 - [x] `organizations.manage` on **Admin** role (staging + prod)
 - [x] Web builds deployed to staging + prod (`HZN Gyms` in `index.html`)
 - [x] `PORKBUN_*` on PocketBase systemd (`/etc/pocketbase/kyliegym-porkbun.env`)
-- [x] GitHub secrets (partial): `POCKETBASE_URL_*`, `SSH_HOST`, `SSH_USER`
+- [x] GitHub secrets: `POCKETBASE_URL_*`, `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `VERSION_MANAGER_URL`, `VERSION_COLLECTION_ID`, `SENTRY_AUTH_TOKEN`, `SENTRY_DSN_PROD`
 - [x] PR #2 merged `staging` → `main` (`version:minor`)
 
 ## Remaining (manual)
