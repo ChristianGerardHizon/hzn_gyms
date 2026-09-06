@@ -7,7 +7,6 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../packages/sentry/sentry_config.dart';
 import '../pages/app_root.dart';
-import '../pages/platform_root.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'router_utils.dart';

@@ -231,20 +231,22 @@ class _FileSelectionStep extends StatelessWidget {
 
   Future<void> _pickFile(BuildContext context) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['csv'],
-        withData: true,
       );
 
-      if (result == null || result.files.single.bytes == null) return;
+      if (file == null) return;
 
-      final csvContent = utf8.decode(result.files.single.bytes!);
+      final csvContent = utf8.decode(await file.readAsBytes());
       onFilePicked(csvContent);
     } catch (e) {
       if (context.mounted) {
-        showErrorSnackBar(context,
-            message: 'Failed to read file: $e', useRootMessenger: false);
+        showErrorSnackBar(
+          context,
+          message: 'Failed to read file: $e',
+          useRootMessenger: false,
+        );
       }
     }
   }
@@ -274,8 +276,9 @@ class _ParseSummaryStep extends StatelessWidget {
       return const Center(child: Text('No data'));
     }
 
-    final noCategory =
-        result.entries.where((e) => e.categoryName == null).length;
+    final noCategory = result.entries
+        .where((e) => e.categoryName == null)
+        .length;
 
     return Column(
       children: [
@@ -286,10 +289,7 @@ class _ParseSummaryStep extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 16),
-                Text(
-                  'Import Summary',
-                  style: theme.textTheme.headlineSmall,
-                ),
+                Text('Import Summary', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: 24),
 
                 // Stats cards
@@ -335,10 +335,12 @@ class _ParseSummaryStep extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 4,
                       children: result.existingCategoryNames
-                          .map((name) => Chip(
-                                label: Text(name),
-                                visualDensity: VisualDensity.compact,
-                              ))
+                          .map(
+                            (name) => Chip(
+                              label: Text(name),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -359,12 +361,14 @@ class _ParseSummaryStep extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 4,
                       children: result.newCategoryNames
-                          .map((name) => Chip(
-                                label: Text(name),
-                                visualDensity: VisualDensity.compact,
-                                backgroundColor:
-                                    theme.colorScheme.tertiaryContainer,
-                              ))
+                          .map(
+                            (name) => Chip(
+                              label: Text(name),
+                              visualDensity: VisualDensity.compact,
+                              backgroundColor:
+                                  theme.colorScheme.tertiaryContainer,
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -396,8 +400,11 @@ class _ParseSummaryStep extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         children: [
-                          Icon(Icons.warning_amber,
-                              size: 16, color: theme.colorScheme.error),
+                          Icon(
+                            Icons.warning_amber,
+                            size: 16,
+                            color: theme.colorScheme.error,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(child: Text(w)),
                         ],
@@ -417,10 +424,7 @@ class _ParseSummaryStep extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              OutlinedButton(
-                onPressed: onBack,
-                child: const Text('Back'),
-              ),
+              OutlinedButton(onPressed: onBack, child: const Text('Back')),
               const Spacer(),
               FilledButton(
                 onPressed: result.entries.isEmpty ? null : onNext,
@@ -458,9 +462,7 @@ class _SummaryCard extends StatelessWidget {
           children: [
             Icon(icon, color: color),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(title, style: theme.textTheme.bodyMedium),
-            ),
+            Expanded(child: Text(title, style: theme.textTheme.bodyMedium)),
             Text(
               value,
               style: theme.textTheme.titleMedium?.copyWith(
@@ -517,8 +519,8 @@ class _ReviewStep extends StatelessWidget {
                 value: allSelected
                     ? true
                     : selectedCount == 0
-                        ? false
-                        : null,
+                    ? false
+                    : null,
                 tristate: true,
                 onChanged: (value) {
                   onSelectAll(value ?? false);
@@ -548,16 +550,20 @@ class _ReviewStep extends StatelessWidget {
                 title: Text(
                   entry.name,
                   style: TextStyle(
-                    decoration:
-                        entry.isSelected ? null : TextDecoration.lineThrough,
+                    decoration: entry.isSelected
+                        ? null
+                        : TextDecoration.lineThrough,
                     color: entry.isSelected ? null : theme.colorScheme.outline,
                   ),
                 ),
                 subtitle: Row(
                   children: [
                     if (entry.categoryName != null) ...[
-                      Icon(Icons.folder_outlined,
-                          size: 14, color: theme.colorScheme.outline),
+                      Icon(
+                        Icons.folder_outlined,
+                        size: 14,
+                        color: theme.colorScheme.outline,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         entry.categoryName!,
@@ -567,8 +573,11 @@ class _ReviewStep extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                     ],
-                    Icon(Icons.attach_money,
-                        size: 14, color: theme.colorScheme.outline),
+                    Icon(
+                      Icons.attach_money,
+                      size: 14,
+                      color: theme.colorScheme.outline,
+                    ),
                     const SizedBox(width: 2),
                     Text(
                       entry.isVariablePrice
@@ -580,8 +589,11 @@ class _ReviewStep extends StatelessWidget {
                     ),
                     if (entry.trackStock) ...[
                       const SizedBox(width: 12),
-                      Icon(Icons.inventory,
-                          size: 14, color: theme.colorScheme.outline),
+                      Icon(
+                        Icons.inventory,
+                        size: 14,
+                        color: theme.colorScheme.outline,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Stock: ${entry.quantity?.toStringAsFixed(0) ?? 'N/A'}',
@@ -603,10 +615,7 @@ class _ReviewStep extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              OutlinedButton(
-                onPressed: onBack,
-                child: const Text('Back'),
-              ),
+              OutlinedButton(onPressed: onBack, child: const Text('Back')),
               const Spacer(),
               FilledButton.icon(
                 onPressed: selectedCount == 0 ? null : onImport,
@@ -626,10 +635,7 @@ class _ReviewStep extends StatelessWidget {
 // =============================================================================
 
 class _ImportProgressStep extends StatelessWidget {
-  const _ImportProgressStep({
-    required this.importState,
-    required this.onDone,
-  });
+  const _ImportProgressStep({required this.importState, required this.onDone});
 
   final ImportState importState;
   final VoidCallback onDone;
@@ -714,8 +720,11 @@ class _ImportProgressStep extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 16, color: theme.colorScheme.error),
+                      Icon(
+                        Icons.error_outline,
+                        size: 16,
+                        color: theme.colorScheme.error,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -733,10 +742,7 @@ class _ImportProgressStep extends StatelessWidget {
 
             const SizedBox(height: 32),
             Center(
-              child: FilledButton(
-                onPressed: onDone,
-                child: const Text('Done'),
-              ),
+              child: FilledButton(onPressed: onDone, child: const Text('Done')),
             ),
           ],
 

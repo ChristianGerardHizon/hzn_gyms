@@ -1,6 +1,5 @@
 import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
 import 'package:hzn_gyms/src/core/widgets/branch_code_pill.dart';
-import 'package:hzn_gyms/src/features/pos/domain/sale.dart';
 import 'package:hzn_gyms/src/features/pos/presentation/payments_controller.dart';
 import 'package:hzn_gyms/src/features/sales/presentation/controllers/sale_items_provider.dart';
 import 'package:hzn_gyms/src/features/sales/presentation/controllers/sale_provider.dart';

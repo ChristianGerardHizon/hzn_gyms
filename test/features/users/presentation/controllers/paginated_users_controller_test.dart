@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:hzn_gyms/src/core/foundation/paginated_state.dart';
 import 'package:hzn_gyms/src/core/foundation/type_defs.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';

@@ -25,6 +25,10 @@ class $AssetsIconsGen {
   AssetGenImage get appIconMark =>
       const AssetGenImage('assets/icons/app_icon_mark.png');
 
+  /// File path: assets/icons/app_icon_mark_opaque.png
+  AssetGenImage get appIconMarkOpaque =>
+      const AssetGenImage('assets/icons/app_icon_mark_opaque.png');
+
   /// File path: assets/icons/app_icon_transparent.png
   AssetGenImage get appIconTransparent =>
       const AssetGenImage('assets/icons/app_icon_transparent.png');
@@ -42,6 +46,7 @@ class $AssetsIconsGen {
     appIcon,
     appIconMac,
     appIconMark,
+    appIconMarkOpaque,
     appIconTransparent,
     hznSystemsLogoJpg,
     hznSystemsLogoPng,
