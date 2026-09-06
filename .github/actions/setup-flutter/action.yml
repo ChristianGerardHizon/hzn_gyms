@@ -1,0 +1,30 @@
+name: Setup Flutter
+description: Install Flutter (cached) and restore pub dependencies
+
+inputs:
+  flutter-version:
+    description: Flutter SDK version
+    required: false
+    default: "3.47.2"
+
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        cache: true
+
+    - name: Cache Pub dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.pub-cache/hosted
+          ~/.pub-cache/git
+        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pub-
+
+    - name: Install dependencies
+      shell: bash
+      run: flutter pub get

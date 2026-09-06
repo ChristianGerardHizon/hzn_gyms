@@ -77,36 +77,22 @@ Manual **Actions → Deploy System → Run workflow** also asks for `version_bum
 ```
 PR merged to staging (or manual dispatch)
   │
-  ├─ Validate all required secrets exist
-  ├─ Setup: Java 17 (Zulu) + Flutter 3.38.3
-  ├─ Restore caches (Gradle, Pub, Flutter build)
-  ├─ flutter pub get
+  ├─ [prepare-staging]
+  │   ├─ Validate required secrets
+  │   ├─ Fetch version from Version Manager → bump → "-staging" suffix
+  │   └─ Resolve unique tag (append build number if tag exists)
   │
-  ├─ Fetch current version from Version Manager API
-  │   → Increment patch → append "-staging" suffix
-  │   → Resolve unique tag (append build number if tag exists)
+  ├─ Parallel builds (shared Flutter/pub caches via setup-flutter composite)
+  │   ├─ [build-staging-web] Flutter setup → build web (+ source maps) → artifact
+  │   └─ [build-staging-apk] Java + Flutter → keystore → signed APK → artifact
+  │       (APK job skipped when PR has `web-only` or dispatch `web_only=true`)
   │
-  ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
-  │
-  ├─ Build Web (--release --source-maps)
-  │   --dart-define=ENV=staging
-  │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
-  │
-  ├─ Build APK (--release, signed) — skipped when PR has `web-only` (or manual dispatch `web_only=true`)
-  │
-  ├─ dart run sentry_dart_plugin (source maps + debug symbols → Sentry project `hzn-gyms`)
-  ├─ Strip `*.map` from `build/web` so they are not served from pb_public
-  │
-  ├─ Setup SSH agent + known_hosts
-  ├─ rsync web build → staging server pb_public/
-  ├─ rsync migrations → staging server pb_migrations/
-  ├─ rsync hooks → staging server pb_hooks/
-  ├─ Restart PocketBase staging service
-  │
-  └─ Create GitHub Release (prerelease)
-      Tag: staging-X.Y.Z[-build.N]
-      Title: Deploy X.Y.Z to Staging
-      Artifact: app-release.apk
+  └─ [deploy-staging] runs only after web succeeds and APK succeeds or was skipped
+      ├─ Download build artifacts
+      ├─ dart run sentry_dart_plugin (source maps + debug symbols → `hzn-gyms`)
+      ├─ Strip `*.map` from `build/web`
+      ├─ SSH deploy (pb_public / migrations / hooks) + restart PocketBase
+      └─ Create GitHub Release (prerelease; APK attached unless web-only)
 ```
 
 ### Production Deployment
@@ -116,36 +102,18 @@ PR merged to staging (or manual dispatch)
 ```
 PR merged to main
   │
-  ├─ "Production" environment approval gate
+  ├─ [production-gate] "Production" environment approval (once)
   │
-  ├─ [deploy-production job]
-  │   ├─ Validate all required secrets exist
-  │   ├─ Setup: Java 17 (Zulu) + Flutter 3.38.3
-  │   ├─ Restore caches (Gradle, Pub, Flutter build)
-  │   ├─ flutter pub get
-  │   │
-  │   ├─ Fetch current version from Version Manager API
-  │   │   → Increment patch (no suffix)
-  │   │
-  │   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
-  │   │
-  │   ├─ Build Web (--release --source-maps)
-  │   │   --dart-define=ENV=prod
-  │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
-  │   │   --dart-define=SENTRY_DSN=$SENTRY_DSN_PROD
-  │   │
-  │   ├─ Build APK (--release, signed) — skipped when PR has `web-only`
-  │   │
-  │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
-  │   ├─ Strip `*.map` from `build/web`
-  │   │
-  │   ├─ Setup SSH agent + known_hosts
-  │   ├─ rsync web build → production server pb_public/
-  │   ├─ rsync migrations → production server pb_migrations/
-  │   ├─ rsync hooks → production server pb_hooks/
-  │   ├─ Restart PocketBase production service
-  │   │
-  │   └─ Upload APK as GitHub Actions artifact
+  ├─ [prepare-production] secrets + version bump (no suffix) + label outputs
+  │
+  ├─ Parallel builds (shared Flutter/pub caches via setup-flutter composite)
+  │   ├─ [build-production-web] → web artifact
+  │   └─ [build-production-apk] → android artifact (skipped when `web-only`)
+  │
+  ├─ [deploy-production] after web succeeds and APK succeeds or was skipped
+  │   ├─ Download artifacts → Sentry upload → strip maps
+  │   ├─ SSH deploy + restart PocketBase production
+  │   └─ Upload APK Actions artifact (unless web-only)
   │
   └─ [release-and-sync job] (depends on deploy-production)
       ├─ Download APK artifact
