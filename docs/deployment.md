@@ -183,10 +183,10 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `VERSION_COLLECTION_ID` | Yes | Staging & Production | Record ID in the version collection |
 | `POCKETBASE_URL_STAGING` | Yes | Staging | Staging PocketBase backend URL |
 | `POCKETBASE_URL_PROD` | Yes | Production | Production PocketBase backend URL |
-| `KEYSTORE_BASE64` | Yes | Staging & Production | Base64-encoded Android signing keystore (`.jks`) |
-| `KEYSTORE_PASSWORD` | Yes | Staging & Production | Keystore store password |
-| `KEY_ALIAS` | Yes | Staging & Production | Key alias within the keystore |
-| `KEY_PASSWORD` | Yes | Staging & Production | Key password |
+| `KEYSTORE_BASE64` | When not `web-only` | Staging & Production | Base64-encoded Android signing keystore (`.jks`) |
+| `KEYSTORE_PASSWORD` | When not `web-only` | Staging & Production | Keystore store password |
+| `KEY_ALIAS` | When not `web-only` | Staging & Production | Key alias within the keystore |
+| `KEY_PASSWORD` | When not `web-only` | Staging & Production | Key password |
 | `SSH_HOST` | Yes | Staging & Production | Server hostname or IP for SSH deployment |
 | `SSH_USER` | Yes | Staging & Production | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Yes | Staging & Production | Ed25519 or RSA private key (PEM format) for SSH authentication |

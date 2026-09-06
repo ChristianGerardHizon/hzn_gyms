@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 7 | Setup docs refresh | Documented keystore secrets, label-gated web-only, auto-promote YAML fix; Windows CMake project → `hzn_gyms` |
 | Sep 7 | Initial setup guide | Documented HZN Gyms provision pitfalls, secrets, and manual checklist (`docs/hzngyms-initial-setup.md`) |
 | Sep 7 | HZN Gyms PocketBase | New staging/prod instances at `*.hzngyms.hznsystems.com` (`/opt/pocketbase/hzn_gyms*`); kyliegym left untouched |
 | Sep 6 | Deploy uploads | Staging and production both upload Sentry source maps, then rsync web + migrations + hooks (`scripts/deploy.sh`) |
