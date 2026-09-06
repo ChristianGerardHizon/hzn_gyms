@@ -2,6 +2,8 @@
 
 This document describes the GitHub Actions deployment pipeline, branching strategy, and required configuration.
 
+For the **HZN Gyms cutover** (new hosts, secrets, pitfalls, and remaining manual steps), see [hzngyms-initial-setup.md](hzngyms-initial-setup.md).
+
 ---
 
 ## Table of Contents
@@ -38,7 +40,7 @@ feature branch → staging → main
 |------|---------|
 | `.github/workflows/deploy.yml` | Main deployment — staging + production builds and releases |
 | `scripts/deploy.sh` | SSH/rsync deploy helper invoked by `deploy.yml` |
-| `.github/workflows/auto-promote.yml` | Auto-creates a PR from `staging` → `main` when a merged PR has the `deploy` label |
+| `.github/workflows/auto-promote.yml` | Auto-creates a PR from `staging` → `main` when a merged PR has the `deploy` label. Requires repo setting **Allow GitHub Actions to create and approve pull requests**, or optional secret `GH_PAT` (see [hzngyms-initial-setup.md](hzngyms-initial-setup.md)). |
 | `.github/workflows/branch-protection.yml` | Blocks PRs to `main` that don't originate from `staging` |
 
 ---
@@ -191,8 +193,9 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `SENTRY_AUTH_TOKEN` | Yes | Staging & Production | Sentry auth token for `sentry_dart_plugin` (org `christian-hizon`, project `hzn-gyms`) |
 | `SENTRY_DSN_PROD` | Yes | Production | Production Sentry DSN (`--dart-define=SENTRY_DSN`). Staging builds do not initialize the SDK. |
 | `PB_TOKEN` | Optional | Production (release-and-sync) | Auth token for PATCH-ing the Version Manager after release |
+| `GH_PAT` | Optional | Auto-promote | PAT that can create PRs if Actions is not allowed to create/approve PRs with `GITHUB_TOKEN` |
 
-`GITHUB_TOKEN` is provided automatically by GitHub Actions.
+`GITHUB_TOKEN` is provided automatically by GitHub Actions. Auto-promote also needs **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** (unless `GH_PAT` is set).
 
 ---
 

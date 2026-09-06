@@ -34,5 +34,6 @@ Ports **8106/8107** (not 8104/8105 — those belong to HZN Laundry).
 
 ## Related
 
+- **Initial setup / pitfalls / manual checklist:** [`hzngyms-initial-setup.md`](hzngyms-initial-setup.md)
 - Deploy script defaults: [`scripts/deploy.sh`](../scripts/deploy.sh)
 - Full deploy pipeline: [`deployment.md`](deployment.md)

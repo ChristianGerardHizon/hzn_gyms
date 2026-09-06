@@ -1,7 +1,7 @@
 #!/usr/bin/env bash# Idempotent organizations backfill — see docs/backfill-organizations.md
 set -euo pipefail
 
-API_URL="${API_URL:?Set API_URL (e.g. https://staging.kyliegym.hznsystems.com)}"
+API_URL="${API_URL:?Set API_URL (e.g. https://staging.hzngyms.hznsystems.com)}"
 ADMIN_EMAIL="${ADMIN_EMAIL:?Set ADMIN_EMAIL}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}"
 ORG_SLUG="${ORG_SLUG:-kyliegym}"

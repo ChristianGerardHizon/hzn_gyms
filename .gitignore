@@ -7,6 +7,7 @@ key.properties
 keystore-secrets.txt
 github_secrets.txt
 .env
+pb_token.txt
 sentry.properties
 *.log
 *.pyc
