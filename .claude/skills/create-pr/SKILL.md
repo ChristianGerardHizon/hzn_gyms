@@ -19,7 +19,7 @@ Core rules live in `CLAUDE.md` (target `staging`, ask for a version label, alway
 ## Other labels
 
 - **Optionally add the `deploy` label** on a staging PR to auto-open a staging→main production PR after merge (same as hizone_laundry)
-- **Optionally add the `web-only` label** to skip Android APK / mobile signing and build+deploy web only. Auto-promote forwards `web-only` to the staging→main PR so production deploy stays web-only too.
+- **Optionally add the `web-only` label** to skip Android APK / mobile signing and build+deploy web only. Without `web-only`, CI builds the APK (keystore secrets required). Auto-promote forwards `web-only` and `deploy` to the staging→main PR when those labels are on the feature→staging PR.
 - **For PRs from `staging` to `main`, ask if this should be the new minimum required version:**
   - If yes, add `minimum version`: `gh pr edit <number> --add-label "minimum version"`
   - Deploy then also updates `minimumMajor` / `minimumMinor` / `minimumPatch` on the version manager

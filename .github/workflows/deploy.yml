@@ -37,10 +37,6 @@ concurrency:
 permissions:
   contents: write # REQUIRED for creating GitHub Releases
 
-# HZN Gyms ships web only — skip Android APK builds and keystore requirements.
-env:
-  DEPLOY_WEB_ONLY: "true"
-
 jobs:
   # ==========================================
   # PREFLIGHT: Check version label before staging deploy
@@ -84,10 +80,6 @@ jobs:
             if echo "$LABELS" | grep -q '"web-only"'; then
               WEB_ONLY="true"
             fi
-          fi
-
-          if [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
-            WEB_ONLY="true"
           fi
 
           echo "bump=$BUMP" >> $GITHUB_OUTPUT
@@ -356,10 +348,6 @@ jobs:
           fi
 
           if echo "$LABELS" | grep -q '"web-only"'; then
-            WEB_ONLY="true"
-          fi
-
-          if [ "${{ env.DEPLOY_WEB_ONLY }}" == "true" ]; then
             WEB_ONLY="true"
           fi
 
