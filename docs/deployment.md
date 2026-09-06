@@ -57,7 +57,7 @@ Same model as sannjose_animal_clinic:
 | `version:minor` | Bump minor, deploy staging |
 | `version:major` | Bump major, deploy staging |
 | `deploy` | After merge to staging, open staging→main PR (**requires a `version:*` label too**) |
-| `web-only` | Build/deploy **web only** — skip Java, keystore, Android APK, and APK release artifacts. Forwarded to the staging→main PR by auto-promote. |
+| `web-only` | Build/deploy **web only** — skip Java, keystore, Android APK, and APK release artifacts. **Required for web-only mode** (not forced globally). Auto-promote forwards `web-only` and `deploy` to the staging→main PR when present on the feature→staging PR. |
 | *(none, staging only)* | Merge without deploy |
 | `minimum version` | *(main only)* Also set minimum required app version |
 
@@ -92,7 +92,7 @@ PR merged to staging (or manual dispatch)
   │   --dart-define=ENV=staging
   │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
   │
-  ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  ├─ Build APK (--release, signed) — skipped when PR has `web-only` (or manual dispatch `web_only=true`)
   │
   ├─ dart run sentry_dart_plugin (source maps + debug symbols → Sentry project `hzn-gyms`)
   ├─ Strip `*.map` from `build/web` so they are not served from pb_public
@@ -134,7 +134,7 @@ PR merged to main
   │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
   │   │   --dart-define=SENTRY_DSN=$SENTRY_DSN_PROD
   │   │
-  │   ├─ Build APK (--release, signed) — skipped when `DEPLOY_WEB_ONLY` / `web-only`
+  │   ├─ Build APK (--release, signed) — skipped when PR has `web-only`
   │   │
   │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
   │   ├─ Strip `*.map` from `build/web`
@@ -326,7 +326,7 @@ Staging and production have **separate** Flutter build caches to prevent conflic
 
 | Platform | CI/CD Status | Notes |
 |----------|-------------|-------|
-| Android (APK) | Disabled | `DEPLOY_WEB_ONLY=true` in deploy workflows — HZN Gyms is web-only |
+| Android (APK) | Label-gated | Built unless the PR (or manual dispatch) sets `web-only` |
 | Web | Fully automated | Standard builds for both environments. Auto-deployed via SSH/rsync to PocketBase `pb_public/`. |
 | iOS | Not configured | Would require macOS runner + signing certificates |
 | macOS | Not configured | Would require macOS runner |
