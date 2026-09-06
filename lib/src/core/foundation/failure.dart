@@ -62,8 +62,13 @@ sealed class Failure with FailureMappable {
   static const fromJson = FailureMapper.fromJson;
 
   static Failure handle(Object error, StackTrace stackTrace) {
-    debugPrint(error.toString());
-    debugPrint(stackTrace.toString());
+    final isTransientAbort =
+        error is ClientException && error.isAbort;
+
+    if (!isTransientAbort) {
+      debugPrint(error.toString());
+      debugPrint(stackTrace.toString());
+    }
 
     if (error is Failure) {
       return error;
@@ -77,7 +82,9 @@ sealed class Failure with FailureMappable {
 
     // Handle known auth-related errors
     if (error is ClientException) {
-      debugPrint(error.response.toString());
+      if (!isTransientAbort) {
+        debugPrint(error.response.toString());
+      }
 
       final code = error.statusCode;
       if (code == 401 || code == 403) {

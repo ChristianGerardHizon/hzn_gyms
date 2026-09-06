@@ -352,6 +352,39 @@ class Translations$navigation$en {
 
 	// Translations
 
+	/// en: 'Shortcuts'
+	String get shortcuts => 'Shortcuts';
+
+	/// en: 'Categories'
+	String get categories => 'Categories';
+
+	/// en: 'Show more'
+	String get showMore => 'Show more';
+
+	/// en: 'Show less'
+	String get showLess => 'Show less';
+
+	/// en: 'Operations'
+	String get operations => 'Operations';
+
+	/// en: 'People'
+	String get people => 'People';
+
+	/// en: 'Insights'
+	String get insights => 'Insights';
+
+	/// en: 'Administration'
+	String get administration => 'Administration';
+
+	/// en: 'Account'
+	String get account => 'Account';
+
+	/// en: 'Collapse navigation'
+	String get collapseNav => 'Collapse navigation';
+
+	/// en: 'Expand navigation'
+	String get expandNav => 'Expand navigation';
+
 	/// en: 'Dashboard'
 	String get dashboard => 'Dashboard';
 
@@ -412,9 +445,6 @@ class Translations$navigation$en {
 	/// en: 'System'
 	String get system => 'System';
 
-	/// en: 'Account'
-	String get account => 'Account';
-
 	/// en: 'No Branch'
 	String get noBranch => 'No Branch';
 
@@ -445,8 +475,8 @@ class Translations$organizations$en {
 	/// en: 'Slug'
 	String get slug => 'Slug';
 
-	/// en: 'Used for subdomain (e.g. slug.hzngyms.com)'
-	String get slugHelper => 'Used for subdomain (e.g. slug.hzngyms.com)';
+	/// en: 'Used for subdomain (e.g. slug.gyms.hznsystems.com)'
+	String get slugHelper => 'Used for subdomain (e.g. slug.gyms.hznsystems.com)';
 
 	/// en: 'Shown in app title/branding'
 	String get displayNameHint => 'Shown in app title/branding';
@@ -456,6 +486,24 @@ class Translations$organizations$en {
 
 	/// en: 'Use hex format like #1E88E5'
 	String get seedColorValidationError => 'Use hex format like #1E88E5';
+
+	/// en: 'Theme accent color for this organization'
+	String get seedColorHelper => 'Theme accent color for this organization';
+
+	/// en: 'Custom color'
+	String get seedColorCustom => 'Custom color';
+
+	/// en: 'Pick color'
+	String get seedColorPick => 'Pick color';
+
+	/// en: 'Clear color'
+	String get seedColorClear => 'Clear color';
+
+	/// en: 'Preview'
+	String get seedColorPreview => 'Preview';
+
+	/// en: 'Sample'
+	String get seedColorPreviewButton => 'Sample';
 
 	/// en: 'Use hex format like #FFFFFF'
 	String get splashColorValidationError => 'Use hex format like #FFFFFF';
@@ -468,6 +516,21 @@ class Translations$organizations$en {
 
 	/// en: 'Splash Background Color'
 	String get splashBackgroundColor => 'Splash Background Color';
+
+	/// en: 'Organization Logo'
+	String get logo => 'Organization Logo';
+
+	/// en: 'PNG or WebP with transparent background works best. Shown in the app sidebar and login screen.'
+	String get logoHelper => 'PNG or WebP with transparent background works best. Shown in the app sidebar and login screen.';
+
+	/// en: 'Upload logo'
+	String get logoUpload => 'Upload logo';
+
+	/// en: 'Replace logo'
+	String get logoReplace => 'Replace logo';
+
+	/// en: 'Remove'
+	String get logoRemove => 'Remove';
 
 	/// en: 'Subdomain'
 	String get subdomain => 'Subdomain';
@@ -501,6 +564,126 @@ class Translations$organizations$en {
 
 	/// en: 'Switch Organization'
 	String get switchOrganization => 'Switch Organization';
+
+	/// en: 'Platform'
+	String get platformTitle => 'Platform';
+
+	/// en: 'Dashboard'
+	String get platformDashboard => 'Dashboard';
+
+	/// en: 'Enter tenant'
+	String get enterTenant => 'Enter tenant';
+
+	/// en: 'View all organizations'
+	String get viewAllOrganizations => 'View all organizations';
+
+	/// en: 'Recent organizations'
+	String get recentOrganizations => 'Recent organizations';
+
+	/// en: 'Total organizations'
+	String get summaryTotal => 'Total organizations';
+
+	/// en: 'Pending setup'
+	String get summaryPendingSetup => 'Pending setup';
+
+	/// en: 'DNS issues'
+	String get summaryDnsIssues => 'DNS issues';
+
+	/// en: 'Ready'
+	String get summaryReady => 'Ready';
+
+	/// en: 'Continue setup'
+	String get continueSetup => 'Continue setup';
+
+	/// en: 'Organization setup'
+	String get setupTitle => 'Organization setup';
+
+	/// en: 'Branding'
+	String get setupStepBranding => 'Branding';
+
+	/// en: 'DNS & subdomain'
+	String get setupStepDns => 'DNS & subdomain';
+
+	/// en: 'First branch'
+	String get setupStepBranch => 'First branch';
+
+	/// en: 'Org admin'
+	String get setupStepAdminUser => 'Org admin';
+
+	/// en: 'Membership plan'
+	String get setupStepMembership => 'Membership plan';
+
+	/// en: 'Product'
+	String get setupStepProduct => 'Product';
+
+	/// en: 'Review & complete'
+	String get setupStepReview => 'Review & complete';
+
+	/// en: 'Review organization name, slug, and branding colors.'
+	String get setupBrandingHint => 'Review organization name, slug, and branding colors.';
+
+	/// en: 'Continue'
+	String get setupContinue => 'Continue';
+
+	/// en: 'Create branch'
+	String get setupCreateBranch => 'Create branch';
+
+	/// en: 'Branch name'
+	String get setupBranchName => 'Branch name';
+
+	/// en: 'Branch code'
+	String get setupBranchCode => 'Branch code';
+
+	/// en: 'Failed to create branch'
+	String get setupBranchFailed => 'Failed to create branch';
+
+	/// en: 'Create a branch before adding an admin user.'
+	String get setupBranchRequiredFirst => 'Create a branch before adding an admin user.';
+
+	/// en: 'Admin name'
+	String get setupAdminName => 'Admin name';
+
+	/// en: 'Admin email (login)'
+	String get setupAdminEmail => 'Admin email (login)';
+
+	/// en: 'Username'
+	String get setupAdminUsername => 'Username';
+
+	/// en: 'Password'
+	String get setupAdminPassword => 'Password';
+
+	/// en: 'Create admin user'
+	String get setupCreateAdminUser => 'Create admin user';
+
+	/// en: 'Failed to create admin user'
+	String get setupAdminUserFailed => 'Failed to create admin user';
+
+	/// en: 'No Admin role found. Seed roles in PocketBase first.'
+	String get setupAdminRoleMissing => 'No Admin role found. Seed roles in PocketBase first.';
+
+	/// en: 'Optional: create a membership plan for renewals and check-in.'
+	String get setupMembershipHint => 'Optional: create a membership plan for renewals and check-in.';
+
+	/// en: 'Create membership plan'
+	String get setupCreateMembership => 'Create membership plan';
+
+	/// en: 'Optional: create a product for the POS cashier.'
+	String get setupProductHint => 'Optional: create a product for the POS cashier.';
+
+	/// en: 'Create product'
+	String get setupCreateProduct => 'Create product';
+
+	/// en: 'Skip for now'
+	String get setupSkipStep => 'Skip for now';
+
+	/// en: 'Mark setup complete'
+	String get setupMarkComplete => 'Mark setup complete';
+
+	/// en: 'Staff login URL: $url'
+	String setupLoginUrl({required Object url}) => 'Staff login URL: ${url}';
+
+	/// en: 'Organization is ready'
+	String get setupCompleteSuccess => 'Organization is ready';
 }
 
 // Path: sort
@@ -688,6 +871,17 @@ extension on Translations {
 			'fields.statusPaid' => 'Paid',
 			'fields.statusVoided' => 'Voided',
 			'fields.statusAwaitingPayment' => 'Awaiting Payment',
+			'navigation.shortcuts' => 'Shortcuts',
+			'navigation.categories' => 'Categories',
+			'navigation.showMore' => 'Show more',
+			'navigation.showLess' => 'Show less',
+			'navigation.operations' => 'Operations',
+			'navigation.people' => 'People',
+			'navigation.insights' => 'Insights',
+			'navigation.administration' => 'Administration',
+			'navigation.account' => 'Account',
+			'navigation.collapseNav' => 'Collapse navigation',
+			'navigation.expandNav' => 'Expand navigation',
 			'navigation.dashboard' => 'Dashboard',
 			'navigation.products' => 'Products',
 			'navigation.inventory' => 'Inventory',
@@ -708,7 +902,6 @@ extension on Translations {
 			'navigation.memberships' => 'Memberships',
 			'navigation.outbox' => 'Outbox',
 			'navigation.system' => 'System',
-			'navigation.account' => 'Account',
 			'navigation.noBranch' => 'No Branch',
 			'navigation.allBranches' => 'All Branches',
 			'organizations.title' => 'Organizations',
@@ -716,14 +909,25 @@ extension on Translations {
 			'organizations.edit' => 'Edit Organization',
 			'organizations.name' => 'Name',
 			'organizations.slug' => 'Slug',
-			'organizations.slugHelper' => 'Used for subdomain (e.g. slug.hzngyms.com)',
+			'organizations.slugHelper' => 'Used for subdomain (e.g. slug.gyms.hznsystems.com)',
 			'organizations.displayNameHint' => 'Shown in app title/branding',
 			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens only',
 			'organizations.seedColorValidationError' => 'Use hex format like #1E88E5',
+			'organizations.seedColorHelper' => 'Theme accent color for this organization',
+			'organizations.seedColorCustom' => 'Custom color',
+			'organizations.seedColorPick' => 'Pick color',
+			'organizations.seedColorClear' => 'Clear color',
+			'organizations.seedColorPreview' => 'Preview',
+			'organizations.seedColorPreviewButton' => 'Sample',
 			'organizations.splashColorValidationError' => 'Use hex format like #FFFFFF',
 			'organizations.displayName' => 'Display Name',
 			'organizations.seedColor' => 'Seed Color',
 			'organizations.splashBackgroundColor' => 'Splash Background Color',
+			'organizations.logo' => 'Organization Logo',
+			'organizations.logoHelper' => 'PNG or WebP with transparent background works best. Shown in the app sidebar and login screen.',
+			'organizations.logoUpload' => 'Upload logo',
+			'organizations.logoReplace' => 'Replace logo',
+			'organizations.logoRemove' => 'Remove',
 			'organizations.subdomain' => 'Subdomain',
 			'organizations.dnsStatus' => 'DNS Status',
 			'organizations.retryDns' => 'Retry DNS',
@@ -735,6 +939,46 @@ extension on Translations {
 			'organizations.emptyList' => 'No organizations found',
 			'organizations.noOrganization' => 'No Organization',
 			'organizations.switchOrganization' => 'Switch Organization',
+			'organizations.platformTitle' => 'Platform',
+			'organizations.platformDashboard' => 'Dashboard',
+			'organizations.enterTenant' => 'Enter tenant',
+			'organizations.viewAllOrganizations' => 'View all organizations',
+			'organizations.recentOrganizations' => 'Recent organizations',
+			'organizations.summaryTotal' => 'Total organizations',
+			'organizations.summaryPendingSetup' => 'Pending setup',
+			'organizations.summaryDnsIssues' => 'DNS issues',
+			'organizations.summaryReady' => 'Ready',
+			'organizations.continueSetup' => 'Continue setup',
+			'organizations.setupTitle' => 'Organization setup',
+			'organizations.setupStepBranding' => 'Branding',
+			'organizations.setupStepDns' => 'DNS & subdomain',
+			'organizations.setupStepBranch' => 'First branch',
+			'organizations.setupStepAdminUser' => 'Org admin',
+			'organizations.setupStepMembership' => 'Membership plan',
+			'organizations.setupStepProduct' => 'Product',
+			'organizations.setupStepReview' => 'Review & complete',
+			'organizations.setupBrandingHint' => 'Review organization name, slug, and branding colors.',
+			'organizations.setupContinue' => 'Continue',
+			'organizations.setupCreateBranch' => 'Create branch',
+			'organizations.setupBranchName' => 'Branch name',
+			'organizations.setupBranchCode' => 'Branch code',
+			'organizations.setupBranchFailed' => 'Failed to create branch',
+			'organizations.setupBranchRequiredFirst' => 'Create a branch before adding an admin user.',
+			'organizations.setupAdminName' => 'Admin name',
+			'organizations.setupAdminEmail' => 'Admin email (login)',
+			'organizations.setupAdminUsername' => 'Username',
+			'organizations.setupAdminPassword' => 'Password',
+			'organizations.setupCreateAdminUser' => 'Create admin user',
+			'organizations.setupAdminUserFailed' => 'Failed to create admin user',
+			'organizations.setupAdminRoleMissing' => 'No Admin role found. Seed roles in PocketBase first.',
+			'organizations.setupMembershipHint' => 'Optional: create a membership plan for renewals and check-in.',
+			'organizations.setupCreateMembership' => 'Create membership plan',
+			'organizations.setupProductHint' => 'Optional: create a product for the POS cashier.',
+			'organizations.setupCreateProduct' => 'Create product',
+			'organizations.setupSkipStep' => 'Skip for now',
+			'organizations.setupMarkComplete' => 'Mark setup complete',
+			'organizations.setupLoginUrl' => ({required Object url}) => 'Staff login URL: ${url}',
+			'organizations.setupCompleteSuccess' => 'Organization is ready',
 			'sort.sortBy' => 'Sort By',
 			'sort.direction' => 'Direction',
 			'sort.ascending' => 'Ascending',

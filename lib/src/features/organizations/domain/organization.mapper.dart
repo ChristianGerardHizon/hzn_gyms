@@ -84,6 +84,20 @@ class OrganizationMapper extends ClassMapperBase<Organization> {
     _$dnsLastAttempt,
     opt: true,
   );
+  static OrganizationSetupStatus _$setupStatus(Organization v) => v.setupStatus;
+  static const Field<Organization, OrganizationSetupStatus> _f$setupStatus =
+      Field(
+        'setupStatus',
+        _$setupStatus,
+        opt: true,
+        def: OrganizationSetupStatus.pendingSetup,
+      );
+  static DateTime? _$setupCompletedAt(Organization v) => v.setupCompletedAt;
+  static const Field<Organization, DateTime> _f$setupCompletedAt = Field(
+    'setupCompletedAt',
+    _$setupCompletedAt,
+    opt: true,
+  );
   static bool _$isDeleted(Organization v) => v.isDeleted;
   static const Field<Organization, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -118,6 +132,8 @@ class OrganizationMapper extends ClassMapperBase<Organization> {
     #dnsStatus: _f$dnsStatus,
     #dnsError: _f$dnsError,
     #dnsLastAttempt: _f$dnsLastAttempt,
+    #setupStatus: _f$setupStatus,
+    #setupCompletedAt: _f$setupCompletedAt,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -137,6 +153,8 @@ class OrganizationMapper extends ClassMapperBase<Organization> {
       dnsStatus: data.dec(_f$dnsStatus),
       dnsError: data.dec(_f$dnsError),
       dnsLastAttempt: data.dec(_f$dnsLastAttempt),
+      setupStatus: data.dec(_f$setupStatus),
+      setupCompletedAt: data.dec(_f$setupCompletedAt),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -218,6 +236,8 @@ abstract class OrganizationCopyWith<$R, $In extends Organization, $Out>
     OrganizationDnsStatus? dnsStatus,
     String? dnsError,
     DateTime? dnsLastAttempt,
+    OrganizationSetupStatus? setupStatus,
+    DateTime? setupCompletedAt,
     bool? isDeleted,
     DateTime? created,
     DateTime? updated,
@@ -247,6 +267,8 @@ class _OrganizationCopyWithImpl<$R, $Out>
     OrganizationDnsStatus? dnsStatus,
     Object? dnsError = $none,
     Object? dnsLastAttempt = $none,
+    OrganizationSetupStatus? setupStatus,
+    Object? setupCompletedAt = $none,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -265,6 +287,8 @@ class _OrganizationCopyWithImpl<$R, $Out>
       if (dnsStatus != null) #dnsStatus: dnsStatus,
       if (dnsError != $none) #dnsError: dnsError,
       if (dnsLastAttempt != $none) #dnsLastAttempt: dnsLastAttempt,
+      if (setupStatus != null) #setupStatus: setupStatus,
+      if (setupCompletedAt != $none) #setupCompletedAt: setupCompletedAt,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -290,6 +314,8 @@ class _OrganizationCopyWithImpl<$R, $Out>
     dnsStatus: data.get(#dnsStatus, or: $value.dnsStatus),
     dnsError: data.get(#dnsError, or: $value.dnsError),
     dnsLastAttempt: data.get(#dnsLastAttempt, or: $value.dnsLastAttempt),
+    setupStatus: data.get(#setupStatus, or: $value.setupStatus),
+    setupCompletedAt: data.get(#setupCompletedAt, or: $value.setupCompletedAt),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

@@ -7,24 +7,26 @@ import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../permissions/current_user_permissions.dart';
 import '../sync/outbox_sync_worker.dart';
+import '../routing/routes/branches.routes.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
-import '../routing/routes/organization.routes.dart';
-import '../routing/routes/organizations.routes.dart';
+import '../routing/routes/platform.routes.dart';
 import '../routing/routes/outbox.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/members.routes.dart';
 import '../routing/routes/memberships.routes.dart';
 import '../routing/routes/profile.routes.dart';
 import '../routing/routes/reports.routes.dart';
+import '../routing/routes/roles.routes.dart';
 import '../routing/routes/sales.routes.dart';
 import '../routing/routes/sales_history.routes.dart';
 import '../routing/routes/system.routes.dart';
+import '../routing/routes/users.routes.dart';
 import '../utils/breakpoints.dart';
-import '../widgets/branch_switcher.dart';
-import '../widgets/organization_switcher.dart';
 import '../widgets/mobile_bottom_nav.dart';
 import '../widgets/mobile_drawer.dart';
+import '../widgets/desktop_side_nav.dart';
+import '../widgets/scope_switcher_bar.dart';
 import '../widgets/tablet_nav_rail.dart';
 
 /// Main adaptive shell widget that wraps authenticated app content.
@@ -74,10 +76,14 @@ class _AppRootState extends ConsumerState<AppRoot> {
         const MembershipsRoute().go(context);
       case AppNavId.reports:
         const ReportsRoute().go(context);
-      case AppNavId.organization:
-        const OrganizationRoute().go(context);
+      case AppNavId.users:
+        const UsersRoute().go(context);
+      case AppNavId.roles:
+        const RolesRoute().go(context);
+      case AppNavId.branches:
+        const BranchesRoute().go(context);
       case AppNavId.organizations:
-        const OrganizationsRoute().go(context);
+        const PlatformDashboardRoute().go(context);
       case AppNavId.profile:
         const ProfileRoute().go(context);
       case AppNavId.outbox:
@@ -164,13 +170,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
   }
 
   Widget _buildBranchBar(BuildContext context) {
-    return const Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        OrganizationSwitcher(compact: true),
-        BranchSwitcher(compact: true),
-      ],
-    );
+    return const ScopeSwitcherBar();
   }
 
   Widget _buildMobileLayout(
@@ -219,21 +219,28 @@ class _AppRootState extends ConsumerState<AppRoot> {
     List<AppNavDestination> destinations,
     int selectedIndex,
   ) {
+    final useDesktopNav = Breakpoints.isTabletLargeOrLarger(context);
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Row(
           children: [
-            // Navigation Rail
-            TabletNavRail(
-              destinations: destinations,
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (index) {
-                if (index >= 0 && index < destinations.length) {
-                  _goToDestination(destinations[index]);
-                }
-              },
-            ),
+            if (useDesktopNav)
+              DesktopSideNav(
+                destinations: destinations,
+                onDestinationTap: _goToDestination,
+              )
+            else
+              TabletNavRail(
+                destinations: destinations,
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (index) {
+                  if (index >= 0 && index < destinations.length) {
+                    _goToDestination(destinations[index]);
+                  }
+                },
+              ),
 
             const VerticalDivider(width: 1),
 

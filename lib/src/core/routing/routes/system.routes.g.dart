@@ -13,64 +13,85 @@ RouteBase get $systemShellRoute => ShellRouteData.$route(
   routes: [
     GoRouteData.$route(
       path: '/system',
+      hasOverriddenOnExit: false,
       factory: $SystemRoute._fromState,
       routes: [
         GoRouteData.$route(
           path: 'product-categories',
+          hasOverriddenOnExit: false,
           factory: $ProductCategoriesRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: ':id',
+              hasOverriddenOnExit: false,
               factory: $ProductCategoryDetailRoute._fromState,
             ),
           ],
         ),
         GoRouteData.$route(
           path: 'quantity-units',
+          hasOverriddenOnExit: false,
           factory: $QuantityUnitsRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: ':id',
+              hasOverriddenOnExit: false,
               factory: $QuantityUnitDetailRoute._fromState,
             ),
           ],
         ),
         GoRouteData.$route(
           path: 'printers',
+          hasOverriddenOnExit: false,
           factory: $PrinterSettingsRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: ':id',
+              hasOverriddenOnExit: false,
               factory: $PrinterDetailRoute._fromState,
             ),
           ],
         ),
         GoRouteData.$route(
           path: 'cashier-groups',
+          hasOverriddenOnExit: false,
           factory: $CashierGroupsRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: ':id',
+              hasOverriddenOnExit: false,
               factory: $CashierGroupDetailRoute._fromState,
             ),
           ],
         ),
         GoRouteData.$route(
           path: 'appearance',
+          hasOverriddenOnExit: false,
           factory: $AppearanceRoute._fromState,
         ),
-        GoRouteData.$route(path: 'camera', factory: $CameraRoute._fromState),
-        GoRouteData.$route(path: 'import', factory: $ImportRoute._fromState),
+        GoRouteData.$route(
+          path: 'camera',
+          hasOverriddenOnExit: false,
+          factory: $CameraRoute._fromState,
+        ),
+        GoRouteData.$route(
+          path: 'import',
+          hasOverriddenOnExit: false,
+          factory: $ImportRoute._fromState,
+        ),
         GoRouteData.$route(
           path: 'debug',
+          hasOverriddenOnExit: false,
           factory: $SystemDebugRoute._fromState,
         ),
         GoRouteData.$route(
           path: 'activity-log',
+          hasOverriddenOnExit: false,
           factory: $ActivityLogRoute._fromState,
           routes: [
             GoRouteData.$route(
               path: ':id',
+              hasOverriddenOnExit: false,
               factory: $ActivityLogDetailRoute._fromState,
             ),
           ],

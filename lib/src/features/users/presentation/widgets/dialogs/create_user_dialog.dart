@@ -6,11 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
-import '../../../../../core/routing/routes/organization.routes.dart';
 import '../../../../../core/routing/routes/users.routes.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../../core/widgets/form_feedback.dart';
+import '../../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../../settings/presentation/controllers/branches_controller.dart';
 import '../../../domain/user.dart';
 import '../../controllers/paginated_users_controller.dart';
@@ -64,12 +64,15 @@ class CreateUserDialog extends HookConsumerWidget {
       }
 
       // Create user object
+      final orgId = ref.read(currentOrganizationIdProvider);
       final user = User(
         id: '',
         name: (values['name'] as String).trim(),
         username: (values['username'] as String).trim().toLowerCase(),
+        email: (values['email'] as String).trim(),
         roleId: values['role'] as String?,
         branchId: defaultBranchId,
+        organizationId: orgId,
         allowedBranchIds: allowedBranchIds,
       );
 
@@ -136,6 +139,22 @@ class CreateUserDialog extends HookConsumerWidget {
             validator: FormBuilderValidators.required(
               errorText: 'Name is required',
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Email (required for login)
+          FormBuilderTextField(
+            name: 'email',
+            decoration: const InputDecoration(
+              labelText: 'Email *',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.email),
+            ),
+            enabled: !isSaving.value,
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(errorText: 'Email is required'),
+              FormBuilderValidators.email(errorText: 'Enter a valid email'),
+            ]),
           ),
           const SizedBox(height: 16),
 
@@ -370,6 +389,7 @@ class CreateUserDialog extends HookConsumerWidget {
 
   static const _fieldLabels = {
     'name': 'Name',
+    'email': 'Email',
     'username': 'Username',
     'password': 'Password',
     'confirmPassword': 'Confirm Password',
@@ -404,13 +424,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 /// Resolves the user detail location for the shell that opened create-user.
-///
-/// Organization users live under `/organization/users/:id`; otherwise
-/// `/users/:id`.
 String userDetailLocationForCurrentPath(String currentPath, String userId) {
-  if (currentPath.startsWith('/organization')) {
-    return OrganizationUserDetailRoute(id: userId).location;
-  }
   return UserDetailRoute(id: userId).location;
 }
 

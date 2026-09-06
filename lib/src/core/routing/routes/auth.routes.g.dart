@@ -13,8 +13,11 @@ List<RouteBase> get $appRoutes => [
   $authLoadingRoute,
 ];
 
-RouteBase get $splashRoute =>
-    GoRouteData.$route(path: '/splash', factory: $SplashRoute._fromState);
+RouteBase get $splashRoute => GoRouteData.$route(
+  path: '/splash',
+  hasOverriddenOnExit: false,
+  factory: $SplashRoute._fromState,
+);
 
 mixin $SplashRoute on GoRouteData {
   static SplashRoute _fromState(GoRouterState state) => const SplashRoute();
@@ -36,8 +39,11 @@ mixin $SplashRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $loginRoute =>
-    GoRouteData.$route(path: '/login', factory: $LoginRoute._fromState);
+RouteBase get $loginRoute => GoRouteData.$route(
+  path: '/login',
+  hasOverriddenOnExit: false,
+  factory: $LoginRoute._fromState,
+);
 
 mixin $LoginRoute on GoRouteData {
   static LoginRoute _fromState(GoRouterState state) => const LoginRoute();
@@ -61,6 +67,7 @@ mixin $LoginRoute on GoRouteData {
 
 RouteBase get $forgotPasswordRoute => GoRouteData.$route(
   path: '/forgot-password',
+  hasOverriddenOnExit: false,
   factory: $ForgotPasswordRoute._fromState,
 );
 
@@ -87,6 +94,7 @@ mixin $ForgotPasswordRoute on GoRouteData {
 
 RouteBase get $authLoadingRoute => GoRouteData.$route(
   path: '/auth-loading',
+  hasOverriddenOnExit: false,
   factory: $AuthLoadingRoute._fromState,
 );
 

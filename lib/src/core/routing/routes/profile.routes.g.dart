@@ -8,8 +8,11 @@ part of 'profile.routes.dart';
 
 List<RouteBase> get $appRoutes => [$profileRoute];
 
-RouteBase get $profileRoute =>
-    GoRouteData.$route(path: '/profile', factory: $ProfileRoute._fromState);
+RouteBase get $profileRoute => GoRouteData.$route(
+  path: '/profile',
+  hasOverriddenOnExit: false,
+  factory: $ProfileRoute._fromState,
+);
 
 mixin $ProfileRoute on GoRouteData {
   static ProfileRoute _fromState(GoRouterState state) => const ProfileRoute();

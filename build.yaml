@@ -2,6 +2,7 @@ targets:
   $default:
     builders:
       slang_build_runner:
+        enabled: false
         options:
           base_locale: en
           input_directory: assets/i18n

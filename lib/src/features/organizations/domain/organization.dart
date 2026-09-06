@@ -1,6 +1,7 @@
 import 'package:dart_mappable/dart_mappable.dart';
 
 import 'organization_dns_status.dart';
+import 'organization_setup_status.dart';
 
 part 'organization.mapper.dart';
 
@@ -23,6 +24,8 @@ class Organization with OrganizationMappable {
     this.dnsStatus = OrganizationDnsStatus.pending,
     this.dnsError,
     this.dnsLastAttempt,
+    this.setupStatus = OrganizationSetupStatus.pendingSetup,
+    this.setupCompletedAt,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -52,7 +55,7 @@ class Organization with OrganizationMappable {
   /// Hex background color for the in-app/web post-boot loading screen.
   final String? splashBackgroundColor;
 
-  /// Resolved `<slug>.hzngyms.com` hostname.
+  /// Resolved `<slug>.gyms.hznsystems.com` hostname (see PocketBase org hooks).
   final String? subdomain;
 
   /// Porkbun DNS provisioning status for [subdomain].
@@ -63,6 +66,12 @@ class Organization with OrganizationMappable {
 
   /// Timestamp of the last provisioning attempt.
   final DateTime? dnsLastAttempt;
+
+  /// Onboarding lifecycle (`pending_setup` | `ready`).
+  final OrganizationSetupStatus setupStatus;
+
+  /// When setup was marked complete.
+  final DateTime? setupCompletedAt;
 
   /// Soft delete flag.
   final bool isDeleted;

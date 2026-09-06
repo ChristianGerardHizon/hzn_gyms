@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../features/users/domain/user_tab.dart';
 import '../../../features/users/presentation/pages/user_detail_page.dart';
-import '../../../features/users/presentation/pages/user_roles_page.dart';
 import '../../../features/users/presentation/pages/users_list_page.dart';
 import '../../../features/users/presentation/pages/users_shell.dart';
 import '../../utils/breakpoints.dart';
@@ -20,7 +19,6 @@ part 'users.routes.g.dart';
       path: UsersRoute.path,
       routes: [
         TypedGoRoute<UserDetailRoute>(path: ':id'),
-        TypedGoRoute<UserRolesRoute>(path: 'roles'),
       ],
     ),
   ],
@@ -68,12 +66,3 @@ class UserDetailRoute extends GoRouteData with $UserDetailRoute {
   }
 }
 
-/// User roles management page route.
-class UserRolesRoute extends GoRouteData with $UserRolesRoute {
-  const UserRolesRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const UserRolesPage();
-  }
-}

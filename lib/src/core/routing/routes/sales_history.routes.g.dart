@@ -13,9 +13,14 @@ RouteBase get $salesShellRoute => ShellRouteData.$route(
   routes: [
     GoRouteData.$route(
       path: '/sales',
+      hasOverriddenOnExit: false,
       factory: $SalesHistoryRoute._fromState,
       routes: [
-        GoRouteData.$route(path: ':id', factory: $SaleDetailRoute._fromState),
+        GoRouteData.$route(
+          path: ':id',
+          hasOverriddenOnExit: false,
+          factory: $SaleDetailRoute._fromState,
+        ),
       ],
     ),
   ],

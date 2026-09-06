@@ -13,5 +13,9 @@
  */
 onRecordCreateRequest((e) => {
     e.record.set("verified", true);
-    e.next();
+    require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e);
+}, "users");
+
+onRecordUpdateRequest((e) => {
+    require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e);
 }, "users");

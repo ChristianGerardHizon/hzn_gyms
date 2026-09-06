@@ -22,6 +22,7 @@ import '../controllers/paginated_members_controller.dart';
 import '../../../member_cards/domain/member_card.dart';
 import '../../../member_cards/presentation/controllers/member_cards_controller.dart';
 import '../../../member_cards/presentation/widgets/add_card_dialog.dart';
+import '../../../users/presentation/controllers/user_provider.dart';
 import '../widgets/member_form_dialog.dart';
 import '../widgets/member_memberships_section.dart';
 
@@ -168,6 +169,7 @@ class MemberDetailPage extends HookConsumerWidget {
                         _InfoRow(label: 'RFID Card', value: member.rfidCardId!),
                       if (member.remarks != null && member.remarks!.isNotEmpty)
                         _InfoRow(label: 'Remarks', value: member.remarks!),
+                      _AddedByInfoRow(addedById: member.addedBy),
                     ],
                   ),
                 ),
@@ -975,5 +977,25 @@ class _InfoRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Shows the staff account that registered this member.
+class _AddedByInfoRow extends ConsumerWidget {
+  const _AddedByInfoRow({this.addedById});
+
+  final String? addedById;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final id = addedById?.trim();
+    if (id == null || id.isEmpty) return const SizedBox.shrink();
+
+    final addedByName = ref.watch(userProvider(id)).value?.name;
+    if (addedByName == null || addedByName.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _InfoRow(label: 'Added by', value: addedByName);
   }
 }

@@ -27,8 +27,8 @@ String effectiveAppTitle(Ref ref) {
 }
 
 /// The transparent-background logo URL for the current organization, or
-/// null when unresolved/unset — callers should fall back to the bundled
-/// default asset (e.g. via `CachedImage`'s built-in placeholder).
+/// null when unresolved/unset — used as the default image placeholder in
+/// member photo cards and org branding widgets.
 @Riverpod(keepAlive: true)
 String? effectiveLogoUrl(Ref ref) {
   final org = ref.watch(currentOrganizationControllerProvider).value;

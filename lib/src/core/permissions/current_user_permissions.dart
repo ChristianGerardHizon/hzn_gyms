@@ -83,6 +83,9 @@ class CurrentUserPermissionsController
   /// Invalidates in-flight [refreshInBackground] calls after auth changes.
   int _refreshGeneration = 0;
 
+  /// Coalesces overlapping background refreshes into a single in-flight fetch.
+  Future<void>? _backgroundRefresh;
+
   UserRoleRepository get _repository => ref.read(userRoleRepositoryProvider);
 
   @override
@@ -103,6 +106,7 @@ class CurrentUserPermissionsController
     ref.onDispose(() {
       disposed = true;
       _refreshGeneration++;
+      _backgroundRefresh = null;
       pollTimer?.cancel();
       debounce?.cancel();
       final unsub = unsubscribe;
@@ -168,6 +172,13 @@ class CurrentUserPermissionsController
     final roleId = auth?.user.roleId;
     if (roleId == null || roleId.isEmpty) return;
 
+    _backgroundRefresh ??= _refreshRolePermissions(roleId).whenComplete(
+      () => _backgroundRefresh = null,
+    );
+    await _backgroundRefresh;
+  }
+
+  Future<void> _refreshRolePermissions(String roleId) async {
     final generation = _refreshGeneration;
     final result = await _repository.fetchOne(roleId);
     if (!ref.mounted || generation != _refreshGeneration) return;
@@ -184,4 +195,18 @@ class CurrentUserPermissionsController
       },
     );
   }
+}
+
+/// Whether the signed-in user may use the organization switcher.
+///
+/// Platform super-admins need [Permissions.organizationsManage] and must not
+/// be linked to a tenant on their user record (org-scoped staff stay on their
+/// tenant even if their role incorrectly includes organizations.manage).
+@Riverpod(keepAlive: true)
+bool canUseOrganizationSwitcher(Ref ref) {
+  final perms = ref.watch(currentUserPermissionsProvider).value;
+  if (!(perms?.canManageOrganizations ?? false)) return false;
+
+  final orgId = ref.watch(currentAuthProvider)?.user.organization;
+  return orgId == null || orgId.isEmpty;
 }

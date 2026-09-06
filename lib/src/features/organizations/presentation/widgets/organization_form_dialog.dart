@@ -8,10 +8,17 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/hooks/use_form_dirty_guard.dart';
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/routes/platform.routes.dart';
+import '../../../../core/utils/color_utils.dart';
+import '../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../core/widgets/form/form_dialog_scaffold.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../domain/organization.dart';
+import '../../domain/organization_logo_draft.dart';
+import '../controllers/current_organization_controller.dart';
 import '../controllers/organizations_controller.dart';
+import 'organization_logo_picker.dart';
+import 'organization_seed_color_field.dart';
 
 /// Dialog for creating or editing an organization.
 class OrganizationFormDialog extends HookConsumerWidget {
@@ -32,13 +39,14 @@ class OrganizationFormDialog extends HookConsumerWidget {
               'name': organization!.name,
               'slug': organization!.slug,
               'displayName': organization!.displayName ?? '',
-              'seedColor': organization!.seedColor ?? '',
+              'seedColor': normalizeHexColor(organization!.seedColor) ?? '',
               'splashBackgroundColor':
                   organization!.splashBackgroundColor ?? '',
             }
           : null,
     );
     final isSaving = useState(false);
+    final logoDraft = useState<OrganizationLogoDraft?>(null);
     final fieldLabels = {
       'name': t.organizations.name,
       'slug': t.organizations.slug,
@@ -66,38 +74,66 @@ class OrganizationFormDialog extends HookConsumerWidget {
         name: (values['name'] as String).trim(),
         slug: (values['slug'] as String).trim().toLowerCase(),
         displayName: _nullIfEmpty(values['displayName'] as String?),
-        seedColor: _nullIfEmpty(values['seedColor'] as String?),
+        seedColor: normalizeHexColor(values['seedColor'] as String?),
         splashBackgroundColor:
             _nullIfEmpty(values['splashBackgroundColor'] as String?),
       );
 
-      final success = isEditing
-          ? await ref
-              .read(organizationsControllerProvider.notifier)
-              .updateOrganization(orgData)
-          : await ref
-              .read(organizationsControllerProvider.notifier)
-              .createOrganization(orgData);
+      if (isEditing) {
+        final success = await ref
+            .read(organizationsControllerProvider.notifier)
+            .updateOrganization(
+              orgData.copyWith(id: organization!.id),
+              logoDraft: logoDraft.value,
+            );
+        if (!success) {
+          if (context.mounted) {
+            isSaving.value = false;
+            showFormErrorDialog(
+              context,
+              errors: [t.organizations.saveFailed],
+            );
+          }
+          return;
+        }
+      } else {
+        final created = await ref
+            .read(organizationsControllerProvider.notifier)
+            .createOrganization(orgData, logoDraft: logoDraft.value);
+        if (created == null) {
+          if (context.mounted) {
+            isSaving.value = false;
+            showFormErrorDialog(
+              context,
+              errors: [t.organizations.saveFailed],
+            );
+          }
+          return;
+        }
 
-      if (!success) {
         if (context.mounted) {
           isSaving.value = false;
-          showFormErrorDialog(
+          context.pop(true);
+          showSuccessSnackBar(
             context,
-            errors: [t.organizations.saveFailed],
+            message: t.organizations.createSuccess,
           );
+          await ref
+              .read(currentOrganizationControllerProvider.notifier)
+              .switchOrganization(created.id);
+          if (context.mounted) {
+            OrganizationSetupRoute(orgId: created.id).go(context);
+          }
         }
         return;
       }
 
       if (context.mounted) {
         isSaving.value = false;
-        context.pop();
+        context.pop(true);
         showSuccessSnackBar(
           context,
-          message: isEditing
-              ? t.organizations.updateSuccess
-              : t.organizations.createSuccess,
+          message: t.organizations.updateSuccess,
         );
       }
     }
@@ -111,6 +147,12 @@ class OrganizationFormDialog extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          OrganizationLogoPicker(
+            existingLogoUrl: organization?.logoTransparentUrl,
+            enabled: !isSaving.value,
+            onChanged: (draft) => logoDraft.value = draft,
+          ),
+          const SizedBox(height: 16),
           FormBuilderTextField(
             name: 'name',
             initialValue: organization?.name,
@@ -159,23 +201,10 @@ class OrganizationFormDialog extends HookConsumerWidget {
             enabled: !isSaving.value,
           ),
           const SizedBox(height: 16),
-          FormBuilderTextField(
+          OrganizationSeedColorField(
             name: 'seedColor',
             initialValue: organization?.seedColor,
-            decoration: InputDecoration(
-              labelText: t.organizations.seedColor,
-              hintText: '#1E88E5',
-              border: const OutlineInputBorder(),
-            ),
             enabled: !isSaving.value,
-            validator: (value) {
-              final trimmed = value?.trim() ?? '';
-              if (trimmed.isEmpty) return null;
-              if (!RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(trimmed)) {
-                return t.organizations.seedColorValidationError;
-              }
-              return null;
-            },
           ),
           const SizedBox(height: 16),
           FormBuilderTextField(
@@ -205,4 +234,15 @@ class OrganizationFormDialog extends HookConsumerWidget {
 String? _nullIfEmpty(String? value) {
   final trimmed = value?.trim() ?? '';
   return trimmed.isEmpty ? null : trimmed;
+}
+
+/// Shows the create/edit organization dialog.
+Future<bool?> showOrganizationFormDialog(
+  BuildContext context, {
+  Organization? organization,
+}) {
+  return showConstrainedDialog<bool>(
+    context: context,
+    builder: (context) => OrganizationFormDialog(organization: organization),
+  );
 }

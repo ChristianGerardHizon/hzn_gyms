@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/color_utils.dart';
+
 /// App theme definitions for light and dark modes.
 ///
 /// Uses Material 3 with a seed-based color scheme. The seed color is a
@@ -14,7 +16,7 @@ class AppThemes {
 
   /// Light theme definition for [seedColor].
   static ThemeData light(Color seedColor) => ThemeData(
-        colorScheme: ColorScheme.fromSeed(
+        colorScheme: colorSchemeFromSeed(
           seedColor: seedColor,
           brightness: Brightness.light,
         ),
@@ -23,7 +25,7 @@ class AppThemes {
 
   /// Dark theme definition for [seedColor].
   static ThemeData dark(Color seedColor) => ThemeData(
-        colorScheme: ColorScheme.fromSeed(
+        colorScheme: colorSchemeFromSeed(
           seedColor: seedColor,
           brightness: Brightness.dark,
         ),

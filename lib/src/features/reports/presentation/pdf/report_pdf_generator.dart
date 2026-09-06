@@ -9,6 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../../../core/assets/assets.gen.dart';
 import '../../../../core/pdf/pdf_task_runner.dart';
 import '../../../../core/utils/permission_service.dart';
 import '../../domain/report_period.dart';
@@ -361,7 +362,7 @@ class ReportPdfGenerator {
       message: 'Generating report...',
       preload: () async {
         final logoData = await rootBundle.load(
-          'assets/icons/app_icon_transparent.png',
+          Assets.icons.appIconTransparent.path,
         );
         return _ReportPdfPayload(
           data: data,

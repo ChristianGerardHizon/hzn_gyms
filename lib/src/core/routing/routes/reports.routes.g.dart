@@ -8,8 +8,11 @@ part of 'reports.routes.dart';
 
 List<RouteBase> get $appRoutes => [$reportsRoute];
 
-RouteBase get $reportsRoute =>
-    GoRouteData.$route(path: '/reports', factory: $ReportsRoute._fromState);
+RouteBase get $reportsRoute => GoRouteData.$route(
+  path: '/reports',
+  hasOverriddenOnExit: false,
+  factory: $ReportsRoute._fromState,
+);
 
 mixin $ReportsRoute on GoRouteData {
   static ReportsRoute _fromState(GoRouterState state) => const ReportsRoute();

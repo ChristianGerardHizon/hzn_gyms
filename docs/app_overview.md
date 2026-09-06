@@ -187,26 +187,25 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 
 ### Organization/Admin Features
 
-#### Organizations (`/organizations`)
-Super-admin platform page for managing tenants (requires `organizations.manage`, not granted by `systemAdmin` alone).
+#### Platform (`/platform`)
+Super-admin shell separate from the gym app (requires `organizations.manage`).
 
-- List all organizations with slug, subdomain, and DNS provisioning status
-- Create/edit organization branding fields (name, slug, display name, seed/splash colors)
-- Retry Porkbun DNS provisioning for failed/pending orgs
-- **Organization switcher** in the app shell (top bar + mobile drawer) for super-admins to change active tenant
+- **Dashboard** (`/platform`) — tenant summary counts, recent organizations, enter-tenant shortcuts
+- **Organizations** (`/platform/organizations`) — list/create/edit tenants, DNS status, setup badges
+- **Setup wizard** (`/platform/organizations/:orgId/setup`) — guided onboarding (branch, admin user, optional plan/product)
+- Platform admins land here after login; **Enter tenant** switches org context and opens the gym app at `/`
+- Legacy `/organizations` redirects to `/platform/organizations`
 
-#### Organization (`/organization`)
-3-panel tablet layout for managing organizational settings.
+#### Users, roles, and branches (gym shell)
+Top-level routes in the main app shell (not a separate `/organization` layout):
 
-**Layout** (tablet):
-- Panel 1 (80px): Navigation rail with icon + text labels
-- Panel 2 (320px): List panel (users, roles, or branches)
-- Panel 3 (expanded): Detail panel or empty state
+- **Users** (`/users`) — User CRUD, role assignment, branch association (org-scoped)
+- **Roles** (`/roles`) — Role and permission management
+- **Branches** (`/branches`) — Multi-location support with name, code (pill label), optional pill color preset, address, contact, operating hours, and cut-off time (only name + code required)
 
-**Modes:**
-- **Users** (`/organization/users`) - User CRUD, role assignment, branch association
-- **Roles** (`/organization/roles`) - Role and permission management (Admin, Staff, Cashier)
-- **Branches** (`/organization/branches`) - Multi-location support with name, code (pill label), optional pill color preset, address, contact, operating hours, and cut-off time (only name + code required)
+Legacy `/organization/*` paths redirect to the routes above.
+
+**Organization switcher** in the app shell (top bar, mobile drawer, tablet nav) for super-admins to change active tenant.
 
 #### Profile (`/profile`)
 Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
@@ -433,14 +432,13 @@ App Root (Shell)
     │   ├── /memberships (List)
     │   └── /memberships/:id (Detail)
     ├── /reports (Reports)
-    ├── /organizations (Super-admin tenant management)
-    ├── /organization (3-panel layout)
-    │   ├── /organization/users
-    │   │   └── /organization/users/:id
-    │   ├── /organization/roles
-    │   │   └── /organization/roles/:id
-    │   └── /organization/branches
-    │       └── /organization/branches/:id
+    ├── /platform (Platform admin shell — super-admin only)
+    │   ├── /platform (Dashboard)
+    │   ├── /platform/organizations
+    │   │   └── /platform/organizations/:orgId/setup
+    ├── /users (Users — org-scoped)
+    ├── /roles (Roles)
+    ├── /branches (Branches — org-scoped)
     ├── /outbox (Offline sync queue)
     └── /system (3-panel layout)
         ├── /system/product-categories
@@ -587,7 +585,11 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
-| Sep 2 | Organizations admin UI | Super-admin `/organizations` page, org switcher, DNS retry, and `organizations.manage` nav gating |
+| Sep 6 | Sentry project | Prod DSN and `sentry_dart_plugin` now target Sentry project `hzn-gyms` |
+| Sep 2 | Sale/member account attribution | Sale quick view + detail show Sold by cashier; customer name links to member detail; member detail shows Added by |
+| Sep 2 | Organization logo upload | Edit/create organization form supports uploading a logo (PNG/WebP); used in sidebar, login, and org list |
+| Sep 2 | Organization onboarding | Platform shell (`/platform`), setup wizard, `setupStatus` lifecycle, public branding resolve, org-scoped user/branch rules |
+| Sep 2 | Organizations admin UI | Super-admin org list, org switcher, DNS retry, and `organizations.manage` nav gating |
 | Aug 19 | Today's activity logs | Dashboard **Today's Logs** quick action (admin or `activityLog.view`) opens today's branch-scoped activity with descriptive headlines and expandable field diffs |
 | Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; new deploys bust boot-asset HTTP cache then reload via version.json |
 | Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |

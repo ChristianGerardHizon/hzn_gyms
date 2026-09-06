@@ -3,6 +3,7 @@ import 'package:pocketbase/pocketbase.dart';
 
 import '../../domain/organization.dart';
 import '../../domain/organization_dns_status.dart';
+import '../../domain/organization_setup_status.dart';
 
 part 'organization_dto.mapper.dart';
 
@@ -25,6 +26,8 @@ class OrganizationDto with OrganizationDtoMappable {
   final String? dnsStatus;
   final String? dnsError;
   final String? dnsLastAttempt;
+  final String? setupStatus;
+  final String? setupCompletedAt;
   final bool isDeleted;
   final String? created;
   final String? updated;
@@ -44,6 +47,8 @@ class OrganizationDto with OrganizationDtoMappable {
     this.dnsStatus,
     this.dnsError,
     this.dnsLastAttempt,
+    this.setupStatus,
+    this.setupCompletedAt,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -68,6 +73,8 @@ class OrganizationDto with OrganizationDtoMappable {
       dnsStatus: json['dnsStatus'] as String?,
       dnsError: json['dnsError'] as String?,
       dnsLastAttempt: json['dnsLastAttempt'] as String?,
+      setupStatus: json['setupStatus'] as String?,
+      setupCompletedAt: json['setupCompletedAt'] as String?,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
@@ -98,6 +105,10 @@ class OrganizationDto with OrganizationDtoMappable {
       dnsError: dnsError,
       dnsLastAttempt:
           dnsLastAttempt != null ? DateTime.tryParse(dnsLastAttempt!) : null,
+      setupStatus: OrganizationSetupStatus.fromValue(setupStatus),
+      setupCompletedAt: setupCompletedAt != null
+          ? DateTime.tryParse(setupCompletedAt!)
+          : null,
       isDeleted: isDeleted,
       created: created != null ? DateTime.tryParse(created!) : null,
       updated: updated != null ? DateTime.tryParse(updated!) : null,

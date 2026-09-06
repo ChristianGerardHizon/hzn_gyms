@@ -12,7 +12,7 @@ void main() {
     id: 'org-1',
     name: 'Kylie Gym',
     slug: 'kyliegym',
-    subdomain: 'kyliegym.hzngyms.com',
+    subdomain: 'kyliegym.gyms.hznsystems.com',
     dnsStatus: OrganizationDnsStatus.failed,
     dnsError: 'DNS timeout',
   );

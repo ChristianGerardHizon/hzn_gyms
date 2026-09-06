@@ -70,6 +70,15 @@ void main() {
       expect(Failure.handle(error, StackTrace.empty), isA<AuthFailure>());
     });
 
+    test('maps aborted ClientException to GenericFailure', () {
+      final error = ClientException(
+        url: Uri.parse('https://example.com'),
+        isAbort: true,
+        originalError: http.ClientException('Request timed out after 30s'),
+      );
+      expect(Failure.handle(error, StackTrace.empty), isA<GenericFailure>());
+    });
+
     test('maps FormatException to PresentationFailure', () {
       expect(
         Failure.handle(const FormatException('bad'), StackTrace.empty),

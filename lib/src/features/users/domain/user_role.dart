@@ -158,6 +158,11 @@ abstract class Permissions {
   static const organizationsView = 'organizations.view';
   static const organizationsManage = 'organizations.manage';
 
+  // Organization membership permissions (per-org team roster: invite,
+  // remove, and change roles for members of *this* organization — distinct
+  // from `organizationsManage`, which is cross-org platform administration)
+  static const membersManage = 'members.manage';
+
   /// All permissions grouped by category (keys only).
   static const Map<String, List<String>> allByCategory = {
     'Members': [membersView, membersCreate, membersEdit, membersDelete],
@@ -191,6 +196,7 @@ abstract class Permissions {
     'Settings': [settingsView, settingsEdit],
     'System': [systemAdmin, activityLogView],
     'Organizations': [organizationsView, organizationsManage],
+    'Organization Members': [membersManage],
   };
 
   /// All permissions with full metadata.
@@ -564,6 +570,15 @@ abstract class Permissions {
             'Create, switch between, and manage all organizations (platform '
             'super-admin) — not granted by System Admin alone',
         icon: Icons.corporate_fare,
+      ),
+      // Organization Members
+      const Permission(
+        key: membersManage,
+        name: 'Manage Members',
+        category: 'Organization Members',
+        description:
+            'Invite, remove, and change roles for organization members',
+        icon: Icons.group,
       ),
     ];
   }

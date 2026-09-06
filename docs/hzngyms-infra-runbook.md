@@ -40,7 +40,9 @@ In PocketBase Admin → user roles:
 1. Edit the platform super-admin role (or create `Platform Admin`)
 2. Enable `organizations.manage` (and `organizations.view` if listed separately)
 3. Assign role to test user
-4. Verify app nav shows **Organizations** and `/organizations` is accessible
+4. Verify app nav shows **Platform** link and `/platform` is accessible
+
+See [organization-onboarding.md](organization-onboarding.md) for setup wizard and schema patch details.
 
 ## 5. Staging QA
 
@@ -49,8 +51,9 @@ In PocketBase Admin → user roles:
 | Auth | Login with email; wrong password → "email or password" |
 | Branding | Org splash → themed UI; drawer title matches org |
 | Branches | List scoped to org; new branch gets current org |
-| Organizations UI | List, create/edit, DNS badge, retry DNS |
-| Org switcher | Switch tenant; branches/branding update |
+| Platform UI | `/platform` dashboard; org list; create/edit; DNS badge; retry DNS |
+| Setup wizard | Create org → wizard; branch + admin required; optional steps skippable; mark complete |
+| Org switcher | Switch tenant; branches/branding update; Enter tenant opens gym app |
 | Rename | App title "HZN Gyms"; local DB migrates from `kylie_gym.sqlite` |
 
 ## 6. hzngyms.com infrastructure
@@ -64,7 +67,7 @@ Required for `<slug>.hzngyms.com` pre-auth branding.
 | Reverse proxy | Caddy/nginx: route `*.hzngyms.com` + apex to Flutter web + PocketBase API |
 | Wildcard TLS | Certificate for `*.hzngyms.com` (Caddy on-demand or pre-provisioned) |
 | Porkbun env | On PocketBase systemd unit (configured): `/etc/pocketbase/kyliegym-porkbun.env` with `PORKBUN_API_KEY`, `PORKBUN_API_SECRET`, `PORKBUN_DNS_TARGET`, `PORKBUN_BASE_DOMAIN` |
-| Sentry | Create/migrate project `hzngyms` (see `pubspec.yaml` sentry.project) |
+| Sentry | Flutter project `hzn-gyms` (see `pubspec.yaml` sentry.project) |
 
 Hook reference: `server/pb_hooks/organizations.pb.js` — `POST /api/organizations/:id/retry-dns`
 

@@ -4,7 +4,7 @@ const buildEnvironment = String.fromEnvironment('ENV', defaultValue: '');
 const prodSentryDsn = String.fromEnvironment(
   'SENTRY_DSN',
   defaultValue:
-      'https://1945b89861c8a0b663765b846303976f@o418473.ingest.us.sentry.io/4511839793577984',
+      'https://637f6ad1e7cdeae93caa163312ff6c93@o418473.ingest.us.sentry.io/4512037316919296',
 );
 
 /// Whether Sentry should be initialized for an explicit build [environment].
@@ -17,10 +17,7 @@ bool isSentryEnabledForEnvironment(String environment) => environment == 'prod';
 bool get isSentryEnabled => isSentryEnabledForEnvironment(buildEnvironment);
 
 /// Resolves the Sentry DSN for [environment].
-String sentryDsnFor({
-  required String environment,
-  required String prodDsn,
-}) =>
+String sentryDsnFor({required String environment, required String prodDsn}) =>
     isSentryEnabledForEnvironment(environment) ? prodDsn : '';
 
 /// Sentry DSN for the current app build, or empty when disabled.
@@ -30,5 +27,4 @@ String get sentryDsn => isSentryEnabled ? prodSentryDsn : '';
 String sentryReleaseLabel({
   required String version,
   required String buildNumber,
-}) =>
-    '$version+$buildNumber';
+}) => '$version+$buildNumber';

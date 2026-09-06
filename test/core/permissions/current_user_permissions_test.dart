@@ -62,6 +62,20 @@ void main() {
       expect(withVoid.canVoidCheckIns, isTrue);
     });
 
+    test('canManageOrganizations requires explicit organizations.manage', () {
+      const adminOnly = CurrentUserPermissions(
+        permissions: {Permissions.systemAdmin},
+        isAdmin: true,
+      );
+      expect(adminOnly.canManageOrganizations, isFalse);
+      expect(adminOnly.has(Permissions.organizationsManage), isTrue);
+
+      const platform = CurrentUserPermissions(
+        permissions: {Permissions.organizationsManage},
+      );
+      expect(platform.canManageOrganizations, isTrue);
+    });
+
     test('canViewActivityLog is granted by admin or activityLog.view', () {
       const admin = CurrentUserPermissions(isAdmin: true);
       expect(admin.canViewActivityLog, isTrue);
@@ -75,6 +89,80 @@ void main() {
         permissions: {Permissions.membersView},
       );
       expect(staff.canViewActivityLog, isFalse);
+    });
+  });
+
+  group('canUseOrganizationSwitcher', () {
+    const platformPerms = CurrentUserPermissions(
+      permissions: {Permissions.organizationsManage},
+    );
+
+    const platformAuth = AuthState(
+      token: 'tok',
+      user: User(
+        id: 'platform-admin',
+        name: 'Platform Admin',
+        username: 'platform',
+        verified: true,
+      ),
+    );
+
+    const orgScopedAuth = AuthState(
+      token: 'tok',
+      user: User(
+        id: 'org-admin',
+        name: 'Org Admin',
+        username: 'orgadmin',
+        verified: true,
+        organization: 'org-1',
+      ),
+    );
+
+    ProviderContainer createContainer({
+      required CurrentUserPermissions permissions,
+      AuthState? auth,
+    }) {
+      return ProviderContainer(
+        overrides: [
+          currentUserPermissionsProvider.overrideWith(
+            () => _StaticPermissionsController(permissions),
+          ),
+          currentAuthProvider.overrideWithValue(auth),
+        ],
+      );
+    }
+
+    test('true for platform admin with organizations.manage and no org link', () async {
+      final container = createContainer(
+        permissions: platformPerms,
+        auth: platformAuth,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(currentUserPermissionsProvider.future);
+      expect(container.read(canUseOrganizationSwitcherProvider), isTrue);
+    });
+
+    test('false when user is linked to an organization', () async {
+      final container = createContainer(
+        permissions: platformPerms,
+        auth: orgScopedAuth,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(currentUserPermissionsProvider.future);
+      expect(container.read(canUseOrganizationSwitcherProvider), isFalse);
+    });
+
+    test('false without organizations.manage permission', () async {
+      final container = createContainer(
+        permissions: CurrentUserPermissions.empty,
+        auth: platformAuth,
+      );
+      addTearDown(container.dispose);
+
+      await container.read(currentUserPermissionsProvider.future);
+      expect(container.read(canUseOrganizationSwitcherProvider), isFalse);
     });
   });
 
@@ -291,5 +379,51 @@ void main() {
         expect(perms.has(Permissions.membershipsCreate), isTrue);
       },
     );
+
+    test('refreshInBackground coalesces overlapping calls', () async {
+      when(
+        () => repo.fetchOne('role-1'),
+      ).thenAnswer((_) async => right(staffRole));
+
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      await container.read(currentUserPermissionsProvider.future);
+
+      final allowRefresh = Completer<void>();
+      var refreshFetchCount = 0;
+      when(() => repo.fetchOne('role-1')).thenAnswer((_) async {
+        refreshFetchCount++;
+        await allowRefresh.future;
+        return right(staffRoleWithExclude);
+      });
+
+      final notifier = container.read(currentUserPermissionsProvider.notifier);
+      final first = notifier.refreshInBackground();
+      final second = notifier.refreshInBackground();
+
+      expect(refreshFetchCount, 1);
+
+      allowRefresh.complete();
+      await Future.wait([first, second]);
+
+      expect(refreshFetchCount, 1);
+      expect(
+        container
+            .read(currentUserPermissionsProvider)
+            .value
+            ?.canExcludeMembershipFromSales,
+        isTrue,
+      );
+    });
   });
+}
+
+class _StaticPermissionsController extends CurrentUserPermissionsController {
+  _StaticPermissionsController(this._permissions);
+
+  final CurrentUserPermissions _permissions;
+
+  @override
+  Future<CurrentUserPermissions> build() async => _permissions;
 }

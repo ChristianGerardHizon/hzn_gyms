@@ -73,7 +73,7 @@ curl -s "$LOCAL_API_URL/api/collections/organizations/records/<orgId>" \
 Check `dnsStatus`:
 - `"pending"` — expected in local dev/CI when `PORKBUN_API_KEY`/
   `PORKBUN_API_SECRET` aren't set on the server process; `subdomain` is
-  still computed and stored (e.g. `kyliegym.hzngyms.com`).
+  still computed and stored (e.g. `kyliegym.gyms.hznsystems.com`).
 - `"created"` — a real Porkbun DNS record was provisioned (staging/prod
   with credentials configured).
 - `"failed"` — check `dnsError`; retry via `POST /api/organizations/<id>/retry-dns`

@@ -13,6 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8 
   flutter:
     sdk: flutter
+  flutter_colorpicker: ^1.1.0
   flutter_form_builder: ^10.0.1 
   flutter_hooks: ^0.21.2 
   flutter_secure_storage: ^10.0.0 
@@ -123,7 +124,7 @@ scripts:
 sentry:
   upload_debug_symbols: true
   upload_source_maps: true
-  project: hzngyms
+  project: hzn-gyms
   org: christian-hizon
   # Shallow CI clones can't always resolve the previous release SHA
   ignore_missing: true
@@ -131,18 +132,23 @@ sentry:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icons/app_icon_transparent.png"
+  remove_alpha_ios: true
+  image_path: "assets/icons/app_icon_mark.png"
+  image_path_ios: "assets/icons/app_icon_mark_opaque.png"
   web:
     generate: true
-    image_path: "assets/icons/app_icon_transparent.png"
+    image_path: "assets/icons/app_icon_mark.png"
+    background_color: "#000000"
+    theme_color: "#000000"
   windows:
     generate: true
-    image_path: "assets/icons/app_icon_transparent.png"
+    image_path: "assets/icons/app_icon_mark.png"
   macos:
     generate: true
     image_path: "assets/icons/app_icon_mac.png"
   adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/icons/app_icon_transparent.png"
+  adaptive_icon_foreground: "assets/icons/app_icon_mark.png"
+  adaptive_icon_monochrome: "assets/icons/app_icon_mark.png"
 
 
   

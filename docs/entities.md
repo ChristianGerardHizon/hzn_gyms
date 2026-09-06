@@ -87,7 +87,9 @@ All system users with role-based access.
 |-------|------|----------|-------------|
 | `id` | String | Yes | PocketBase record ID |
 | `name` | String | Yes | User name |
-| `email` | String | Yes | Email address |
+| `username` | String | Yes | Login username |
+| `email` | String | No | Login email (required for org admin accounts) |
+| `organization` | String (FK) | No | FK to Organization — tenant scope; enforced on create/update for non–platform-admins |
 | `avatar` | String | No | Avatar filename |
 | `verified` | bool | Yes | Email verification status |
 | `role` | String (FK) | Yes | FK to UserRole |
@@ -101,6 +103,7 @@ All system users with role-based access.
 
 **Relationships:**
 - `role` -> UserRole
+- `organization` -> Organization (tenant; optional on legacy rows until backfilled)
 - `branch` -> Branch (optional default)
 - `allowedBranches` -> Branch[] (optional)
 
