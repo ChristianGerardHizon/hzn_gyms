@@ -10,6 +10,8 @@
     "timeout": "Request timed out. Please try again.",
     "noInternet": "No internet connection.",
     "invalidCredentials": "Invalid email or password.",
+    "googleNoStaffAccount": "No staff account for this Google email. Ask an admin to create your user first.",
+    "googleSignInFailed": "Could not start Google sign-in. Please try again.",
     "accountDisabled": "Your account has been disabled.",
     "accountNotVerified": "Your account has not been verified.",
     "tooManyRequests": "Too many requests. Please wait a moment."

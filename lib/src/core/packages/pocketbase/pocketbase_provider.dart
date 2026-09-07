@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../constants/constants.dart';
 import '../storage/secure_storage_provider.dart';
+import 'pocketbase_http_client.dart';
 import 'timeout_http_client.dart';
 
 part 'pocketbase_provider.g.dart';
@@ -112,7 +112,7 @@ PocketBase pocketbase(Ref ref) {
     pocketbaseUrl,
     reuseHTTPClient: true,
     httpClientFactory: () => TimeoutHttpClient(
-      http.Client(),
+      createPocketBaseHttpClient(),
       ApiConstants.requestTimeout,
     ),
   );

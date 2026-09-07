@@ -81,6 +81,27 @@ class AuthController extends _$AuthController {
     );
   }
 
+  /// Attempts Google OAuth2 login (web).
+  ///
+  /// Returns true on success, false on failure.
+  Future<bool> loginWithGoogle() async {
+    _invalidateBackgroundRefresh();
+    state = const AsyncLoading();
+
+    final result = await _repository.loginWithGoogle();
+
+    return result.fold(
+      (failure) {
+        state = AsyncError(failure, StackTrace.current);
+        return false;
+      },
+      (authState) {
+        state = AsyncData(authState);
+        return true;
+      },
+    );
+  }
+
   /// Logs out the current user.
   Future<void> logout() async {
     _invalidateBackgroundRefresh();

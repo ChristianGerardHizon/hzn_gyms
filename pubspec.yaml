@@ -39,6 +39,7 @@ dependencies:
 
   pocketbase: ^0.25.1
   http: ^1.2.2
+  fetch_client: ^1.1.2
   flutter_side_menu: ^0.5.41
   package_info_plus: ^10.2.1
   form_builder: ^1.0.1
