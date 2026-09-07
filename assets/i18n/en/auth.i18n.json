@@ -20,6 +20,8 @@
     "checkEmail": "Check Your Email",
     "resetLinkSent(email)": "Password reset link has been sent to $email",
     "signInToContinue": "Sign in to continue",
+    "continueWithGoogle": "Continue with Google",
+    "orDivider": "or",
     "signingIn": "Signing in...",
     "verifyEmailTitle": "Verify your email",
     "verifyEmailSubtitle(email)": "We sent a verification link to $email. Open the link, then tap Continue.",

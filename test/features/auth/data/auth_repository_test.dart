@@ -118,4 +118,89 @@ void main() {
     expect((await repo.confirmVerification('token-1')).isRight(), isTrue);
     verify(() => users.confirmVerification('token-1')).called(1);
   });
+
+  test('loginWithGoogle saves auth when staff role is present', () async {
+    final auth = sampleAuth().copyWith(role: 'role-1');
+    when(
+      () => users.authWithOAuth2(
+        any(),
+        any(),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((invocation) async {
+      final callback = invocation.positionalArguments[1] as Function;
+      await callback(Uri.parse('https://accounts.google.com/o/oauth2'));
+      return RecordAuth(
+        token: auth.token,
+        record: auth.toRecordModel(),
+      );
+    });
+    when(() => storage.write(key: any(named: 'key'), value: any(named: 'value')))
+        .thenAnswer((_) async {});
+
+    final result = await repo.loginWithGoogle(
+      openUrl: (_) async => true,
+    );
+    expect(result.isRight(), isTrue);
+    expect(
+      result.getOrElse((_) => throw StateError('l')).user.roleId,
+      'role-1',
+    );
+    verify(
+      () => storage.write(key: any(named: 'key'), value: any(named: 'value')),
+    ).called(1);
+  });
+
+  test('loginWithGoogle fails when staff role is missing', () async {
+    final auth = sampleAuth(); // no role
+    when(
+      () => users.authWithOAuth2(
+        any(),
+        any(),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((invocation) async {
+      final callback = invocation.positionalArguments[1] as Function;
+      await callback(Uri.parse('https://accounts.google.com/o/oauth2'));
+      return RecordAuth(
+        token: auth.token,
+        record: auth.toRecordModel(),
+      );
+    });
+
+    final result = await repo.loginWithGoogle(openUrl: (_) async => true);
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (f) {
+        expect(f, isA<AuthFailure>());
+        expect(f.identifier, 'google_no_staff');
+      },
+      (_) => fail('expected left'),
+    );
+    expect(pb.authStore.token, isEmpty);
+  });
+
+  test('loginWithGoogle fails when URL cannot be opened', () async {
+    when(
+      () => users.authWithOAuth2(
+        any(),
+        any(),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer((invocation) async {
+      final callback = invocation.positionalArguments[1] as Function;
+      await callback(Uri.parse('https://accounts.google.com/o/oauth2'));
+      throw StateError('should not reach auth result');
+    });
+
+    final result = await repo.loginWithGoogle(openUrl: (_) async => false);
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (f) {
+        expect(f, isA<AuthFailure>());
+        expect(f.identifier, 'google_launch_failed');
+      },
+      (_) => fail('expected left'),
+    );
+  });
 }

@@ -10,6 +10,8 @@
     "timeout": "Nag-timeout ang request. Pakisubukang muli.",
     "noInternet": "Walang koneksyon sa internet.",
     "invalidCredentials": "Di-wastong email o password.",
+    "googleNoStaffAccount": "Walang staff account para sa Google email na ito. Magpa-create muna sa admin.",
+    "googleSignInFailed": "Hindi masimulan ang Google sign-in. Subukan ulit.",
     "accountDisabled": "Ang iyong account ay na-disable.",
     "accountNotVerified": "Hindi pa na-verify ang iyong account.",
     "tooManyRequests": "Masyadong maraming request. Maghintay ng ilang sandali."
