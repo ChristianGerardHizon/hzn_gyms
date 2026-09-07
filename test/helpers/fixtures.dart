@@ -47,7 +47,7 @@ AuthState buildAuthState({String userId = 'user-1', String token = 'token'}) {
     user: User(
       id: userId,
       name: 'Cashier',
-      username: 'cashier',
+      email: 'cashier@test.com',
       verified: true,
       branch: 'branch-1',
     ),

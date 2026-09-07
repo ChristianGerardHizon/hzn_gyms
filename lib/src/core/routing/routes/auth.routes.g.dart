@@ -11,6 +11,8 @@ List<RouteBase> get $appRoutes => [
   $loginRoute,
   $forgotPasswordRoute,
   $authLoadingRoute,
+  $verifyEmailRoute,
+  $confirmVerificationRoute,
 ];
 
 RouteBase get $splashRoute => GoRouteData.$route(
@@ -104,6 +106,64 @@ mixin $AuthLoadingRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/auth-loading');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $verifyEmailRoute => GoRouteData.$route(
+  path: '/verify-email',
+  hasOverriddenOnExit: false,
+  factory: $VerifyEmailRoute._fromState,
+);
+
+mixin $VerifyEmailRoute on GoRouteData {
+  static VerifyEmailRoute _fromState(GoRouterState state) =>
+      const VerifyEmailRoute();
+
+  @override
+  String get location => GoRouteData.$location('/verify-email');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $confirmVerificationRoute => GoRouteData.$route(
+  path: '/confirm-verification/:token',
+  hasOverriddenOnExit: false,
+  factory: $ConfirmVerificationRoute._fromState,
+);
+
+mixin $ConfirmVerificationRoute on GoRouteData {
+  static ConfirmVerificationRoute _fromState(GoRouterState state) =>
+      ConfirmVerificationRoute(token: state.pathParameters['token']!);
+
+  ConfirmVerificationRoute get _self => this as ConfirmVerificationRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/confirm-verification/${Uri.encodeComponent(_self.token)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

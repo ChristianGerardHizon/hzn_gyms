@@ -102,7 +102,7 @@ void main() {
       user: User(
         id: 'platform-admin',
         name: 'Platform Admin',
-        username: 'platform',
+        email: 'platform@test.com',
         verified: true,
       ),
     );
@@ -112,7 +112,7 @@ void main() {
       user: User(
         id: 'org-admin',
         name: 'Org Admin',
-        username: 'orgadmin',
+        email: 'orgadmin@test.com',
         verified: true,
         organization: 'org-1',
       ),
@@ -174,7 +174,7 @@ void main() {
       user: User(
         id: 'u1',
         name: 'Staff',
-        username: 'staff',
+        email: 'staff@test.com',
         verified: true,
         roleId: 'role-1',
       ),

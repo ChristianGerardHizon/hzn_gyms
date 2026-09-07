@@ -64,14 +64,14 @@ class UserOverviewTab extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        Icons.alternate_email,
+                        Icons.email_outlined,
                         size: 16,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          user.username,
+                          user.email ?? '',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),

@@ -76,7 +76,7 @@ class ResetPasswordDialog extends HookConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Set a new password for ${user.name} (@${user.username}).',
+            'Set a new password for ${user.name}${user.email != null && user.email!.isNotEmpty ? ' (${user.email})' : ''}.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

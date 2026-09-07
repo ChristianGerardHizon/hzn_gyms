@@ -5,15 +5,30 @@
 // ============================================================================
 
 /**
- * Hook: Automatically set new users as verified on creation.
- *
- * PocketBase auth collections require email verification by default.
- * Since users are created by admins in this system (not self-registered),
- * we skip the verification step by marking them verified immediately.
+ * On create: enforce org scope. Do not auto-verify — users must confirm email.
  */
 onRecordCreateRequest((e) => {
-    e.record.set("verified", true);
     require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e);
+}, "users");
+
+/**
+ * After create: send verification email when SMTP is configured.
+ */
+onRecordAfterCreateSuccess((e) => {
+    const email = (e.record.getString("email") || "").trim();
+    if (!email || e.record.getBool("verified")) return;
+
+    try {
+        $mails.sendRecordVerification($app, e.record);
+    } catch (err) {
+        $app.logger().error(
+            "users: failed to send verification email",
+            "email",
+            email,
+            "error",
+            err,
+        );
+    }
 }, "users");
 
 onRecordUpdateRequest((e) => {
