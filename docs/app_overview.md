@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 7 | Parallel deploy builds | Staging/prod web + APK build in parallel jobs (shared Flutter/pub caches); Sentry/SSH/APK upload wait until both finish |
 | Sep 7 | Play Console upload | Production builds AAB and uploads to Internal testing when `PLAYSTORE_SERVICE_ACCOUNT_JSON` is set |
 | Sep 7 | Setup docs refresh | Documented keystore secrets, label-gated web-only, auto-promote YAML fix; Windows CMake project → `hzn_gyms` |
 | Sep 7 | Initial setup guide | Documented HZN Gyms provision pitfalls, secrets, and manual checklist (`docs/hzngyms-initial-setup.md`) |
