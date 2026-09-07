@@ -180,6 +180,20 @@ Do these once; CI cannot finish them alone.
 - [ ] First AAB uploaded manually in Play Console if the API rejects an empty Internal track
 - [ ] Local `.env` has `PLAYSTORE_SERVICE_ACCOUNT_JSON_PATH`; JSON lives under gitignored `android/keystore/`
 
+### C3. Google web login (OAuth)
+
+Existing-staff only: Google email must match an admin-created `users` record. Server hook `onRecordAuthWithOAuth2Request` rejects unknown Google emails.
+
+- [ ] Google Cloud → OAuth consent screen + **Web** OAuth client
+- [ ] Authorized redirect URIs (PocketBase, not the Flutter app):
+  - Local: `http://127.0.0.1:8090/api/oauth2-redirect`
+  - Staging: `{PB_STAGING_URL}/api/oauth2-redirect`
+  - Prod: `{PB_PROD_URL}/api/oauth2-redirect`
+- [ ] PocketBase Admin → **users** → Options → OAuth2 → enable + add Google (Client ID / Secret)
+- [ ] Keep password auth enabled
+- [ ] Confirm `pb_hooks` (users OAuth reject) deployed on staging/prod
+- [ ] Smoke: staff with matching Google email can sign in on web; unknown Google email is denied
+
 ### D. App / PocketBase smoke (new hosts)
 
 - [ ] https://staging.hzngyms.hznsystems.com — login, org branding, branch list.

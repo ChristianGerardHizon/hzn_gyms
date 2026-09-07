@@ -107,6 +107,12 @@ class Translations$auth$en {
 	/// en: 'Sign in to continue'
 	String get signInToContinue => 'Sign in to continue';
 
+	/// en: 'Continue with Google'
+	String get continueWithGoogle => 'Continue with Google';
+
+	/// en: 'or'
+	String get orDivider => 'or';
+
 	/// en: 'Signing in...'
 	String get signingIn => 'Signing in...';
 
@@ -292,6 +298,12 @@ class Translations$failures$en {
 
 	/// en: 'Invalid email or password.'
 	String get invalidCredentials => 'Invalid email or password.';
+
+	/// en: 'No staff account for this Google email. Ask an admin to create your user first.'
+	String get googleNoStaffAccount => 'No staff account for this Google email. Ask an admin to create your user first.';
+
+	/// en: 'Could not start Google sign-in. Please try again.'
+	String get googleSignInFailed => 'Could not start Google sign-in. Please try again.';
 
 	/// en: 'Your account has been disabled.'
 	String get accountDisabled => 'Your account has been disabled.';
@@ -808,6 +820,8 @@ extension on Translations {
 			'auth.checkEmail' => 'Check Your Email',
 			'auth.resetLinkSent' => ({required Object email}) => 'Password reset link has been sent to ${email}',
 			'auth.signInToContinue' => 'Sign in to continue',
+			'auth.continueWithGoogle' => 'Continue with Google',
+			'auth.orDivider' => 'or',
 			'auth.signingIn' => 'Signing in...',
 			'auth.verifyEmailTitle' => 'Verify your email',
 			'auth.verifyEmailSubtitle' => ({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.',
@@ -864,6 +878,8 @@ extension on Translations {
 			'failures.timeout' => 'Request timed out. Please try again.',
 			'failures.noInternet' => 'No internet connection.',
 			'failures.invalidCredentials' => 'Invalid email or password.',
+			'failures.googleNoStaffAccount' => 'No staff account for this Google email. Ask an admin to create your user first.',
+			'failures.googleSignInFailed' => 'Could not start Google sign-in. Please try again.',
 			'failures.accountDisabled' => 'Your account has been disabled.',
 			'failures.accountNotVerified' => 'Your account has not been verified.',
 			'failures.tooManyRequests' => 'Too many requests. Please wait a moment.',
