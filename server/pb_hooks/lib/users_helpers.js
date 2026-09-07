@@ -2,6 +2,8 @@
 
 // Users hooks — org-scoping for tenant isolation.
 
+const { roleHasPermission } = require(`${__hooks}/lib/permissions_helpers.js`);
+
 function isSuperuserAuth(authRecord) {
     if (!authRecord) return false;
     try {
@@ -14,33 +16,43 @@ function isSuperuserAuth(authRecord) {
 function callerHasOrganizationsManage(app, authRecord) {
     if (!authRecord) return false;
     // Resolve via users.role → userRoles.permissions (not userRoles.user).
-    const roleId = authRecord.getString("role");
-    if (!roleId) return false;
-    try {
-        const role = app.findRecordById("userRoles", roleId);
-        const permissions = role.get("permissions") || [];
-        if (!Array.isArray(permissions)) return false;
-        return permissions.indexOf("organizations.manage") !== -1;
-    } catch (_) {
-        return false;
-    }
+    return roleHasPermission(
+        app,
+        authRecord.getString("role"),
+        "organizations.manage",
+    );
 }
 
-function enforceUserOrganizationScope(e) {
+/**
+ * @param {core.RecordRequestEvent} e
+ * @param {{ requireOrganization?: boolean }} [options]
+ *   When true (create requests), platform admins / superusers must supply
+ *   an organization so new users are never created unlinked.
+ */
+function enforceUserOrganizationScope(e, options) {
+    const requireOrganization = !!(options && options.requireOrganization);
     const authRecord = e.auth;
     if (!authRecord) {
         e.next();
         return;
     }
 
+    const requestedOrg = (e.record.getString("organization") || "").trim();
+
     // PocketBase superusers may create/update users across tenants
     // (including platform admins with no organization).
     if (isSuperuserAuth(authRecord)) {
+        if (requireOrganization && !requestedOrg) {
+            throw new BadRequestError("organization is required");
+        }
         e.next();
         return;
     }
 
     if (callerHasOrganizationsManage(e.app, authRecord)) {
+        if (requireOrganization && !requestedOrg) {
+            throw new BadRequestError("organization is required");
+        }
         e.next();
         return;
     }
@@ -50,7 +62,6 @@ function enforceUserOrganizationScope(e) {
         throw new ForbiddenError("Your account is not linked to an organization");
     }
 
-    const requestedOrg = e.record.getString("organization");
     if (requestedOrg && requestedOrg !== authOrg) {
         throw new ForbiddenError("Cannot assign users to another organization");
     }
