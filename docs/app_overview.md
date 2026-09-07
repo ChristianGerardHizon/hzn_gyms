@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 7 | Email OTP login | Passwordless email OTP on login screen (send code → verify); PocketBase OTP + Resend |
 | Sep 7 | Google web login | Existing-staff Google OAuth on web via PocketBase; pb_hooks reject unknown Google emails |
 | Sep 7 | Email verification + no username | Username removed from users; post-login verify-email gate with resend cooldown; Resend SMTP on staging/prod |
 | Sep 7 | Parallel deploy builds | Staging/prod web + APK build in parallel jobs (shared Flutter/pub caches); Sentry/SSH/APK upload wait until both finish |

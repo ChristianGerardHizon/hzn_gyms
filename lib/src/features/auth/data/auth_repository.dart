@@ -47,6 +47,12 @@ abstract class AuthRepository {
 
   /// Confirms email verification using the token from the email link.
   FutureEither<void> confirmVerification(String token);
+
+  /// Requests an email OTP for passwordless login. Returns the OTP id.
+  FutureEither<String> requestOtp(String email);
+
+  /// Logs in with an email OTP id and the code from the email.
+  FutureEither<AuthState> loginWithOtp(String otpId, String code);
 }
 
 /// Provides the auth repository instance.
@@ -221,6 +227,37 @@ class AuthRepositoryImpl implements AuthRepository {
   FutureEither<void> confirmVerification(String token) async {
     return TaskEither.tryCatch(() async {
       await _collection.confirmVerification(token);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<String> requestOtp(String email) async {
+    return TaskEither.tryCatch(() async {
+      final response = await _collection.requestOTP(email);
+      final otpId = response.otpId;
+      if (otpId.isEmpty) {
+        throw const AuthFailure(
+          'Could not send login code',
+          null,
+          'otp_request_failed',
+        );
+      }
+      return otpId;
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<AuthState> loginWithOtp(String otpId, String code) async {
+    return TaskEither.tryCatch(() async {
+      final result = await _collection.authWithOTP(
+        otpId,
+        code,
+        expand: _expand,
+      );
+
+      final authDto = AuthDto.fromAuthResult(result);
+      await _persistAuth(authDto);
+      return _createAuthState(authDto);
     }, Failure.handle).run();
   }
 }
