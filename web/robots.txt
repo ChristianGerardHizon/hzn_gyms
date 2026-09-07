@@ -1,0 +1,8 @@
+# HZN Gyms — staff business app (not for public search indexing).
+# Privacy policy remains fetchable for store compliance links.
+
+User-agent: *
+Disallow: /
+
+Allow: /privacy-policy.html
+Allow: /privacy-policy/
