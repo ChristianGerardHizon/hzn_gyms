@@ -11,7 +11,6 @@ class User with UserMappable {
   const User({
     required this.id,
     required this.name,
-    required this.username,
     this.email,
     this.avatar,
     this.verified = false,
@@ -32,9 +31,6 @@ class User with UserMappable {
 
   /// User's display name.
   final String name;
-
-  /// User's username.
-  final String username;
 
   /// Login email (PocketBase password auth identity).
   final String? email;

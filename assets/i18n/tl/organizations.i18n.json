@@ -54,7 +54,6 @@
     "setupBranchRequiredFirst": "Gumawa muna ng branch bago magdagdag ng admin user.",
     "setupAdminName": "Pangalan ng admin",
     "setupAdminEmail": "Email ng admin (login)",
-    "setupAdminUsername": "Username",
     "setupAdminPassword": "Password",
     "setupCreateAdminUser": "Gumawa ng admin user",
     "setupAdminUserFailed": "Hindi nagawa ang admin user",

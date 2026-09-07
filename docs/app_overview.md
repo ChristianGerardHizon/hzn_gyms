@@ -208,7 +208,7 @@ Legacy `/organization/*` paths redirect to the routes above.
 **Organization switcher** in the app shell (top bar, mobile drawer, tablet nav) for super-admins to change active tenant.
 
 #### Profile (`/profile`)
-Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name/username only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
+Self-service account page for staff (and any user without `users.view`). Shows own profile and allows editing name only (no role/branch assignment). Change Password requires the current password plus a new password confirmation.
 
 #### System Settings (`/system`)
 3-panel tablet layout for system configuration.
@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 7 | Email verification + no username | Username removed from users; post-login verify-email gate with resend cooldown; Resend SMTP on staging/prod |
 | Sep 7 | Parallel deploy builds | Staging/prod web + APK build in parallel jobs (shared Flutter/pub caches); Sentry/SSH/APK upload wait until both finish |
 | Sep 7 | Play Console upload | Production builds AAB and uploads to Internal testing when `PLAYSTORE_SERVICE_ACCOUNT_JSON` is set |
 | Sep 7 | Org DNS optional | Organizations no longer require DNS/subdomain; setup completes with branch + admin only |

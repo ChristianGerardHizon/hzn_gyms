@@ -82,7 +82,6 @@ void main() {
         collectionName: 'users',
         data: {
           'name': 'Admin',
-          'username': 'admin',
           'email': 'admin@example.com',
           'organization': 'org-1',
           'role': 'role-admin',
@@ -95,7 +94,6 @@ void main() {
       const User(
         id: '',
         name: 'Admin',
-        username: 'admin',
         email: 'admin@example.com',
         organizationId: 'org-1',
         roleId: 'role-admin',
@@ -113,5 +111,50 @@ void main() {
     expect(body['email'], 'admin@example.com');
     expect(body['organization'], 'org-1');
     expect(body['password'], 'secret123');
+    expect(body.containsKey('username'), isFalse);
+  });
+
+  test('update sends verified and omits username', () async {
+    when(
+      () => users.update(
+        any(),
+        body: any(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer(
+      (_) async => buildRecord(
+        id: 'user-1',
+        collectionName: 'users',
+        data: {
+          'name': 'Admin',
+          'email': 'admin@example.com',
+          'verified': true,
+        },
+      ),
+    );
+
+    final result = await repo.update(
+      const User(
+        id: 'user-1',
+        name: 'Admin',
+        email: 'admin@example.com',
+        verified: true,
+        roleId: 'role-admin',
+        branchId: 'branch-1',
+      ),
+    );
+
+    expect(result.isRight(), isTrue);
+    final body = verify(
+      () => users.update(
+        'user-1',
+        body: captureAny(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).captured.single as Map<String, dynamic>;
+
+    expect(body['verified'], isTrue);
+    expect(body['name'], 'Admin');
+    expect(body.containsKey('username'), isFalse);
   });
 }

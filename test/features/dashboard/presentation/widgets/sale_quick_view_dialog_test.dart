@@ -34,7 +34,7 @@ void main() {
               (ref) async => const User(
                 id: 'user-1',
                 name: 'Front Desk',
-                username: 'frontdesk',
+                email: 'frontdesk@example.com',
               ),
             ),
           ],
@@ -73,7 +73,7 @@ void main() {
               (ref) async => const User(
                 id: 'user-1',
                 name: 'Front Desk',
-                username: 'frontdesk',
+                email: 'frontdesk@example.com',
               ),
             ),
           ],

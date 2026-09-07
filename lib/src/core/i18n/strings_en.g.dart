@@ -109,6 +109,42 @@ class Translations$auth$en {
 
 	/// en: 'Signing in...'
 	String get signingIn => 'Signing in...';
+
+	/// en: 'Verify your email'
+	String get verifyEmailTitle => 'Verify your email';
+
+	/// en: 'We sent a verification link to $email. Open the link, then tap Continue.'
+	String verifyEmailSubtitle({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.';
+
+	/// en: 'I've verified — Continue'
+	String get verifyEmailContinue => 'I\'ve verified — Continue';
+
+	/// en: 'Resend verification email'
+	String get resendVerification => 'Resend verification email';
+
+	/// en: 'Resend in ${seconds}s'
+	String resendVerificationCooldown({required Object seconds}) => 'Resend in ${seconds}s';
+
+	/// en: 'Verification email sent'
+	String get verificationEmailSent => 'Verification email sent';
+
+	/// en: 'Could not send verification email. Try again later.'
+	String get verificationEmailFailed => 'Could not send verification email. Try again later.';
+
+	/// en: 'Email is still unverified. Check your inbox and try again.'
+	String get stillUnverified => 'Email is still unverified. Check your inbox and try again.';
+
+	/// en: 'Confirming your email...'
+	String get confirmingVerification => 'Confirming your email...';
+
+	/// en: 'Email verified'
+	String get verificationSuccess => 'Email verified';
+
+	/// en: 'Verification link is invalid or expired.'
+	String get verificationFailed => 'Verification link is invalid or expired.';
+
+	/// en: 'Back to verify email'
+	String get backToVerifyEmail => 'Back to verify email';
 }
 
 // Path: common
@@ -277,9 +313,6 @@ class Translations$fields$en {
 
 	/// en: 'Email'
 	String get email => 'Email';
-
-	/// en: 'Username'
-	String get username => 'Username';
 
 	/// en: 'Password'
 	String get password => 'Password';
@@ -626,9 +659,6 @@ class Translations$organizations$en {
 	/// en: 'Admin email (login)'
 	String get setupAdminEmail => 'Admin email (login)';
 
-	/// en: 'Username'
-	String get setupAdminUsername => 'Username';
-
 	/// en: 'Password'
 	String get setupAdminPassword => 'Password';
 
@@ -779,6 +809,18 @@ extension on Translations {
 			'auth.resetLinkSent' => ({required Object email}) => 'Password reset link has been sent to ${email}',
 			'auth.signInToContinue' => 'Sign in to continue',
 			'auth.signingIn' => 'Signing in...',
+			'auth.verifyEmailTitle' => 'Verify your email',
+			'auth.verifyEmailSubtitle' => ({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.',
+			'auth.verifyEmailContinue' => 'I\'ve verified — Continue',
+			'auth.resendVerification' => 'Resend verification email',
+			'auth.resendVerificationCooldown' => ({required Object seconds}) => 'Resend in ${seconds}s',
+			'auth.verificationEmailSent' => 'Verification email sent',
+			'auth.verificationEmailFailed' => 'Could not send verification email. Try again later.',
+			'auth.stillUnverified' => 'Email is still unverified. Check your inbox and try again.',
+			'auth.confirmingVerification' => 'Confirming your email...',
+			'auth.verificationSuccess' => 'Email verified',
+			'auth.verificationFailed' => 'Verification link is invalid or expired.',
+			'auth.backToVerifyEmail' => 'Back to verify email',
 			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'Save',
@@ -826,7 +868,6 @@ extension on Translations {
 			'failures.accountNotVerified' => 'Your account has not been verified.',
 			'failures.tooManyRequests' => 'Too many requests. Please wait a moment.',
 			'fields.email' => 'Email',
-			'fields.username' => 'Username',
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Name',
@@ -936,7 +977,6 @@ extension on Translations {
 			'organizations.setupBranchRequiredFirst' => 'Create a branch before adding an admin user.',
 			'organizations.setupAdminName' => 'Admin name',
 			'organizations.setupAdminEmail' => 'Admin email (login)',
-			'organizations.setupAdminUsername' => 'Username',
 			'organizations.setupAdminPassword' => 'Password',
 			'organizations.setupCreateAdminUser' => 'Create admin user',
 			'organizations.setupAdminUserFailed' => 'Failed to create admin user',

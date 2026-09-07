@@ -13,7 +13,7 @@ import '../../../users/data/repositories/user_repository.dart';
 import '../../../users/domain/user.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 
-/// Self-edit dialog: name and username only (no role/branch).
+/// Self-edit dialog: name only (no role/branch).
 class EditProfileDialog extends HookConsumerWidget {
   const EditProfileDialog({super.key, required this.user});
 
@@ -26,7 +26,6 @@ class EditProfileDialog extends HookConsumerWidget {
       formKey: formKey,
       initialValues: {
         'name': user.name,
-        'username': user.username,
       },
     );
     final isSaving = useState(false);
@@ -37,7 +36,6 @@ class EditProfileDialog extends HookConsumerWidget {
         final errors = formKey.currentState?.errors ?? {};
         final errorMessages = formatFormErrors(errors, {
           'name': 'Name',
-          'username': 'Username',
         });
         if (errorMessages.isNotEmpty) {
           showFormErrorDialog(context, errors: errorMessages);
@@ -51,7 +49,6 @@ class EditProfileDialog extends HookConsumerWidget {
       final result = await ref.read(userRepositoryProvider).updateProfile(
             id: user.id,
             name: (values['name'] as String).trim(),
-            username: (values['username'] as String).trim().toLowerCase(),
           );
 
       if (!context.mounted) return;
@@ -81,7 +78,6 @@ class EditProfileDialog extends HookConsumerWidget {
       maxWidth: DialogConstraints.compactMaxWidth,
       initialValue: {
         'name': user.name,
-        'username': user.username,
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,23 +94,6 @@ class EditProfileDialog extends HookConsumerWidget {
             validator: FormBuilderValidators.required(
               errorText: 'Name is required',
             ),
-          ),
-          const SizedBox(height: 16),
-          FormBuilderTextField(
-            name: 'username',
-            decoration: const InputDecoration(
-              labelText: 'Username *',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.alternate_email),
-            ),
-            enabled: !isSaving.value,
-            validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(errorText: 'Username is required'),
-              FormBuilderValidators.minLength(
-                3,
-                errorText: 'Username must be at least 3 characters',
-              ),
-            ]),
           ),
         ],
       ),

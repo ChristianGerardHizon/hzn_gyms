@@ -77,6 +77,18 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String resetLinkSent({required Object email}) => 'Naipadala na ang password reset link sa ${email}';
 	@override String get signInToContinue => 'Mag-sign in upang magpatuloy';
 	@override String get signingIn => 'Nagsa-sign in...';
+	@override String get verifyEmailTitle => 'I-verify ang email';
+	@override String verifyEmailSubtitle({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.';
+	@override String get verifyEmailContinue => 'Na-verify ko — Magpatuloy';
+	@override String get resendVerification => 'Ipadala muli ang verification email';
+	@override String resendVerificationCooldown({required Object seconds}) => 'Ipadala muli sa ${seconds}s';
+	@override String get verificationEmailSent => 'Naipadala ang verification email';
+	@override String get verificationEmailFailed => 'Hindi maipadala ang verification email. Subukan ulit mamaya.';
+	@override String get stillUnverified => 'Hindi pa verified ang email. Tingnan ang inbox at subukan ulit.';
+	@override String get confirmingVerification => 'Kino-confirm ang email...';
+	@override String get verificationSuccess => 'Na-verify ang email';
+	@override String get verificationFailed => 'Invalid o expired ang verification link.';
+	@override String get backToVerifyEmail => 'Bumalik sa verify email';
 }
 
 // Path: common
@@ -151,7 +163,6 @@ class _Translations$fields$tl implements Translations$fields$en {
 
 	// Translations
 	@override String get email => 'Email';
-	@override String get username => 'Username';
 	@override String get password => 'Password';
 	@override String get passwordConfirmation => 'Password confirmation';
 	@override String get name => 'Pangalan';
@@ -279,7 +290,6 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get setupBranchRequiredFirst => 'Gumawa muna ng branch bago magdagdag ng admin user.';
 	@override String get setupAdminName => 'Pangalan ng admin';
 	@override String get setupAdminEmail => 'Email ng admin (login)';
-	@override String get setupAdminUsername => 'Username';
 	@override String get setupAdminPassword => 'Password';
 	@override String get setupCreateAdminUser => 'Gumawa ng admin user';
 	@override String get setupAdminUserFailed => 'Hindi nagawa ang admin user';
@@ -361,6 +371,18 @@ extension on TranslationsTl {
 			'auth.resetLinkSent' => ({required Object email}) => 'Naipadala na ang password reset link sa ${email}',
 			'auth.signInToContinue' => 'Mag-sign in upang magpatuloy',
 			'auth.signingIn' => 'Nagsa-sign in...',
+			'auth.verifyEmailTitle' => 'I-verify ang email',
+			'auth.verifyEmailSubtitle' => ({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.',
+			'auth.verifyEmailContinue' => 'Na-verify ko — Magpatuloy',
+			'auth.resendVerification' => 'Ipadala muli ang verification email',
+			'auth.resendVerificationCooldown' => ({required Object seconds}) => 'Ipadala muli sa ${seconds}s',
+			'auth.verificationEmailSent' => 'Naipadala ang verification email',
+			'auth.verificationEmailFailed' => 'Hindi maipadala ang verification email. Subukan ulit mamaya.',
+			'auth.stillUnverified' => 'Hindi pa verified ang email. Tingnan ang inbox at subukan ulit.',
+			'auth.confirmingVerification' => 'Kino-confirm ang email...',
+			'auth.verificationSuccess' => 'Na-verify ang email',
+			'auth.verificationFailed' => 'Invalid o expired ang verification link.',
+			'auth.backToVerifyEmail' => 'Bumalik sa verify email',
 			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'I-save',
@@ -408,7 +430,6 @@ extension on TranslationsTl {
 			'failures.accountNotVerified' => 'Hindi pa na-verify ang iyong account.',
 			'failures.tooManyRequests' => 'Masyadong maraming request. Maghintay ng ilang sandali.',
 			'fields.email' => 'Email',
-			'fields.username' => 'Username',
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Pangalan',
@@ -518,7 +539,6 @@ extension on TranslationsTl {
 			'organizations.setupBranchRequiredFirst' => 'Gumawa muna ng branch bago magdagdag ng admin user.',
 			'organizations.setupAdminName' => 'Pangalan ng admin',
 			'organizations.setupAdminEmail' => 'Email ng admin (login)',
-			'organizations.setupAdminUsername' => 'Username',
 			'organizations.setupAdminPassword' => 'Password',
 			'organizations.setupCreateAdminUser' => 'Gumawa ng admin user',
 			'organizations.setupAdminUserFailed' => 'Hindi nagawa ang admin user',

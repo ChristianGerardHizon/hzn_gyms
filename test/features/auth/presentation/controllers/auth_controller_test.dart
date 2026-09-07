@@ -14,12 +14,12 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 
 const _cachedAuth = AuthState(
   token: 'old-tok',
-  user: User(id: 'u1', name: 'Old User', username: 'cashier', verified: true),
+  user: User(id: 'u1', name: 'Old User', email: 'cashier@test.com', verified: true),
 );
 
 const _newAuth = AuthState(
   token: 'new-tok',
-  user: User(id: 'u1', name: 'New User', username: 'cashier', verified: true),
+  user: User(id: 'u1', name: 'New User', email: 'cashier@test.com', verified: true),
 );
 
 void main() {

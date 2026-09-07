@@ -42,7 +42,6 @@ void main() {
   const admin = User(
     id: 'user-1',
     name: 'Admin',
-    username: 'admin',
     email: 'admin@example.com',
     branchId: 'branch-1',
     roleName: 'Admin',

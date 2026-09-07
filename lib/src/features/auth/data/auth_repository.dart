@@ -34,6 +34,12 @@ abstract class AuthRepository {
 
   /// Requests a password reset email.
   FutureEither<void> requestPasswordReset(String email);
+
+  /// Requests an email verification message for [email].
+  FutureEither<void> requestVerification(String email);
+
+  /// Confirms email verification using the token from the email link.
+  FutureEither<void> confirmVerification(String token);
 }
 
 /// Provides the auth repository instance.
@@ -149,6 +155,20 @@ class AuthRepositoryImpl implements AuthRepository {
   FutureEither<void> requestPasswordReset(String email) async {
     return TaskEither.tryCatch(() async {
       await _collection.requestPasswordReset(email);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<void> requestVerification(String email) async {
+    return TaskEither.tryCatch(() async {
+      await _collection.requestVerification(email);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<void> confirmVerification(String token) async {
+    return TaskEither.tryCatch(() async {
+      await _collection.confirmVerification(token);
     }, Failure.handle).run();
   }
 }

@@ -58,6 +58,8 @@ GoRouter router(Ref ref) {
       $loginRoute,
       $forgotPasswordRoute,
       $authLoadingRoute,
+      $verifyEmailRoute,
+      $confirmVerificationRoute,
 
       // Legacy org path redirect
       $organizationsRoute,
@@ -103,7 +105,12 @@ GoRouter router(Ref ref) {
         if (location.isEmpty) return;
 
         if (isAuthenticated && location == LoginRoute.path) {
-          // Login success: restore deep link or go home.
+          // Login success: restore deep link or go home / verify gate.
+          final verified = next.value?.isVerified ?? false;
+          if (!verified) {
+            router.go(VerifyEmailRoute.path);
+            return;
+          }
           final pendingUrl = ref
               .read(pendingRedirectProvider.notifier)
               .consume();
@@ -111,16 +118,18 @@ GoRouter router(Ref ref) {
             router.go(pendingUrl);
             return;
           }
-          final perms = ref.read(currentUserPermissionsProvider).value;
-          if (perms?.canManageOrganizations ?? false) {
-            router.go(PlatformDashboardRoute.path);
-          } else {
-            router.go(DashboardRoute.path);
-          }
+          router.go(RouterUtils.homePathFor(ref));
         } else if (isAuthenticated && location == SplashRoute.path) {
           // Do not router.go(Dashboard) here — that races redirect restore and
           // can wipe a pending deep link. Let [RouterUtils.redirect] step 3
           // run via refresh() below.
+        } else if (isAuthenticated &&
+            location == VerifyEmailRoute.path &&
+            (next.value?.isVerified ?? false)) {
+          final pendingUrl = ref
+              .read(pendingRedirectProvider.notifier)
+              .consume();
+          router.go(pendingUrl ?? RouterUtils.homePathFor(ref));
         } else if (!isAuthenticated &&
             !RouterUtils.ignoredRoutes.any(
               (route) => location.startsWith(route),

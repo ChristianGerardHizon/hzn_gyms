@@ -9,7 +9,7 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(userSearchFieldsProvider.notifier);
-      notifier.toggleField('username');
+      notifier.toggleField('email');
 
       expect(container.read(userSearchFieldsProvider), {'name'});
 

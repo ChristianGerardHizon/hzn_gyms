@@ -618,16 +618,16 @@ class ReportsRepositoryImpl implements ReportsRepository {
       filters.map(
         (f) => _pb
             .collection(PocketBaseCollections.users)
-            .getFullList(filter: f, fields: 'id,name,username'),
+            .getFullList(filter: f, fields: 'id,name,email'),
       ),
     );
     final names = <String, String>{};
     for (final record in chunks.expand((e) => e)) {
       final name = record.getStringValue('name');
-      final username = record.getStringValue('username');
+      final email = record.getStringValue('email');
       names[record.id] = name.isNotEmpty
           ? name
-          : (username.isNotEmpty ? username : 'Unknown');
+          : (email.isNotEmpty ? email : 'Unknown');
     }
     return names;
   }

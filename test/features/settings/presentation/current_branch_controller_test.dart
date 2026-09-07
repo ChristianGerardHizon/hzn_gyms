@@ -89,7 +89,7 @@ void main() {
           (ref) async => users.User(
             id: 'user-1',
             name: 'Cashier',
-            username: 'cashier',
+            email: 'cashier@test.com',
             roleId: 'role-1',
             branchId: authBranch,
           ),

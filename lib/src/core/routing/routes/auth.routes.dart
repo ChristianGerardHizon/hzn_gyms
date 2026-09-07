@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../features/auth/presentation/pages/auth_loading_page.dart';
+import '../../../features/auth/presentation/pages/confirm_verification_page.dart';
 import '../../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../../features/auth/presentation/pages/login_page.dart';
 import '../../../features/auth/presentation/pages/splash_page.dart';
+import '../../../features/auth/presentation/pages/verify_email_page.dart';
 
 part 'auth.routes.g.dart';
 
@@ -57,5 +59,33 @@ class AuthLoadingRoute extends GoRouteData with $AuthLoadingRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const AuthLoadingPage();
+  }
+}
+
+/// Post-login email verification gate.
+@TypedGoRoute<VerifyEmailRoute>(path: VerifyEmailRoute.path)
+class VerifyEmailRoute extends GoRouteData with $VerifyEmailRoute {
+  const VerifyEmailRoute();
+
+  static const path = '/verify-email';
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const VerifyEmailPage();
+  }
+}
+
+/// Confirms email verification from the emailed token link.
+@TypedGoRoute<ConfirmVerificationRoute>(path: ConfirmVerificationRoute.path)
+class ConfirmVerificationRoute extends GoRouteData with $ConfirmVerificationRoute {
+  const ConfirmVerificationRoute({required this.token});
+
+  static const path = '/confirm-verification/:token';
+
+  final String token;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return ConfirmVerificationPage(token: token);
   }
 }
