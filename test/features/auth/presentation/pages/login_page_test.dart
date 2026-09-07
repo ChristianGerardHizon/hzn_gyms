@@ -15,7 +15,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 const _fakeAuth = AuthState(
   token: 'tok',
-  user: User(id: 'u1', name: 'Test User', username: 'cashier', verified: true),
+  user: User(id: 'u1', name: 'Test User', email: 'cashier@test.com', verified: true),
 );
 
 /// Mirrors the real [AuthController.login] transition (loading -> data/error)

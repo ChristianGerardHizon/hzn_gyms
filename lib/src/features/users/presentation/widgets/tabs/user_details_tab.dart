@@ -69,12 +69,13 @@ class UserDetailsTab extends HookConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '@${user.username}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  if (user.email != null && user.email!.isNotEmpty)
+                    Text(
+                      user.email!,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 4),
                   Text(
                     user.displayRole,
@@ -192,11 +193,12 @@ class UserDetailsTab extends HookConsumerWidget {
   Widget _buildUserDetailsSection(ThemeData theme) {
     final items = <_DetailItem>[
       _DetailItem(icon: Icons.person, label: 'Name', value: user.name),
-      _DetailItem(
-        icon: Icons.alternate_email,
-        label: 'Username',
-        value: user.username,
-      ),
+      if (user.email != null && user.email!.isNotEmpty)
+        _DetailItem(
+          icon: Icons.email_outlined,
+          label: 'Email',
+          value: user.email!,
+        ),
       _DetailItem(
         icon: Icons.admin_panel_settings,
         label: 'Role',

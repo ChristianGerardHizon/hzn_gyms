@@ -15,8 +15,8 @@ class User with UserMappable {
   /// The user's display name.
   final String name;
 
-  /// The user's username (used for login).
-  final String username;
+  /// Login email (PocketBase password auth identity).
+  final String email;
 
   /// The user's avatar URL (pre-computed).
   final String? avatarUrl;
@@ -40,7 +40,7 @@ class User with UserMappable {
   const User({
     required this.id,
     required this.name,
-    required this.username,
+    required this.email,
     this.avatarUrl,
     this.verified = false,
     this.branch,

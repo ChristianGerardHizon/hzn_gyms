@@ -113,6 +113,26 @@ class AuthController extends _$AuthController {
     final result = await _repository.requestPasswordReset(email);
     return result.isRight();
   }
+
+  /// Requests a verification email for the signed-in user's address.
+  Future<bool> requestVerification(String email) async {
+    final result = await _repository.requestVerification(email);
+    return result.isRight();
+  }
+
+  /// Confirms email verification with [token], then refreshes the session.
+  ///
+  /// Returns true when confirmation and refresh both succeed and the user
+  /// is verified.
+  Future<bool> confirmVerification(String token) async {
+    final confirmResult = await _repository.confirmVerification(token);
+    final confirmed = confirmResult.fold((_) => false, (_) => true);
+    if (!confirmed) return false;
+
+    final refreshed = await refresh();
+    if (!refreshed) return false;
+    return state.value?.isVerified ?? false;
+  }
 }
 
 /// Convenience provider to check if user is authenticated.

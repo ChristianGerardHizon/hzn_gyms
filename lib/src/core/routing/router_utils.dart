@@ -23,7 +23,18 @@ abstract class RouterUtils {
     '/splash',
     '/auth-loading',
     '/forgot-password',
+    '/verify-email',
+    '/confirm-verification',
   ];
+
+  /// Home path for an authenticated, verified user.
+  static String homePathFor(Ref ref) {
+    final perms = ref.read(currentUserPermissionsProvider).value;
+    if (perms?.canManageOrganizations ?? false) {
+      return PlatformDashboardRoute.path;
+    }
+    return DashboardRoute.path;
+  }
 
   /// Former top-level check-in records path (now nested under check-in).
   static const String legacyCheckInRecordsPath = '/check-in-records';
@@ -114,8 +125,13 @@ abstract class RouterUtils {
     final authAsync = ref.read(authControllerProvider);
     final isAuthenticated = authAsync.value != null;
     final isAuthLoading = authAsync.isLoading;
+    final isVerified = authAsync.value?.isVerified ?? false;
     final isOnLoginPage = currentPath == LoginRoute.path;
     final isOnSplashPage = currentPath == SplashRoute.path;
+    final isOnVerifyEmailPage = currentPath == VerifyEmailRoute.path;
+    final isOnConfirmVerification = currentPath.startsWith(
+      '/confirm-verification',
+    );
 
     // 1. Still loading auth on splash - stay on splash
     if (isAuthLoading && isOnSplashPage) {
@@ -137,6 +153,9 @@ abstract class RouterUtils {
     // 3. Splash complete - redirect based on auth result
     if (isOnSplashPage && !isAuthLoading) {
       if (isAuthenticated) {
+        if (!isVerified) {
+          return VerifyEmailRoute.path;
+        }
         // peek() includes eager stash if provider set has not run yet
         final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
         if (pendingUrl != null) {
@@ -145,11 +164,7 @@ abstract class RouterUtils {
           ref.read(pendingRedirectProvider.notifier).clear();
           return pendingUrl;
         }
-        final perms = ref.read(currentUserPermissionsProvider).value;
-        if (perms?.canManageOrganizations ?? false) {
-          return PlatformDashboardRoute.path;
-        }
-        return DashboardRoute.path;
+        return homePathFor(ref);
       }
       return LoginRoute.path;
     }
@@ -157,23 +172,48 @@ abstract class RouterUtils {
     // 4. Login page - redirect if authenticated
     if (isOnLoginPage) {
       if (isAuthenticated) {
+        if (!isVerified) {
+          return VerifyEmailRoute.path;
+        }
         final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
         if (pendingUrl != null) {
           ref.read(pendingRedirectProvider.notifier).clear();
           return pendingUrl;
         }
-        final perms = ref.read(currentUserPermissionsProvider).value;
-        if (perms?.canManageOrganizations ?? false) {
-          return PlatformDashboardRoute.path;
-        }
-        return DashboardRoute.path;
+        return homePathFor(ref);
       }
+      return null;
+    }
+
+    // 4b. Verify-email page
+    if (isOnVerifyEmailPage) {
+      if (!isAuthenticated) return LoginRoute.path;
+      if (isVerified) {
+        final pendingUrl = ref.read(pendingRedirectProvider.notifier).peek();
+        if (pendingUrl != null) {
+          ref.read(pendingRedirectProvider.notifier).clear();
+          return pendingUrl;
+        }
+        return homePathFor(ref);
+      }
+      return null;
+    }
+
+    // 4c. Confirm-verification: require session; verified users leave after success
+    if (isOnConfirmVerification) {
+      if (!isAuthenticated) return LoginRoute.path;
+      if (isVerified) return homePathFor(ref);
       return null;
     }
 
     // 5. Not authenticated + protected route - redirect to login
     if (!isAuthenticated && !isIgnored) {
       return LoginRoute.path;
+    }
+
+    // 5b. Authenticated but unverified - force verify gate
+    if (isAuthenticated && !isVerified && !isIgnored) {
+      return VerifyEmailRoute.path;
     }
 
     // 6. Role permission guards for authenticated shell routes

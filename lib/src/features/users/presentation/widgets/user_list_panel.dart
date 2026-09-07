@@ -151,7 +151,7 @@ class UserListPanel extends HookConsumerWidget {
                           : FontWeight.normal,
                     ),
                   ),
-                  subtitle: Text('${user.displayRole} - ${user.username}'),
+                  subtitle: Text('${user.displayRole} - ${user.email ?? ''}'),
                   selected: isSelected,
                   selectedTileColor: theme.colorScheme.primaryContainer,
                   trailing: isSelected ? const Icon(Icons.chevron_right) : null,

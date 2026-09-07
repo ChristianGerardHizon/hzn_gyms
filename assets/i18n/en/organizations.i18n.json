@@ -61,7 +61,6 @@
     "setupBranchRequiredFirst": "Create a branch before adding an admin user.",
     "setupAdminName": "Admin name",
     "setupAdminEmail": "Admin email (login)",
-    "setupAdminUsername": "Username",
     "setupAdminPassword": "Password",
     "setupCreateAdminUser": "Create admin user",
     "setupAdminUserFailed": "Failed to create admin user",

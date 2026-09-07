@@ -15,7 +15,7 @@ void main() {
   late MockUserRepository userRepo;
 
   const org = Organization(id: 'org-1', name: 'Kylie Gym', slug: 'kyliegym');
-  const user = User(id: 'user-1', name: 'Admin', username: 'admin');
+  const user = User(id: 'user-1', name: 'Admin', email: 'admin@example.com');
 
   setUp(() {
     userRepo = MockUserRepository();

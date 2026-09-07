@@ -31,7 +31,7 @@ void main() {
     user: User(
       id: 'u1',
       name: 'Staff',
-      username: 'staff',
+      email: 'staff@test.com',
       verified: true,
       organization: 'org-1',
     ),
@@ -90,7 +90,7 @@ void main() {
       user: User(
         id: 'admin',
         name: 'Admin',
-        username: 'admin',
+        email: 'admin@test.com',
         verified: true,
       ),
     );

@@ -56,7 +56,6 @@ class OrganizationSetupAdminUserForm extends HookConsumerWidget {
       final user = User(
         id: '',
         name: (values['name'] as String).trim(),
-        username: (values['username'] as String).trim().toLowerCase(),
         email: (values['email'] as String).trim(),
         roleId: adminRole.id,
         branchId: branchId,
@@ -105,15 +104,6 @@ class OrganizationSetupAdminUserForm extends HookConsumerWidget {
               FormBuilderValidators.required(),
               FormBuilderValidators.email(),
             ]),
-          ),
-          const SizedBox(height: 16),
-          FormBuilderTextField(
-            name: 'username',
-            decoration: InputDecoration(
-              labelText: '${t.organizations.setupAdminUsername} *',
-              border: const OutlineInputBorder(),
-            ),
-            validator: FormBuilderValidators.required(),
           ),
           const SizedBox(height: 16),
           FormBuilderTextField(
