@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/packages/theme/app_themes.dart';
 import '../../../../core/utils/color_utils.dart';
+import '../../../../core/utils/web_brand_icons_updater.dart';
 import 'current_organization_controller.dart';
 
 part 'organization_branding_providers.g.dart';
@@ -43,4 +44,15 @@ String? effectiveLogoUrl(Ref ref) {
 Color effectiveSplashBackgroundColor(Ref ref) {
   final org = ref.watch(currentOrganizationControllerProvider).value;
   return colorFromHex(org?.splashBackgroundColor) ?? Colors.black;
+}
+
+/// Keeps the browser favicon / apple-touch-icon in sync with the active org
+/// logo on web. No-op on other platforms.
+@Riverpod(keepAlive: true)
+void syncWebBrandIcons(Ref ref) {
+  final org = ref.watch(currentOrganizationControllerProvider).value;
+  updateWebBrandIcons(
+    logoUrl: org?.logoTransparentUrl,
+    cacheBust: org?.id,
+  );
 }
