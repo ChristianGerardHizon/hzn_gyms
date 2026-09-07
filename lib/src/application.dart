@@ -21,6 +21,9 @@ class Application extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Web-only side effect: favicon + apple-touch-icon follow the active org.
+    ref.watch(syncWebBrandIconsProvider);
+
     final orgResolution = ref.watch(currentOrganizationControllerProvider);
 
     // Only gate on the *initial* resolution — once we have any value (data

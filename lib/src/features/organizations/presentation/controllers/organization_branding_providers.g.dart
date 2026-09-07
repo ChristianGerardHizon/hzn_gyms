@@ -218,3 +218,52 @@ final class EffectiveSplashBackgroundColorProvider
 
 String _$effectiveSplashBackgroundColorHash() =>
     r'67edf247d3f48b710e728941718c7d73fb77c8e6';
+
+/// Keeps the browser favicon / apple-touch-icon in sync with the active org
+/// logo on web. No-op on other platforms.
+
+@ProviderFor(syncWebBrandIcons)
+final syncWebBrandIconsProvider = SyncWebBrandIconsProvider._();
+
+/// Keeps the browser favicon / apple-touch-icon in sync with the active org
+/// logo on web. No-op on other platforms.
+
+final class SyncWebBrandIconsProvider
+    extends $FunctionalProvider<void, void, void>
+    with $Provider<void> {
+  /// Keeps the browser favicon / apple-touch-icon in sync with the active org
+  /// logo on web. No-op on other platforms.
+  SyncWebBrandIconsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'syncWebBrandIconsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$syncWebBrandIconsHash();
+
+  @$internal
+  @override
+  $ProviderElement<void> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  void create(Ref ref) {
+    return syncWebBrandIcons(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(void value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<void>(value),
+    );
+  }
+}
+
+String _$syncWebBrandIconsHash() => r'34d28996609a9e3d4da847b482cae300fab2367c';

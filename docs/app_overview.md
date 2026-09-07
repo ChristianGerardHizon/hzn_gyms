@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 7 | Org web favicon | Active organization logo drives browser favicon + apple-touch-icon on web |
 | Sep 7 | Email verification + no username | Username removed from users; post-login verify-email gate with resend cooldown; Resend SMTP on staging/prod |
 | Sep 7 | Parallel deploy builds | Staging/prod web + APK build in parallel jobs (shared Flutter/pub caches); Sentry/SSH/APK upload wait until both finish |
 | Sep 7 | Play Console upload | Production builds AAB and uploads to Internal testing when `PLAYSTORE_SERVICE_ACCOUNT_JSON` is set |
