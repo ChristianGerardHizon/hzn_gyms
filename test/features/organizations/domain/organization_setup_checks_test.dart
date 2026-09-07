@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
-import 'package:hzn_gyms/src/features/organizations/domain/organization_dns_status.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization_setup_checks.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization_setup_status.dart';
 
@@ -9,12 +8,11 @@ void main() {
     id: 'org-1',
     name: 'Kylie Gym',
     slug: 'kyliegym',
-    dnsStatus: OrganizationDnsStatus.created,
     setupStatus: OrganizationSetupStatus.pendingSetup,
   );
 
   group('OrganizationSetupChecks.evaluate', () {
-    test('passes when DNS, branch, and admin user are satisfied', () {
+    test('passes when branch and admin user are satisfied', () {
       final checks = OrganizationSetupChecks.evaluate(
         organization: org,
         hasBranch: true,
@@ -23,43 +21,29 @@ void main() {
       );
 
       expect(checks.where((c) => !c.passed).map((c) => c.key), ['setupStatus']);
+      expect(checks.any((c) => c.key == 'dns'), isFalse);
     });
 
-    test('fails DNS when status is failed', () {
-      const failedDns = Organization(
-        id: 'org-1',
-        name: 'Kylie Gym',
-        slug: 'kyliegym',
-        dnsStatus: OrganizationDnsStatus.failed,
-        dnsError: 'Porkbun timeout',
-      );
-
+    test('fails without branch', () {
       final checks = OrganizationSetupChecks.evaluate(
-        organization: failedDns,
-        hasBranch: true,
+        organization: org,
+        hasBranch: false,
         hasAdminUser: true,
       );
 
-      final dns = checks.firstWhere((c) => c.key == 'dns');
-      expect(dns.passed, isFalse);
-      expect(dns.detail, 'Porkbun timeout');
+      final branch = checks.firstWhere((c) => c.key == 'branch');
+      expect(branch.passed, isFalse);
     });
 
-    test('treats pending DNS as acceptable', () {
-      const pendingDns = Organization(
-        id: 'org-1',
-        name: 'Kylie Gym',
-        slug: 'kyliegym',
-        dnsStatus: OrganizationDnsStatus.pending,
-      );
-
+    test('fails without admin user', () {
       final checks = OrganizationSetupChecks.evaluate(
-        organization: pendingDns,
-        hasBranch: false,
+        organization: org,
+        hasBranch: true,
         hasAdminUser: false,
       );
 
-      expect(checks.firstWhere((c) => c.key == 'dns').passed, isTrue);
+      final admin = checks.firstWhere((c) => c.key == 'adminUser');
+      expect(admin.passed, isFalse);
     });
   });
 
@@ -85,38 +69,45 @@ void main() {
         isFalse,
       );
     });
+
+    test('returns false without branch', () {
+      expect(
+        OrganizationSetupChecks.canMarkComplete(
+          organization: org,
+          hasBranch: false,
+          hasAdminUser: true,
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('PlatformDashboardSummary', () {
-    test('counts ready, pending, and DNS issues', () {
+    test('counts ready and pending setup', () {
       final summary = PlatformDashboardSummary.fromOrganizations([
         const Organization(
           id: '1',
           name: 'A',
           slug: 'a',
           setupStatus: OrganizationSetupStatus.ready,
-          dnsStatus: OrganizationDnsStatus.created,
         ),
         const Organization(
           id: '2',
           name: 'B',
           slug: 'b',
           setupStatus: OrganizationSetupStatus.pendingSetup,
-          dnsStatus: OrganizationDnsStatus.failed,
         ),
         const Organization(
           id: '3',
           name: 'C',
           slug: 'c',
           setupStatus: OrganizationSetupStatus.pendingSetup,
-          dnsStatus: OrganizationDnsStatus.pending,
         ),
       ]);
 
       expect(summary.total, 3);
       expect(summary.ready, 1);
       expect(summary.pendingSetup, 2);
-      expect(summary.dnsIssues, 1);
     });
   });
 }

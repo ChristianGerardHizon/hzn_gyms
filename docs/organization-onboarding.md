@@ -7,7 +7,7 @@ Super-admins with `organizations.manage` use the **Platform** shell (`/platform`
 | Route | Purpose |
 |-------|---------|
 | `/platform` | Dashboard — tenant counts, recent orgs, quick links |
-| `/platform/organizations` | Organization list (create, edit, DNS retry) |
+| `/platform/organizations` | Organization list (create, edit, continue setup) |
 | `/platform/organizations/:orgId/setup` | Guided onboarding wizard |
 
 Legacy `/organizations` redirects to `/platform/organizations`. The old `/organization/*` nested paths still redirect to top-level `/users`, `/roles`, and `/branches`.
@@ -15,12 +15,11 @@ Legacy `/organizations` redirects to `/platform/organizations`. The old `/organi
 ## Setup wizard steps
 
 1. **Branding** — review name, slug, colors (edit via org form)
-2. **DNS & subdomain** — Porkbun provisioning status; retry if failed
-3. **First branch** — required; scoped to the tenant
-4. **Org admin** — required user with email, default branch, and Admin role (`system.admin`)
-5. **Membership plan** — optional (skippable)
-6. **Product** — optional (skippable)
-7. **Review & complete** — client checklist mirrors server validation
+2. **First branch** — required; scoped to the tenant
+3. **Org admin** — required user with email, default branch, and Admin role (`system.admin`)
+4. **Membership plan** — optional (skippable)
+5. **Product** — optional (skippable)
+6. **Review & complete** — client checklist mirrors server validation
 
 Creating an organization from the list dialog switches into that tenant and navigates to the setup wizard automatically.
 
@@ -28,9 +27,10 @@ Creating an organization from the list dialog switches into that tenant and navi
 
 `POST /api/organizations/{id}/complete-setup` runs the same checks as the wizard review step:
 
-- DNS status is `created` or `pending`
 - At least one branch for the organization
 - At least one admin user with email, branch, and `system.admin` role
+
+DNS / per-tenant subdomain provisioning is **not** required. Organizations work without a custom hostname; staff sign in on the shared app URL and branding is applied from the user's organization after login.
 
 On success, PocketBase sets `setupStatus = ready` and `setupCompletedAt`.
 
@@ -82,7 +82,7 @@ The script adds:
 - [ ] Complete setup sets badge to **Ready** on org list
 - [ ] **Enter tenant** switches org context and opens gym app at `/`
 - [ ] Branch staff without `organizations.manage` cannot open `/platform`
-- [ ] Public resolve returns branding for tenant subdomain
+- [ ] Public resolve returns branding for tenant subdomain (optional / legacy)
 
 ## Backfill existing data
 

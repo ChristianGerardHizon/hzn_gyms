@@ -191,8 +191,8 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 Super-admin shell separate from the gym app (requires `organizations.manage`).
 
 - **Dashboard** (`/platform`) — tenant summary counts, recent organizations, enter-tenant shortcuts
-- **Organizations** (`/platform/organizations`) — list/create/edit tenants, DNS status, setup badges
-- **Setup wizard** (`/platform/organizations/:orgId/setup`) — guided onboarding (branch, admin user, optional plan/product)
+- **Organizations** (`/platform/organizations`) — list/create/edit tenants, setup badges
+- **Setup wizard** (`/platform/organizations/:orgId/setup`) — guided onboarding (branch, admin user, optional plan/product; DNS not required)
 - Platform admins land here after login; **Enter tenant** switches org context and opens the gym app at `/`
 - Legacy `/organizations` redirects to `/platform/organizations`
 
@@ -588,6 +588,7 @@ lib/src/
 | Sep 7 | Email verification + no username | Username removed from users; post-login verify-email gate with resend cooldown; Resend SMTP on staging/prod |
 | Sep 7 | Parallel deploy builds | Staging/prod web + APK build in parallel jobs (shared Flutter/pub caches); Sentry/SSH/APK upload wait until both finish |
 | Sep 7 | Play Console upload | Production builds AAB and uploads to Internal testing when `PLAYSTORE_SERVICE_ACCOUNT_JSON` is set |
+| Sep 7 | Org DNS optional | Organizations no longer require DNS/subdomain; setup completes with branch + admin only |
 | Sep 7 | Setup docs refresh | Documented keystore secrets, label-gated web-only, auto-promote YAML fix; Windows CMake project → `hzn_gyms` |
 | Sep 7 | Initial setup guide | Documented HZN Gyms provision pitfalls, secrets, and manual checklist (`docs/hzngyms-initial-setup.md`) |
 | Sep 7 | HZN Gyms PocketBase | New staging/prod instances at `*.hzngyms.hznsystems.com` (`/opt/pocketbase/hzn_gyms*`); kyliegym left untouched |

@@ -37,7 +37,7 @@ class Organization with OrganizationMappable {
   /// Full organization name (e.g. "Kylie Gym").
   final String name;
 
-  /// URL-safe slug, also used as the DNS subdomain label.
+  /// URL-safe slug for the organization.
   final String slug;
 
   /// Display name shown as the app title/branding. Falls back to [name].
@@ -55,16 +55,16 @@ class Organization with OrganizationMappable {
   /// Hex background color for the in-app/web post-boot loading screen.
   final String? splashBackgroundColor;
 
-  /// Resolved `<slug>.gyms.hznsystems.com` hostname (see PocketBase org hooks).
+  /// Optional legacy hostname field (DNS linking is no longer required).
   final String? subdomain;
 
-  /// Porkbun DNS provisioning status for [subdomain].
+  /// Optional legacy DNS status (not required for onboarding).
   final OrganizationDnsStatus dnsStatus;
 
-  /// Last Porkbun error message, if [dnsStatus] is `failed`.
+  /// Optional legacy DNS error message.
   final String? dnsError;
 
-  /// Timestamp of the last provisioning attempt.
+  /// Optional legacy timestamp of the last DNS provisioning attempt.
   final DateTime? dnsLastAttempt;
 
   /// Onboarding lifecycle (`pending_setup` | `ready`).

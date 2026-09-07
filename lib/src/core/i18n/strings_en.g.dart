@@ -509,8 +509,8 @@ class Translations$organizations$en {
 	/// en: 'Slug'
 	String get slug => 'Slug';
 
-	/// en: 'Used for subdomain (e.g. slug.gyms.hznsystems.com)'
-	String get slugHelper => 'Used for subdomain (e.g. slug.gyms.hznsystems.com)';
+	/// en: 'URL-safe identifier (lowercase letters, numbers, hyphens)'
+	String get slugHelper => 'URL-safe identifier (lowercase letters, numbers, hyphens)';
 
 	/// en: 'Shown in app title/branding'
 	String get displayNameHint => 'Shown in app title/branding';
@@ -566,21 +566,6 @@ class Translations$organizations$en {
 	/// en: 'Remove'
 	String get logoRemove => 'Remove';
 
-	/// en: 'Subdomain'
-	String get subdomain => 'Subdomain';
-
-	/// en: 'DNS Status'
-	String get dnsStatus => 'DNS Status';
-
-	/// en: 'Retry DNS'
-	String get retryDns => 'Retry DNS';
-
-	/// en: 'DNS provisioning retried'
-	String get retryDnsSuccess => 'DNS provisioning retried';
-
-	/// en: 'Failed to retry DNS provisioning'
-	String get retryDnsFailed => 'Failed to retry DNS provisioning';
-
 	/// en: 'Organization created successfully'
 	String get createSuccess => 'Organization created successfully';
 
@@ -620,9 +605,6 @@ class Translations$organizations$en {
 	/// en: 'Pending setup'
 	String get summaryPendingSetup => 'Pending setup';
 
-	/// en: 'DNS issues'
-	String get summaryDnsIssues => 'DNS issues';
-
 	/// en: 'Ready'
 	String get summaryReady => 'Ready';
 
@@ -634,9 +616,6 @@ class Translations$organizations$en {
 
 	/// en: 'Branding'
 	String get setupStepBranding => 'Branding';
-
-	/// en: 'DNS & subdomain'
-	String get setupStepDns => 'DNS & subdomain';
 
 	/// en: 'First branch'
 	String get setupStepBranch => 'First branch';
@@ -709,9 +688,6 @@ class Translations$organizations$en {
 
 	/// en: 'Mark setup complete'
 	String get setupMarkComplete => 'Mark setup complete';
-
-	/// en: 'Staff login URL: $url'
-	String setupLoginUrl({required Object url}) => 'Staff login URL: ${url}';
 
 	/// en: 'Organization is ready'
 	String get setupCompleteSuccess => 'Organization is ready';
@@ -951,7 +927,7 @@ extension on Translations {
 			'organizations.edit' => 'Edit Organization',
 			'organizations.name' => 'Name',
 			'organizations.slug' => 'Slug',
-			'organizations.slugHelper' => 'Used for subdomain (e.g. slug.gyms.hznsystems.com)',
+			'organizations.slugHelper' => 'URL-safe identifier (lowercase letters, numbers, hyphens)',
 			'organizations.displayNameHint' => 'Shown in app title/branding',
 			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens only',
 			'organizations.seedColorValidationError' => 'Use hex format like #1E88E5',
@@ -970,11 +946,6 @@ extension on Translations {
 			'organizations.logoUpload' => 'Upload logo',
 			'organizations.logoReplace' => 'Replace logo',
 			'organizations.logoRemove' => 'Remove',
-			'organizations.subdomain' => 'Subdomain',
-			'organizations.dnsStatus' => 'DNS Status',
-			'organizations.retryDns' => 'Retry DNS',
-			'organizations.retryDnsSuccess' => 'DNS provisioning retried',
-			'organizations.retryDnsFailed' => 'Failed to retry DNS provisioning',
 			'organizations.createSuccess' => 'Organization created successfully',
 			'organizations.updateSuccess' => 'Organization updated successfully',
 			'organizations.saveFailed' => 'Failed to save organization. Please try again.',
@@ -988,12 +959,10 @@ extension on Translations {
 			'organizations.recentOrganizations' => 'Recent organizations',
 			'organizations.summaryTotal' => 'Total organizations',
 			'organizations.summaryPendingSetup' => 'Pending setup',
-			'organizations.summaryDnsIssues' => 'DNS issues',
 			'organizations.summaryReady' => 'Ready',
 			'organizations.continueSetup' => 'Continue setup',
 			'organizations.setupTitle' => 'Organization setup',
 			'organizations.setupStepBranding' => 'Branding',
-			'organizations.setupStepDns' => 'DNS & subdomain',
 			'organizations.setupStepBranch' => 'First branch',
 			'organizations.setupStepAdminUser' => 'Org admin',
 			'organizations.setupStepMembership' => 'Membership plan',
@@ -1018,7 +987,6 @@ extension on Translations {
 			'organizations.setupCreateProduct' => 'Create product',
 			'organizations.setupSkipStep' => 'Skip for now',
 			'organizations.setupMarkComplete' => 'Mark setup complete',
-			'organizations.setupLoginUrl' => ({required Object url}) => 'Staff login URL: ${url}',
 			'organizations.setupCompleteSuccess' => 'Organization is ready',
 			'sort.sortBy' => 'Sort By',
 			'sort.direction' => 'Direction',
