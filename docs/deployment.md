@@ -77,36 +77,22 @@ Manual **Actions → Deploy System → Run workflow** also asks for `version_bum
 ```
 PR merged to staging (or manual dispatch)
   │
-  ├─ Validate all required secrets exist
-  ├─ Setup: Java 17 (Zulu) + Flutter 3.38.3
-  ├─ Restore caches (Gradle, Pub, Flutter build)
-  ├─ flutter pub get
+  ├─ [prepare-staging]
+  │   ├─ Validate required secrets
+  │   ├─ Fetch version from Version Manager → bump → "-staging" suffix
+  │   └─ Resolve unique tag (append build number if tag exists)
   │
-  ├─ Fetch current version from Version Manager API
-  │   → Increment patch → append "-staging" suffix
-  │   → Resolve unique tag (append build number if tag exists)
+  ├─ Parallel builds (shared Flutter/pub caches via setup-flutter composite)
+  │   ├─ [build-staging-web] Flutter setup → build web (+ source maps) → artifact
+  │   └─ [build-staging-apk] Java + Flutter → keystore → signed APK → artifact
+  │       (APK job skipped when PR has `web-only` or dispatch `web_only=true`)
   │
-  ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
-  │
-  ├─ Build Web (--release --source-maps)
-  │   --dart-define=ENV=staging
-  │   --dart-define=API_URL=$POCKETBASE_URL_STAGING
-  │
-  ├─ Build APK (--release, signed) — skipped when PR has `web-only` (or manual dispatch `web_only=true`)
-  │
-  ├─ dart run sentry_dart_plugin (source maps + debug symbols → Sentry project `hzn-gyms`)
-  ├─ Strip `*.map` from `build/web` so they are not served from pb_public
-  │
-  ├─ Setup SSH agent + known_hosts
-  ├─ rsync web build → staging server pb_public/
-  ├─ rsync migrations → staging server pb_migrations/
-  ├─ rsync hooks → staging server pb_hooks/
-  ├─ Restart PocketBase staging service
-  │
-  └─ Create GitHub Release (prerelease)
-      Tag: staging-X.Y.Z[-build.N]
-      Title: Deploy X.Y.Z to Staging
-      Artifact: app-release.apk
+  └─ [deploy-staging] runs only after web succeeds and APK succeeds or was skipped
+      ├─ Download build artifacts
+      ├─ dart run sentry_dart_plugin (source maps + debug symbols → `hzn-gyms`)
+      ├─ Strip `*.map` from `build/web`
+      ├─ SSH deploy (pb_public / migrations / hooks) + restart PocketBase
+      └─ Create GitHub Release (prerelease; APK attached unless web-only)
 ```
 
 ### Production Deployment
@@ -116,36 +102,19 @@ PR merged to staging (or manual dispatch)
 ```
 PR merged to main
   │
-  ├─ "Production" environment approval gate
+  ├─ [production-gate] "Production" environment approval (once)
   │
-  ├─ [deploy-production job]
-  │   ├─ Validate all required secrets exist
-  │   ├─ Setup: Java 17 (Zulu) + Flutter 3.38.3
-  │   ├─ Restore caches (Gradle, Pub, Flutter build)
-  │   ├─ flutter pub get
-  │   │
-  │   ├─ Fetch current version from Version Manager API
-  │   │   → Increment patch (no suffix)
-  │   │
-  │   ├─ Decode KEYSTORE_BASE64 → upload-keystore.jks
-  │   │
-  │   ├─ Build Web (--release --source-maps)
-  │   │   --dart-define=ENV=prod
-  │   │   --dart-define=API_URL=$POCKETBASE_URL_PROD
-  │   │   --dart-define=SENTRY_DSN=$SENTRY_DSN_PROD
-  │   │
-  │   ├─ Build APK (--release, signed) — skipped when PR has `web-only`
-  │   │
-  │   ├─ dart run sentry_dart_plugin (source maps + debug symbols)
-  │   ├─ Strip `*.map` from `build/web`
-  │   │
-  │   ├─ Setup SSH agent + known_hosts
-  │   ├─ rsync web build → production server pb_public/
-  │   ├─ rsync migrations → production server pb_migrations/
-  │   ├─ rsync hooks → production server pb_hooks/
-  │   ├─ Restart PocketBase production service
-  │   │
-  │   └─ Upload APK as GitHub Actions artifact
+  ├─ [prepare-production] secrets + version bump (no suffix) + label outputs
+  │
+  ├─ Parallel builds (shared Flutter/pub caches via setup-flutter composite)
+  │   ├─ [build-production-web] → web artifact
+  │   └─ [build-production-apk] → APK + AAB artifact (skipped when `web-only`)
+  │
+  ├─ [deploy-production] after web succeeds and APK succeeds or was skipped
+  │   ├─ Download artifacts → Sentry upload → strip maps
+  │   ├─ SSH deploy + restart PocketBase production
+  │   ├─ Upload APK + AAB Actions artifacts (unless web-only)
+  │   └─ Upload AAB to Google Play Internal testing (if `PLAYSTORE_SERVICE_ACCOUNT_JSON` set)
   │
   └─ [release-and-sync job] (depends on deploy-production)
       ├─ Download APK artifact
@@ -187,6 +156,7 @@ These must be configured in **Settings → Secrets and variables → Actions**.
 | `KEYSTORE_PASSWORD` | When not `web-only` | Staging & Production | Keystore store password |
 | `KEY_ALIAS` | When not `web-only` | Staging & Production | Key alias within the keystore |
 | `KEY_PASSWORD` | When not `web-only` | Staging & Production | Key password |
+| `PLAYSTORE_SERVICE_ACCOUNT_JSON` | Optional | Production | Play Console service-account JSON. If unset, Play upload is skipped (see [Google Play Store](#google-play-store)). |
 | `SSH_HOST` | Yes | Staging & Production | Server hostname or IP for SSH deployment |
 | `SSH_USER` | Yes | Staging & Production | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Yes | Staging & Production | Ed25519 or RSA private key (PEM format) for SSH authentication |
@@ -277,6 +247,32 @@ To encode your keystore for the secret:
 base64 -i your-keystore.jks | pbcopy   # macOS (copies to clipboard)
 base64 -w 0 your-keystore.jks          # Linux (outputs to stdout)
 ```
+
+---
+
+## Google Play Store
+
+Play Console does **not** accept APKs for new uploads. Production deploys therefore build a signed **Android App Bundle** (`.aab`) and upload it with the Play Developer API when credentials are present.
+
+**Package name:** `com.hznsystems.hzngyms` (must match `applicationId` in `android/app/build.gradle.kts` and the Play Console app).
+
+The AAB is uploaded to **Internal testing** with `status: completed` (published to testers). Staging deploys do **not** upload to Play. If `PLAYSTORE_SERVICE_ACCOUNT_JSON` is unset, production still deploys web and GitHub Releases; the Play step is skipped.
+
+### One-time setup (Play Console + GitHub)
+
+1. Create the **HZN Gyms** app in [Play Console](https://play.google.com/console) with package `com.hznsystems.hzngyms` if it does not exist.
+2. Enroll in **Play App Signing** using the same upload keystore as `KEYSTORE_BASE64`.
+3. Upload the **first** AAB manually to Internal testing if the API rejects an empty track.
+4. Link a Google Cloud service account with **Google Play Android Developer API** enabled, and grant it access to HZN Gyms with at least **Release apps to testing tracks**.
+5. Set GitHub Actions secret `PLAYSTORE_SERVICE_ACCOUNT_JSON` to the full service-account JSON (repo secret; also add on the **Production** environment if that environment restricts secrets).
+6. Locally (gitignored): keep the JSON under `android/keystore/` and set in `.env`:
+   `PLAYSTORE_SERVICE_ACCOUNT_JSON_PATH=android/keystore/<service-account>.json`
+
+### After each production deploy
+
+1. Wait for `deploy-production` to finish (including Play upload when enabled).
+2. Testers already on the Internal testing list get the new version (`X.Y.Z`, version code = GitHub run number).
+3. New testers need the Internal testing opt-in URL from Play Console.
 
 ---
 
