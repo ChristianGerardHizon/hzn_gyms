@@ -20,6 +20,8 @@
     "checkEmail": "Tingnan ang Iyong Email",
     "resetLinkSent(email)": "Naipadala na ang password reset link sa $email",
     "signInToContinue": "Mag-sign in upang magpatuloy",
+    "continueWithGoogle": "Magpatuloy gamit ang Google",
+    "orDivider": "o",
     "signingIn": "Nagsa-sign in...",
     "verifyEmailTitle": "I-verify ang email",
     "verifyEmailSubtitle(email)": "Nagpadala kami ng verification link sa $email. Buksan ang link, tapos pindutin ang Continue.",

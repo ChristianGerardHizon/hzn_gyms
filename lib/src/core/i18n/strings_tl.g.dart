@@ -76,6 +76,8 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String get checkEmail => 'Tingnan ang Iyong Email';
 	@override String resetLinkSent({required Object email}) => 'Naipadala na ang password reset link sa ${email}';
 	@override String get signInToContinue => 'Mag-sign in upang magpatuloy';
+	@override String get continueWithGoogle => 'Magpatuloy gamit ang Google';
+	@override String get orDivider => 'o';
 	@override String get signingIn => 'Nagsa-sign in...';
 	@override String get verifyEmailTitle => 'I-verify ang email';
 	@override String verifyEmailSubtitle({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.';
@@ -150,6 +152,8 @@ class _Translations$failures$tl implements Translations$failures$en {
 	@override String get timeout => 'Nag-timeout ang request. Pakisubukang muli.';
 	@override String get noInternet => 'Walang koneksyon sa internet.';
 	@override String get invalidCredentials => 'Di-wastong email o password.';
+	@override String get googleNoStaffAccount => 'Walang staff account para sa Google email na ito. Magpa-create muna sa admin.';
+	@override String get googleSignInFailed => 'Hindi masimulan ang Google sign-in. Subukan ulit.';
 	@override String get accountDisabled => 'Ang iyong account ay na-disable.';
 	@override String get accountNotVerified => 'Hindi pa na-verify ang iyong account.';
 	@override String get tooManyRequests => 'Masyadong maraming request. Maghintay ng ilang sandali.';
@@ -370,6 +374,8 @@ extension on TranslationsTl {
 			'auth.checkEmail' => 'Tingnan ang Iyong Email',
 			'auth.resetLinkSent' => ({required Object email}) => 'Naipadala na ang password reset link sa ${email}',
 			'auth.signInToContinue' => 'Mag-sign in upang magpatuloy',
+			'auth.continueWithGoogle' => 'Magpatuloy gamit ang Google',
+			'auth.orDivider' => 'o',
 			'auth.signingIn' => 'Nagsa-sign in...',
 			'auth.verifyEmailTitle' => 'I-verify ang email',
 			'auth.verifyEmailSubtitle' => ({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.',
@@ -426,6 +432,8 @@ extension on TranslationsTl {
 			'failures.timeout' => 'Nag-timeout ang request. Pakisubukang muli.',
 			'failures.noInternet' => 'Walang koneksyon sa internet.',
 			'failures.invalidCredentials' => 'Di-wastong email o password.',
+			'failures.googleNoStaffAccount' => 'Walang staff account para sa Google email na ito. Magpa-create muna sa admin.',
+			'failures.googleSignInFailed' => 'Hindi masimulan ang Google sign-in. Subukan ulit.',
 			'failures.accountDisabled' => 'Ang iyong account ay na-disable.',
 			'failures.accountNotVerified' => 'Hindi pa na-verify ang iyong account.',
 			'failures.tooManyRequests' => 'Masyadong maraming request. Maghintay ng ilang sandali.',

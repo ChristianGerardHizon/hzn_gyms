@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/foundation/failure.dart';
 import '../../../core/foundation/type_defs.dart';
@@ -12,10 +13,16 @@ import 'auth_dto.dart';
 
 part 'auth_repository.g.dart';
 
+/// Opens an OAuth vendor URL (browser popup/tab on web).
+typedef OAuthUrlLauncher = Future<bool> Function(Uri url);
+
 /// Repository interface for authentication operations.
 abstract class AuthRepository {
   /// Attempts to login with email and password.
   FutureEither<AuthState> login(String email, String password);
+
+  /// Attempts Google OAuth2 login (web; existing staff email must match).
+  FutureEither<AuthState> loginWithGoogle({OAuthUrlLauncher? openUrl});
 
   /// Logs out the current user.
   FutureEither<void> logout();
@@ -67,6 +74,24 @@ class AuthRepositoryImpl implements AuthRepository {
     return AuthState(token: dto.token, user: user);
   }
 
+  Future<void> _persistAuth(AuthDto authDto) async {
+    await authStorage.save(authDto);
+    pb.authStore.save(authDto.token, authDto.toRecordModel());
+  }
+
+  /// Rejects OAuth sessions that somehow lack a staff role.
+  void _ensureStaffRole(AuthDto authDto) {
+    final role = authDto.role;
+    if (role == null || role.isEmpty) {
+      pb.authStore.clear();
+      throw const AuthFailure(
+        'No staff account for this Google email',
+        null,
+        'google_no_staff',
+      );
+    }
+  }
+
   @override
   FutureEither<AuthState> login(String email, String password) async {
     return TaskEither.tryCatch(() async {
@@ -77,8 +102,37 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       final authDto = AuthDto.fromAuthResult(result);
-      await authStorage.save(authDto);
-      pb.authStore.save(authDto.token, authDto.toRecordModel());
+      await _persistAuth(authDto);
+      return _createAuthState(authDto);
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<AuthState> loginWithGoogle({OAuthUrlLauncher? openUrl}) async {
+    return TaskEither.tryCatch(() async {
+      // Avoid linking Google to a stale leftover session.
+      pb.authStore.clear();
+
+      final result = await _collection.authWithOAuth2(
+        'google',
+        (url) async {
+          final launcher =
+              openUrl ?? (Uri u) => launchUrl(u, webOnlyWindowName: '_blank');
+          final opened = await launcher(url);
+          if (!opened) {
+            throw const AuthFailure(
+              'Could not open Google sign-in',
+              null,
+              'google_launch_failed',
+            );
+          }
+        },
+        expand: _expand,
+      );
+
+      final authDto = AuthDto.fromAuthResult(result);
+      _ensureStaffRole(authDto);
+      await _persistAuth(authDto);
       return _createAuthState(authDto);
     }, Failure.handle).run();
   }
@@ -97,8 +151,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final result = await _collection.authRefresh(expand: _expand);
 
       final authDto = AuthDto.fromAuthResult(result);
-      await authStorage.save(authDto);
-      pb.authStore.save(authDto.token, authDto.toRecordModel());
+      await _persistAuth(authDto);
       return _createAuthState(authDto);
     }, Failure.handle).run();
   }
@@ -145,8 +198,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final result = await _collection.authRefresh(expand: _expand);
 
       final authDto = AuthDto.fromAuthResult(result);
-      await authStorage.save(authDto);
-      pb.authStore.save(authDto.token, authDto.toRecordModel());
+      await _persistAuth(authDto);
       return _createAuthState(authDto);
     }, Failure.handle).run();
   }

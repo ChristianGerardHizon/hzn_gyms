@@ -36,3 +36,11 @@ onRecordAfterCreateSuccess((e) => {
 onRecordUpdateRequest((e) => {
     require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e);
 }, "users");
+
+/**
+ * Google (and other OAuth) login: allow only when an existing staff user
+ * matches the provider email. Block automatic account creation.
+ */
+onRecordAuthWithOAuth2Request((e) => {
+    require(`${__hooks}/lib/users_helpers.js`).rejectOAuthAccountCreation(e);
+}, "users");

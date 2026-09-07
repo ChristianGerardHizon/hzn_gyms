@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -9,6 +10,8 @@ import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../../core/widgets/app_version_indicator.dart';
 import '../controllers/auth_controller.dart';
+import '../login_error_message.dart';
+
 /// Login page for user authentication.
 class LoginPage extends HookConsumerWidget {
   const LoginPage({super.key});
@@ -27,7 +30,7 @@ class LoginPage extends HookConsumerWidget {
       if (!context.mounted) return;
 
       if (next.hasError) {
-        errorMessage.value = t.failures.invalidCredentials;
+        errorMessage.value = loginErrorMessage(next.error);
       }
     });
 
@@ -40,6 +43,11 @@ class LoginPage extends HookConsumerWidget {
             .read(authControllerProvider.notifier)
             .login(values['email'] as String, values['password'] as String);
       }
+    }
+
+    Future<void> handleGoogleLogin() async {
+      errorMessage.value = null;
+      await ref.read(authControllerProvider.notifier).loginWithGoogle();
     }
 
     return Scaffold(
@@ -71,7 +79,8 @@ class LoginPage extends HookConsumerWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            appTitle,                            textAlign: TextAlign.center,
+                            appTitle,
+                            textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                           const SizedBox(height: 8),
@@ -186,6 +195,39 @@ class LoginPage extends HookConsumerWidget {
                                   : Text(t.auth.loginButton),
                             ),
                           ),
+
+                          if (kIsWeb) ...[
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                const Expanded(child: Divider()),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Text(
+                                    t.auth.orDivider,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: Colors.grey),
+                                  ),
+                                ),
+                                const Expanded(child: Divider()),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: isLoading ? null : handleGoogleLogin,
+                              icon: const Icon(Icons.g_mobiledata, size: 28),
+                              label: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                child: Text(t.auth.continueWithGoogle),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 32),
 
                           // App version indicator

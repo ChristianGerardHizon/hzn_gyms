@@ -70,7 +70,23 @@ function enforceUserOrganizationScope(e, options) {
     e.next();
 }
 
+/**
+ * Existing-staff Google login only: reject OAuth when PocketBase would create
+ * a new users record (unknown Google email). Matching emails link/login.
+ *
+ * @param {core.RecordAuthWithOAuth2RequestEvent} e
+ */
+function rejectOAuthAccountCreation(e) {
+    if (e.isNewRecord || !e.record) {
+        throw new ForbiddenError(
+            "No staff account for this Google email. Ask an admin to create your user first.",
+        );
+    }
+    e.next();
+}
+
 module.exports = {
     callerHasOrganizationsManage: callerHasOrganizationsManage,
     enforceUserOrganizationScope: enforceUserOrganizationScope,
+    rejectOAuthAccountCreation: rejectOAuthAccountCreation,
 };

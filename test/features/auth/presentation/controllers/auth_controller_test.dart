@@ -38,9 +38,44 @@ void main() {
     when(() => repo.login(any(), any())).thenAnswer(
       (_) async => right(_newAuth),
     );
+    when(() => repo.loginWithGoogle()).thenAnswer(
+      (_) async => right(_newAuth),
+    );
   });
 
   group('AuthController', () {
+    test('loginWithGoogle sets auth state on success', () async {
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(authControllerProvider.future);
+      final ok =
+          await container.read(authControllerProvider.notifier).loginWithGoogle();
+      expect(ok, isTrue);
+      expect(container.read(authControllerProvider).value, _newAuth);
+      verify(() => repo.loginWithGoogle()).called(1);
+    });
+
+    test('loginWithGoogle sets error state on failure', () async {
+      when(() => repo.loginWithGoogle()).thenAnswer(
+        (_) async => left(
+          const AuthFailure('No staff account', null, 'google_no_staff'),
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(authControllerProvider.future);
+      final ok =
+          await container.read(authControllerProvider.notifier).loginWithGoogle();
+      expect(ok, isFalse);
+      expect(container.read(authControllerProvider).hasError, isTrue);
+    });
+
     test(
       'ignores stale background refresh after logout and re-login',
       () async {
