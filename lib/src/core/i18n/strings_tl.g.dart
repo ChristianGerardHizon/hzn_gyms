@@ -229,7 +229,7 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get edit => 'I-edit ang Organisasyon';
 	@override String get name => 'Pangalan';
 	@override String get slug => 'Slug';
-	@override String get slugHelper => 'Ginagamit para sa subdomain (hal. slug.gyms.hznsystems.com)';
+	@override String get slugHelper => 'URL-safe na identifier (lowercase letters, numbers, hyphens)';
 	@override String get displayNameHint => 'Ipinapakita sa app title/branding';
 	@override String get slugValidationError => 'Lowercase letters, numbers, and hyphens lamang';
 	@override String get seedColorValidationError => 'Gumamit ng hex format tulad ng #1E88E5';
@@ -248,11 +248,6 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get logoUpload => 'Mag-upload ng logo';
 	@override String get logoReplace => 'Palitan ang logo';
 	@override String get logoRemove => 'Alisin';
-	@override String get subdomain => 'Subdomain';
-	@override String get dnsStatus => 'DNS Status';
-	@override String get retryDns => 'Subukang Muli ang DNS';
-	@override String get retryDnsSuccess => 'Sinubukan muli ang DNS provisioning';
-	@override String get retryDnsFailed => 'Hindi na-retry ang DNS provisioning';
 	@override String get createSuccess => 'Matagumpay na nagawa ang organisasyon';
 	@override String get updateSuccess => 'Matagumpay na na-update ang organisasyon';
 	@override String get saveFailed => 'Hindi na-save ang organisasyon. Pakisubukang muli.';
@@ -266,12 +261,10 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get recentOrganizations => 'Kamakailang organisasyon';
 	@override String get summaryTotal => 'Kabuuang organisasyon';
 	@override String get summaryPendingSetup => 'Nakabinbing setup';
-	@override String get summaryDnsIssues => 'Mga isyu sa DNS';
 	@override String get summaryReady => 'Handa na';
 	@override String get continueSetup => 'Ipagpatuloy ang setup';
 	@override String get setupTitle => 'Setup ng organisasyon';
 	@override String get setupStepBranding => 'Branding';
-	@override String get setupStepDns => 'DNS at subdomain';
 	@override String get setupStepBranch => 'Unang branch';
 	@override String get setupStepAdminUser => 'Org admin';
 	@override String get setupStepMembership => 'Membership plan';
@@ -297,7 +290,6 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get setupCreateProduct => 'Gumawa ng produkto';
 	@override String get setupSkipStep => 'Laktawan muna';
 	@override String get setupMarkComplete => 'Markahan bilang kumpleto';
-	@override String setupLoginUrl({required Object url}) => 'Staff login URL: ${url}';
 	@override String get setupCompleteSuccess => 'Handa na ang organisasyon';
 }
 
@@ -476,7 +468,7 @@ extension on TranslationsTl {
 			'organizations.edit' => 'I-edit ang Organisasyon',
 			'organizations.name' => 'Pangalan',
 			'organizations.slug' => 'Slug',
-			'organizations.slugHelper' => 'Ginagamit para sa subdomain (hal. slug.gyms.hznsystems.com)',
+			'organizations.slugHelper' => 'URL-safe na identifier (lowercase letters, numbers, hyphens)',
 			'organizations.displayNameHint' => 'Ipinapakita sa app title/branding',
 			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens lamang',
 			'organizations.seedColorValidationError' => 'Gumamit ng hex format tulad ng #1E88E5',
@@ -495,11 +487,6 @@ extension on TranslationsTl {
 			'organizations.logoUpload' => 'Mag-upload ng logo',
 			'organizations.logoReplace' => 'Palitan ang logo',
 			'organizations.logoRemove' => 'Alisin',
-			'organizations.subdomain' => 'Subdomain',
-			'organizations.dnsStatus' => 'DNS Status',
-			'organizations.retryDns' => 'Subukang Muli ang DNS',
-			'organizations.retryDnsSuccess' => 'Sinubukan muli ang DNS provisioning',
-			'organizations.retryDnsFailed' => 'Hindi na-retry ang DNS provisioning',
 			'organizations.createSuccess' => 'Matagumpay na nagawa ang organisasyon',
 			'organizations.updateSuccess' => 'Matagumpay na na-update ang organisasyon',
 			'organizations.saveFailed' => 'Hindi na-save ang organisasyon. Pakisubukang muli.',
@@ -513,12 +500,10 @@ extension on TranslationsTl {
 			'organizations.recentOrganizations' => 'Kamakailang organisasyon',
 			'organizations.summaryTotal' => 'Kabuuang organisasyon',
 			'organizations.summaryPendingSetup' => 'Nakabinbing setup',
-			'organizations.summaryDnsIssues' => 'Mga isyu sa DNS',
 			'organizations.summaryReady' => 'Handa na',
 			'organizations.continueSetup' => 'Ipagpatuloy ang setup',
 			'organizations.setupTitle' => 'Setup ng organisasyon',
 			'organizations.setupStepBranding' => 'Branding',
-			'organizations.setupStepDns' => 'DNS at subdomain',
 			'organizations.setupStepBranch' => 'Unang branch',
 			'organizations.setupStepAdminUser' => 'Org admin',
 			'organizations.setupStepMembership' => 'Membership plan',
@@ -544,7 +529,6 @@ extension on TranslationsTl {
 			'organizations.setupCreateProduct' => 'Gumawa ng produkto',
 			'organizations.setupSkipStep' => 'Laktawan muna',
 			'organizations.setupMarkComplete' => 'Markahan bilang kumpleto',
-			'organizations.setupLoginUrl' => ({required Object url}) => 'Staff login URL: ${url}',
 			'organizations.setupCompleteSuccess' => 'Handa na ang organisasyon',
 			'sort.sortBy' => 'Ayusin Ayon Sa',
 			'sort.direction' => 'Direksyon',

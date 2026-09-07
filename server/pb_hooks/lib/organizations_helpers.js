@@ -168,21 +168,13 @@ function assertSubdomainAvailable(app, record, excludeId) {
 }
 
 // Handler: onRecordCreateRequest("organizations")
+// DNS linking is no longer required — skip Porkbun availability checks.
 function onCreateRequest(e) {
-    assertSubdomainAvailable(e.app, e.record, null)
     e.next()
 }
 
 // Handler: onRecordUpdateRequest("organizations")
 function onUpdateRequest(e) {
-    const original = getOriginalRecord(e.record)
-    const slugChanged =
-        !original || original.getString("slug").trim() !== e.record.getString("slug").trim()
-
-    if (slugChanged) {
-        assertSubdomainAvailable(e.app, e.record, e.record.id)
-    }
-
     e.next()
 }
 
@@ -274,29 +266,14 @@ function provisionSubdomain(app, record) {
 }
 
 // Handler: onRecordAfterCreateSuccess("organizations")
+// Auto DNS provisioning disabled — organizations do not need a subdomain.
 function onCreateSuccess(e) {
     e.next()
-    try {
-        provisionSubdomain(e.app, e.record)
-    } catch (err) {
-        console.log(`[organizations] create-provisioning error: ${err}`)
-    }
 }
 
 // Handler: onRecordAfterUpdateSuccess("organizations")
-//
-// Reprovisions when the stored subdomain drifts from the expected hostname
-// (e.g. after changing PORKBUN_BASE_DOMAIN or slug). Old Porkbun records are
-// intentionally left in place so in-flight links/bookmarks don't break.
 function onUpdateSuccess(e) {
     e.next()
-    try {
-        if (e.record.getString("subdomain") !== expectedSubdomain(e.record)) {
-            provisionSubdomain(e.app, e.record)
-        }
-    } catch (err) {
-        console.log(`[organizations] update-provisioning error: ${err}`)
-    }
 }
 
 function requireOrganizationsManage(e) {
@@ -341,25 +318,9 @@ function retryDns(e) {
     })
 }
 
-// Scheduled job: retries records stuck in "failed".
+// Scheduled job — no-op; auto DNS retry disabled with org DNS linking.
 function retryFailed() {
-    try {
-        const failed = $app.findRecordsByFilter(
-            "organizations",
-            'dnsStatus = "failed" && isDeleted = false',
-            "",
-            50,
-            0,
-        )
-        for (const record of failed) {
-            provisionSubdomain($app, record)
-        }
-        if (failed.length > 0) {
-            console.log(`[organizations] retried DNS provisioning for ${failed.length} org(s)`)
-        }
-    } catch (err) {
-        console.log(`[organizations] scheduled retry error: ${err}`)
-    }
+    // intentionally empty
 }
 
 module.exports = {

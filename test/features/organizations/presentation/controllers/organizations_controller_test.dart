@@ -1,7 +1,6 @@
 import 'package:hzn_gyms/src/core/foundation/failure.dart';
 import 'package:hzn_gyms/src/features/organizations/data/repositories/organization_repository.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
-import 'package:hzn_gyms/src/features/organizations/domain/organization_dns_status.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organizations_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -24,7 +23,6 @@ void main() {
     id: 'org-b',
     name: 'Org B',
     slug: 'org-b',
-    dnsStatus: OrganizationDnsStatus.failed,
   );
 
   setUp(() {
@@ -61,28 +59,6 @@ void main() {
     expect(
       container.read(organizationsControllerProvider).value,
       [created, orgA, orgB],
-    );
-  });
-
-  test('retryDnsProvisioning updates matching org in list', () async {
-    const retried = Organization(
-      id: 'org-b',
-      name: 'Org B',
-      slug: 'org-b',
-      dnsStatus: OrganizationDnsStatus.created,
-    );
-    when(() => repo.retryDnsProvisioning('org-b'))
-        .thenAnswer((_) async => right(retried));
-
-    await container.read(organizationsControllerProvider.future);
-    final controller =
-        container.read(organizationsControllerProvider.notifier);
-
-    final success = await controller.retryDnsProvisioning('org-b');
-    expect(success, isTrue);
-    expect(
-      container.read(organizationsControllerProvider).value,
-      [orgA, retried],
     );
   });
 

@@ -1,6 +1,6 @@
 import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
-import 'package:hzn_gyms/src/features/organizations/domain/organization_dns_status.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization_setup_status.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organizations_controller.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/pages/organizations_page.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +12,10 @@ void main() {
     id: 'org-1',
     name: 'Kylie Gym',
     slug: 'kyliegym',
-    subdomain: 'kyliegym.gyms.hznsystems.com',
-    dnsStatus: OrganizationDnsStatus.failed,
-    dnsError: 'DNS timeout',
+    setupStatus: OrganizationSetupStatus.pendingSetup,
   );
 
-  testWidgets('shows organization list with DNS badge', (tester) async {
+  testWidgets('shows organization list with setup status', (tester) async {
     await tester.pumpWidget(
       TranslationProvider(
         child: ProviderScope(
@@ -34,9 +32,7 @@ void main() {
 
     expect(find.text('Kylie Gym'), findsOneWidget);
     expect(find.text('Slug: kyliegym'), findsOneWidget);
-    expect(find.text('Failed'), findsOneWidget);
-    expect(find.text('DNS timeout'), findsOneWidget);
-    expect(find.text('Retry DNS'), findsOneWidget);
+    expect(find.text('Retry DNS'), findsNothing);
   });
 }
 
@@ -47,7 +43,4 @@ class _FakeOrganizationsController extends OrganizationsController {
 
   @override
   Future<List<Organization>> build() async => _organizations;
-
-  @override
-  Future<bool> retryDnsProvisioning(String id) async => true;
 }

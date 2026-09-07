@@ -1,5 +1,4 @@
 import '../domain/organization.dart';
-import '../domain/organization_dns_status.dart';
 
 /// A single checklist row for org setup (mirrors server complete-setup checks).
 class OrganizationSetupCheck {
@@ -19,6 +18,7 @@ class OrganizationSetupCheck {
 /// Pure client-side setup checklist for wizard step indicators.
 ///
 /// Server validation on complete-setup endpoint is authoritative.
+/// DNS / subdomain is not required for organizations.
 class OrganizationSetupChecks {
   const OrganizationSetupChecks._();
 
@@ -28,19 +28,7 @@ class OrganizationSetupChecks {
     required bool hasAdminUser,
     String? adminUserDetail,
   }) {
-    final dnsOk =
-        organization.dnsStatus == OrganizationDnsStatus.created ||
-        organization.dnsStatus == OrganizationDnsStatus.pending;
-
     return [
-      OrganizationSetupCheck(
-        key: 'dns',
-        label: 'DNS provisioning',
-        passed: dnsOk,
-        detail: dnsOk
-            ? organization.dnsStatus.label
-            : organization.dnsError ?? organization.dnsStatus.label,
-      ),
       OrganizationSetupCheck(
         key: 'branch',
         label: 'At least one branch',
@@ -71,10 +59,7 @@ class OrganizationSetupChecks {
     required bool hasBranch,
     required bool hasAdminUser,
   }) {
-    final dnsOk =
-        organization.dnsStatus == OrganizationDnsStatus.created ||
-        organization.dnsStatus == OrganizationDnsStatus.pending;
-    return dnsOk && hasBranch && hasAdminUser;
+    return hasBranch && hasAdminUser;
   }
 }
 
@@ -83,18 +68,15 @@ class PlatformDashboardSummary {
   const PlatformDashboardSummary({
     required this.total,
     required this.pendingSetup,
-    required this.dnsIssues,
     required this.ready,
   });
 
   final int total;
   final int pendingSetup;
-  final int dnsIssues;
   final int ready;
 
   factory PlatformDashboardSummary.fromOrganizations(List<Organization> orgs) {
     var pending = 0;
-    var dnsIssues = 0;
     var ready = 0;
     for (final org in orgs) {
       if (org.setupStatus.isReady) {
@@ -102,14 +84,10 @@ class PlatformDashboardSummary {
       } else {
         pending++;
       }
-      if (org.dnsStatus == OrganizationDnsStatus.failed) {
-        dnsIssues++;
-      }
     }
     return PlatformDashboardSummary(
       total: orgs.length,
       pendingSetup: pending,
-      dnsIssues: dnsIssues,
       ready: ready,
     );
   }

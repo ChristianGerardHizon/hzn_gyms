@@ -73,19 +73,7 @@ function runSetupChecks(app, orgId) {
         errors.push("Organization is deleted");
     }
 
-    const dnsStatus = org.getString("dnsStatus");
-    const dnsOk = dnsStatus === "created" || dnsStatus === "pending";
-    checks.push({
-        key: "dns",
-        label: "DNS provisioning",
-        passed: dnsOk,
-        detail: dnsOk
-            ? `dnsStatus=${dnsStatus}`
-            : `dnsStatus=${dnsStatus}${org.getString("dnsError") ? ": " + org.getString("dnsError") : ""}`,
-    });
-    if (!dnsOk) {
-        errors.push("DNS is not ready (expected created or pending)");
-    }
+    // DNS / subdomain provisioning is optional — tenants no longer require it.
 
     const branches = app.findRecordsByFilter(
         "branches",

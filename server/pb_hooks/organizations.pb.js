@@ -1,11 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // ============================================================================
-// Organizations Hooks — Porkbun DNS subdomain provisioning
+// Organizations Hooks — onboarding + optional DNS helpers
 // ============================================================================
-// Registration only — see pb_hooks/lib/organizations_helpers.js for the
-// actual logic (required inside each callback, per this repo's convention
-// for sharing code between hook callbacks).
+// Registration only — see pb_hooks/lib/organizations_helpers.js and
+// organization_setup_helpers.js for the actual logic (required inside each
+// callback, per this repo's convention for sharing code between hooks).
+//
+// Per-tenant DNS / subdomain provisioning is no longer required for orgs.
 
 onRecordCreateRequest((e) => {
     require(`${__hooks}/lib/organizations_helpers.js`).onCreateRequest(e);

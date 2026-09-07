@@ -52,12 +52,6 @@ class PlatformDashboardPage extends ConsumerWidget {
                   color: Colors.orange,
                 ),
                 _SummaryCard(
-                  label: t.organizations.summaryDnsIssues,
-                  value: '${summary.dnsIssues}',
-                  icon: Icons.dns,
-                  color: Colors.red,
-                ),
-                _SummaryCard(
                   label: t.organizations.summaryReady,
                   value: '${summary.ready}',
                   icon: Icons.check_circle,
