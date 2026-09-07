@@ -50,6 +50,21 @@ class CreateUserDialog extends HookConsumerWidget {
       }
 
       final values = formKey.currentState!.value;
+
+      final orgId = ref.read(currentOrganizationIdProvider);
+      if (!hasCreateUserOrganizationId(orgId)) {
+        if (context.mounted) {
+          showFormErrorDialog(
+            context,
+            errors: [
+              'No organization selected. Switch to an organization before '
+                  'creating a user.',
+            ],
+          );
+        }
+        return;
+      }
+
       isSaving.value = true;
 
       final defaultBranchId = values['branch'] as String?;
@@ -63,8 +78,6 @@ class CreateUserDialog extends HookConsumerWidget {
         allowedBranchIds = [...allowedBranchIds, defaultBranchId];
       }
 
-      // Create user object
-      final orgId = ref.read(currentOrganizationIdProvider);
       final user = User(
         id: '',
         name: (values['name'] as String).trim(),
@@ -401,6 +414,10 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
+
+/// Whether [orgId] is present for linking a newly created user.
+bool hasCreateUserOrganizationId(String? orgId) =>
+    orgId != null && orgId.isNotEmpty;
 
 /// Resolves the user detail location for the shell that opened create-user.
 String userDetailLocationForCurrentPath(String currentPath, String userId) {

@@ -289,18 +289,9 @@ function requireOrganizationsManage(e) {
     } catch (_) {
         // fall through to role check
     }
+    const { roleHasPermission } = require(`${__hooks}/lib/permissions_helpers.js`)
     const roleId = authRecord.getString("role")
-    if (!roleId) {
-        throw new ForbiddenError("organizations.manage permission required")
-    }
-    let permissions = []
-    try {
-        const role = e.app.findRecordById("userRoles", roleId)
-        permissions = role.get("permissions") || []
-    } catch (_) {
-        throw new ForbiddenError("organizations.manage permission required")
-    }
-    if (!Array.isArray(permissions) || permissions.indexOf("organizations.manage") === -1) {
+    if (!roleHasPermission(e.app, roleId, "organizations.manage")) {
         throw new ForbiddenError("organizations.manage permission required")
     }
     e.next()

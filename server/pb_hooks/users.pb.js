@@ -8,7 +8,9 @@
  * On create: enforce org scope. Do not auto-verify — users must confirm email.
  */
 onRecordCreateRequest((e) => {
-    require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e);
+    require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e, {
+        requireOrganization: true,
+    });
 }, "users");
 
 /**
