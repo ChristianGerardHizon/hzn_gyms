@@ -77,6 +77,18 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String resetLinkSent({required Object email}) => 'Naipadala na ang password reset link sa ${email}';
 	@override String get signInToContinue => 'Mag-sign in upang magpatuloy';
 	@override String get signingIn => 'Nagsa-sign in...';
+	@override String get verifyEmailTitle => 'I-verify ang email';
+	@override String verifyEmailSubtitle({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.';
+	@override String get verifyEmailContinue => 'Na-verify ko — Magpatuloy';
+	@override String get resendVerification => 'Ipadala muli ang verification email';
+	@override String resendVerificationCooldown({required Object seconds}) => 'Ipadala muli sa ${seconds}s';
+	@override String get verificationEmailSent => 'Naipadala ang verification email';
+	@override String get verificationEmailFailed => 'Hindi maipadala ang verification email. Subukan ulit mamaya.';
+	@override String get stillUnverified => 'Hindi pa verified ang email. Tingnan ang inbox at subukan ulit.';
+	@override String get confirmingVerification => 'Kino-confirm ang email...';
+	@override String get verificationSuccess => 'Na-verify ang email';
+	@override String get verificationFailed => 'Invalid o expired ang verification link.';
+	@override String get backToVerifyEmail => 'Bumalik sa verify email';
 }
 
 // Path: common
@@ -151,7 +163,6 @@ class _Translations$fields$tl implements Translations$fields$en {
 
 	// Translations
 	@override String get email => 'Email';
-	@override String get username => 'Username';
 	@override String get password => 'Password';
 	@override String get passwordConfirmation => 'Password confirmation';
 	@override String get name => 'Pangalan';
@@ -229,7 +240,7 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get edit => 'I-edit ang Organisasyon';
 	@override String get name => 'Pangalan';
 	@override String get slug => 'Slug';
-	@override String get slugHelper => 'Ginagamit para sa subdomain (hal. slug.gyms.hznsystems.com)';
+	@override String get slugHelper => 'URL-safe na identifier (lowercase letters, numbers, hyphens)';
 	@override String get displayNameHint => 'Ipinapakita sa app title/branding';
 	@override String get slugValidationError => 'Lowercase letters, numbers, and hyphens lamang';
 	@override String get seedColorValidationError => 'Gumamit ng hex format tulad ng #1E88E5';
@@ -248,11 +259,6 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get logoUpload => 'Mag-upload ng logo';
 	@override String get logoReplace => 'Palitan ang logo';
 	@override String get logoRemove => 'Alisin';
-	@override String get subdomain => 'Subdomain';
-	@override String get dnsStatus => 'DNS Status';
-	@override String get retryDns => 'Subukang Muli ang DNS';
-	@override String get retryDnsSuccess => 'Sinubukan muli ang DNS provisioning';
-	@override String get retryDnsFailed => 'Hindi na-retry ang DNS provisioning';
 	@override String get createSuccess => 'Matagumpay na nagawa ang organisasyon';
 	@override String get updateSuccess => 'Matagumpay na na-update ang organisasyon';
 	@override String get saveFailed => 'Hindi na-save ang organisasyon. Pakisubukang muli.';
@@ -266,12 +272,10 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get recentOrganizations => 'Kamakailang organisasyon';
 	@override String get summaryTotal => 'Kabuuang organisasyon';
 	@override String get summaryPendingSetup => 'Nakabinbing setup';
-	@override String get summaryDnsIssues => 'Mga isyu sa DNS';
 	@override String get summaryReady => 'Handa na';
 	@override String get continueSetup => 'Ipagpatuloy ang setup';
 	@override String get setupTitle => 'Setup ng organisasyon';
 	@override String get setupStepBranding => 'Branding';
-	@override String get setupStepDns => 'DNS at subdomain';
 	@override String get setupStepBranch => 'Unang branch';
 	@override String get setupStepAdminUser => 'Org admin';
 	@override String get setupStepMembership => 'Membership plan';
@@ -286,7 +290,6 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get setupBranchRequiredFirst => 'Gumawa muna ng branch bago magdagdag ng admin user.';
 	@override String get setupAdminName => 'Pangalan ng admin';
 	@override String get setupAdminEmail => 'Email ng admin (login)';
-	@override String get setupAdminUsername => 'Username';
 	@override String get setupAdminPassword => 'Password';
 	@override String get setupCreateAdminUser => 'Gumawa ng admin user';
 	@override String get setupAdminUserFailed => 'Hindi nagawa ang admin user';
@@ -297,7 +300,6 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get setupCreateProduct => 'Gumawa ng produkto';
 	@override String get setupSkipStep => 'Laktawan muna';
 	@override String get setupMarkComplete => 'Markahan bilang kumpleto';
-	@override String setupLoginUrl({required Object url}) => 'Staff login URL: ${url}';
 	@override String get setupCompleteSuccess => 'Handa na ang organisasyon';
 }
 
@@ -369,6 +371,18 @@ extension on TranslationsTl {
 			'auth.resetLinkSent' => ({required Object email}) => 'Naipadala na ang password reset link sa ${email}',
 			'auth.signInToContinue' => 'Mag-sign in upang magpatuloy',
 			'auth.signingIn' => 'Nagsa-sign in...',
+			'auth.verifyEmailTitle' => 'I-verify ang email',
+			'auth.verifyEmailSubtitle' => ({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.',
+			'auth.verifyEmailContinue' => 'Na-verify ko — Magpatuloy',
+			'auth.resendVerification' => 'Ipadala muli ang verification email',
+			'auth.resendVerificationCooldown' => ({required Object seconds}) => 'Ipadala muli sa ${seconds}s',
+			'auth.verificationEmailSent' => 'Naipadala ang verification email',
+			'auth.verificationEmailFailed' => 'Hindi maipadala ang verification email. Subukan ulit mamaya.',
+			'auth.stillUnverified' => 'Hindi pa verified ang email. Tingnan ang inbox at subukan ulit.',
+			'auth.confirmingVerification' => 'Kino-confirm ang email...',
+			'auth.verificationSuccess' => 'Na-verify ang email',
+			'auth.verificationFailed' => 'Invalid o expired ang verification link.',
+			'auth.backToVerifyEmail' => 'Bumalik sa verify email',
 			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'I-save',
@@ -416,7 +430,6 @@ extension on TranslationsTl {
 			'failures.accountNotVerified' => 'Hindi pa na-verify ang iyong account.',
 			'failures.tooManyRequests' => 'Masyadong maraming request. Maghintay ng ilang sandali.',
 			'fields.email' => 'Email',
-			'fields.username' => 'Username',
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Pangalan',
@@ -476,7 +489,7 @@ extension on TranslationsTl {
 			'organizations.edit' => 'I-edit ang Organisasyon',
 			'organizations.name' => 'Pangalan',
 			'organizations.slug' => 'Slug',
-			'organizations.slugHelper' => 'Ginagamit para sa subdomain (hal. slug.gyms.hznsystems.com)',
+			'organizations.slugHelper' => 'URL-safe na identifier (lowercase letters, numbers, hyphens)',
 			'organizations.displayNameHint' => 'Ipinapakita sa app title/branding',
 			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens lamang',
 			'organizations.seedColorValidationError' => 'Gumamit ng hex format tulad ng #1E88E5',
@@ -495,11 +508,6 @@ extension on TranslationsTl {
 			'organizations.logoUpload' => 'Mag-upload ng logo',
 			'organizations.logoReplace' => 'Palitan ang logo',
 			'organizations.logoRemove' => 'Alisin',
-			'organizations.subdomain' => 'Subdomain',
-			'organizations.dnsStatus' => 'DNS Status',
-			'organizations.retryDns' => 'Subukang Muli ang DNS',
-			'organizations.retryDnsSuccess' => 'Sinubukan muli ang DNS provisioning',
-			'organizations.retryDnsFailed' => 'Hindi na-retry ang DNS provisioning',
 			'organizations.createSuccess' => 'Matagumpay na nagawa ang organisasyon',
 			'organizations.updateSuccess' => 'Matagumpay na na-update ang organisasyon',
 			'organizations.saveFailed' => 'Hindi na-save ang organisasyon. Pakisubukang muli.',
@@ -513,12 +521,10 @@ extension on TranslationsTl {
 			'organizations.recentOrganizations' => 'Kamakailang organisasyon',
 			'organizations.summaryTotal' => 'Kabuuang organisasyon',
 			'organizations.summaryPendingSetup' => 'Nakabinbing setup',
-			'organizations.summaryDnsIssues' => 'Mga isyu sa DNS',
 			'organizations.summaryReady' => 'Handa na',
 			'organizations.continueSetup' => 'Ipagpatuloy ang setup',
 			'organizations.setupTitle' => 'Setup ng organisasyon',
 			'organizations.setupStepBranding' => 'Branding',
-			'organizations.setupStepDns' => 'DNS at subdomain',
 			'organizations.setupStepBranch' => 'Unang branch',
 			'organizations.setupStepAdminUser' => 'Org admin',
 			'organizations.setupStepMembership' => 'Membership plan',
@@ -533,7 +539,6 @@ extension on TranslationsTl {
 			'organizations.setupBranchRequiredFirst' => 'Gumawa muna ng branch bago magdagdag ng admin user.',
 			'organizations.setupAdminName' => 'Pangalan ng admin',
 			'organizations.setupAdminEmail' => 'Email ng admin (login)',
-			'organizations.setupAdminUsername' => 'Username',
 			'organizations.setupAdminPassword' => 'Password',
 			'organizations.setupCreateAdminUser' => 'Gumawa ng admin user',
 			'organizations.setupAdminUserFailed' => 'Hindi nagawa ang admin user',
@@ -544,7 +549,6 @@ extension on TranslationsTl {
 			'organizations.setupCreateProduct' => 'Gumawa ng produkto',
 			'organizations.setupSkipStep' => 'Laktawan muna',
 			'organizations.setupMarkComplete' => 'Markahan bilang kumpleto',
-			'organizations.setupLoginUrl' => ({required Object url}) => 'Staff login URL: ${url}',
 			'organizations.setupCompleteSuccess' => 'Handa na ang organisasyon',
 			'sort.sortBy' => 'Ayusin Ayon Sa',
 			'sort.direction' => 'Direksyon',

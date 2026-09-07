@@ -20,5 +20,17 @@
     "checkEmail": "Tingnan ang Iyong Email",
     "resetLinkSent(email)": "Naipadala na ang password reset link sa $email",
     "signInToContinue": "Mag-sign in upang magpatuloy",
-    "signingIn": "Nagsa-sign in..."
+    "signingIn": "Nagsa-sign in...",
+    "verifyEmailTitle": "I-verify ang email",
+    "verifyEmailSubtitle(email)": "Nagpadala kami ng verification link sa $email. Buksan ang link, tapos pindutin ang Continue.",
+    "verifyEmailContinue": "Na-verify ko — Magpatuloy",
+    "resendVerification": "Ipadala muli ang verification email",
+    "resendVerificationCooldown(seconds)": "Ipadala muli sa ${seconds}s",
+    "verificationEmailSent": "Naipadala ang verification email",
+    "verificationEmailFailed": "Hindi maipadala ang verification email. Subukan ulit mamaya.",
+    "stillUnverified": "Hindi pa verified ang email. Tingnan ang inbox at subukan ulit.",
+    "confirmingVerification": "Kino-confirm ang email...",
+    "verificationSuccess": "Na-verify ang email",
+    "verificationFailed": "Invalid o expired ang verification link.",
+    "backToVerifyEmail": "Bumalik sa verify email"
 }

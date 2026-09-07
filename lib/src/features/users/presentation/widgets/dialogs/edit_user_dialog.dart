@@ -31,7 +31,6 @@ class EditUserDialog extends HookConsumerWidget {
       formKey: formKey,
       initialValues: {
         'name': user.name,
-        'username': user.username,
         'role': user.roleId,
         'branch': user.branchId,
         'allowedBranches': user.allowedBranchIds,
@@ -76,12 +75,13 @@ class EditUserDialog extends HookConsumerWidget {
       final updatedUser = User(
         id: user.id,
         name: (values['name'] as String).trim(),
-        username: (values['username'] as String).trim().toLowerCase(),
+        email: user.email,
         avatar: user.avatar,
         verified: user.verified,
         roleId: values['role'] as String?,
         branchId: defaultBranchId,
         branchName: user.branchName,
+        organizationId: user.organizationId,
         allowedBranchIds: allowedBranchIds,
         allowedBranchNames: user.allowedBranchNames,
         isDeleted: user.isDeleted,
@@ -123,7 +123,6 @@ class EditUserDialog extends HookConsumerWidget {
       onSave: (_) => handleSave(),
       initialValue: {
         'name': user.name,
-        'username': user.username,
         'role': user.roleId,
         'branch': user.branchId,
         'allowedBranches': user.allowedBranchIds,
@@ -148,25 +147,6 @@ class EditUserDialog extends HookConsumerWidget {
             validator: FormBuilderValidators.required(
               errorText: 'Name is required',
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Username (required)
-          FormBuilderTextField(
-            name: 'username',
-            decoration: const InputDecoration(
-              labelText: 'Username *',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.alternate_email),
-            ),
-            enabled: !isSaving.value,
-            validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(errorText: 'Username is required'),
-              FormBuilderValidators.minLength(
-                3,
-                errorText: 'Username must be at least 3 characters',
-              ),
-            ]),
           ),
           const SizedBox(height: 8),
 
@@ -403,7 +383,6 @@ class EditUserDialog extends HookConsumerWidget {
 
   static const _fieldLabels = {
     'name': 'Name',
-    'username': 'Username',
     'role': 'Role',
     'branch': 'Default Branch',
     'allowedBranches': 'Allowed Branches',

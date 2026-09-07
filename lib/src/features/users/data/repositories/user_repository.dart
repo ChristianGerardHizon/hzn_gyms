@@ -36,11 +36,10 @@ abstract class UserRepository {
   /// Updates an existing user.
   FutureEither<User> update(User user);
 
-  /// Updates only name/username for the signed-in user's profile.
+  /// Updates only name for the signed-in user's profile.
   FutureEither<User> updateProfile({
     required String id,
     required String name,
-    required String username,
   });
 
   /// Soft deletes a user (sets isDeleted = true).
@@ -201,7 +200,6 @@ class UserRepositoryImpl implements UserRepository {
   FutureEither<User> create(User user, String password) async {
     return TaskEither.tryCatch(() async {
       final body = <String, dynamic>{
-        'username': user.username,
         'name': user.name,
         'email': user.email,
         'password': password,
@@ -225,11 +223,11 @@ class UserRepositoryImpl implements UserRepository {
   FutureEither<User> update(User user) async {
     return TaskEither.tryCatch(() async {
       final body = <String, dynamic>{
-        'username': user.username,
         'name': user.name,
         'role': user.roleId,
         'branch': user.branchId,
         'allowedBranches': user.allowedBranchIds,
+        'verified': user.verified,
       };
       if (user.email != null && user.email!.isNotEmpty) {
         body['email'] = user.email;
@@ -252,14 +250,12 @@ class UserRepositoryImpl implements UserRepository {
   FutureEither<User> updateProfile({
     required String id,
     required String name,
-    required String username,
   }) async {
     return TaskEither.tryCatch(() async {
       final record = await _collection.update(
         id,
         body: {
           'name': name,
-          'username': username,
         },
         expand: _expand,
       );
@@ -279,7 +275,7 @@ class UserRepositoryImpl implements UserRepository {
   @override
   FutureEither<List<User>> search(String query, {List<String>? fields}) async {
     return TaskEither.tryCatch(() async {
-      final searchFields = fields ?? ['name', 'username'];
+      final searchFields = fields ?? ['name', 'email'];
       final filter = PBFilter()
           .notDeleted()
           .searchFields(query, searchFields)
@@ -304,7 +300,7 @@ class UserRepositoryImpl implements UserRepository {
     String? filter,
   }) async {
     return TaskEither.tryCatch(() async {
-      final searchFields = fields ?? ['name', 'username'];
+      final searchFields = fields ?? ['name', 'email'];
       final searchFilter = PBFilter()
           .notDeleted()
           .searchFields(query, searchFields)

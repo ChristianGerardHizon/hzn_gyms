@@ -25,7 +25,6 @@ void main() {
         collectionId: 'c',
         collectionName: 'users',
         name: 'Cashier',
-        username: 'cashier',
         email: 'c@test.com',
         verified: true,
         branch: 'branch-1',
@@ -59,11 +58,11 @@ void main() {
     when(() => storage.write(key: any(named: 'key'), value: any(named: 'value')))
         .thenAnswer((_) async {});
 
-    final result = await repo.login('cashier', 'secret');
+    final result = await repo.login('c@test.com', 'secret');
     expect(result.isRight(), isTrue);
     expect(
-      result.getOrElse((_) => throw StateError('l')).user.username,
-      'cashier',
+      result.getOrElse((_) => throw StateError('l')).user.email,
+      'c@test.com',
     );
     verify(
       () => storage.write(key: any(named: 'key'), value: any(named: 'value')),
@@ -106,5 +105,17 @@ void main() {
     when(() => users.requestPasswordReset(any())).thenAnswer((_) async {});
     expect((await repo.requestPasswordReset('a@b.com')).isRight(), isTrue);
     verify(() => users.requestPasswordReset('a@b.com')).called(1);
+  });
+
+  test('requestVerification delegates to collection', () async {
+    when(() => users.requestVerification(any())).thenAnswer((_) async {});
+    expect((await repo.requestVerification('a@b.com')).isRight(), isTrue);
+    verify(() => users.requestVerification('a@b.com')).called(1);
+  });
+
+  test('confirmVerification delegates to collection', () async {
+    when(() => users.confirmVerification(any())).thenAnswer((_) async {});
+    expect((await repo.confirmVerification('token-1')).isRight(), isTrue);
+    verify(() => users.confirmVerification('token-1')).called(1);
   });
 }

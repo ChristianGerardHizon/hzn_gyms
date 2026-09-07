@@ -6,7 +6,6 @@ import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/routing/routes/platform.routes.dart';
 import '../../domain/organization.dart';
 import '../controllers/organization_setup_controller.dart';
-import '../widgets/organization_dns_retry_button.dart';
 import '../widgets/organization_form_dialog.dart';
 import '../widgets/organization_setup_admin_user_form.dart';
 import '../widgets/organization_setup_branch_form.dart';
@@ -37,7 +36,6 @@ class OrganizationSetupPage extends HookConsumerWidget {
       data: (setupState) {
         final steps = [
           t.organizations.setupStepBranding,
-          t.organizations.setupStepDns,
           t.organizations.setupStepBranch,
           t.organizations.setupStepAdminUser,
           t.organizations.setupStepMembership,
@@ -89,23 +87,32 @@ class OrganizationSetupPage extends HookConsumerWidget {
               Step(
                 title: Text(steps[1]),
                 isActive: currentStep.value >= 1,
-                state: currentStep.value > 1
-                    ? StepState.complete
-                    : StepState.editing,
-                content: _DnsStep(
-                  organization: setupState.organization,
-                  onContinue: () => currentStep.value = 2,
-                ),
-              ),
-              Step(
-                title: Text(steps[2]),
-                isActive: currentStep.value >= 2,
-                state: setupState.hasBranch || currentStep.value > 2
+                state: setupState.hasBranch || currentStep.value > 1
                     ? StepState.complete
                     : StepState.editing,
                 content: OrganizationSetupBranchForm(
                   organizationId: organizationId,
                   onCreated: (branchId) async {
+                    await ref
+                        .read(
+                          organizationSetupControllerProvider(organizationId)
+                              .notifier,
+                        )
+                        .refreshProgress();
+                    currentStep.value = 2;
+                  },
+                ),
+              ),
+              Step(
+                title: Text(steps[2]),
+                isActive: currentStep.value >= 2,
+                state: setupState.hasAdminUser || currentStep.value > 2
+                    ? StepState.complete
+                    : StepState.editing,
+                content: OrganizationSetupAdminUserForm(
+                  organizationId: organizationId,
+                  defaultBranchId: setupState.createdBranchId,
+                  onCreated: () async {
                     await ref
                         .read(
                           organizationSetupControllerProvider(organizationId)
@@ -119,30 +126,10 @@ class OrganizationSetupPage extends HookConsumerWidget {
               Step(
                 title: Text(steps[3]),
                 isActive: currentStep.value >= 3,
-                state: setupState.hasAdminUser || currentStep.value > 3
-                    ? StepState.complete
-                    : StepState.editing,
-                content: OrganizationSetupAdminUserForm(
-                  organizationId: organizationId,
-                  defaultBranchId: setupState.createdBranchId,
-                  onCreated: () async {
-                    await ref
-                        .read(
-                          organizationSetupControllerProvider(organizationId)
-                              .notifier,
-                        )
-                        .refreshProgress();
-                    currentStep.value = 4;
-                  },
-                ),
-              ),
-              Step(
-                title: Text(steps[4]),
-                isActive: currentStep.value >= 4,
                 state:
                     setupState.membershipCreated ||
                         setupState.skippedMembership ||
-                        currentStep.value > 4
+                        currentStep.value > 3
                     ? StepState.complete
                     : StepState.editing,
                 content: OrganizationSetupOptionalMembershipStep(
@@ -153,7 +140,7 @@ class OrganizationSetupPage extends HookConsumerWidget {
                               .notifier,
                         )
                         .markMembershipCreated();
-                    currentStep.value = 5;
+                    currentStep.value = 4;
                   },
                   onSkip: () {
                     ref
@@ -162,17 +149,17 @@ class OrganizationSetupPage extends HookConsumerWidget {
                               .notifier,
                         )
                         .markMembershipSkipped();
-                    currentStep.value = 5;
+                    currentStep.value = 4;
                   },
                 ),
               ),
               Step(
-                title: Text(steps[5]),
-                isActive: currentStep.value >= 5,
+                title: Text(steps[4]),
+                isActive: currentStep.value >= 4,
                 state:
                     setupState.productCreated ||
                         setupState.skippedProduct ||
-                        currentStep.value > 5
+                        currentStep.value > 4
                     ? StepState.complete
                     : StepState.editing,
                 content: OrganizationSetupOptionalProductStep(
@@ -183,7 +170,7 @@ class OrganizationSetupPage extends HookConsumerWidget {
                               .notifier,
                         )
                         .markProductCreated();
-                    currentStep.value = 6;
+                    currentStep.value = 5;
                   },
                   onSkip: () {
                     ref
@@ -192,13 +179,13 @@ class OrganizationSetupPage extends HookConsumerWidget {
                               .notifier,
                         )
                         .markProductSkipped();
-                    currentStep.value = 6;
+                    currentStep.value = 5;
                   },
                 ),
               ),
               Step(
-                title: Text(steps[6]),
-                isActive: currentStep.value >= 6,
+                title: Text(steps[5]),
+                isActive: currentStep.value >= 5,
                 state: setupState.organization.setupStatus.isReady
                     ? StepState.complete
                     : StepState.editing,
@@ -257,47 +244,6 @@ class _BrandingStep extends ConsumerWidget {
   }
 }
 
-class _DnsStep extends ConsumerWidget {
-  const _DnsStep({
-    required this.organization,
-    required this.onContinue,
-  });
-
-  final Organization organization;
-  final VoidCallback onContinue;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = Translations.of(context);
-    final dnsStatus = organization.dnsStatus;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (organization.subdomain != null)
-          SelectableText(organization.subdomain!),
-        const SizedBox(height: 8),
-        Text('${t.organizations.dnsStatus}: ${dnsStatus.label}'),
-        if (organization.dnsError != null && organization.dnsError!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              organization.dnsError!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        const SizedBox(height: 12),
-        OrganizationDnsRetryButton(organization: organization),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: onContinue,
-          child: Text(t.organizations.setupContinue),
-        ),
-      ],
-    );
-  }
-}
-
 class _ReviewStep extends ConsumerStatefulWidget {
   const _ReviewStep({
     required this.setupState,
@@ -336,13 +282,6 @@ class _ReviewStepState extends ConsumerState<_ReviewStep> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.setupState.organization.subdomain != null)
-          Text(
-            t.organizations.setupLoginUrl(
-              url: 'https://${widget.setupState.organization.subdomain}',
-            ),
-          ),
-        const SizedBox(height: 16),
         for (final check in checks)
           ListTile(
             leading: Icon(

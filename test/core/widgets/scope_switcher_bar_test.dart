@@ -108,7 +108,7 @@ void main() {
                   user: User(
                     id: 'org-admin',
                     name: 'Org Admin',
-                    username: 'orgadmin',
+                    email: 'orgadmin@test.com',
                     verified: true,
                     organization: 'org-1',
                   ),

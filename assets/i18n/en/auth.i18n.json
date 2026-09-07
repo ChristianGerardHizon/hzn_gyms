@@ -20,5 +20,17 @@
     "checkEmail": "Check Your Email",
     "resetLinkSent(email)": "Password reset link has been sent to $email",
     "signInToContinue": "Sign in to continue",
-    "signingIn": "Signing in..."
+    "signingIn": "Signing in...",
+    "verifyEmailTitle": "Verify your email",
+    "verifyEmailSubtitle(email)": "We sent a verification link to $email. Open the link, then tap Continue.",
+    "verifyEmailContinue": "I've verified — Continue",
+    "resendVerification": "Resend verification email",
+    "resendVerificationCooldown(seconds)": "Resend in ${seconds}s",
+    "verificationEmailSent": "Verification email sent",
+    "verificationEmailFailed": "Could not send verification email. Try again later.",
+    "stillUnverified": "Email is still unverified. Check your inbox and try again.",
+    "confirmingVerification": "Confirming your email...",
+    "verificationSuccess": "Email verified",
+    "verificationFailed": "Verification link is invalid or expired.",
+    "backToVerifyEmail": "Back to verify email"
 }

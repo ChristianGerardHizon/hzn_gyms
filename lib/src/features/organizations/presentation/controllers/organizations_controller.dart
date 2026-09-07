@@ -138,21 +138,4 @@ class OrganizationsController extends _$OrganizationsController {
       },
     );
   }
-
-  /// Re-triggers DNS provisioning and updates the list entry.
-  Future<bool> retryDnsProvisioning(String id) async {
-    final result = await _repository.retryDnsProvisioning(id);
-
-    return result.fold(
-      (failure) => false,
-      (updated) {
-        final currentList = state.value ?? [];
-        final updatedList = currentList.map((org) {
-          return org.id == updated.id ? updated : org;
-        }).toList();
-        state = AsyncData(updatedList);
-        return true;
-      },
-    );
-  }
 }

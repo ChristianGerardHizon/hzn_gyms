@@ -6,7 +6,6 @@ import '../../../../core/routing/routes/platform.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../domain/organization.dart';
 import '../controllers/current_organization_controller.dart';
-import 'organization_dns_retry_button.dart';
 import 'organization_form_dialog.dart';
 import 'organization_setup_status_badge.dart';
 
@@ -19,8 +18,6 @@ class OrganizationListTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Translations.of(context);
-    final theme = Theme.of(context);
-    final dnsStatus = organization.dnsStatus;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -36,46 +33,8 @@ class OrganizationListTile extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Slug: ${organization.slug}'),
-            if (organization.subdomain != null &&
-                organization.subdomain!.isNotEmpty)
-              Text(organization.subdomain!),
             const SizedBox(height: 4),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                OrganizationSetupStatusBadge(organization: organization),
-                Text('${t.organizations.dnsStatus}: '),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: dnsStatus.badgeColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: dnsStatus.badgeColor),
-                  ),
-                  child: Text(
-                    dnsStatus.label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: dnsStatus.badgeColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (organization.dnsError != null &&
-                organization.dnsError!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  organization.dnsError!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
-                ),
-              ),
+            OrganizationSetupStatusBadge(organization: organization),
             if (!organization.setupStatus.isReady)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -103,7 +62,6 @@ class OrganizationListTile extends ConsumerWidget {
                       .switchOrganization(organization.id);
                 },
               ),
-            OrganizationDnsRetryButton(organization: organization),
           ],
         ),
         onTap: () => showOrganizationFormDialog(

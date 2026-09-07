@@ -109,6 +109,42 @@ class Translations$auth$en {
 
 	/// en: 'Signing in...'
 	String get signingIn => 'Signing in...';
+
+	/// en: 'Verify your email'
+	String get verifyEmailTitle => 'Verify your email';
+
+	/// en: 'We sent a verification link to $email. Open the link, then tap Continue.'
+	String verifyEmailSubtitle({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.';
+
+	/// en: 'I've verified — Continue'
+	String get verifyEmailContinue => 'I\'ve verified — Continue';
+
+	/// en: 'Resend verification email'
+	String get resendVerification => 'Resend verification email';
+
+	/// en: 'Resend in ${seconds}s'
+	String resendVerificationCooldown({required Object seconds}) => 'Resend in ${seconds}s';
+
+	/// en: 'Verification email sent'
+	String get verificationEmailSent => 'Verification email sent';
+
+	/// en: 'Could not send verification email. Try again later.'
+	String get verificationEmailFailed => 'Could not send verification email. Try again later.';
+
+	/// en: 'Email is still unverified. Check your inbox and try again.'
+	String get stillUnverified => 'Email is still unverified. Check your inbox and try again.';
+
+	/// en: 'Confirming your email...'
+	String get confirmingVerification => 'Confirming your email...';
+
+	/// en: 'Email verified'
+	String get verificationSuccess => 'Email verified';
+
+	/// en: 'Verification link is invalid or expired.'
+	String get verificationFailed => 'Verification link is invalid or expired.';
+
+	/// en: 'Back to verify email'
+	String get backToVerifyEmail => 'Back to verify email';
 }
 
 // Path: common
@@ -277,9 +313,6 @@ class Translations$fields$en {
 
 	/// en: 'Email'
 	String get email => 'Email';
-
-	/// en: 'Username'
-	String get username => 'Username';
 
 	/// en: 'Password'
 	String get password => 'Password';
@@ -476,8 +509,8 @@ class Translations$organizations$en {
 	/// en: 'Slug'
 	String get slug => 'Slug';
 
-	/// en: 'Used for subdomain (e.g. slug.gyms.hznsystems.com)'
-	String get slugHelper => 'Used for subdomain (e.g. slug.gyms.hznsystems.com)';
+	/// en: 'URL-safe identifier (lowercase letters, numbers, hyphens)'
+	String get slugHelper => 'URL-safe identifier (lowercase letters, numbers, hyphens)';
 
 	/// en: 'Shown in app title/branding'
 	String get displayNameHint => 'Shown in app title/branding';
@@ -533,21 +566,6 @@ class Translations$organizations$en {
 	/// en: 'Remove'
 	String get logoRemove => 'Remove';
 
-	/// en: 'Subdomain'
-	String get subdomain => 'Subdomain';
-
-	/// en: 'DNS Status'
-	String get dnsStatus => 'DNS Status';
-
-	/// en: 'Retry DNS'
-	String get retryDns => 'Retry DNS';
-
-	/// en: 'DNS provisioning retried'
-	String get retryDnsSuccess => 'DNS provisioning retried';
-
-	/// en: 'Failed to retry DNS provisioning'
-	String get retryDnsFailed => 'Failed to retry DNS provisioning';
-
 	/// en: 'Organization created successfully'
 	String get createSuccess => 'Organization created successfully';
 
@@ -587,9 +605,6 @@ class Translations$organizations$en {
 	/// en: 'Pending setup'
 	String get summaryPendingSetup => 'Pending setup';
 
-	/// en: 'DNS issues'
-	String get summaryDnsIssues => 'DNS issues';
-
 	/// en: 'Ready'
 	String get summaryReady => 'Ready';
 
@@ -601,9 +616,6 @@ class Translations$organizations$en {
 
 	/// en: 'Branding'
 	String get setupStepBranding => 'Branding';
-
-	/// en: 'DNS & subdomain'
-	String get setupStepDns => 'DNS & subdomain';
 
 	/// en: 'First branch'
 	String get setupStepBranch => 'First branch';
@@ -647,9 +659,6 @@ class Translations$organizations$en {
 	/// en: 'Admin email (login)'
 	String get setupAdminEmail => 'Admin email (login)';
 
-	/// en: 'Username'
-	String get setupAdminUsername => 'Username';
-
 	/// en: 'Password'
 	String get setupAdminPassword => 'Password';
 
@@ -679,9 +688,6 @@ class Translations$organizations$en {
 
 	/// en: 'Mark setup complete'
 	String get setupMarkComplete => 'Mark setup complete';
-
-	/// en: 'Staff login URL: $url'
-	String setupLoginUrl({required Object url}) => 'Staff login URL: ${url}';
 
 	/// en: 'Organization is ready'
 	String get setupCompleteSuccess => 'Organization is ready';
@@ -803,6 +809,18 @@ extension on Translations {
 			'auth.resetLinkSent' => ({required Object email}) => 'Password reset link has been sent to ${email}',
 			'auth.signInToContinue' => 'Sign in to continue',
 			'auth.signingIn' => 'Signing in...',
+			'auth.verifyEmailTitle' => 'Verify your email',
+			'auth.verifyEmailSubtitle' => ({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.',
+			'auth.verifyEmailContinue' => 'I\'ve verified — Continue',
+			'auth.resendVerification' => 'Resend verification email',
+			'auth.resendVerificationCooldown' => ({required Object seconds}) => 'Resend in ${seconds}s',
+			'auth.verificationEmailSent' => 'Verification email sent',
+			'auth.verificationEmailFailed' => 'Could not send verification email. Try again later.',
+			'auth.stillUnverified' => 'Email is still unverified. Check your inbox and try again.',
+			'auth.confirmingVerification' => 'Confirming your email...',
+			'auth.verificationSuccess' => 'Email verified',
+			'auth.verificationFailed' => 'Verification link is invalid or expired.',
+			'auth.backToVerifyEmail' => 'Back to verify email',
 			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'Save',
@@ -850,7 +868,6 @@ extension on Translations {
 			'failures.accountNotVerified' => 'Your account has not been verified.',
 			'failures.tooManyRequests' => 'Too many requests. Please wait a moment.',
 			'fields.email' => 'Email',
-			'fields.username' => 'Username',
 			'fields.password' => 'Password',
 			'fields.passwordConfirmation' => 'Password confirmation',
 			'fields.name' => 'Name',
@@ -910,7 +927,7 @@ extension on Translations {
 			'organizations.edit' => 'Edit Organization',
 			'organizations.name' => 'Name',
 			'organizations.slug' => 'Slug',
-			'organizations.slugHelper' => 'Used for subdomain (e.g. slug.gyms.hznsystems.com)',
+			'organizations.slugHelper' => 'URL-safe identifier (lowercase letters, numbers, hyphens)',
 			'organizations.displayNameHint' => 'Shown in app title/branding',
 			'organizations.slugValidationError' => 'Lowercase letters, numbers, and hyphens only',
 			'organizations.seedColorValidationError' => 'Use hex format like #1E88E5',
@@ -929,11 +946,6 @@ extension on Translations {
 			'organizations.logoUpload' => 'Upload logo',
 			'organizations.logoReplace' => 'Replace logo',
 			'organizations.logoRemove' => 'Remove',
-			'organizations.subdomain' => 'Subdomain',
-			'organizations.dnsStatus' => 'DNS Status',
-			'organizations.retryDns' => 'Retry DNS',
-			'organizations.retryDnsSuccess' => 'DNS provisioning retried',
-			'organizations.retryDnsFailed' => 'Failed to retry DNS provisioning',
 			'organizations.createSuccess' => 'Organization created successfully',
 			'organizations.updateSuccess' => 'Organization updated successfully',
 			'organizations.saveFailed' => 'Failed to save organization. Please try again.',
@@ -947,12 +959,10 @@ extension on Translations {
 			'organizations.recentOrganizations' => 'Recent organizations',
 			'organizations.summaryTotal' => 'Total organizations',
 			'organizations.summaryPendingSetup' => 'Pending setup',
-			'organizations.summaryDnsIssues' => 'DNS issues',
 			'organizations.summaryReady' => 'Ready',
 			'organizations.continueSetup' => 'Continue setup',
 			'organizations.setupTitle' => 'Organization setup',
 			'organizations.setupStepBranding' => 'Branding',
-			'organizations.setupStepDns' => 'DNS & subdomain',
 			'organizations.setupStepBranch' => 'First branch',
 			'organizations.setupStepAdminUser' => 'Org admin',
 			'organizations.setupStepMembership' => 'Membership plan',
@@ -967,7 +977,6 @@ extension on Translations {
 			'organizations.setupBranchRequiredFirst' => 'Create a branch before adding an admin user.',
 			'organizations.setupAdminName' => 'Admin name',
 			'organizations.setupAdminEmail' => 'Admin email (login)',
-			'organizations.setupAdminUsername' => 'Username',
 			'organizations.setupAdminPassword' => 'Password',
 			'organizations.setupCreateAdminUser' => 'Create admin user',
 			'organizations.setupAdminUserFailed' => 'Failed to create admin user',
@@ -978,7 +987,6 @@ extension on Translations {
 			'organizations.setupCreateProduct' => 'Create product',
 			'organizations.setupSkipStep' => 'Skip for now',
 			'organizations.setupMarkComplete' => 'Mark setup complete',
-			'organizations.setupLoginUrl' => ({required Object url}) => 'Staff login URL: ${url}',
 			'organizations.setupCompleteSuccess' => 'Organization is ready',
 			'sort.sortBy' => 'Sort By',
 			'sort.direction' => 'Direction',

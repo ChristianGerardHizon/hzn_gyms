@@ -50,7 +50,7 @@ void main() {
               (ref) async => users.User(
                 id: 'admin-1',
                 name: 'Admin',
-                username: 'admin',
+                email: 'admin@test.com',
                 verified: true,
                 roleId: 'role-admin',
               ),

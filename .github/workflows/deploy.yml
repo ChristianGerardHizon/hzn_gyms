@@ -222,6 +222,10 @@ jobs:
             --dart-define=ENV=staging \
             --dart-define=API_URL=${{ secrets.POCKETBASE_URL_STAGING }}
           cp web/flutter_service_worker.js build/web/flutter_service_worker.js
+          cp web/privacy-policy.html build/web/privacy-policy.html
+          cp web/robots.txt build/web/robots.txt
+          mkdir -p build/web/privacy-policy
+          cp web/privacy-policy/index.html build/web/privacy-policy/index.html
 
       - name: Upload web build artifact
         uses: actions/upload-artifact@v4
@@ -535,6 +539,10 @@ jobs:
             --dart-define=API_URL=${{ secrets.POCKETBASE_URL_PROD }} \
             --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN_PROD }}
           cp web/flutter_service_worker.js build/web/flutter_service_worker.js
+          cp web/privacy-policy.html build/web/privacy-policy.html
+          cp web/robots.txt build/web/robots.txt
+          mkdir -p build/web/privacy-policy
+          cp web/privacy-policy/index.html build/web/privacy-policy/index.html
 
       - name: Upload web build artifact
         uses: actions/upload-artifact@v4
