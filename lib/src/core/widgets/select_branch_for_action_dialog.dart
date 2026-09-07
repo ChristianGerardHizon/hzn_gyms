@@ -51,6 +51,13 @@ Future<String?> showSelectBranchForActionDialog(
   if (!context.mounted) return null;
   if (branches.isEmpty) return null;
 
+  // Sole switchable branch: switch without prompting.
+  if (branches.length == 1) {
+    final soleId = branches.first.id;
+    await controller.switchBranch(soleId);
+    return soleId;
+  }
+
   return showDialog<String>(
     context: context,
     barrierDismissible: false,

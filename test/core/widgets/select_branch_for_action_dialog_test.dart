@@ -213,6 +213,47 @@ void main() {
     expect(find.text('BCD'), findsOneWidget);
     expect(find.text('TAL'), findsOneWidget);
   });
+
+  testWidgets(
+    'ensureWritableBranch auto-switches when only one switchable branch',
+    (tester) async {
+      late bool result;
+      final controller = _SoleBranchController();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            effectiveBranchIdForWriteProvider.overrideWithValue(null),
+            branchesControllerProvider.overrideWith(
+              () => _FakeBranchesController(const [branchA]),
+            ),
+            currentBranchControllerProvider.overrideWith(() => controller),
+          ],
+          child: MaterialApp(
+            home: Consumer(
+              builder: (context, ref, _) {
+                return Scaffold(
+                  body: TextButton(
+                    onPressed: () async {
+                      result = await ensureWritableBranch(context, ref);
+                    },
+                    child: const Text('Go'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Go'));
+      await tester.pumpAndSettle();
+
+      expect(result, isTrue);
+      expect(find.text('Select a Branch'), findsNothing);
+      expect(controller.switchedTo, 'branch-a');
+    },
+  );
 }
 
 Future<void> _noopConfirm(String _) async {}
@@ -238,6 +279,34 @@ class _AllBranchesController extends CurrentBranchController {
 
   @override
   Future<void> switchBranch(String branchId) async {
+    state = AsyncData(
+      CurrentBranchSelection(
+        branch: Branch(
+          id: branchId,
+          name: branchId,
+          code: 'X',
+          address: '',
+          contactNumber: '',
+        ),
+      ),
+    );
+  }
+}
+
+class _SoleBranchController extends CurrentBranchController {
+  String? switchedTo;
+
+  @override
+  Future<CurrentBranchSelection> build() async {
+    return const CurrentBranchSelection(isAll: true);
+  }
+
+  @override
+  Future<List<String>> switchableBranchIds() async => const ['branch-a'];
+
+  @override
+  Future<void> switchBranch(String branchId) async {
+    switchedTo = branchId;
     state = AsyncData(
       CurrentBranchSelection(
         branch: Branch(
