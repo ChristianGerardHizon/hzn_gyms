@@ -151,6 +151,33 @@ class Translations$auth$en {
 
 	/// en: 'Back to verify email'
 	String get backToVerifyEmail => 'Back to verify email';
+
+	/// en: 'Sign in with email code'
+	String get signInWithEmailCode => 'Sign in with email code';
+
+	/// en: 'Back to password login'
+	String get backToPasswordLogin => 'Back to password login';
+
+	/// en: 'Send code'
+	String get sendLoginCode => 'Send code';
+
+	/// en: 'Verify code'
+	String get verifyLoginCode => 'Verify code';
+
+	/// en: 'Login code'
+	String get enterLoginCode => 'Login code';
+
+	/// en: 'We sent a login code to $email'
+	String loginCodeSent({required Object email}) => 'We sent a login code to ${email}';
+
+	/// en: 'Resend code'
+	String get resendLoginCode => 'Resend code';
+
+	/// en: 'Resend in ${seconds}s'
+	String resendLoginCodeCooldown({required Object seconds}) => 'Resend in ${seconds}s';
+
+	/// en: 'Could not send login code. Try again later.'
+	String get loginCodeSendFailed => 'Could not send login code. Try again later.';
 }
 
 // Path: common
@@ -835,6 +862,15 @@ extension on Translations {
 			'auth.verificationSuccess' => 'Email verified',
 			'auth.verificationFailed' => 'Verification link is invalid or expired.',
 			'auth.backToVerifyEmail' => 'Back to verify email',
+			'auth.signInWithEmailCode' => 'Sign in with email code',
+			'auth.backToPasswordLogin' => 'Back to password login',
+			'auth.sendLoginCode' => 'Send code',
+			'auth.verifyLoginCode' => 'Verify code',
+			'auth.enterLoginCode' => 'Login code',
+			'auth.loginCodeSent' => ({required Object email}) => 'We sent a login code to ${email}',
+			'auth.resendLoginCode' => 'Resend code',
+			'auth.resendLoginCodeCooldown' => ({required Object seconds}) => 'Resend in ${seconds}s',
+			'auth.loginCodeSendFailed' => 'Could not send login code. Try again later.',
 			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'Save',

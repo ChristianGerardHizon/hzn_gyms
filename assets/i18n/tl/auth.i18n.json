@@ -34,5 +34,14 @@
     "confirmingVerification": "Kino-confirm ang email...",
     "verificationSuccess": "Na-verify ang email",
     "verificationFailed": "Invalid o expired ang verification link.",
-    "backToVerifyEmail": "Bumalik sa verify email"
+    "backToVerifyEmail": "Bumalik sa verify email",
+    "signInWithEmailCode": "Mag-sign in gamit ang email code",
+    "backToPasswordLogin": "Bumalik sa password login",
+    "sendLoginCode": "Ipadala ang code",
+    "verifyLoginCode": "I-verify ang code",
+    "enterLoginCode": "Login code",
+    "loginCodeSent(email)": "Nagpadala kami ng login code sa $email",
+    "resendLoginCode": "Ipadala muli ang code",
+    "resendLoginCodeCooldown(seconds)": "Ipadala muli sa ${seconds}s",
+    "loginCodeSendFailed": "Hindi maipadala ang login code. Subukan ulit mamaya."
 }

@@ -34,5 +34,14 @@
     "confirmingVerification": "Confirming your email...",
     "verificationSuccess": "Email verified",
     "verificationFailed": "Verification link is invalid or expired.",
-    "backToVerifyEmail": "Back to verify email"
+    "backToVerifyEmail": "Back to verify email",
+    "signInWithEmailCode": "Sign in with email code",
+    "backToPasswordLogin": "Back to password login",
+    "sendLoginCode": "Send code",
+    "verifyLoginCode": "Verify code",
+    "enterLoginCode": "Login code",
+    "loginCodeSent(email)": "We sent a login code to $email",
+    "resendLoginCode": "Resend code",
+    "resendLoginCodeCooldown(seconds)": "Resend in ${seconds}s",
+    "loginCodeSendFailed": "Could not send login code. Try again later."
 }
