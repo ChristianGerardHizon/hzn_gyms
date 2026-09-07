@@ -41,6 +41,12 @@ void main() {
     when(() => repo.loginWithGoogle()).thenAnswer(
       (_) async => right(_newAuth),
     );
+    when(() => repo.requestOtp(any())).thenAnswer(
+      (_) async => right('otp-abc'),
+    );
+    when(() => repo.loginWithOtp(any(), any())).thenAnswer(
+      (_) async => right(_newAuth),
+    );
   });
 
   group('AuthController', () {
@@ -125,5 +131,42 @@ void main() {
         expect(container.read(authControllerProvider).value, _newAuth);
       },
     );
+
+    test('requestOtp returns otpId without setting AsyncLoading', () async {
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(authControllerProvider.future);
+      expect(container.read(authControllerProvider).value, _cachedAuth);
+
+      final otpId = await container
+          .read(authControllerProvider.notifier)
+          .requestOtp('cashier@test.com');
+
+      expect(otpId, 'otp-abc');
+      expect(container.read(authControllerProvider).isLoading, isFalse);
+      expect(container.read(authControllerProvider).value, _cachedAuth);
+      verify(() => repo.requestOtp('cashier@test.com')).called(1);
+    });
+
+    test('loginWithOtp sets AuthState on success', () async {
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(authControllerProvider.future);
+      await container.read(authControllerProvider.notifier).logout();
+
+      final ok = await container
+          .read(authControllerProvider.notifier)
+          .loginWithOtp('otp-abc', '123456');
+
+      expect(ok, isTrue);
+      expect(container.read(authControllerProvider).value, _newAuth);
+      verify(() => repo.loginWithOtp('otp-abc', '123456')).called(1);
+    });
   });
 }

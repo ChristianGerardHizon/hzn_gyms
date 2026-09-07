@@ -91,6 +91,15 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String get verificationSuccess => 'Na-verify ang email';
 	@override String get verificationFailed => 'Invalid o expired ang verification link.';
 	@override String get backToVerifyEmail => 'Bumalik sa verify email';
+	@override String get signInWithEmailCode => 'Mag-sign in gamit ang email code';
+	@override String get backToPasswordLogin => 'Bumalik sa password login';
+	@override String get sendLoginCode => 'Ipadala ang code';
+	@override String get verifyLoginCode => 'I-verify ang code';
+	@override String get enterLoginCode => 'Login code';
+	@override String loginCodeSent({required Object email}) => 'Nagpadala kami ng login code sa ${email}';
+	@override String get resendLoginCode => 'Ipadala muli ang code';
+	@override String resendLoginCodeCooldown({required Object seconds}) => 'Ipadala muli sa ${seconds}s';
+	@override String get loginCodeSendFailed => 'Hindi maipadala ang login code. Subukan ulit mamaya.';
 }
 
 // Path: common
@@ -389,6 +398,15 @@ extension on TranslationsTl {
 			'auth.verificationSuccess' => 'Na-verify ang email',
 			'auth.verificationFailed' => 'Invalid o expired ang verification link.',
 			'auth.backToVerifyEmail' => 'Bumalik sa verify email',
+			'auth.signInWithEmailCode' => 'Mag-sign in gamit ang email code',
+			'auth.backToPasswordLogin' => 'Bumalik sa password login',
+			'auth.sendLoginCode' => 'Ipadala ang code',
+			'auth.verifyLoginCode' => 'I-verify ang code',
+			'auth.enterLoginCode' => 'Login code',
+			'auth.loginCodeSent' => ({required Object email}) => 'Nagpadala kami ng login code sa ${email}',
+			'auth.resendLoginCode' => 'Ipadala muli ang code',
+			'auth.resendLoginCodeCooldown' => ({required Object seconds}) => 'Ipadala muli sa ${seconds}s',
+			'auth.loginCodeSendFailed' => 'Hindi maipadala ang login code. Subukan ulit mamaya.',
 			'common.appName' => 'HZN Gyms',
 			'common.placeholderText' => 'N/A',
 			'common.save' => 'I-save',

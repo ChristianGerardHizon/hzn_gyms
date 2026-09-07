@@ -154,6 +154,35 @@ class AuthController extends _$AuthController {
     if (!refreshed) return false;
     return state.value?.isVerified ?? false;
   }
+
+  /// Requests an email OTP. Does not change global auth loading state.
+  ///
+  /// Returns the OTP id on success, or null on failure.
+  Future<String?> requestOtp(String email) async {
+    final result = await _repository.requestOtp(email);
+    return result.fold((_) => null, (otpId) => otpId);
+  }
+
+  /// Logs in with an email OTP id and code.
+  ///
+  /// Returns true on success, false on failure.
+  Future<bool> loginWithOtp(String otpId, String code) async {
+    _invalidateBackgroundRefresh();
+    state = const AsyncLoading();
+
+    final result = await _repository.loginWithOtp(otpId, code);
+
+    return result.fold(
+      (failure) {
+        state = AsyncError(failure, StackTrace.current);
+        return false;
+      },
+      (authState) {
+        state = AsyncData(authState);
+        return true;
+      },
+    );
+  }
 }
 
 /// Convenience provider to check if user is authenticated.

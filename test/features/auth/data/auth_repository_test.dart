@@ -203,4 +203,59 @@ void main() {
       (_) => fail('expected left'),
     );
   });
+
+  test('requestOtp returns otpId', () async {
+    when(() => users.requestOTP(any())).thenAnswer(
+      (_) async => OTPResponse(otpId: 'otp-123'),
+    );
+
+    final result = await repo.requestOtp('c@test.com');
+    expect(result.isRight(), isTrue);
+    expect(result.getOrElse((_) => throw StateError('l')), 'otp-123');
+    verify(() => users.requestOTP('c@test.com')).called(1);
+  });
+
+  test('requestOtp fails when otpId is empty', () async {
+    when(() => users.requestOTP(any())).thenAnswer(
+      (_) async => OTPResponse(otpId: ''),
+    );
+
+    final result = await repo.requestOtp('c@test.com');
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (f) {
+        expect(f, isA<AuthFailure>());
+        expect(f.identifier, 'otp_request_failed');
+      },
+      (_) => fail('expected left'),
+    );
+  });
+
+  test('loginWithOtp saves auth and returns AuthState', () async {
+    final auth = sampleAuth();
+    when(
+      () => users.authWithOTP(
+        any(),
+        any(),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer(
+      (_) async => RecordAuth(
+        token: auth.token,
+        record: auth.toRecordModel(),
+      ),
+    );
+    when(() => storage.write(key: any(named: 'key'), value: any(named: 'value')))
+        .thenAnswer((_) async {});
+
+    final result = await repo.loginWithOtp('otp-123', '123456');
+    expect(result.isRight(), isTrue);
+    expect(
+      result.getOrElse((_) => throw StateError('l')).user.email,
+      'c@test.com',
+    );
+    verify(
+      () => storage.write(key: any(named: 'key'), value: any(named: 'value')),
+    ).called(1);
+  });
 }

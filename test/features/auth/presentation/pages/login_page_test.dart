@@ -21,9 +21,11 @@ const _fakeAuth = AuthState(
 /// Mirrors the real [AuthController.login] transition (loading -> data/error)
 /// without touching the network.
 class _FakeAuthController extends AuthController {
-  _FakeAuthController({this.shouldFail = false});
+  _FakeAuthController({this.shouldFail = false, this.otpId = 'otp-test'});
 
   final bool shouldFail;
+  final String otpId;
+  int requestOtpCalls = 0;
 
   @override
   Future<AuthState?> build() async => null;
@@ -34,6 +36,26 @@ class _FakeAuthController extends AuthController {
     await Future<void>.delayed(Duration.zero);
     if (shouldFail) {
       state = AsyncError(Exception('bad credentials'), StackTrace.current);
+      return false;
+    }
+    state = const AsyncData(_fakeAuth);
+    return true;
+  }
+
+  @override
+  Future<String?> requestOtp(String email) async {
+    requestOtpCalls++;
+    await Future<void>.delayed(Duration.zero);
+    if (shouldFail) return null;
+    return otpId;
+  }
+
+  @override
+  Future<bool> loginWithOtp(String otpId, String code) async {
+    state = const AsyncLoading();
+    await Future<void>.delayed(Duration.zero);
+    if (shouldFail) {
+      state = AsyncError(Exception('bad otp'), StackTrace.current);
       return false;
     }
     state = const AsyncData(_fakeAuth);
@@ -225,6 +247,49 @@ void main() {
       expect(find.text('Invalid email or password.'), findsOneWidget);
       expect(find.byType(LoginPage), findsOneWidget);
       expect(find.text('DASHBOARD'), findsNothing);
+    });
+
+    testWidgets('OTP mode sends code then verifies and navigates', (
+      tester,
+    ) async {
+      final fake = _FakeAuthController();
+      final container = ProviderContainer(
+        overrides: [
+          ..._baseOverrides(),
+          authControllerProvider.overrideWith(() => fake),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: _testRouter(container)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Sign in with email code'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Send code'), findsOneWidget);
+      await tester.enterText(find.byType(TextField).at(0), 'cashier@test.com');
+      await tester.tap(find.text('Send code'));
+      await tester.pumpAndSettle();
+
+      expect(fake.requestOtpCalls, 1);
+      expect(find.text('Verify code'), findsOneWidget);
+      expect(
+        find.text('We sent a login code to cashier@test.com'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField).at(0), '123456');
+      await tester.tap(find.text('Verify code'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('DASHBOARD'), findsOneWidget);
+      expect(find.byType(LoginPage), findsNothing);
     });
   });
 }
