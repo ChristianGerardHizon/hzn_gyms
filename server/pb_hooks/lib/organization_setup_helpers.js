@@ -47,15 +47,8 @@ function brandingPayload(app, record) {
 }
 
 function roleHasSystemAdmin(app, roleId) {
-    if (!roleId) return false;
-    try {
-        const role = app.findRecordById("userRoles", roleId);
-        const permissions = role.get("permissions");
-        if (!Array.isArray(permissions)) return false;
-        return permissions.indexOf("system.admin") !== -1;
-    } catch (_) {
-        return false;
-    }
+    const { roleHasPermission } = require(`${__hooks}/lib/permissions_helpers.js`);
+    return roleHasPermission(app, roleId, "system.admin");
 }
 
 function runSetupChecks(app, orgId) {
