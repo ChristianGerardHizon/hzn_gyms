@@ -11,12 +11,17 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import '../../../../core/assets/assets.gen.dart';
 import '../../../../core/i18n/strings.g.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../../core/routing/routes/auth.routes.dart';
 import '../../../../core/widgets/app_version_indicator.dart';
 import '../controllers/auth_controller.dart';
 import '../login_error_message.dart';
 
 /// Cooldown between OTP resends (abuse prevention).
 const kLoginOtpResendCooldown = Duration(seconds: 60);
+
+enum _LoginStep { email, auth }
+
+enum _AuthMethod { password, otp }
 
 /// Login page for user authentication.
 class LoginPage extends HookConsumerWidget {
@@ -27,15 +32,18 @@ class LoginPage extends HookConsumerWidget {
     final formKey = useMemoized(() => GlobalKey<FormBuilderState>());
     final obscurePassword = useState(true);
     final errorMessage = useState<String?>(null);
-    final otpMode = useState(false);
+    final loginStep = useState(_LoginStep.email);
+    final authMethod = useState(_AuthMethod.password);
+    final email = useState('');
     final otpId = useState<String?>(null);
-    final otpEmail = useState('');
     final isSendingOtp = useState(false);
     final cooldownSeconds = useState(0);
 
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
     final formBusy = isLoading || isSendingOtp.value;
+    final awaitingCode =
+        authMethod.value == _AuthMethod.otp && otpId.value != null;
 
     useEffect(() {
       Timer? timer;
@@ -60,13 +68,40 @@ class LoginPage extends HookConsumerWidget {
       }
     });
 
+    void clearOtpState() {
+      otpId.value = null;
+      cooldownSeconds.value = 0;
+    }
+
+    void goToEmailStep() {
+      errorMessage.value = null;
+      loginStep.value = _LoginStep.email;
+      authMethod.value = _AuthMethod.password;
+      clearOtpState();
+    }
+
+    void goToAuthStep(String nextEmail) {
+      errorMessage.value = null;
+      email.value = nextEmail;
+      loginStep.value = _LoginStep.auth;
+      authMethod.value = _AuthMethod.password;
+      clearOtpState();
+    }
+
+    void handleContinue() {
+      if (formKey.currentState?.saveAndValidate() ?? false) {
+        final value =
+            (formKey.currentState!.value['email'] as String?)?.trim() ?? '';
+        if (value.isEmpty) return;
+        goToAuthStep(value);
+      }
+    }
+
     void handleLogin() {
       if (formKey.currentState?.saveAndValidate() ?? false) {
         errorMessage.value = null;
-        final values = formKey.currentState!.value;
-        ref
-            .read(authControllerProvider.notifier)
-            .login(values['email'] as String, values['password'] as String);
+        final password = formKey.currentState!.value['password'] as String;
+        ref.read(authControllerProvider.notifier).login(email.value, password);
       }
     }
 
@@ -78,25 +113,14 @@ class LoginPage extends HookConsumerWidget {
     Future<void> handleSendOtp({required bool isResend}) async {
       if (isSendingOtp.value || cooldownSeconds.value > 0) return;
 
-      String email;
-      if (isResend) {
-        email = otpEmail.value;
-      } else {
-        final emailField = formKey.currentState?.fields['email'];
-        final valid = emailField?.validate() ?? false;
-        if (!valid) {
-          formKey.currentState?.saveAndValidate();
-          return;
-        }
-        email = (emailField?.value as String?)?.trim() ?? '';
-        if (email.isEmpty) return;
-      }
+      final targetEmail = email.value.trim();
+      if (targetEmail.isEmpty) return;
 
       errorMessage.value = null;
       isSendingOtp.value = true;
       final id = await ref
           .read(authControllerProvider.notifier)
-          .requestOtp(email);
+          .requestOtp(targetEmail);
       isSendingOtp.value = false;
       if (!context.mounted) return;
 
@@ -105,8 +129,8 @@ class LoginPage extends HookConsumerWidget {
         return;
       }
 
+      authMethod.value = _AuthMethod.otp;
       otpId.value = id;
-      otpEmail.value = email;
       cooldownSeconds.value = kLoginOtpResendCooldown.inSeconds;
     }
 
@@ -120,24 +144,20 @@ class LoginPage extends HookConsumerWidget {
       }
     }
 
-    void switchToOtpMode() {
+    void switchToPasswordMethod() {
       errorMessage.value = null;
-      otpMode.value = true;
-      otpId.value = null;
-      otpEmail.value = '';
-      cooldownSeconds.value = 0;
+      authMethod.value = _AuthMethod.password;
+      clearOtpState();
     }
 
-    void switchToPasswordMode() {
-      errorMessage.value = null;
-      otpMode.value = false;
-      otpId.value = null;
-      otpEmail.value = '';
-      cooldownSeconds.value = 0;
-    }
-
-    final awaitingCode = otpMode.value && otpId.value != null;
     final canResend = !isSendingOtp.value && cooldownSeconds.value == 0;
+
+    String subtitle() {
+      if (awaitingCode) {
+        return t.auth.loginCodeSent(email: email.value);
+      }
+      return t.auth.signInToContinue;
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -173,9 +193,7 @@ class LoginPage extends HookConsumerWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            awaitingCode
-                                ? t.auth.loginCodeSent(email: otpEmail.value)
-                                : t.auth.signInToContinue,
+                            subtitle(),
                             textAlign: TextAlign.center,
                             style: Theme.of(
                               context,
@@ -218,75 +236,38 @@ class LoginPage extends HookConsumerWidget {
                             const SizedBox(height: 16),
                           ],
 
-                          if (!otpMode.value) ...[
+                          if (loginStep.value == _LoginStep.email) ...[
                             FormBuilderTextField(
                               name: 'email',
                               enabled: !formBusy,
+                              initialValue: email.value.isEmpty
+                                  ? null
+                                  : email.value,
                               decoration: InputDecoration(
                                 labelText: t.fields.email,
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 border: const OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
+                              textInputAction: TextInputAction.done,
                               validator: FormBuilderValidators.compose([
                                 FormBuilderValidators.required(),
                                 FormBuilderValidators.email(),
                               ]),
-                            ),
-                            const SizedBox(height: 16),
-                            FormBuilderTextField(
-                              name: 'password',
-                              enabled: !formBusy,
-                              decoration: InputDecoration(
-                                labelText: t.fields.password,
-                                prefixIcon: const Icon(Icons.lock_outlined),
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    obscurePassword.value
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
-                                  onPressed: formBusy
-                                      ? null
-                                      : () {
-                                          obscurePassword.value =
-                                              !obscurePassword.value;
-                                        },
-                                ),
-                              ),
-                              obscureText: obscurePassword.value,
-                              textInputAction: TextInputAction.done,
-                              validator: FormBuilderValidators.required(),
                               onSubmitted:
-                                  formBusy ? null : (_) => handleLogin(),
+                                  formBusy ? null : (_) => handleContinue(),
                             ),
                             const SizedBox(height: 24),
                             FilledButton(
-                              onPressed: formBusy ? null : handleLogin,
+                              onPressed: formBusy ? null : handleContinue,
                               child: Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 12),
-                                child: isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(t.auth.loginButton),
+                                child: Text(t.auth.continueButton),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: formBusy ? null : switchToOtpMode,
-                              child: Text(t.auth.signInWithEmailCode),
-                            ),
                             if (kIsWeb) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 16),
                               Row(
                                 children: [
                                   const Expanded(child: Divider()),
@@ -319,33 +300,60 @@ class LoginPage extends HookConsumerWidget {
                               ),
                             ],
                           ] else if (!awaitingCode) ...[
+                            Text(
+                              email.value,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            TextButton(
+                              onPressed: formBusy ? null : goToEmailStep,
+                              child: Text(t.auth.changeEmail),
+                            ),
+                            const SizedBox(height: 8),
                             FormBuilderTextField(
-                              name: 'email',
+                              name: 'password',
                               enabled: !formBusy,
                               decoration: InputDecoration(
-                                labelText: t.fields.email,
-                                prefixIcon: const Icon(Icons.email_outlined),
+                                labelText: t.fields.password,
+                                prefixIcon: const Icon(Icons.lock_outlined),
                                 border: const OutlineInputBorder(),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    obscurePassword.value
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                  ),
+                                  onPressed: formBusy
+                                      ? null
+                                      : () {
+                                          obscurePassword.value =
+                                              !obscurePassword.value;
+                                        },
+                                ),
                               ),
-                              keyboardType: TextInputType.emailAddress,
+                              obscureText: obscurePassword.value,
                               textInputAction: TextInputAction.done,
-                              validator: FormBuilderValidators.compose([
-                                FormBuilderValidators.required(),
-                                FormBuilderValidators.email(),
-                              ]),
-                              onSubmitted: formBusy
-                                  ? null
-                                  : (_) => handleSendOtp(isResend: false),
+                              validator: FormBuilderValidators.required(),
+                              onSubmitted:
+                                  formBusy ? null : (_) => handleLogin(),
                             ),
-                            const SizedBox(height: 24),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: formBusy
+                                    ? null
+                                    : () =>
+                                        const ForgotPasswordRoute().go(context),
+                                child: Text(t.auth.forgotPassword),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
                             FilledButton(
-                              onPressed: formBusy
-                                  ? null
-                                  : () => handleSendOtp(isResend: false),
+                              onPressed: formBusy ? null : handleLogin,
                               child: Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 12),
-                                child: isSendingOtp.value
+                                child: isLoading
                                     ? const SizedBox(
                                         height: 20,
                                         width: 20,
@@ -354,14 +362,23 @@ class LoginPage extends HookConsumerWidget {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : Text(t.auth.sendLoginCode),
+                                    : Text(t.auth.loginButton),
                               ),
                             ),
                             const SizedBox(height: 16),
                             TextButton(
-                              onPressed:
-                                  formBusy ? null : switchToPasswordMode,
-                              child: Text(t.auth.backToPasswordLogin),
+                              onPressed: formBusy
+                                  ? null
+                                  : () => handleSendOtp(isResend: false),
+                              child: isSendingOtp.value
+                                  ? const SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(t.auth.signInWithEmailCode),
                             ),
                           ] else ...[
                             FormBuilderTextField(
@@ -420,7 +437,7 @@ class LoginPage extends HookConsumerWidget {
                             ),
                             TextButton(
                               onPressed:
-                                  formBusy ? null : switchToPasswordMode,
+                                  formBusy ? null : switchToPasswordMethod,
                               child: Text(t.auth.backToPasswordLogin),
                             ),
                           ],
