@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/repositories/membership_repository.dart';
 import '../../domain/membership.dart';
@@ -15,8 +16,12 @@ class MembershipsController extends _$MembershipsController {
   @override
   Future<List<Membership>> build() async {
     final branchId = ref.watch(currentBranchIdProvider);
+    final organizationId = ref.watch(currentOrganizationIdProvider);
 
-    final result = await _repository.fetchAll(branchId: branchId);
+    final result = await _repository.fetchAll(
+      branchId: branchId,
+      organizationId: organizationId,
+    );
 
     return result.fold(
       (failure) => throw failure,
@@ -33,7 +38,11 @@ class MembershipsController extends _$MembershipsController {
     }
 
     final branchId = ref.read(currentBranchIdProvider);
-    final result = await _repository.fetchAll(branchId: branchId);
+    final organizationId = ref.read(currentOrganizationIdProvider);
+    final result = await _repository.fetchAll(
+      branchId: branchId,
+      organizationId: organizationId,
+    );
 
     state = result.fold(
       (failure) => AsyncError(failure, StackTrace.current),

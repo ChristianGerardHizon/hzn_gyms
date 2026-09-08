@@ -54,7 +54,7 @@ final class CurrentOrganizationControllerProvider
 }
 
 String _$currentOrganizationControllerHash() =>
-    r'affa330fa3b8fa2601372d2e516dd47c7cceba5a';
+    r'5b59ce84df21c881f7d734875c3a983370c3304a';
 
 /// Controller for resolving/switching the current organization.
 ///
@@ -135,7 +135,7 @@ String _$currentOrganizationIdHash() =>
 /// Convenience provider for an organization-scoped filter string.
 ///
 /// Returns `organization = "id" && isDeleted = false`, or null while
-/// unresolved.
+/// unresolved. Use for collections that own an `organization` field.
 
 @ProviderFor(currentOrganizationFilter)
 final currentOrganizationFilterProvider = CurrentOrganizationFilterProvider._();
@@ -143,7 +143,7 @@ final currentOrganizationFilterProvider = CurrentOrganizationFilterProvider._();
 /// Convenience provider for an organization-scoped filter string.
 ///
 /// Returns `organization = "id" && isDeleted = false`, or null while
-/// unresolved.
+/// unresolved. Use for collections that own an `organization` field.
 
 final class CurrentOrganizationFilterProvider
     extends $FunctionalProvider<String?, String?, String?>
@@ -151,7 +151,7 @@ final class CurrentOrganizationFilterProvider
   /// Convenience provider for an organization-scoped filter string.
   ///
   /// Returns `organization = "id" && isDeleted = false`, or null while
-  /// unresolved.
+  /// unresolved. Use for collections that own an `organization` field.
   CurrentOrganizationFilterProvider._()
     : super(
         from: null,
@@ -187,3 +187,60 @@ final class CurrentOrganizationFilterProvider
 
 String _$currentOrganizationFilterHash() =>
     r'825ec6f5bc3dd9f3b33303112e794336264283b5';
+
+/// Filter for gym rows scoped via `branch.organization`.
+///
+/// Returns `branch.organization = "id" && isDeleted = false`, or null while
+/// unresolved.
+
+@ProviderFor(currentBranchOrganizationFilter)
+final currentBranchOrganizationFilterProvider =
+    CurrentBranchOrganizationFilterProvider._();
+
+/// Filter for gym rows scoped via `branch.organization`.
+///
+/// Returns `branch.organization = "id" && isDeleted = false`, or null while
+/// unresolved.
+
+final class CurrentBranchOrganizationFilterProvider
+    extends $FunctionalProvider<String?, String?, String?>
+    with $Provider<String?> {
+  /// Filter for gym rows scoped via `branch.organization`.
+  ///
+  /// Returns `branch.organization = "id" && isDeleted = false`, or null while
+  /// unresolved.
+  CurrentBranchOrganizationFilterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentBranchOrganizationFilterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentBranchOrganizationFilterHash();
+
+  @$internal
+  @override
+  $ProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String? create(Ref ref) {
+    return currentBranchOrganizationFilter(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$currentBranchOrganizationFilterHash() =>
+    r'ac8fdd776c31e25eb566dfeef6ccd1d9951b0703';

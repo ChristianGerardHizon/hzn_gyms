@@ -8,7 +8,9 @@
  * On create: enforce org scope. Do not auto-verify — users must confirm email.
  */
 onRecordCreateRequest((e) => {
-    require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e, {
+    const helpers = require(`${__hooks}/lib/users_helpers.js`);
+    helpers.protectSuperAdminField(e, { isCreate: true });
+    helpers.enforceUserOrganizationScope(e, {
         requireOrganization: true,
     });
 }, "users");
@@ -34,7 +36,9 @@ onRecordAfterCreateSuccess((e) => {
 }, "users");
 
 onRecordUpdateRequest((e) => {
-    require(`${__hooks}/lib/users_helpers.js`).enforceUserOrganizationScope(e);
+    const helpers = require(`${__hooks}/lib/users_helpers.js`);
+    helpers.protectSuperAdminField(e);
+    helpers.enforceUserOrganizationScope(e);
 }, "users");
 
 /**

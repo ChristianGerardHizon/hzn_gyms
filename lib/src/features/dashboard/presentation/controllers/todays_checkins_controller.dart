@@ -3,14 +3,16 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 
 part 'todays_checkins_controller.g.dart';
 
-/// Count of check-ins today for the current branch.
+/// Count of check-ins today for the current branch / organization.
 @riverpod
 Future<int> todaysCheckInsCount(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
+  final organizationId = ref.watch(currentOrganizationIdProvider);
   final pb = ref.read(pocketbaseProvider);
   final now = DateTime.now();
   final startOfToday = DateTime(now.year, now.month, now.day);
@@ -18,6 +20,8 @@ Future<int> todaysCheckInsCount(Ref ref) async {
   final filter = PBFilter().after('checkInTime', startOfToday);
   if (branchId != null) {
     filter.relation('branch', branchId);
+  } else if (organizationId != null && organizationId.isNotEmpty) {
+    filter.relation('branch.organization', organizationId);
   }
 
   final result = await pb

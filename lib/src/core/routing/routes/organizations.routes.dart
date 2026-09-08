@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../features/organizations/presentation/pages/awaiting_organization_page.dart';
 import '../../../features/organizations/presentation/pages/organizations_page.dart';
 
 part 'organizations.routes.g.dart';
@@ -20,5 +21,19 @@ class OrganizationsRoute extends GoRouteData with $OrganizationsRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const OrganizationsPage();
+  }
+}
+
+/// Signed-in users with no org membership wait here for an invite.
+@TypedGoRoute<AwaitingOrganizationRoute>(path: AwaitingOrganizationRoute.path)
+class AwaitingOrganizationRoute extends GoRouteData
+    with $AwaitingOrganizationRoute {
+  const AwaitingOrganizationRoute();
+
+  static const path = '/awaiting-organization';
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const AwaitingOrganizationPage();
   }
 }

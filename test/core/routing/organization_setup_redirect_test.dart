@@ -5,9 +5,7 @@ import 'package:hzn_gyms/src/core/routing/routes/platform.routes.dart';
 import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 
 void main() {
-  const platformAdmin = CurrentUserPermissions(
-    permissions: {Permissions.organizationsManage},
-  );
+  const platformAdmin = CurrentUserPermissions(superAdmin: true);
   const branchAdmin = CurrentUserPermissions(
     permissions: {Permissions.systemAdmin},
     isAdmin: true,
@@ -21,7 +19,7 @@ void main() {
       );
     });
 
-    test('branch admin without organizations.manage is denied platform paths', () {
+    test('branch admin without superAdmin is denied platform paths', () {
       expect(
         canAccessPath(PlatformDashboardRoute.path, branchAdmin),
         isFalse,

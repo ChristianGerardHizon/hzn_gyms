@@ -29,6 +29,8 @@
     "emptyList": "No organizations found",
     "noOrganization": "No Organization",
     "switchOrganization": "Switch Organization",
+    "awaitingInviteTitle": "Invitation required",
+    "awaitingInviteBody": "You need to be invited to an organization before you can use the app. Ask your organization admin for an invite, then sign in again.",
     "platformTitle": "Platform",
     "platformDashboard": "Dashboard",
     "enterTenant": "Enter tenant",

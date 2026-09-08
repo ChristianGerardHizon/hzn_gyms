@@ -77,5 +77,5 @@ Check `dnsStatus`:
 - `"created"` — a real Porkbun DNS record was provisioned (staging/prod
   with credentials configured).
 - `"failed"` — check `dnsError`; retry via `POST /api/organizations/<id>/retry-dns`
-  (super-admin auth, `organizations.manage` permission) or wait for the
+  (super-admin auth, `users.superAdmin`) or wait for the
   scheduled retry (every 30 minutes).

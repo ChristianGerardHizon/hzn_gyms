@@ -23,19 +23,21 @@ function hasPermission(app, roleId, permissionKey) {
     return roleHasPermission(app, roleId, permissionKey);
 }
 
-// Caller may manage org invites/members if they're a platform superuser
-// (organizations.manage), OR they hold an active organizationMemberships
-// row for this specific org whose role has members.manage. Looked up as a
-// single authoritative row — not a filter-rule chain across relations — to
-// avoid ANDing conditions across different back-relation rows.
+// Caller may manage org invites/members if they're a platform superAdmin,
+// OR they hold an active organizationMemberships row for this specific org
+// whose role has members.manage. Looked up as a single authoritative row —
+// not a filter-rule chain across relations — to avoid ANDing conditions
+// across different back-relation rows.
 function canManageOrgMembers(e, orgId) {
     const authRecord = e.auth;
     if (!authRecord) return false;
 
     if (isSuperuser(authRecord)) return true;
 
-    if (hasPermission(e.app, authRecord.getString("role"), "organizations.manage")) {
-        return true;
+    try {
+        if (authRecord.getBool("superAdmin")) return true;
+    } catch (_) {
+        // fall through
     }
 
     let membership;

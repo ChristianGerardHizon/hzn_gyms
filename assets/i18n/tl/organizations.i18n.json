@@ -29,6 +29,8 @@
     "emptyList": "Walang nahanap na organisasyon",
     "noOrganization": "Walang Organisasyon",
     "switchOrganization": "Palitan ang Organisasyon",
+    "awaitingInviteTitle": "Kailangan ng imbitasyon",
+    "awaitingInviteBody": "Kailangan kang imbitahan sa isang organisasyon bago mo magamit ang app. Humingi ng invite sa admin ng organisasyon, tapos mag-sign in ulit.",
     "platformTitle": "Platform",
     "platformDashboard": "Dashboard",
     "enterTenant": "Pumasok sa tenant",

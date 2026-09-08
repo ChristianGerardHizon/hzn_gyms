@@ -288,6 +288,27 @@ abstract class PBFilters {
   static PBFilter forOrganization(String organizationId) =>
       PBFilter().relation('organization', organizationId).notDeleted();
 
+  /// Filter gym rows whose `branch` relation belongs to [organizationId].
+  ///
+  /// Example: `PBFilters.forBranchOrganization(organizationId).build()`
+  /// Result: `branch.organization = "id" && isDeleted = false`
+  static PBFilter forBranchOrganization(String organizationId) =>
+      PBFilter()
+          .relation('branch.organization', organizationId)
+          .notDeleted();
+
+  /// AND two PocketBase filter strings. Either side may be null/empty.
+  static String? andFilters(String? a, String? b) {
+    final left = a?.trim();
+    final right = b?.trim();
+    final hasLeft = left != null && left.isNotEmpty;
+    final hasRight = right != null && right.isNotEmpty;
+    if (!hasLeft && !hasRight) return null;
+    if (!hasLeft) return right;
+    if (!hasRight) return left;
+    return '($left) && ($right)';
+  }
+
   /// Currently active member subscriptions.
   ///
   /// `startDate <= now` and `endDate >= start of today` (local). The end

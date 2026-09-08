@@ -10,8 +10,10 @@ part of 'current_user_permissions.dart';
 // ignore_for_file: type=lint, type=warning
 /// Loads and silently refreshes the current user's role permissions.
 ///
-/// Keeps the last known permissions visible while re-fetching in the
-/// background (realtime role updates + periodic poll).
+/// Prefer the active organization's membership role when present so the same
+/// user can hold different roles per tenant. Platform [superAdmin] always
+/// comes from the user record. KeepAlive poll/realtime still refresh the
+/// resolved role permissions.
 
 @ProviderFor(CurrentUserPermissionsController)
 final currentUserPermissionsProvider =
@@ -19,8 +21,10 @@ final currentUserPermissionsProvider =
 
 /// Loads and silently refreshes the current user's role permissions.
 ///
-/// Keeps the last known permissions visible while re-fetching in the
-/// background (realtime role updates + periodic poll).
+/// Prefer the active organization's membership role when present so the same
+/// user can hold different roles per tenant. Platform [superAdmin] always
+/// comes from the user record. KeepAlive poll/realtime still refresh the
+/// resolved role permissions.
 final class CurrentUserPermissionsControllerProvider
     extends
         $AsyncNotifierProvider<
@@ -29,8 +33,10 @@ final class CurrentUserPermissionsControllerProvider
         > {
   /// Loads and silently refreshes the current user's role permissions.
   ///
-  /// Keeps the last known permissions visible while re-fetching in the
-  /// background (realtime role updates + periodic poll).
+  /// Prefer the active organization's membership role when present so the same
+  /// user can hold different roles per tenant. Platform [superAdmin] always
+  /// comes from the user record. KeepAlive poll/realtime still refresh the
+  /// resolved role permissions.
   CurrentUserPermissionsControllerProvider._()
     : super(
         from: null,
@@ -52,12 +58,14 @@ final class CurrentUserPermissionsControllerProvider
 }
 
 String _$currentUserPermissionsControllerHash() =>
-    r'4b416f991a5ab6f3e20bb1ed3468de17c6530d51';
+    r'81a1490362aa8c8ec68c5f8d9d6411325b6e16f8';
 
 /// Loads and silently refreshes the current user's role permissions.
 ///
-/// Keeps the last known permissions visible while re-fetching in the
-/// background (realtime role updates + periodic poll).
+/// Prefer the active organization's membership role when present so the same
+/// user can hold different roles per tenant. Platform [superAdmin] always
+/// comes from the user record. KeepAlive poll/realtime still refresh the
+/// resolved role permissions.
 
 abstract class _$CurrentUserPermissionsController
     extends $AsyncNotifier<CurrentUserPermissions> {
@@ -85,9 +93,8 @@ abstract class _$CurrentUserPermissionsController
 
 /// Whether the signed-in user may use the organization switcher.
 ///
-/// Platform super-admins need [Permissions.organizationsManage] and must not
-/// be linked to a tenant on their user record (org-scoped staff stay on their
-/// tenant even if their role incorrectly includes organizations.manage).
+/// Platform operators (`users.superAdmin`) can switch tenants even when
+/// `users.organization` is set (active tenant for PB rules / gym data).
 
 @ProviderFor(canUseOrganizationSwitcher)
 final canUseOrganizationSwitcherProvider =
@@ -95,18 +102,16 @@ final canUseOrganizationSwitcherProvider =
 
 /// Whether the signed-in user may use the organization switcher.
 ///
-/// Platform super-admins need [Permissions.organizationsManage] and must not
-/// be linked to a tenant on their user record (org-scoped staff stay on their
-/// tenant even if their role incorrectly includes organizations.manage).
+/// Platform operators (`users.superAdmin`) can switch tenants even when
+/// `users.organization` is set (active tenant for PB rules / gym data).
 
 final class CanUseOrganizationSwitcherProvider
     extends $FunctionalProvider<bool, bool, bool>
     with $Provider<bool> {
   /// Whether the signed-in user may use the organization switcher.
   ///
-  /// Platform super-admins need [Permissions.organizationsManage] and must not
-  /// be linked to a tenant on their user record (org-scoped staff stay on their
-  /// tenant even if their role incorrectly includes organizations.manage).
+  /// Platform operators (`users.superAdmin`) can switch tenants even when
+  /// `users.organization` is set (active tenant for PB rules / gym data).
   CanUseOrganizationSwitcherProvider._()
     : super(
         from: null,
@@ -141,4 +146,4 @@ final class CanUseOrganizationSwitcherProvider
 }
 
 String _$canUseOrganizationSwitcherHash() =>
-    r'dbda7ceef60df99fdd0bb9f89a138c0a79ef1a20';
+    r'c542ce0e42b76f0c86a7fe03552b361c1ac3de72';
