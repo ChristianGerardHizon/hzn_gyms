@@ -40,6 +40,7 @@ Future<List<Sale>> todaySales(Ref ref) async {
 /// Uses [PocketBaseCollections.vwTodaysSales] (Manila-day UTC range on server).
 /// Must match [todaySales] day boundaries — view uses fixed UTC+8, not server TZ.
 /// Membership / walk-in / product totals come from [PocketBaseCollections.vwRevenueByItemType].
+/// Payment-method totals come from [PocketBaseCollections.vwSalesDailySummary].
 /// Filtered by the current branch.
 @riverpod
 Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
@@ -57,7 +58,7 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
       .getFullList(
         filter: branchId != null ? 'branch = "$branchId"' : null,
       );
-  // Soft-fail: item-type chips are additive; don't fail the core sales KPI.
+  // Soft-fail: item-type / payment-method chips are additive.
   final itemTypeFuture = () async {
     try {
       return await pb
@@ -67,9 +68,19 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
       return [];
     }
   }();
+  final paymentMethodFuture = () async {
+    try {
+      return await pb
+          .collection(PocketBaseCollections.vwSalesDailySummary)
+          .getFullList(filter: itemTypeFilter);
+    } catch (_) {
+      return [];
+    }
+  }();
 
   final salesRecords = await salesFuture;
   final itemTypeRecords = await itemTypeFuture;
+  final paymentMethodRecords = await paymentMethodFuture;
 
   final rows = salesRecords.map(
     (record) => TodaysSalesBranchRow(
@@ -87,6 +98,15 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
       ),
     ),
   );
+  final paymentMethodTotals = aggregatePaymentMethodViewRows(
+    paymentMethodRecords.map(
+      (record) => (
+        paymentMethod: record.getStringValue('paymentMethod'),
+        totalRevenue: record.getDoubleValue('total_revenue'),
+        transactionCount: record.getIntValue('transaction_count'),
+      ),
+    ),
+  );
   return aggregateTodaysSalesSummary(
     rows,
     membershipTotal: itemTypeTotals.membershipTotal,
@@ -95,5 +115,8 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
     membershipCount: itemTypeTotals.membershipCount,
     walkInCount: itemTypeTotals.walkInCount,
     productCount: itemTypeTotals.productCount,
+    revenueByPaymentMethod: paymentMethodTotals.revenueByPaymentMethod,
+    transactionCountByPaymentMethod:
+        paymentMethodTotals.transactionCountByPaymentMethod,
   );
 }

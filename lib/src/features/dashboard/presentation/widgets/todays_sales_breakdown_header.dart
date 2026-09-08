@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../../pos/domain/payment_method.dart';
+import '../../../reports/domain/report_aggregations.dart';
+
 /// Structured summary header for the Today's Sales breakdown dialog.
 ///
 /// Layout:
 /// 1. Hero revenue + transaction count
 /// 2. Memberships / Walk-ins / Products split cards
-/// 3. Paid / Unpaid status row
-/// 4. Optional branch pills when viewing all branches
+/// 3. Cash / GCash / Bank / Check payment-method cards
+/// 4. Paid / Unpaid status row
+/// 5. Optional branch pills when viewing all branches
 class TodaysSalesBreakdownHeader extends StatelessWidget {
   const TodaysSalesBreakdownHeader({
     super.key,
@@ -20,6 +24,8 @@ class TodaysSalesBreakdownHeader extends StatelessWidget {
     required this.productCount,
     required this.paidCount,
     required this.unpaidCount,
+    this.paymentMethodTotalLabels = const {},
+    this.paymentMethodCounts = const {},
     this.branchChips = const [],
   });
 
@@ -34,8 +40,28 @@ class TodaysSalesBreakdownHeader extends StatelessWidget {
   final int paidCount;
   final int unpaidCount;
 
+  /// Formatted amounts keyed by payment method storage value (`cash`, `card`, …).
+  final Map<String, String> paymentMethodTotalLabels;
+
+  /// Transaction counts keyed by payment method storage value.
+  final Map<String, int> paymentMethodCounts;
+
   /// Small branch labels (e.g. "BCD · 2") when viewing all branches.
   final List<String> branchChips;
+
+  static const _methodColors = <PaymentMethod, Color>{
+    PaymentMethod.cash: Colors.green,
+    PaymentMethod.card: Colors.blue,
+    PaymentMethod.bankTransfer: Colors.indigo,
+    PaymentMethod.check: Colors.brown,
+  };
+
+  static String _storageKey(PaymentMethod method) => switch (method) {
+        PaymentMethod.cash => 'cash',
+        PaymentMethod.card => 'card',
+        PaymentMethod.bankTransfer => 'bankTransfer',
+        PaymentMethod.check => 'check',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +135,46 @@ class TodaysSalesBreakdownHeader extends StatelessWidget {
                   count: productCount,
                   color: Colors.teal,
                 ),
+              ];
+
+              if (useRow) {
+                return Row(
+                  children: [
+                    for (var i = 0; i < cards.length; i++) ...[
+                      if (i > 0) const SizedBox(width: gap),
+                      Expanded(child: cards[i]),
+                    ],
+                  ],
+                );
+              }
+
+              final cardWidth = (constraints.maxWidth - gap) / 2;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  for (final card in cards)
+                    SizedBox(width: cardWidth, child: card),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+
+          // Payment-method split
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const gap = 10.0;
+              final useRow = constraints.maxWidth >= 520;
+              final cards = [
+                for (final method in PaymentMethod.values)
+                  _TypeCard(
+                    label: paymentMethodDisplayName(_storageKey(method)),
+                    amount: paymentMethodTotalLabels[_storageKey(method)] ??
+                        '₱0.00',
+                    count: paymentMethodCounts[_storageKey(method)] ?? 0,
+                    color: _methodColors[method] ?? Colors.grey,
+                  ),
               ];
 
               if (useRow) {

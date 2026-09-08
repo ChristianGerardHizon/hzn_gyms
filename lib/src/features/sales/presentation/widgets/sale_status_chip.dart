@@ -58,7 +58,7 @@ class SaleStatusChip extends StatelessWidget {
   (Color, IconData) _getStatusStyle(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return (Colors.grey, Icons.schedule);
+        return (Colors.orange, Icons.schedule);
       case 'awaitingpayment':
         return (Colors.amber, Icons.payment);
       case 'paid':

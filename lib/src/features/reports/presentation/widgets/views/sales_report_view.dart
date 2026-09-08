@@ -8,6 +8,7 @@ import '../../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
 import '../../../../dashboard/presentation/widgets/today_sale_list_tile.dart';
+import '../../../../pos/domain/payment_method.dart';
 import '../../../../pos/domain/sale.dart';
 import '../../../domain/report_aggregations.dart';
 import '../../../domain/report_period.dart';
@@ -145,7 +146,9 @@ class SalesReportView extends HookConsumerWidget {
           .map((e) => MapEntry(itemTypeLabel(e.key), e.value)),
     );
     final paymentMethodData = Map.fromEntries(
-      report.revenueByPaymentMethod.entries.where((e) => e.value > 0),
+      report.revenueByPaymentMethod.entries
+          .where((e) => e.value > 0)
+          .map((e) => MapEntry(paymentMethodDisplayName(e.key), e.value)),
     );
     final topProductsData = Map.fromEntries(
       report.topSellingProducts
@@ -250,6 +253,28 @@ class SalesReportView extends HookConsumerWidget {
       report.revenueByItemType,
       transactionCountByItemType: report.transactionCountByItemType,
     );
+    final methodCounts = report.transactionCountByPaymentMethod ?? const {};
+    final methodRevenue = report.revenueByPaymentMethod;
+
+    String methodAmount(PaymentMethod method) {
+      final key = switch (method) {
+        PaymentMethod.cash => 'cash',
+        PaymentMethod.card => 'card',
+        PaymentMethod.bankTransfer => 'bankTransfer',
+        PaymentMethod.check => 'check',
+      };
+      return _currencyFormat.format(methodRevenue[key] ?? 0);
+    }
+
+    int methodCount(PaymentMethod method) {
+      final key = switch (method) {
+        PaymentMethod.cash => 'cash',
+        PaymentMethod.card => 'card',
+        PaymentMethod.bankTransfer => 'bankTransfer',
+        PaymentMethod.check => 'check',
+      };
+      return methodCounts[key] ?? 0;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -297,6 +322,46 @@ class SalesReportView extends HookConsumerWidget {
                 itemType: 'product',
                 revenueLabel: _currencyFormat.format(typeTotals.productTotal),
               ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Payment method counters
+        ReportKpiGrid(
+          crossAxisCount: 4,
+          children: [
+            ReportKpiCard(
+              title: PaymentMethod.cash.displayName,
+              value: methodAmount(PaymentMethod.cash),
+              icon: Icons.payments_outlined,
+              color: Colors.green,
+              subtitle: salesCountLabel(methodCount(PaymentMethod.cash)),
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: PaymentMethod.card.displayName,
+              value: methodAmount(PaymentMethod.card),
+              icon: Icons.phone_android_outlined,
+              color: Colors.blue,
+              subtitle: salesCountLabel(methodCount(PaymentMethod.card)),
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: PaymentMethod.bankTransfer.displayName,
+              value: methodAmount(PaymentMethod.bankTransfer),
+              icon: Icons.account_balance_outlined,
+              color: Colors.indigo,
+              subtitle:
+                  salesCountLabel(methodCount(PaymentMethod.bankTransfer)),
+              compact: true,
+            ),
+            ReportKpiCard(
+              title: PaymentMethod.check.displayName,
+              value: methodAmount(PaymentMethod.check),
+              icon: Icons.receipt_outlined,
+              color: Colors.brown,
+              subtitle: salesCountLabel(methodCount(PaymentMethod.check)),
+              compact: true,
             ),
           ],
         ),

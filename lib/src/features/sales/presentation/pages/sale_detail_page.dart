@@ -383,7 +383,7 @@ class _SaleDetailContent extends HookConsumerWidget {
 
     // Determine chip color and label
     final (chipColor, chipLabel) = switch (statusLower) {
-      'pending' => (Colors.grey, 'Pending'),
+      'pending' => (Colors.orange, 'Pending'),
       'awaitingpayment' => (Colors.amber, 'Awaiting Payment'),
       'paid' => (Colors.green, 'Paid'),
       'completed' => (Colors.green, 'Completed'),

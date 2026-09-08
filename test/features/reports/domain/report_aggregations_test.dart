@@ -440,6 +440,8 @@ void main() {
       expect(result.totalRevenue, 130); // 100+50-20
       expect(result.revenueByPaymentMethod['cash'], 80);
       expect(result.revenueByPaymentMethod['card'], 50);
+      expect(result.transactionCountByPaymentMethod['cash'], 1); // refund excluded
+      expect(result.transactionCountByPaymentMethod['card'], 1);
       expect(result.revenueByBucket[DateTime(2026, 8, 1)], 130);
     });
 
@@ -460,6 +462,7 @@ void main() {
       expect(result.transactionCount, 1);
       expect(result.totalRevenue, 800);
       expect(result.revenueByPaymentMethod['cash'], 800);
+      expect(result.transactionCountByPaymentMethod['cash'], 1);
     });
 
     test('counts completed sales with no payments', () {
@@ -762,6 +765,32 @@ void main() {
       ]);
       expect(result['09'], 2);
       expect(result['18'], 1);
+    });
+  });
+
+  group('paymentMethodDisplayName', () {
+    test('maps known methods including card → GCash', () {
+      expect(paymentMethodDisplayName('cash'), 'Cash');
+      expect(paymentMethodDisplayName('card'), 'GCash');
+      expect(paymentMethodDisplayName('bankTransfer'), 'Bank Transfer');
+      expect(paymentMethodDisplayName('check'), 'Check');
+      expect(paymentMethodDisplayName('other'), 'other');
+    });
+  });
+
+  group('aggregatePaymentMethodViewRows', () {
+    test('sums revenue and counts by method', () {
+      final result = aggregatePaymentMethodViewRows([
+        (paymentMethod: 'cash', totalRevenue: 100, transactionCount: 2),
+        (paymentMethod: 'card', totalRevenue: 50, transactionCount: 1),
+        (paymentMethod: 'cash', totalRevenue: 25, transactionCount: 1),
+        (paymentMethod: '', totalRevenue: 99, transactionCount: 9),
+      ]);
+      expect(result.revenueByPaymentMethod['cash'], 125);
+      expect(result.revenueByPaymentMethod['card'], 50);
+      expect(result.transactionCountByPaymentMethod['cash'], 3);
+      expect(result.transactionCountByPaymentMethod['card'], 1);
+      expect(result.revenueByPaymentMethod.containsKey(''), isFalse);
     });
   });
 }
