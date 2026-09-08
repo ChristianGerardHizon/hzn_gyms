@@ -26,6 +26,15 @@ void main() {
     );
   });
 
+  test('maps otp_invalid identifier', () {
+    expect(
+      loginErrorMessage(
+        const AuthFailure('Invalid or expired OTP', null, 'otp_invalid'),
+      ),
+      t.failures.invalidLoginCode,
+    );
+  });
+
   test('falls back to invalid credentials', () {
     expect(loginErrorMessage(Exception('boom')), t.failures.invalidCredentials);
   });

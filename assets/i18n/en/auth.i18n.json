@@ -35,6 +35,8 @@
     "verificationSuccess": "Email verified",
     "verificationFailed": "Verification link is invalid or expired.",
     "backToVerifyEmail": "Back to verify email",
+    "continueButton": "Continue",
+    "changeEmail": "Change email",
     "signInWithEmailCode": "Sign in with email code",
     "backToPasswordLogin": "Back to password login",
     "sendLoginCode": "Send code",
