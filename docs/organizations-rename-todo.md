@@ -7,7 +7,7 @@
 - [x] PR #1 merged to `staging` (organizations + HZN Gyms rename)
 - [x] PocketBase migrations/hooks deployed to staging + prod servers
 - [x] Backfill: `Kylie Gym` org (`slug=kyliegym`) on staging + prod — `scripts/backfill-organizations.sh`
-- [x] `organizations.manage` on **Admin** role (staging + prod)
+- [x] Platform access via `users.superAdmin` (staging + prod — set on operator users, not roles)
 - [x] Web builds deployed to staging + prod (`HZN Gyms` in `index.html`)
 - [x] `PORKBUN_*` on PocketBase systemd (`/etc/pocketbase/kyliegym-porkbun.env`)
 - [x] GitHub secrets: `POCKETBASE_URL_*`, `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `VERSION_MANAGER_URL`, `VERSION_COLLECTION_ID`, `SENTRY_AUTH_TOKEN`, `SENTRY_DSN_PROD`

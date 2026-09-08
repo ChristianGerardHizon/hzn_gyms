@@ -31,4 +31,30 @@ void main() {
       RfidListenerStatus.off,
     );
   });
+
+  test('check-in hold refcount acquire/release', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier =
+        container.read(rfidListenerStatusControllerProvider.notifier);
+
+    expect(notifier.isCheckInHeld, isFalse);
+
+    notifier.acquireCheckInHold();
+    expect(notifier.isCheckInHeld, isTrue);
+
+    notifier.acquireCheckInHold();
+    expect(notifier.isCheckInHeld, isTrue);
+
+    notifier.releaseCheckInHold();
+    expect(notifier.isCheckInHeld, isTrue);
+
+    notifier.releaseCheckInHold();
+    expect(notifier.isCheckInHeld, isFalse);
+
+    // Extra release is a no-op.
+    notifier.releaseCheckInHold();
+    expect(notifier.isCheckInHeld, isFalse);
+  });
 }

@@ -26,25 +26,6 @@ onRecordAfterUpdateSuccess((e) => {
     require(`${__hooks}/lib/organizations_helpers.js`).onUpdateSuccess(e);
 }, "organizations");
 
-// Super-admin-only (`organizations.manage` permission) retry for a
-// stuck/failed DNS provisioning attempt.
-routerAdd(
-    "POST",
-    "/api/organizations/{id}/retry-dns",
-    (e) => {
-        return require(`${__hooks}/lib/organizations_helpers.js`).retryDns(e);
-    },
-    $apis.requireAuth("users"),
-    (e) => {
-        require(`${__hooks}/lib/organizations_helpers.js`).requireOrganizationsManage(e);
-    },
-);
-
-// Scheduled retry for organizations stuck with dnsStatus = "failed".
-cronAdd("organizationsDnsRetry", "*/30 * * * *", () => {
-    require(`${__hooks}/lib/organizations_helpers.js`).retryFailed();
-});
-
 // Public branding resolve for pre-auth subdomain theming.
 routerAdd("GET", "/api/public/organizations/resolve", (e) => {
     return require(`${__hooks}/lib/organization_setup_helpers.js`).resolvePublic(e);

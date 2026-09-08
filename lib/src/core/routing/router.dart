@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/organizations/presentation/controllers/organization_memberships_controller.dart';
 import '../packages/sentry/sentry_config.dart';
 import '../pages/app_root.dart';
 import '../permissions/current_user_permissions.dart';
@@ -61,8 +62,9 @@ GoRouter router(Ref ref) {
       $verifyEmailRoute,
       $confirmVerificationRoute,
 
-      // Legacy org path redirect
+      // Legacy org path redirect + invite gate
       $organizationsRoute,
+      $awaitingOrganizationRoute,
 
       // Platform super-admin shell
       $platformShellRoute,
@@ -143,6 +145,10 @@ GoRouter router(Ref ref) {
   });
 
   ref.listen(currentUserPermissionsProvider, (previous, next) {
+    router.refresh();
+  });
+
+  ref.listen(organizationMembershipsControllerProvider, (previous, next) {
     router.refresh();
   });
 

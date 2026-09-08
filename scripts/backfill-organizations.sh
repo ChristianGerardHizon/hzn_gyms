@@ -6,7 +6,8 @@ ADMIN_EMAIL="${ADMIN_EMAIL:?Set ADMIN_EMAIL}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}"
 ORG_SLUG="${ORG_SLUG:-kyliegym}"
 ORG_NAME="${ORG_NAME:-Kylie Gym}"
-GRANT_ORG_MANAGE="${GRANT_ORG_MANAGE:-false}"
+GRANT_SUPER_ADMIN="${GRANT_SUPER_ADMIN:-false}"
+SUPER_ADMIN_EMAIL="${SUPER_ADMIN_EMAIL:-}"
 ROLE_NAME="${ROLE_NAME:-Admin}"
 
 json_get() {
@@ -96,28 +97,22 @@ for item in d.get('items',[]):
   PAGE=$((PAGE + 1))
 done
 
-if [[ "$GRANT_ORG_MANAGE" == "true" ]]; then
-  echo "==> Granting organizations.manage on role '${ROLE_NAME}'"
-  ROLES=$(curl -s "${API_URL}/api/collections/userRoles/records?filter=name%3D%27${ROLE_NAME// /%20}%27&perPage=1" \
-    -H "$AUTH_HEADER")
-  ROLE_ID=$(echo "$ROLES" | json_get "d.get('items',[{}])[0].get('id','')")
-  if [[ -z "$ROLE_ID" ]]; then
-    echo "warning: role '${ROLE_NAME}' not found — grant organizations.manage manually" >&2
+if [[ "$GRANT_SUPER_ADMIN" == "true" ]]; then
+  if [[ -z "$SUPER_ADMIN_EMAIL" ]]; then
+    echo "warning: GRANT_SUPER_ADMIN=true but SUPER_ADMIN_EMAIL unset — set users.superAdmin manually in PocketBase Admin" >&2
   else
-    PERMS_JSON=$(echo "$ROLES" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-perms=d.get('items',[{}])[0].get('permissions',[]) or []
-if 'organizations.manage' not in perms:
-    perms.append('organizations.manage')
-if 'organizations.view' not in perms:
-    perms.append('organizations.view')
-print(json.dumps({'permissions': perms}))
-")
-    curl -s -X PATCH "${API_URL}/api/collections/userRoles/records/${ROLE_ID}" \
-      -H "$AUTH_HEADER" -H "Content-Type: application/json" \
-      -d "$PERMS_JSON" >/dev/null
-    echo "    Updated role ${ROLE_ID}"
+    echo "==> Setting users.superAdmin on ${SUPER_ADMIN_EMAIL}"
+    USERS=$(curl -s "${API_URL}/api/collections/users/records?filter=email%3D%27${SUPER_ADMIN_EMAIL// /%20}%27&perPage=1" \
+      -H "$AUTH_HEADER")
+    USER_ID=$(echo "$USERS" | json_get "d.get('items',[{}])[0].get('id','')")
+    if [[ -z "$USER_ID" ]]; then
+      echo "warning: user '${SUPER_ADMIN_EMAIL}' not found — set superAdmin manually" >&2
+    else
+      curl -s -X PATCH "${API_URL}/api/collections/users/records/${USER_ID}" \
+        -H "$AUTH_HEADER" -H "Content-Type: application/json" \
+        -d '{"superAdmin":true}' >/dev/null
+      echo "    Updated user ${USER_ID} superAdmin=true"
+    fi
   fi
 fi
 

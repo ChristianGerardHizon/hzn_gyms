@@ -16,6 +16,7 @@ import '../../../sales/presentation/controllers/sale_refresh.dart';
 import '../../../sales/presentation/widgets/record_payment_dialog.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../controllers/dashboard_refresh.dart';
+import '../controllers/todays_sales_controller.dart';
 import 'sale_quick_view_dialog.dart';
 
 /// Session-local sale IDs dismissed from the Unpaid today banner via Ignore.
@@ -231,13 +232,3 @@ class _UnpaidSaleTile extends ConsumerWidget {
     );
   }
 }
-
-/// Today's open unpaid sales for the effective write branch.
-final todayUnpaidSalesProvider =
-    FutureProvider.autoDispose<List<Sale>>((ref) async {
-  final branchId = ref.watch(effectiveBranchIdForWriteProvider);
-  if (branchId == null) return const [];
-  final repo = ref.watch(salesRepositoryProvider);
-  final result = await repo.getOpenUnpaidSales(branchId: branchId);
-  return result.fold((_) => <Sale>[], (sales) => sales);
-});

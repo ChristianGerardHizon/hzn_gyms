@@ -188,7 +188,7 @@ Tabbed analytics hub with period selector (Day / Week / Month / Year / All Time)
 ### Organization/Admin Features
 
 #### Platform (`/platform`)
-Super-admin shell separate from the gym app (requires `organizations.manage`).
+Super-admin shell separate from the gym app (requires `users.superAdmin`).
 
 - **Dashboard** (`/platform`) — tenant summary counts, recent organizations, enter-tenant shortcuts
 - **Organizations** (`/platform/organizations`) — list/create/edit tenants, setup badges
@@ -585,6 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
+| Sep 8 | Platform `superAdmin` | Org create/manage gated by `users.superAdmin` (not role permission); roles stay per-organization |
 | Sep 8 | Login + auth emails | Two-step login (email → password/code; Google on step 1); OTP error copy; formal deliverability-safe auth emails with HZN logo |
 | Sep 7 | Email OTP login | Passwordless email OTP on login screen (send code → verify); PocketBase OTP + Resend |
 | Sep 7 | Org web favicon | Active organization logo drives browser favicon + apple-touch-icon on web |
@@ -597,11 +598,12 @@ lib/src/
 | Sep 7 | Initial setup guide | Documented HZN Gyms provision pitfalls, secrets, and manual checklist (`docs/hzngyms-initial-setup.md`) |
 | Sep 7 | HZN Gyms PocketBase | New staging/prod instances at `*.hzngyms.hznsystems.com` (`/opt/pocketbase/hzn_gyms*`); kyliegym left untouched |
 | Sep 6 | Deploy uploads | Staging and production both upload Sentry source maps, then rsync web + migrations + hooks (`scripts/deploy.sh`) |
+| Sep 8 | Org isolation + per-org roles | Gym lists scoped by `branch.organization`; org switch resets cache/branch; `organizationMemberships` drives per-org roles; invite-required gate; PB listRules require auth organization |
 | Sep 6 | Sentry project | Prod DSN and `sentry_dart_plugin` now target Sentry project `hzn-gyms` |
 | Sep 2 | Sale/member account attribution | Sale quick view + detail show Sold by cashier; customer name links to member detail; member detail shows Added by |
 | Sep 2 | Organization logo upload | Edit/create organization form supports uploading a logo (PNG/WebP); used in sidebar, login, and org list |
 | Sep 2 | Organization onboarding | Platform shell (`/platform`), setup wizard, `setupStatus` lifecycle, public branding resolve, org-scoped user/branch rules |
-| Sep 2 | Organizations admin UI | Super-admin org list, org switcher, DNS retry, and `organizations.manage` nav gating |
+| Sep 2 | Organizations admin UI | Super-admin org list, org switcher, DNS retry, and platform nav gating |
 | Aug 19 | Today's activity logs | Dashboard **Today's Logs** quick action (admin or `activityLog.view`) opens today's branch-scoped activity with descriptive headlines and expandable field diffs |
 | Aug 19 | Web splash hang | Deployed web no longer waits on Flutter's precache service worker; splash shows Loading…; new deploys bust boot-asset HTTP cache then reload via version.json |
 | Aug 12 | Unpaid today tap + Ignore | Unpaid today rows open sale quick view on tap; Ignore dismisses from the banner for the session without voiding |

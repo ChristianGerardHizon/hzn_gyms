@@ -641,6 +641,12 @@ class Translations$organizations$en {
 	/// en: 'Switch Organization'
 	String get switchOrganization => 'Switch Organization';
 
+	/// en: 'Invitation required'
+	String get awaitingInviteTitle => 'Invitation required';
+
+	/// en: 'You need to be invited to an organization before you can use the app. Ask your organization admin for an invite, then sign in again.'
+	String get awaitingInviteBody => 'You need to be invited to an organization before you can use the app. Ask your organization admin for an invite, then sign in again.';
+
 	/// en: 'Platform'
 	String get platformTitle => 'Platform';
 
@@ -1028,6 +1034,8 @@ extension on Translations {
 			'organizations.emptyList' => 'No organizations found',
 			'organizations.noOrganization' => 'No Organization',
 			'organizations.switchOrganization' => 'Switch Organization',
+			'organizations.awaitingInviteTitle' => 'Invitation required',
+			'organizations.awaitingInviteBody' => 'You need to be invited to an organization before you can use the app. Ask your organization admin for an invite, then sign in again.',
 			'organizations.platformTitle' => 'Platform',
 			'organizations.platformDashboard' => 'Dashboard',
 			'organizations.enterTenant' => 'Enter tenant',

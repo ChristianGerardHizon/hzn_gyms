@@ -36,7 +36,7 @@ final class MembersControllerProvider
   MembersController create() => MembersController();
 }
 
-String _$membersControllerHash() => r'2839bda0d1ada5b9c1d308684f3190df4ae98304';
+String _$membersControllerHash() => r'2a3e88f0c4a9177843e5efa3dd4b0ed84cdde521';
 
 /// Controller for managing the list of members.
 

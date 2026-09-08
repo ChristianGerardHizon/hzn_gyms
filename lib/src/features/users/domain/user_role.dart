@@ -153,14 +153,12 @@ abstract class Permissions {
   static const systemAdmin = 'system.admin';
   static const activityLogView = 'activityLog.view';
 
-  // Organizations permissions (cross-org platform management — deliberately
-  // NOT granted by systemAdmin; see CurrentUserPermissions.canManageOrganizations)
+  // Organizations permissions (tenant branding visibility)
   static const organizationsView = 'organizations.view';
-  static const organizationsManage = 'organizations.manage';
 
   // Organization membership permissions (per-org team roster: invite,
-  // remove, and change roles for members of *this* organization — distinct
-  // from `organizationsManage`, which is cross-org platform administration)
+  // remove, and change roles for members of *this* organization). Platform
+  // cross-org administration uses users.superAdmin, not a role permission.
   static const membersManage = 'members.manage';
 
   /// All permissions grouped by category (keys only).
@@ -195,7 +193,7 @@ abstract class Permissions {
     'Branches': [branchesView, branchesCreate, branchesEdit, branchesDelete],
     'Settings': [settingsView, settingsEdit],
     'System': [systemAdmin, activityLogView],
-    'Organizations': [organizationsView, organizationsManage],
+    'Organizations': [organizationsView],
     'Organization Members': [membersManage],
   };
 
@@ -561,15 +559,6 @@ abstract class Permissions {
         category: 'Organizations',
         description: 'View this organization\'s branding and DNS status',
         icon: Icons.visibility,
-      ),
-      const Permission(
-        key: organizationsManage,
-        name: 'Manage Organizations',
-        category: 'Organizations',
-        description:
-            'Create, switch between, and manage all organizations (platform '
-            'super-admin) — not granted by System Admin alone',
-        icon: Icons.corporate_fare,
       ),
       // Organization Members
       const Permission(

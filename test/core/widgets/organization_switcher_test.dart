@@ -2,12 +2,9 @@ import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
 import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
 import 'package:hzn_gyms/src/core/widgets/cached_avatar.dart';
 import 'package:hzn_gyms/src/core/widgets/organization_switcher.dart';
-import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
-import 'package:hzn_gyms/src/features/auth/domain/user.dart';
-import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organizations_controller.dart';
-import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,7 +18,7 @@ void main() {
     slug: 'kyliegym',
     logoTransparentUrl: 'https://example.com/logo.png',
   );
-  testWidgets('hidden without organizations.manage permission', (tester) async {
+  testWidgets('hidden without superAdmin', (tester) async {
     await tester.pumpWidget(
       TranslationProvider(
         child: ProviderScope(
@@ -45,61 +42,14 @@ void main() {
     expect(find.byType(OrganizationSwitcher), findsOneWidget);
   });
 
-  testWidgets('hidden for org-scoped admin with organizations.manage', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      TranslationProvider(
-        child: ProviderScope(
-          overrides: [
-            currentAuthProvider.overrideWithValue(
-              const AuthState(
-                token: 'tok',
-                user: User(
-                  id: 'org-admin',
-                  name: 'Org Admin',
-                  email: 'orgadmin@test.com',
-                  verified: true,
-                  organization: 'org-a',
-                ),
-              ),
-            ),
-            currentUserPermissionsProvider.overrideWith(
-              () => _FakePermissionsController(
-                const CurrentUserPermissions(
-                  permissions: {Permissions.organizationsManage},
-                ),
-              ),
-            ),
-            organizationsControllerProvider.overrideWith(
-              () => _FakeOrganizationsController(const [orgA, orgB]),
-            ),
-            currentOrganizationControllerProvider.overrideWith(
-              () => _FakeCurrentOrganizationController(orgA),
-            ),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(body: OrganizationSwitcher(compact: true)),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(DropdownButton<String>), findsNothing);
-  });
-
-  testWidgets('shows dropdown when user can manage organizations', (    tester,
-  ) async {
+  testWidgets('shows dropdown when user is superAdmin', (tester) async {
     await tester.pumpWidget(
       TranslationProvider(
         child: ProviderScope(
           overrides: [
             currentUserPermissionsProvider.overrideWith(
               () => _FakePermissionsController(
-                const CurrentUserPermissions(
-                  permissions: {Permissions.organizationsManage},
-                ),
+                const CurrentUserPermissions(superAdmin: true),
               ),
             ),
             organizationsControllerProvider.overrideWith(
@@ -130,9 +80,7 @@ void main() {
           overrides: [
             currentUserPermissionsProvider.overrideWith(
               () => _FakePermissionsController(
-                const CurrentUserPermissions(
-                  permissions: {Permissions.organizationsManage},
-                ),
+                const CurrentUserPermissions(superAdmin: true),
               ),
             ),
             organizationsControllerProvider.overrideWith(
@@ -154,7 +102,8 @@ void main() {
     expect(find.text('Kylie Gym'), findsOneWidget);
   });
 
-  testWidgets('compact mode lays out in AppBar actions without overflow', (    tester,
+  testWidgets('compact mode lays out in AppBar actions without overflow', (
+    tester,
   ) async {
     await tester.pumpWidget(
       TranslationProvider(
@@ -162,9 +111,7 @@ void main() {
           overrides: [
             currentUserPermissionsProvider.overrideWith(
               () => _FakePermissionsController(
-                const CurrentUserPermissions(
-                  permissions: {Permissions.organizationsManage},
-                ),
+                const CurrentUserPermissions(superAdmin: true),
               ),
             ),
             organizationsControllerProvider.overrideWith(

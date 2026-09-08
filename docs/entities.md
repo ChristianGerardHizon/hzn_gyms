@@ -89,6 +89,7 @@ All system users with role-based access.
 | `name` | String | Yes | User name |
 | `email` | String | Yes | Login email (password auth identity) |
 | `organization` | String (FK) | No | FK to Organization — tenant scope; enforced on create/update for non–platform-admins |
+| `superAdmin` | bool | No | Platform operator flag — create/manage all organizations; independent of role permissions; only `_superusers` may set |
 | `avatar` | String | No | Avatar filename |
 | `verified` | bool | Yes | Email verification status |
 | `role` | String (FK) | Yes | FK to UserRole |

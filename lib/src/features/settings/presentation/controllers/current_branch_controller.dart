@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/storage/secure_storage_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
 import '../../../users/presentation/controllers/user_role_provider.dart';
 import '../../domain/branch.dart';
@@ -26,7 +27,7 @@ class CurrentBranchSelection {
   /// Concrete branch when not viewing all.
   final Branch? branch;
 
-  /// Admin "All branches" mode (no branch filter on lists).
+  /// Admin "All branches" mode (org-scoped, not global).
   final bool isAll;
 
   /// Concrete branch id, or null when [isAll] / unset.
@@ -35,7 +36,7 @@ class CurrentBranchSelection {
 
 /// Controller for managing the current working branch.
 ///
-/// - Admins: can switch to any branch or "All branches"; selection is persisted
+/// - Admins: can switch to any branch in the current org or "All branches"
 /// - Non-admins: can switch among allowed branches; locked if only one
 @Riverpod(keepAlive: true)
 class CurrentBranchController extends _$CurrentBranchController {
@@ -45,6 +46,12 @@ class CurrentBranchController extends _$CurrentBranchController {
     if (auth == null) {
       return const CurrentBranchSelection();
     }
+
+    // Rebuild when the active organization changes (org switcher).
+    ref.watch(currentOrganizationIdProvider);
+
+    final orgBranches = await ref.watch(branchesControllerProvider.future);
+    final orgBranchIds = orgBranches.map((b) => b.id).toSet();
 
     final defaultBranchId = auth.user.branch;
     final allowedIds = _resolveAllowedIds(
@@ -60,17 +67,27 @@ class CurrentBranchController extends _$CurrentBranchController {
       }
       final branchId = _pickValidBranchId(
         persisted: persisted,
-        allowedIds: null,
-        defaultBranchId: defaultBranchId,
+        allowedIds: orgBranchIds.isEmpty ? null : orgBranchIds.toList(),
+        defaultBranchId: defaultBranchId != null &&
+                orgBranchIds.contains(defaultBranchId)
+            ? defaultBranchId
+            : (orgBranches.isEmpty ? null : orgBranches.first.id),
       );
       final branch =
           branchId != null ? await _fetchBranch(branchId) : null;
-      return CurrentBranchSelection(branch: branch);
+      if (branch != null) return CurrentBranchSelection(branch: branch);
+      if (orgBranches.isNotEmpty) {
+        return CurrentBranchSelection(branch: orgBranches.first);
+      }
+      return const CurrentBranchSelection(isAll: true);
     }
 
+    final scopedAllowed = allowedIds
+        .where((id) => orgBranchIds.isEmpty || orgBranchIds.contains(id))
+        .toList();
     final branchId = _pickValidBranchId(
       persisted: persisted,
-      allowedIds: allowedIds,
+      allowedIds: scopedAllowed,
       defaultBranchId: defaultBranchId,
     );
     final branch =
@@ -206,7 +223,7 @@ class CurrentBranchController extends _$CurrentBranchController {
   }
 }
 
-/// Whether admin is viewing all branches (no branch filter).
+/// Whether admin is viewing all branches (no concrete branch filter).
 @Riverpod(keepAlive: true)
 bool viewingAllBranches(Ref ref) {
   return ref.watch(currentBranchControllerProvider).value?.isAll ?? false;
@@ -223,12 +240,17 @@ String? currentBranchId(Ref ref) {
 /// Convenience provider for branch filter string.
 ///
 /// Returns `branch = "id" && isDeleted = false` for a concrete branch,
-/// `isDeleted = false` when viewing All branches, or null while unset/loading.
+/// `branch.organization = "orgId" && isDeleted = false` when viewing All
+/// branches in an org, or null while unset/loading / no org.
 @Riverpod(keepAlive: true)
 String? currentBranchFilter(Ref ref) {
   final selection = ref.watch(currentBranchControllerProvider).value;
   if (selection == null) return null;
-  if (selection.isAll) return PBFilters.active.build();
+  if (selection.isAll) {
+    final orgId = ref.watch(currentOrganizationIdProvider);
+    if (orgId == null || orgId.isEmpty) return null;
+    return PBFilters.forBranchOrganization(orgId).build();
+  }
   final branchId = selection.branch?.id;
   if (branchId == null) return null;
   return PBFilters.forBranch(branchId).build();

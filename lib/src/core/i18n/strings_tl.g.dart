@@ -284,6 +284,8 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get emptyList => 'Walang nahanap na organisasyon';
 	@override String get noOrganization => 'Walang Organisasyon';
 	@override String get switchOrganization => 'Palitan ang Organisasyon';
+	@override String get awaitingInviteTitle => 'Kailangan ng imbitasyon';
+	@override String get awaitingInviteBody => 'Kailangan kang imbitahan sa isang organisasyon bago mo magamit ang app. Humingi ng invite sa admin ng organisasyon, tapos mag-sign in ulit.';
 	@override String get platformTitle => 'Platform';
 	@override String get platformDashboard => 'Dashboard';
 	@override String get enterTenant => 'Pumasok sa tenant';
@@ -552,6 +554,8 @@ extension on TranslationsTl {
 			'organizations.emptyList' => 'Walang nahanap na organisasyon',
 			'organizations.noOrganization' => 'Walang Organisasyon',
 			'organizations.switchOrganization' => 'Palitan ang Organisasyon',
+			'organizations.awaitingInviteTitle' => 'Kailangan ng imbitasyon',
+			'organizations.awaitingInviteBody' => 'Kailangan kang imbitahan sa isang organisasyon bago mo magamit ang app. Humingi ng invite sa admin ng organisasyon, tapos mag-sign in ulit.',
 			'organizations.platformTitle' => 'Platform',
 			'organizations.platformDashboard' => 'Dashboard',
 			'organizations.enterTenant' => 'Pumasok sa tenant',

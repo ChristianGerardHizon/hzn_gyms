@@ -2,8 +2,6 @@
 
 // Users hooks — org-scoping for tenant isolation.
 
-const { roleHasPermission } = require(`${__hooks}/lib/permissions_helpers.js`);
-
 function isSuperuserAuth(authRecord) {
     if (!authRecord) return false;
     try {
@@ -13,14 +11,38 @@ function isSuperuserAuth(authRecord) {
     }
 }
 
-function callerHasOrganizationsManage(app, authRecord) {
+function callerIsSuperAdmin(authRecord) {
     if (!authRecord) return false;
-    // Resolve via users.role → userRoles.permissions (not userRoles.user).
-    return roleHasPermission(
-        app,
-        authRecord.getString("role"),
-        "organizations.manage",
-    );
+    try {
+        return !!authRecord.getBool("superAdmin");
+    } catch (_) {
+        return false;
+    }
+}
+
+/**
+ * Only PocketBase `_superusers` may set `superAdmin`. Non-superuser creates
+ * force false; updates restore the existing DB value.
+ *
+ * @param {core.RecordRequestEvent} e
+ * @param {{ isCreate?: boolean }} [options]
+ */
+function protectSuperAdminField(e, options) {
+    const isCreate = !!(options && options.isCreate);
+    if (isSuperuserAuth(e.auth)) {
+        return;
+    }
+    if (isCreate) {
+        e.record.set("superAdmin", false);
+        return;
+    }
+    let previous = false;
+    try {
+        previous = e.record.originalCopy().getBool("superAdmin");
+    } catch (_) {
+        previous = false;
+    }
+    e.record.set("superAdmin", previous);
 }
 
 /**
@@ -49,7 +71,7 @@ function enforceUserOrganizationScope(e, options) {
         return;
     }
 
-    if (callerHasOrganizationsManage(e.app, authRecord)) {
+    if (callerIsSuperAdmin(authRecord)) {
         if (requireOrganization && !requestedOrg) {
             throw new BadRequestError("organization is required");
         }
@@ -86,7 +108,8 @@ function rejectOAuthAccountCreation(e) {
 }
 
 module.exports = {
-    callerHasOrganizationsManage: callerHasOrganizationsManage,
+    callerIsSuperAdmin: callerIsSuperAdmin,
+    protectSuperAdminField: protectSuperAdminField,
     enforceUserOrganizationScope: enforceUserOrganizationScope,
     rejectOAuthAccountCreation: rejectOAuthAccountCreation,
 };

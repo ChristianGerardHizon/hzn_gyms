@@ -167,10 +167,20 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
     _decoder.reset();
   }
 
+  bool _isCheckInHeld() {
+    try {
+      return ref
+          .read(rfidListenerStatusControllerProvider.notifier)
+          .isCheckInHeld;
+    } catch (_) {
+      return false;
+    }
+  }
+
   bool _handleKeyEvent(KeyEvent event) {
     if (event is! KeyDownEvent) return false;
     if (!_windowFocused) return false;
-    if (_isProcessing || _dialogOpen) return false;
+    if (_isProcessing || _dialogOpen || _isCheckInHeld()) return false;
 
     if (!isRfidWedgeCandidateKey(
       logicalKey: event.logicalKey,
@@ -204,7 +214,7 @@ class _CheckInRfidListenerState extends ConsumerState<CheckInRfidListener>
   }
 
   Future<void> _processScan(String cardValue) async {
-    if (_isProcessing || !mounted) return;
+    if (_isProcessing || !mounted || _isCheckInHeld()) return;
     _isProcessing = true;
 
     try {

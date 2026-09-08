@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/packages/app_info/app_info_provider.dart';
@@ -9,8 +10,10 @@ import '../../../check_in/presentation/widgets/rfid_listener_status_icon.dart';
 import '../../domain/dashboard_greeting.dart';
 import '../controllers/dashboard_refresh.dart';
 
+enum _RefreshUiState { idle, refreshing, done }
+
 /// Dashboard page header: greeting as title, connectivity + app version as subheader.
-class DashboardHeader extends ConsumerWidget {
+class DashboardHeader extends HookConsumerWidget {
   const DashboardHeader({
     super.key,
     this.padding = const EdgeInsets.symmetric(horizontal: 16),
@@ -33,6 +36,39 @@ class DashboardHeader extends ConsumerWidget {
       error: (_, __) => null,
     );
     final connectivityAsync = ref.watch(pbConnectivityProvider);
+
+    final refreshState = useState(_RefreshUiState.idle);
+    final spinController = useAnimationController(
+      duration: const Duration(milliseconds: 800),
+    );
+
+    useEffect(() {
+      if (refreshState.value == _RefreshUiState.refreshing) {
+        spinController.repeat();
+      } else {
+        spinController
+          ..stop()
+          ..reset();
+      }
+      return null;
+    }, [refreshState.value]);
+
+    Future<void> onRefresh() async {
+      if (refreshState.value != _RefreshUiState.idle) return;
+      refreshState.value = _RefreshUiState.refreshing;
+      await refreshDashboard(ref);
+      if (!context.mounted) return;
+      refreshState.value = _RefreshUiState.done;
+      await Future<void>.delayed(const Duration(milliseconds: 1000));
+      if (!context.mounted) return;
+      refreshState.value = _RefreshUiState.idle;
+    }
+
+    final (icon, label) = switch (refreshState.value) {
+      _RefreshUiState.idle => (Icons.refresh, 'Refresh'),
+      _RefreshUiState.refreshing => (Icons.refresh, 'Refreshing…'),
+      _RefreshUiState.done => (Icons.check, 'Done'),
+    };
 
     return Padding(
       padding: padding,
@@ -84,10 +120,30 @@ class DashboardHeader extends ConsumerWidget {
             ),
           ),
           const RfidListenerStatusIcon(),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: () => refreshDashboard(ref),
+          TextButton.icon(
+            onPressed: refreshState.value == _RefreshUiState.refreshing
+                ? null
+                : onRefresh,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: refreshState.value == _RefreshUiState.refreshing
+                  ? RotationTransition(
+                      key: const ValueKey('refreshing'),
+                      turns: spinController,
+                      child: Icon(icon),
+                    )
+                  : Icon(
+                      icon,
+                      key: ValueKey(refreshState.value),
+                    ),
+            ),
+            label: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                label,
+                key: ValueKey(label),
+              ),
+            ),
           ),
         ],
       ),

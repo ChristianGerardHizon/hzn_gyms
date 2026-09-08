@@ -135,7 +135,7 @@ function Ensure-AdminUser {
 
 function Set-SetupReady {
     param([string]$OrgId, [hashtable]$Headers)
-    # complete-setup requires a user token (organizations.manage), not superuser.
+    # complete-setup requires a user token (users.superAdmin), not superuser.
     # PATCH setupStatus directly when the field exists on the collection.
     try {
         $body = @{
@@ -268,4 +268,4 @@ Write-Host ""
 Write-Host "==> Summary"
 $summary | Format-Table -AutoSize
 Write-Host "Test admin password (new users): $TestPassword"
-Write-Host "Switch orgs in-app via the organization dropdown (requires organizations.manage)."
+Write-Host "Switch orgs in-app via the organization dropdown (requires users.superAdmin)."

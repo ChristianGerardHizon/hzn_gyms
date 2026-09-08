@@ -79,6 +79,13 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
     _$organization,
     opt: true,
   );
+  static bool _$superAdmin(AuthDto v) => v.superAdmin;
+  static const Field<AuthDto, bool> _f$superAdmin = Field(
+    'superAdmin',
+    _$superAdmin,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<AuthDto> fields = const {
@@ -94,6 +101,7 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
     #branch: _f$branch,
     #allowedBranches: _f$allowedBranches,
     #organization: _f$organization,
+    #superAdmin: _f$superAdmin,
   };
 
   static AuthDto _instantiate(DecodingData data) {
@@ -110,6 +118,7 @@ class AuthDtoMapper extends ClassMapperBase<AuthDto> {
       branch: data.dec(_f$branch),
       allowedBranches: data.dec(_f$allowedBranches),
       organization: data.dec(_f$organization),
+      superAdmin: data.dec(_f$superAdmin),
     );
   }
 
@@ -185,6 +194,7 @@ abstract class AuthDtoCopyWith<$R, $In extends AuthDto, $Out>
     String? branch,
     List<String>? allowedBranches,
     String? organization,
+    bool? superAdmin,
   });
   AuthDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -218,6 +228,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
     Object? branch = $none,
     List<String>? allowedBranches,
     Object? organization = $none,
+    bool? superAdmin,
   }) => $apply(
     FieldCopyWithData({
       if (token != null) #token: token,
@@ -232,6 +243,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
       if (branch != $none) #branch: branch,
       if (allowedBranches != null) #allowedBranches: allowedBranches,
       if (organization != $none) #organization: organization,
+      if (superAdmin != null) #superAdmin: superAdmin,
     }),
   );
   @override
@@ -248,6 +260,7 @@ class _AuthDtoCopyWithImpl<$R, $Out>
     branch: data.get(#branch, or: $value.branch),
     allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
     organization: data.get(#organization, or: $value.organization),
+    superAdmin: data.get(#superAdmin, or: $value.superAdmin),
   );
 
   @override

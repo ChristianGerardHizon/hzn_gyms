@@ -125,6 +125,20 @@ void main() {
       );
     });
 
+    test('forBranchOrganization scopes via branch relation', () {
+      expect(
+        PBFilters.forBranchOrganization('org1').build(),
+        'branch.organization = "org1" && isDeleted = false',
+      );
+    });
+
+    test('andFilters joins non-empty sides', () {
+      expect(PBFilters.andFilters(null, null), isNull);
+      expect(PBFilters.andFilters('a = 1', null), 'a = 1');
+      expect(PBFilters.andFilters(null, 'b = 2'), 'b = 2');
+      expect(PBFilters.andFilters('a = 1', 'b = 2'), '(a = 1) && (b = 2)');
+    });
+
     test('activeMemberMemberships keeps last calendar day inclusive', () {
       final now = DateTime(2026, 8, 13, 15, 30, 45);
       final filter = PBFilters.activeMemberMemberships(now: now).build();

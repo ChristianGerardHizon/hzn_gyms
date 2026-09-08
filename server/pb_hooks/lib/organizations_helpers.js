@@ -287,31 +287,12 @@ function requireOrganizationsManage(e) {
             return
         }
     } catch (_) {
-        // fall through to role check
+        // fall through to superAdmin check
     }
-    const { roleHasPermission } = require(`${__hooks}/lib/permissions_helpers.js`)
-    const roleId = authRecord.getString("role")
-    if (!roleHasPermission(e.app, roleId, "organizations.manage")) {
-        throw new ForbiddenError("organizations.manage permission required")
+    if (!authRecord.getBool("superAdmin")) {
+        throw new ForbiddenError("superAdmin required")
     }
     e.next()
-}
-
-// Route handler: POST /api/organizations/:id/retry-dns
-function retryDns(e) {
-    const id = e.request.pathValue("id")
-    const record = e.app.findRecordById("organizations", id)
-    provisionSubdomain(e.app, record)
-    return e.json(200, {
-        success: record.getString("dnsStatus") === "created",
-        dnsStatus: record.getString("dnsStatus"),
-        dnsError: record.getString("dnsError"),
-    })
-}
-
-// Scheduled job — no-op; auto DNS retry disabled with org DNS linking.
-function retryFailed() {
-    // intentionally empty
 }
 
 module.exports = {
@@ -326,6 +307,4 @@ module.exports = {
     onCreateSuccess: onCreateSuccess,
     onUpdateSuccess: onUpdateSuccess,
     requireOrganizationsManage: requireOrganizationsManage,
-    retryDns: retryDns,
-    retryFailed: retryFailed,
 }

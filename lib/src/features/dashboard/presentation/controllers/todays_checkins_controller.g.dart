@@ -8,17 +8,17 @@ part of 'todays_checkins_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Count of check-ins today for the current branch.
+/// Count of check-ins today for the current branch / organization.
 
 @ProviderFor(todaysCheckInsCount)
 final todaysCheckInsCountProvider = TodaysCheckInsCountProvider._();
 
-/// Count of check-ins today for the current branch.
+/// Count of check-ins today for the current branch / organization.
 
 final class TodaysCheckInsCountProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Count of check-ins today for the current branch.
+  /// Count of check-ins today for the current branch / organization.
   TodaysCheckInsCountProvider._()
     : super(
         from: null,
@@ -45,4 +45,4 @@ final class TodaysCheckInsCountProvider
 }
 
 String _$todaysCheckInsCountHash() =>
-    r'a4dc7f9ae52e034e1abd55f4f0e1cb6480725fef';
+    r'4da4ce13b69e96b971c4b7ff57e28d16b34c6b11';
