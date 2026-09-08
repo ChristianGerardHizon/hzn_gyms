@@ -38,7 +38,7 @@ final class OrganizationsControllerProvider
 }
 
 String _$organizationsControllerHash() =>
-    r'78cb42f4192581d121b89871c9d6dbad5067571e';
+    r'433792ccf33ffe291543aad0fe6f983a996f10a2';
 
 /// Controller for super-admin organization list and CRUD.
 

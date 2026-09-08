@@ -32,7 +32,6 @@ void main() {
 
     expect(find.text('Kylie Gym'), findsOneWidget);
     expect(find.text('Slug: kyliegym'), findsOneWidget);
-    expect(find.text('Retry DNS'), findsNothing);
   });
 }
 

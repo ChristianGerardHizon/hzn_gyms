@@ -51,7 +51,7 @@ See [organization-onboarding.md](organization-onboarding.md) for setup wizard an
 | Auth | Login with email; wrong password → "email or password" |
 | Branding | Org splash → themed UI; drawer title matches org |
 | Branches | List scoped to org; new branch gets current org |
-| Platform UI | `/platform` dashboard; org list; create/edit; DNS badge; retry DNS |
+| Platform UI | `/platform` dashboard; org list; create/edit; DNS badge |
 | Setup wizard | Create org → wizard; branch + admin required; optional steps skippable; mark complete |
 | Org switcher | Switch tenant; branches/branding update; Enter tenant opens gym app |
 | Rename | App title "HZN Gyms"; local DB migrates from `kylie_gym.sqlite` |
@@ -68,8 +68,6 @@ Required for `<slug>.hzngyms.com` pre-auth branding.
 | Wildcard TLS | Certificate for `*.hzngyms.com` (Caddy on-demand or pre-provisioned) |
 | Porkbun env | On PocketBase systemd unit (configured): `/etc/pocketbase/kyliegym-porkbun.env` with `PORKBUN_API_KEY`, `PORKBUN_API_SECRET`, `PORKBUN_DNS_TARGET`, `PORKBUN_BASE_DOMAIN` |
 | Sentry | Flutter project `hzn-gyms` (see `pubspec.yaml` sentry.project) |
-
-Hook reference: `server/pb_hooks/organizations.pb.js` — `POST /api/organizations/:id/retry-dns`
 
 Caddy example: [caddy-hzngyms.com.example.caddy](caddy-hzngyms.com.example.caddy)
 
