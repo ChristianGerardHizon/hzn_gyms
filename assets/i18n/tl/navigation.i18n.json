@@ -32,5 +32,8 @@
     "system": "Sistema",
     "account": "Account",
     "noBranch": "Walang Sangay",
-    "allBranches": "Lahat ng Sangay"
+    "allBranches": "Lahat ng Sangay",
+    "searchNavHint": "Maghanap ng mga pahina",
+    "searchResults": "Mga resulta ng paghahanap",
+    "noSearchResults": "Walang resulta"
 }

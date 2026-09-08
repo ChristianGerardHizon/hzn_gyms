@@ -87,5 +87,63 @@ void main() {
         isTrue,
       );
     });
+
+    group('filterNavDestinationsByQuery', () {
+      String labelFor(AppNavId id) {
+        switch (id) {
+          case AppNavId.dashboard:
+            return 'Dashboard';
+          case AppNavId.members:
+            return 'Members';
+          case AppNavId.memberships:
+            return 'Memberships';
+          case AppNavId.reports:
+            return 'Reports';
+          default:
+            return id.name;
+        }
+      }
+
+      const destinations = [
+        AppNavDestination(id: AppNavId.dashboard, path: DashboardRoute.path),
+        AppNavDestination(id: AppNavId.members, path: MembersRoute.path),
+        AppNavDestination(
+          id: AppNavId.memberships,
+          path: MembershipsRoute.path,
+        ),
+        AppNavDestination(id: AppNavId.reports, path: '/reports'),
+      ];
+
+      test('empty or whitespace query returns empty list', () {
+        expect(
+          filterNavDestinationsByQuery(destinations, '', labelFor),
+          isEmpty,
+        );
+        expect(
+          filterNavDestinationsByQuery(destinations, '   ', labelFor),
+          isEmpty,
+        );
+      });
+
+      test('matches case-insensitively by label contains', () {
+        final results = filterNavDestinationsByQuery(
+          destinations,
+          'MEM',
+          labelFor,
+        );
+
+        expect(
+          results.map((d) => d.id),
+          [AppNavId.members, AppNavId.memberships],
+        );
+      });
+
+      test('returns empty list when nothing matches', () {
+        expect(
+          filterNavDestinationsByQuery(destinations, 'xyz', labelFor),
+          isEmpty,
+        );
+      });
+    });
   });
 }

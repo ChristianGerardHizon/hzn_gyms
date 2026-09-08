@@ -248,3 +248,18 @@ bool isNavCategorySelected(
     (dest) => isNavDestinationSelected(location, dest.id, destinations),
   );
 }
+
+/// Destinations whose [labelFor] contains [query] (case-insensitive).
+///
+/// Empty/whitespace [query] returns an empty list so callers show normal nav.
+List<AppNavDestination> filterNavDestinationsByQuery(
+  List<AppNavDestination> destinations,
+  String query,
+  String Function(AppNavId id) labelFor,
+) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return const [];
+  return destinations
+      .where((dest) => labelFor(dest.id).toLowerCase().contains(q))
+      .toList(growable: false);
+}

@@ -32,5 +32,8 @@
     "system": "System",
     "account": "Account",
     "noBranch": "No Branch",
-    "allBranches": "All Branches"
+    "allBranches": "All Branches",
+    "searchNavHint": "Search pages",
+    "searchResults": "Search results",
+    "noSearchResults": "No results"
 }
