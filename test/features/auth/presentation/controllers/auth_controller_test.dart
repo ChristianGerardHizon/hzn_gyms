@@ -82,6 +82,28 @@ void main() {
       expect(container.read(authControllerProvider).hasError, isTrue);
     });
 
+    test('loginWithGoogle does not set loading while OAuth is in flight',
+        () async {
+      final oauth = Completer<Either<Failure, AuthState>>();
+      when(() => repo.loginWithGoogle()).thenAnswer((_) => oauth.future);
+
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(authControllerProvider.future);
+      final pending = container
+          .read(authControllerProvider.notifier)
+          .loginWithGoogle();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(authControllerProvider).isLoading, isFalse);
+
+      oauth.complete(right(_newAuth));
+      expect(await pending, isTrue);
+    });
+
     test(
       'ignores stale background refresh after logout and re-login',
       () async {

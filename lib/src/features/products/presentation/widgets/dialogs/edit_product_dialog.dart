@@ -17,6 +17,7 @@ import '../../../domain/product.dart';
 import '../../controllers/paginated_products_controller.dart';
 import '../../controllers/product_categories_provider.dart';
 import '../../controllers/product_provider.dart';
+import 'product_form_preset.dart';
 
 /// Shows the edit product dialog.
 void showEditProductDialog(BuildContext context, String productId) {
@@ -176,11 +177,13 @@ class _EditProductForm extends HookConsumerWidget {
     // UI state
     final isSaving = useState(false);
     final trackByLot = useState(product.trackByLot);
-
-    // Derive initial section states from existing product data
-    // Price section is enabled if the product has a non-variable price set
+    final preset = useState(
+      presetFromFlags(
+        isVariablePrice: product.isVariablePrice,
+        trackStock: product.trackStock,
+      ),
+    );
     final priceEnabled = useState(!product.isVariablePrice);
-    // Stock section is enabled if the product has trackStock enabled
     final stockEnabled = useState(product.trackStock);
     final canEditQuantity = ref
             .watch(currentUserPermissionsProvider)
@@ -191,6 +194,17 @@ class _EditProductForm extends HookConsumerWidget {
     // Watch categories and branches
     final categoriesAsync = ref.watch(productCategoriesProvider);
     final branchesAsync = ref.watch(branchesControllerProvider);
+
+    void applyPreset(ProductFormPreset next) {
+      preset.value = next;
+      if (next == ProductFormPreset.custom) return;
+      final flags = flagsForPreset(next);
+      priceEnabled.value = flags.priceEnabled;
+      stockEnabled.value = flags.stockEnabled;
+      if (!flags.stockEnabled) {
+        trackByLot.value = false;
+      }
+    }
 
     Future<void> handleSave() async {
       final isValid = formKey.currentState!.saveAndValidate();
@@ -428,46 +442,89 @@ class _EditProductForm extends HookConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // === PRICE SECTION ===
-          _SectionToggle(
-            title: 'Price',
-            icon: Icons.attach_money,
-            enabled: priceEnabled.value,
-            onToggle: (value) => priceEnabled.value = value,
-            isSaving: isSaving.value,
+          // === SETUP PRESET ===
+          const FormSectionHeader(
+            title: 'Pricing & Stock',
+            icon: Icons.tune,
           ),
+          const SizedBox(height: 16),
+          ProductFormPresetPicker(
+            value: preset.value,
+            enabled: !isSaving.value,
+            onChanged: applyPreset,
+          ),
+          const SizedBox(height: 16),
+
+          if (preset.value == ProductFormPreset.custom) ...[
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(
+                    value: true,
+                    label: Text('Fixed'),
+                    icon: Icon(Icons.attach_money),
+                  ),
+                  ButtonSegment(
+                    value: false,
+                    label: Text('Variable'),
+                    icon: Icon(Icons.edit_outlined),
+                  ),
+                ],
+                selected: {priceEnabled.value},
+                onSelectionChanged: isSaving.value
+                    ? null
+                    : (selected) {
+                        priceEnabled.value = selected.first;
+                      },
+              ),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Track stock'),
+              subtitle: const Text('Manage quantity and inventory'),
+              value: stockEnabled.value,
+              onChanged: isSaving.value
+                  ? null
+                  : (value) {
+                      stockEnabled.value = value;
+                      if (!value) {
+                        trackByLot.value = false;
+                      }
+                    },
+            ),
+            const SizedBox(height: 8),
+          ],
+
           if (priceEnabled.value) ...[
-            const SizedBox(height: 16),
             FormBuilderTextField(
               name: 'price',
               decoration: const InputDecoration(
-                labelText: 'Price',
+                labelText: 'Price *',
                 border: OutlineInputBorder(),
                 prefixText: '\u20b1 ',
-                helperText: 'Leave empty for variable price (set at POS)',
               ),
               enabled: !isSaving.value,
               keyboardType: TextInputType.number,
-              validator: FormBuilderValidators.numeric(
-                errorText: 'Must be a number',
-              ),
+              validator: FormBuilderValidators.compose([
+                FormBuilderValidators.required(
+                  errorText: 'Price is required',
+                ),
+                FormBuilderValidators.numeric(
+                  errorText: 'Must be a number',
+                ),
+              ]),
+            ),
+          ] else ...[
+            Text(
+              'Price is set at POS when sold.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
-          const SizedBox(height: 24),
 
-          // === STOCK SECTION ===
-          _SectionToggle(
-            title: 'Stock',
-            icon: Icons.inventory_2_outlined,
-            enabled: stockEnabled.value,
-            onToggle: (value) {
-              stockEnabled.value = value;
-              if (!value) {
-                trackByLot.value = false;
-              }
-            },
-            isSaving: isSaving.value,
-          ),
           if (stockEnabled.value) ...[
             const SizedBox(height: 16),
 
@@ -573,64 +630,4 @@ class _EditProductForm extends HookConsumerWidget {
     'trackByLot': 'Track by Lot',
     'requireStock': 'Require Stock',
   };
-}
-
-/// A toggle header for enabling/disabling a form section.
-class _SectionToggle extends StatelessWidget {
-  const _SectionToggle({
-    required this.title,
-    required this.icon,
-    required this.enabled,
-    required this.onToggle,
-    required this.isSaving,
-  });
-
-  final String title;
-  final IconData icon;
-  final bool enabled;
-  final ValueChanged<bool> onToggle;
-  final bool isSaving;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: enabled
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outlineVariant,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: SwitchListTile(
-        value: enabled,
-        onChanged: isSaving ? null : onToggle,
-        title: Row(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: enabled
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: enabled
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        dense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      ),
-    );
-  }
 }
