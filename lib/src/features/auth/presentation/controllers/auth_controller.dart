@@ -83,10 +83,13 @@ class AuthController extends _$AuthController {
 
   /// Attempts Google OAuth2 login (web).
   ///
+  /// Does not set [AsyncLoading] while waiting: PocketBase OAuth waits on a
+  /// realtime redirect that never completes if the user closes the popup/tab,
+  /// which would permanently disable the login form.
+  ///
   /// Returns true on success, false on failure.
   Future<bool> loginWithGoogle() async {
     _invalidateBackgroundRefresh();
-    state = const AsyncLoading();
 
     final result = await _repository.loginWithGoogle();
 

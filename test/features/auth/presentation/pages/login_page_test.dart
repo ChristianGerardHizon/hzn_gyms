@@ -69,6 +69,11 @@ class _FakeAuthController extends AuthController {
     state = const AsyncData(_fakeAuth);
     return true;
   }
+
+  /// Simulates a stuck global auth loading state (e.g. abandoned OAuth).
+  void stickLoading() {
+    state = const AsyncLoading();
+  }
 }
 
 class _FakePendingRedirect extends PendingRedirect {
@@ -340,5 +345,38 @@ void main() {
       expect(find.text('Invalid email or password.'), findsNothing);
       expect(find.byType(LoginPage), findsOneWidget);
     });
+
+    testWidgets(
+      'email step stays usable when auth controller is stuck loading',
+      (tester) async {
+        final fake = _FakeAuthController();
+        final container = ProviderContainer(
+          overrides: [
+            ..._baseOverrides(),
+            authControllerProvider.overrideWith(() => fake),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(routerConfig: _testRouter(container)),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        fake.stickLoading();
+        await tester.pump();
+
+        final emailField = tester.widget<TextField>(find.byType(TextField).first);
+        expect(emailField.enabled, isTrue);
+        expect(find.text('Continue'), findsOneWidget);
+
+        await tester.enterText(find.byType(TextField).first, 'cashier@test.com');
+        await tester.pump();
+        expect(find.text('cashier@test.com'), findsOneWidget);
+      },
+    );
   });
 }

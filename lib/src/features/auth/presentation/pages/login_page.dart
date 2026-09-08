@@ -44,11 +44,16 @@ class LoginPage extends HookConsumerWidget {
     final email = useState('');
     final otpId = useState<String?>(null);
     final isSendingOtp = useState(false);
+    final isGoogleSigningIn = useState(false);
     final cooldownSeconds = useState(0);
 
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
-    final formBusy = isLoading || isSendingOtp.value;
+    // Never block the email step on global auth loading — Google OAuth can hang
+    // forever if the popup/tab is closed, which used to leave the email field
+    // disabled. Password/OTP still use short-lived HTTP `isLoading`.
+    final formBusy =
+        isSendingOtp.value || (isLoading && loginStep.value == _LoginStep.auth);
     final awaitingCode =
         authMethod.value == _AuthMethod.otp && otpId.value != null;
     final scheme = Theme.of(context).colorScheme;
@@ -117,8 +122,14 @@ class LoginPage extends HookConsumerWidget {
     }
 
     Future<void> handleGoogleLogin() async {
+      if (isGoogleSigningIn.value) return;
       errorMessage.value = null;
-      await ref.read(authControllerProvider.notifier).loginWithGoogle();
+      isGoogleSigningIn.value = true;
+      try {
+        await ref.read(authControllerProvider.notifier).loginWithGoogle();
+      } finally {
+        if (context.mounted) isGoogleSigningIn.value = false;
+      }
     }
 
     Future<void> handleSendOtp({required bool isResend}) async {
@@ -264,7 +275,9 @@ class LoginPage extends HookConsumerWidget {
             ),
             const SizedBox(height: 20),
             primaryButton(
-              onPressed: formBusy ? null : handleContinue,
+              onPressed: (formBusy || isGoogleSigningIn.value)
+                  ? null
+                  : handleContinue,
               child: Text(t.auth.continueButton),
             ),
             if (kIsWeb) ...[
@@ -286,8 +299,12 @@ class LoginPage extends HookConsumerWidget {
               ),
               const SizedBox(height: 16),
               _GoogleSignInButton(
-                onPressed: formBusy ? null : handleGoogleLogin,
-                label: t.auth.continueWithGoogle,
+                onPressed: (formBusy || isGoogleSigningIn.value)
+                    ? null
+                    : handleGoogleLogin,
+                label: isGoogleSigningIn.value
+                    ? t.auth.signingIn
+                    : t.auth.continueWithGoogle,
               ),
             ],
           ],
