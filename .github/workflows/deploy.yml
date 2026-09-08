@@ -295,6 +295,14 @@ jobs:
       (needs.build-staging-apk.result == 'success' || needs.build-staging-apk.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The top-level workflow concurrency group is keyed by github.ref, which
+    # is unique per PR merge ref — it does NOT stop two different PRs from
+    # deploying to the same staging server at the same time. Serialize here
+    # (never cancel a deploy mid-rsync) so concurrent merges can't race on
+    # the same remote directory.
+    concurrency:
+      group: deploy-staging-server
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:
@@ -634,6 +642,12 @@ jobs:
       (needs.build-production-apk.result == 'success' || needs.build-production-apk.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Same rationale as deploy-staging: serialize deploys to the prod server
+    # across concurrent workflow runs so two merges close together can't
+    # rsync into the same live directory at once.
+    concurrency:
+      group: deploy-production-server
+      cancel-in-progress: false
     outputs:
       prod_ver: ${{ needs.prepare-production.outputs.prod_ver }}
       new_patch: ${{ needs.prepare-production.outputs.new_patch }}

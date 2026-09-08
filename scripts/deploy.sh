@@ -153,8 +153,50 @@ sync_dir() {
     "${REMOTE}:${remote_path}/"
 }
 
+# Web assets are served live by PocketBase out of $remote_path, so rsync'ing
+# straight into it leaves the site serving a half-written build for the
+# duration of the transfer if anything interrupts it (dropped SSH connection,
+# job cancellation, etc). Instead: sync into a staging directory alongside
+# it, verify the transfer is byte-for-byte complete, then swap it into place
+# with two `mv`s (atomic renames on the same filesystem) so the live
+# directory is never partially written.
+sync_web_atomic() {
+  local local_path="$1"
+  local remote_path="$2"
+  local remote_tmp="${remote_path}.new"
+  local remote_old="${remote_path}.old"
+
+  if [[ ! -d "$local_path" ]]; then
+    echo "error: local path missing for web: ${local_path}" >&2
+    exit 1
+  fi
+
+  echo "==> Sync web (staged) → ${REMOTE}:${remote_tmp}/"
+  ssh "$REMOTE" "rm -rf '${remote_tmp}'"
+  rsync -avz --delete \
+    "${local_path}/" \
+    "${REMOTE}:${remote_tmp}/"
+
+  echo "==> Verify web sync completeness"
+  local local_count local_bytes remote_count remote_bytes
+  local_count="$(find "$local_path" -type f | wc -l | tr -d ' ')"
+  local_bytes="$(find "$local_path" -type f -exec cat {} + | wc -c | tr -d ' ')"
+  remote_count="$(ssh "$REMOTE" "find '${remote_tmp}' -type f | wc -l")"
+  remote_bytes="$(ssh "$REMOTE" "find '${remote_tmp}' -type f -exec cat {} + | wc -c")"
+
+  if [[ "$local_count" != "$remote_count" || "$local_bytes" != "$remote_bytes" ]]; then
+    echo "error: web sync verification failed — local has ${local_count} files / ${local_bytes} bytes, remote has ${remote_count} files / ${remote_bytes} bytes. Aborting before swap; live site left untouched." >&2
+    ssh "$REMOTE" "rm -rf '${remote_tmp}'"
+    exit 1
+  fi
+  echo "==> Verified: ${local_count} files, ${local_bytes} bytes match"
+
+  echo "==> Atomic swap into ${remote_path}"
+  ssh "$REMOTE" "rm -rf '${remote_old}'; [ -e '${remote_path}' ] && mv '${remote_path}' '${remote_old}'; mv '${remote_tmp}' '${remote_path}'; rm -rf '${remote_old}'"
+}
+
 if [[ "$DO_WEB" -eq 1 ]]; then
-  sync_dir "web" "build/web" "$REMOTE_PUBLIC"
+  sync_web_atomic "build/web" "$REMOTE_PUBLIC"
 fi
 
 if [[ "$DO_MIGRATIONS" -eq 1 ]]; then
