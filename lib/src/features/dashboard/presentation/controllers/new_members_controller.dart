@@ -87,28 +87,38 @@ Future<List<NewMemberEntry>> todaysNewMembersList(Ref ref) async {
   return entries.where((e) => e.effectiveBranchId == branchId).toList();
 }
 
+/// Max member IDs per OR-filter chunk, kept under PocketBase's max filter
+/// length (mirrors [MemberMembershipRepository]'s chunk size).
+const _memberIdChunkSize = 50;
+
 /// Fetches each member's earliest membership record — the plan they enrolled
 /// in at registration — keyed by member ID.
 Future<Map<String, MemberMembership>> _fetchEnrolledMemberships(
   PocketBase pb,
   Iterable<String> memberIds,
 ) async {
-  final filter = PBFilter().relationAny('member', memberIds);
-  if (filter.isEmpty) return const {};
-
-  final records = await pb
-      .collection(PocketBaseCollections.memberMemberships)
-      .getFullList(
-        filter: filter.buildOrEmpty(),
-        sort: 'created',
-        expand: 'membership',
-      );
+  final uniqueIds = memberIds.toSet().toList();
+  if (uniqueIds.isEmpty) return const {};
 
   final result = <String, MemberMembership>{};
-  for (final record in records) {
-    final membership = MemberMembershipDto.fromRecord(record).toEntity();
-    // Keep the first (earliest, since sorted ascending) membership per member.
-    result.putIfAbsent(membership.memberId, () => membership);
+  for (var i = 0; i < uniqueIds.length; i += _memberIdChunkSize) {
+    final chunk = uniqueIds.skip(i).take(_memberIdChunkSize);
+    final filter = PBFilter().relationAny('member', chunk);
+    if (filter.isEmpty) continue;
+
+    final records = await pb
+        .collection(PocketBaseCollections.memberMemberships)
+        .getFullList(
+          filter: filter.buildOrEmpty(),
+          sort: 'created',
+          expand: 'membership',
+        );
+
+    for (final record in records) {
+      final membership = MemberMembershipDto.fromRecord(record).toEntity();
+      // Keep the first (earliest, since sorted ascending) membership per member.
+      result.putIfAbsent(membership.memberId, () => membership);
+    }
   }
   return result;
 }
