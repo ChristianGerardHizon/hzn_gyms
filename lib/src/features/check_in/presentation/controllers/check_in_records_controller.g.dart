@@ -37,7 +37,7 @@ final class CheckInRecordsControllerProvider
 }
 
 String _$checkInRecordsControllerHash() =>
-    r'885bc34c5756a8a00335105f27ad06cee30c3ad2';
+    r'05f1846f7b56f097ceefc6e2ff017695694b008d';
 
 /// Loads check-in history for the selected date and branch.
 

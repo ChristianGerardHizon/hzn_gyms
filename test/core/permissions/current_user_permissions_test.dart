@@ -5,6 +5,9 @@ import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
 import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
 import 'package:hzn_gyms/src/features/auth/domain/user.dart';
 import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization_membership.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organization_memberships_controller.dart';
 import 'package:hzn_gyms/src/features/users/data/repositories/user_role_repository.dart';
 import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,17 +65,14 @@ void main() {
       expect(withVoid.canVoidCheckIns, isTrue);
     });
 
-    test('canManageOrganizations requires explicit organizations.manage', () {
+    test('canManageOrganizations requires users.superAdmin', () {
       const adminOnly = CurrentUserPermissions(
         permissions: {Permissions.systemAdmin},
         isAdmin: true,
       );
       expect(adminOnly.canManageOrganizations, isFalse);
-      expect(adminOnly.has(Permissions.organizationsManage), isTrue);
 
-      const platform = CurrentUserPermissions(
-        permissions: {Permissions.organizationsManage},
-      );
+      const platform = CurrentUserPermissions(superAdmin: true);
       expect(platform.canManageOrganizations, isTrue);
     });
 
@@ -93,9 +93,7 @@ void main() {
   });
 
   group('canUseOrganizationSwitcher', () {
-    const platformPerms = CurrentUserPermissions(
-      permissions: {Permissions.organizationsManage},
-    );
+    const platformPerms = CurrentUserPermissions(superAdmin: true);
 
     const platformAuth = AuthState(
       token: 'tok',
@@ -104,17 +102,7 @@ void main() {
         name: 'Platform Admin',
         email: 'platform@test.com',
         verified: true,
-      ),
-    );
-
-    const orgScopedAuth = AuthState(
-      token: 'tok',
-      user: User(
-        id: 'org-admin',
-        name: 'Org Admin',
-        email: 'orgadmin@test.com',
-        verified: true,
-        organization: 'org-1',
+        superAdmin: true,
       ),
     );
 
@@ -132,7 +120,7 @@ void main() {
       );
     }
 
-    test('true for platform admin with organizations.manage and no org link', () async {
+    test('true when permissions.superAdmin is set', () async {
       final container = createContainer(
         permissions: platformPerms,
         auth: platformAuth,
@@ -143,18 +131,29 @@ void main() {
       expect(container.read(canUseOrganizationSwitcherProvider), isTrue);
     });
 
-    test('false when user is linked to an organization', () async {
+    test('true for superAdmin even when user has organization link', () async {
+      const linkedAuth = AuthState(
+        token: 'tok',
+        user: User(
+          id: 'platform-admin',
+          name: 'Platform Admin',
+          email: 'platform@test.com',
+          verified: true,
+          organization: 'org-1',
+          superAdmin: true,
+        ),
+      );
       final container = createContainer(
         permissions: platformPerms,
-        auth: orgScopedAuth,
+        auth: linkedAuth,
       );
       addTearDown(container.dispose);
 
       await container.read(currentUserPermissionsProvider.future);
-      expect(container.read(canUseOrganizationSwitcherProvider), isFalse);
+      expect(container.read(canUseOrganizationSwitcherProvider), isTrue);
     });
 
-    test('false without organizations.manage permission', () async {
+    test('false without superAdmin', () async {
       final container = createContainer(
         permissions: CurrentUserPermissions.empty,
         auth: platformAuth,
@@ -206,11 +205,16 @@ void main() {
     ProviderContainer createContainer({
       AuthState? authState = auth,
       bool signedOut = false,
+      OrganizationMembership? membership,
     }) {
       return ProviderContainer(
         overrides: [
           userRoleRepositoryProvider.overrideWithValue(repo),
           currentAuthProvider.overrideWithValue(signedOut ? null : authState),
+          currentOrganizationIdProvider.overrideWith((ref) => 'org-1'),
+          currentOrganizationMembershipProvider.overrideWith(
+            (ref) => membership,
+          ),
         ],
       );
     }
@@ -227,6 +231,34 @@ void main() {
 
       expect(perms.canExcludeMembershipFromSales, isFalse);
       expect(perms.has(Permissions.membershipsCreate), isTrue);
+    });
+
+    test('prefers active organization membership role over users.role', () async {
+      const orgRole = UserRole(
+        id: 'role-org',
+        name: 'Org Staff',
+        permissions: [Permissions.membersView],
+      );
+      when(
+        () => repo.fetchOne('role-org'),
+      ).thenAnswer((_) async => right(orgRole));
+
+      final container = createContainer(
+        membership: const OrganizationMembership(
+          id: 'om-1',
+          userId: 'u1',
+          organizationId: 'org-1',
+          roleId: 'role-org',
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final perms = await container.read(currentUserPermissionsProvider.future);
+
+      expect(perms.has(Permissions.membersView), isTrue);
+      expect(perms.has(Permissions.membershipsCreate), isFalse);
+      verify(() => repo.fetchOne('role-org')).called(1);
+      verifyNever(() => repo.fetchOne('role-1'));
     });
 
     test(
@@ -402,6 +434,8 @@ void main() {
       final first = notifier.refreshInBackground();
       final second = notifier.refreshInBackground();
 
+      // Role id resolution is async; wait until the coalesced fetch starts.
+      await Future<void>.delayed(Duration.zero);
       expect(refreshFetchCount, 1);
 
       allowRefresh.complete();

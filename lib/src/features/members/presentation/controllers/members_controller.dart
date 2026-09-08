@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../data/local/member_local_data_source.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
@@ -16,12 +17,17 @@ class MembersController extends _$MembersController {
 
   @override
   Future<List<Member>> build() async {
+    final orgFilter = ref.watch(currentBranchOrganizationFilterProvider);
+    if (orgFilter == null || orgFilter.isEmpty) {
+      return const [];
+    }
+
     final cached = await _localDataSource.getAll();
     if (cached.isNotEmpty) {
       state = AsyncData(cached);
     }
 
-    final result = await _repository.fetchAll();
+    final result = await _repository.fetchAll(filter: orgFilter);
 
     return result.fold((failure) {
       if (cached.isNotEmpty) return cached;
@@ -31,6 +37,7 @@ class MembersController extends _$MembersController {
 
   /// Refreshes the member list.
   Future<void> refresh() async {
+    final orgFilter = ref.read(currentBranchOrganizationFilterProvider);
     final cached = state.value;
     if (cached == null || cached.isEmpty) {
       state = const AsyncLoading();
@@ -38,7 +45,12 @@ class MembersController extends _$MembersController {
 
     await _repository.invalidateCache();
 
-    final result = await _repository.fetchAll();
+    if (orgFilter == null || orgFilter.isEmpty) {
+      state = const AsyncData([]);
+      return;
+    }
+
+    final result = await _repository.fetchAll(filter: orgFilter);
 
     state = result.fold((failure) {
       if (cached != null && cached.isNotEmpty) {

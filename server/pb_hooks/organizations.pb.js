@@ -26,8 +26,8 @@ onRecordAfterUpdateSuccess((e) => {
     require(`${__hooks}/lib/organizations_helpers.js`).onUpdateSuccess(e);
 }, "organizations");
 
-// Super-admin-only (`organizations.manage` permission) retry for a
-// stuck/failed DNS provisioning attempt.
+// Super-admin-only (`users.superAdmin`) retry for a stuck/failed DNS
+// provisioning attempt.
 routerAdd(
     "POST",
     "/api/organizations/{id}/retry-dns",

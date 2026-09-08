@@ -32,15 +32,20 @@ abstract class CheckInRepository {
     String? reason,
   });
 
-  /// Fetches today's non-voided check-ins for a branch, or all branches when
-  /// [branchId] is null.
-  FutureEither<List<CheckIn>> fetchTodaysCheckIns(String? branchId);
+  /// Fetches today's non-voided check-ins for a branch, or all branches in
+  /// [organizationId] when [branchId] is null.
+  FutureEither<List<CheckIn>> fetchTodaysCheckIns(
+    String? branchId, {
+    String? organizationId,
+  });
 
   /// Fetches check-ins for a local calendar [date], optionally scoped to
   /// [branchId]. Includes voided rows by default (for records UI).
+  /// When [branchId] is null, scopes to [organizationId] if provided.
   FutureEither<List<CheckIn>> fetchByDate({
     required DateTime date,
     String? branchId,
+    String? organizationId,
     bool includeVoided = true,
   });
 
@@ -154,8 +159,12 @@ class CheckInRepositoryImpl implements CheckInRepository {
   }
 
   @override
-  FutureEither<List<CheckIn>> fetchTodaysCheckIns(String? branchId) async {
-    final cacheKey = branchId ?? '__ALL__';
+  FutureEither<List<CheckIn>> fetchTodaysCheckIns(
+    String? branchId, {
+    String? organizationId,
+  }) async {
+    final cacheKey =
+        branchId ?? (organizationId != null ? 'org:$organizationId' : '__ALL__');
     if (_isCacheValid(cacheKey)) {
       return Right(_cachedTodaysCheckIns!);
     }
@@ -163,6 +172,7 @@ class CheckInRepositoryImpl implements CheckInRepository {
     final result = await fetchByDate(
       date: DateTime.now(),
       branchId: branchId,
+      organizationId: organizationId,
       includeVoided: false,
     );
 
@@ -178,6 +188,7 @@ class CheckInRepositoryImpl implements CheckInRepository {
   FutureEither<List<CheckIn>> fetchByDate({
     required DateTime date,
     String? branchId,
+    String? organizationId,
     bool includeVoided = true,
   }) async {
     return TaskEither.tryCatch(() async {
@@ -194,6 +205,8 @@ class CheckInRepositoryImpl implements CheckInRepository {
           .before('checkInTime', endOfDay);
       if (branchId != null && branchId.isNotEmpty) {
         filter = filter.relation('branch', branchId);
+      } else if (organizationId != null && organizationId.isNotEmpty) {
+        filter = filter.relation('branch.organization', organizationId);
       }
       if (!includeVoided) {
         filter = filter.isFalse('isVoided');

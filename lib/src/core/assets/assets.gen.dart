@@ -33,6 +33,9 @@ class $AssetsIconsGen {
   AssetGenImage get appIconTransparent =>
       const AssetGenImage('assets/icons/app_icon_transparent.png');
 
+  /// File path: assets/icons/google_g.png
+  AssetGenImage get googleG => const AssetGenImage('assets/icons/google_g.png');
+
   /// File path: assets/icons/hzn_systems_logo.jpg
   AssetGenImage get hznSystemsLogoJpg =>
       const AssetGenImage('assets/icons/hzn_systems_logo.jpg');
@@ -48,6 +51,7 @@ class $AssetsIconsGen {
     appIconMark,
     appIconMarkOpaque,
     appIconTransparent,
+    googleG,
     hznSystemsLogoJpg,
     hznSystemsLogoPng,
   ];

@@ -5,13 +5,33 @@ import 'package:hzn_gyms/src/core/routing/pending_redirect_provider.dart';
 import 'package:hzn_gyms/src/core/routing/router_utils.dart';
 import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
 import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization_membership.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organization_memberships_controller.dart';
 import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../helpers/fake_organization_memberships.dart';
 import '../../helpers/fixtures.dart';
+
+const _testMembership = OrganizationMembership(
+  id: 'om-1',
+  userId: 'user-1',
+  organizationId: 'org-1',
+  roleId: 'role-1',
+);
+
+final _membershipsOverride =
+    organizationMembershipsControllerProvider.overrideWith(
+      () => FakeOrganizationMembershipsController(const [_testMembership]),
+    );
+
+final _emptyMembershipsOverride =
+    organizationMembershipsControllerProvider.overrideWith(
+      () => FakeOrganizationMembershipsController(const []),
+    );
 
 class _AuthenticatedAuth extends AuthController {
   @override
@@ -70,11 +90,19 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
         builder: (_, _) => const Text('records'),
       ),
       GoRoute(path: '/cashier', builder: (_, _) => const Text('cashier')),
+      GoRoute(
+        path: '/awaiting-organization',
+        builder: (_, _) => const Text('awaiting'),
+      ),
     ],
   );
 
   ref.listen(authControllerProvider, (_, _) => router.refresh());
   ref.listen(currentUserPermissionsProvider, (_, _) => router.refresh());
+  ref.listen(
+    organizationMembershipsControllerProvider,
+    (_, _) => router.refresh(),
+  );
   Future.microtask(router.refresh);
 
   return router;
@@ -121,6 +149,7 @@ void main() {
         final permsCompleter = Completer<CurrentUserPermissions>();
         final container = ProviderContainer(
           overrides: [
+            _membershipsOverride,
             authControllerProvider.overrideWith(_AuthenticatedAuth.new),
             currentUserPermissionsProvider.overrideWith(
               () => _LoadingPermissions(permsCompleter),
@@ -163,6 +192,7 @@ void main() {
       (tester) async {
         final container = ProviderContainer(
           overrides: [
+            _membershipsOverride,
             authControllerProvider.overrideWith(_AuthenticatedAuth.new),
             currentUserPermissionsProvider.overrideWith(
               () => _FixedPermissions(
@@ -220,9 +250,75 @@ void main() {
       expect(find.text('splash'), findsOneWidget);
     });
 
+    testWidgets(
+      'redirects to awaiting-organization when no memberships',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            _emptyMembershipsOverride,
+            authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+            currentUserPermissionsProvider.overrideWith(
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membersView},
+                ),
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(_testRouterProvider('/members'));
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(RouterUtils.currentLocation(router), '/awaiting-organization');
+        expect(find.text('awaiting'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'platform admin is not blocked by empty memberships',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            _emptyMembershipsOverride,
+            authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+            currentUserPermissionsProvider.overrideWith(
+              () => _FixedPermissions(
+                const CurrentUserPermissions(superAdmin: true),
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(_testRouterProvider('/'));
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(RouterUtils.currentLocation(router), '/');
+        expect(find.text('dashboard'), findsOneWidget);
+        expect(find.text('awaiting'), findsNothing);
+      },
+    );
+
     testWidgets('redirects standalone /cashier to dashboard', (tester) async {
       final container = ProviderContainer(
         overrides: [
+          _membershipsOverride,
           authControllerProvider.overrideWith(_AuthenticatedAuth.new),
           currentUserPermissionsProvider.overrideWith(
             () => _FixedPermissions(
@@ -256,6 +352,7 @@ void main() {
       PendingRedirect.stash('/system/printers');
       final container = ProviderContainer(
         overrides: [
+          _membershipsOverride,
           authControllerProvider.overrideWith(_AuthenticatedAuth.new),
           currentUserPermissionsProvider.overrideWith(
             () => _FixedPermissions(

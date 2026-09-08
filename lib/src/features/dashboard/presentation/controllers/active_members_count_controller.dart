@@ -6,14 +6,20 @@ import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../memberships/data/dto/member_membership_dto.dart';
 import '../../../memberships/domain/member_membership.dart';
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 
 part 'active_members_count_controller.g.dart';
 
-PBFilter _activeMembershipsFilter(String? branchId) {
+PBFilter _activeMembershipsFilter({
+  String? branchId,
+  String? organizationId,
+}) {
   final filter = PBFilters.activeMemberMemberships();
-  if (branchId != null) {
+  if (branchId != null && branchId.isNotEmpty) {
     filter.relation('branch', branchId);
+  } else if (organizationId != null && organizationId.isNotEmpty) {
+    filter.relation('branch.organization', organizationId);
   }
   return filter;
 }
@@ -25,6 +31,7 @@ PBFilter _activeMembershipsFilter(String? branchId) {
 @riverpod
 Future<int> activeMembersCount(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
+  final organizationId = ref.watch(currentOrganizationIdProvider);
   final pb = ref.read(pocketbaseProvider);
 
   final result = await pb
@@ -32,7 +39,10 @@ Future<int> activeMembersCount(Ref ref) async {
       .getList(
         page: 1,
         perPage: 1,
-        filter: _activeMembershipsFilter(branchId).buildOrEmpty(),
+        filter: _activeMembershipsFilter(
+          branchId: branchId,
+          organizationId: organizationId,
+        ).buildOrEmpty(),
       );
 
   return result.totalItems;
@@ -44,12 +54,16 @@ Future<int> activeMembersCount(Ref ref) async {
 @riverpod
 Future<List<MemberMembership>> activeMembersList(Ref ref) async {
   final branchId = ref.watch(currentBranchIdProvider);
+  final organizationId = ref.watch(currentOrganizationIdProvider);
   final pb = ref.read(pocketbaseProvider);
 
   final records = await pb
       .collection(PocketBaseCollections.memberMemberships)
       .getFullList(
-        filter: _activeMembershipsFilter(branchId).buildOrEmpty(),
+        filter: _activeMembershipsFilter(
+          branchId: branchId,
+          organizationId: organizationId,
+        ).buildOrEmpty(),
         sort: 'endDate',
         expand: 'member,membership',
       );

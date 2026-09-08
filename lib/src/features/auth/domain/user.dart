@@ -37,6 +37,10 @@ class User with UserMappable {
   /// org-level users (e.g. super-admins) with no default branch.
   final String? organization;
 
+  /// Platform operator flag (PocketBase `superAdmin`). Independent of
+  /// per-organization roles; grants create/manage organizations access.
+  final bool superAdmin;
+
   const User({
     required this.id,
     required this.name,
@@ -47,5 +51,6 @@ class User with UserMappable {
     this.allowedBranches = const [],
     this.roleId,
     this.organization,
+    this.superAdmin = false,
   });
 }

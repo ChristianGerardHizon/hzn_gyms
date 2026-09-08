@@ -54,7 +54,7 @@ final class PaginatedMembersControllerProvider
 }
 
 String _$paginatedMembersControllerHash() =>
-    r'3c8888bc62c4a9e9051b756c750f6e2b8c579dcd';
+    r'c4ddb6d01a76f41f838c5d60c2fb2c6231b452c4';
 
 /// Controller for managing paginated members list.
 ///
