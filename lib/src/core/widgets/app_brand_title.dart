@@ -9,7 +9,7 @@ class AppBrandTitle extends ConsumerWidget {
   const AppBrandTitle({
     super.key,
     this.logoOnly = false,
-    this.logoSize = 24,
+    this.logoSize = 36,
   });
 
   /// When true, renders only the logo (e.g. collapsed sidebar).
@@ -18,8 +18,8 @@ class AppBrandTitle extends ConsumerWidget {
   /// Logo width/height in logical pixels.
   final double logoSize;
 
-  static const double _titleFontSize = 20;
-  static const double _logoGap = 10;
+  static const double _titleFontSize = 22;
+  static const double _logoGap = 12;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,10 +42,10 @@ class AppBrandTitle extends ConsumerWidget {
             title,
             style: theme.textTheme.titleLarge?.copyWith(
               fontSize: _titleFontSize,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
               color: theme.colorScheme.onSurface,
-              letterSpacing: -0.15,
-              height: 1.2,
+              letterSpacing: -0.2,
+              height: 1.15,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

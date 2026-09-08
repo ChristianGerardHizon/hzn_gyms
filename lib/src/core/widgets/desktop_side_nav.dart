@@ -138,7 +138,7 @@ class DesktopSideNav extends HookConsumerWidget {
             ),
             child: collapsed.value
                 ? const Center(
-                    child: AppBrandTitle(logoOnly: true, logoSize: 32),
+                    child: AppBrandTitle(logoOnly: true, logoSize: 40),
                   )
                 : const AppBrandTitle(),
           ),
@@ -156,6 +156,7 @@ class DesktopSideNav extends HookConsumerWidget {
           const Divider(height: 1),
           Expanded(
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 ListView(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -289,7 +290,10 @@ class DesktopSideNav extends HookConsumerWidget {
                   ],
                 ),
                 if (isSearching)
-                  Positioned.fill(
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    top: 4,
                     child: _NavSearchResultsOverlay(
                       results: searchResults,
                       location: location,
@@ -483,54 +487,61 @@ class _NavSearchResultsOverlay extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Material(
-      elevation: 4,
+      elevation: 8,
+      borderRadius: BorderRadius.circular(12),
       color: colorScheme.surfaceContainerHigh,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Text(
-              resultsLabel,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          if (results.isEmpty)
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 280),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          shrinkWrap: true,
+          children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Text(
-                emptyLabel,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                resultsLabel,
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            )
-          else
-            for (final dest in results)
+            ),
+            if (results.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                child: DesktopNavItem(
-                  icon: appNavIcon(
-                    dest.id,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Text(
+                  emptyLabel,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              for (final dest in results)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  child: DesktopNavItem(
+                    icon: appNavIcon(
+                      dest.id,
+                      selected: isNavDestinationSelected(
+                        location,
+                        dest.id,
+                        destinations,
+                      ),
+                    ),
+                    label: labelFor(dest.id),
                     selected: isNavDestinationSelected(
                       location,
                       dest.id,
                       destinations,
                     ),
+                    onTap: () => onResultTap(dest),
                   ),
-                  label: labelFor(dest.id),
-                  selected: isNavDestinationSelected(
-                    location,
-                    dest.id,
-                    destinations,
-                  ),
-                  onTap: () => onResultTap(dest),
                 ),
-              ),
-        ],
+          ],
+        ),
       ),
     );
   }

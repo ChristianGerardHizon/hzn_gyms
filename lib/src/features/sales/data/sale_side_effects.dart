@@ -26,10 +26,14 @@ FutureEither<Sale> voidSaleWithSideEffects({
   required ProductAdjustmentRepository adjustmentRepo,
   required String saleId,
   String? voidedById,
+  String? voidReason,
 }) async {
+  final trimmedReason = voidReason?.trim();
   final body = <String, dynamic>{
     'status': 'voided',
     if (voidedById != null && voidedById.isNotEmpty) 'voidedBy': voidedById,
+    if (trimmedReason != null && trimmedReason.isNotEmpty)
+      'voidReason': trimmedReason,
   };
 
   final voidedResult = await salesRepo.updateSale(saleId, body);
@@ -49,7 +53,11 @@ FutureEither<Sale> voidSaleWithSideEffects({
   final receiptLabel = voidedSale.receiptNumber.isNotEmpty
       ? voidedSale.receiptNumber
       : saleId;
-  final adjustmentReason = 'Void sale $receiptLabel';
+  final reasonSuffix =
+      (trimmedReason != null && trimmedReason.isNotEmpty)
+          ? ': $trimmedReason'
+          : '';
+  final adjustmentReason = 'Void sale $receiptLabel$reasonSuffix';
 
   final itemsResult = await salesRepo.getSaleItems(saleId);
   await itemsResult.fold(

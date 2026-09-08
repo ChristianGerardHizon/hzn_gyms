@@ -471,6 +471,8 @@ Transaction records.
 | `branch` | String (FK) | No | FK to Branch |
 | `soldBy` | String (FK) | No | FK to User |
 | `notes` | String | No | Sale notes |
+| `voidedBy` | String (FK) | No | FK to User who voided the sale |
+| `voidReason` | String | No | Reason entered when voiding |
 | `created` | DateTime | No | Creation timestamp |
 | `updated` | DateTime | No | Last update timestamp |
 

@@ -32,6 +32,7 @@ import '../controllers/sale_provider.dart';
 import '../controllers/sale_refresh.dart';
 import '../widgets/record_payment_dialog.dart';
 import '../widgets/sale_status_chip.dart';
+import '../widgets/void_sale_dialog.dart';
 
 /// Sale detail page showing sale information and items.
 class SaleDetailPage extends ConsumerWidget {
@@ -333,28 +334,9 @@ class _SaleDetailContent extends HookConsumerWidget {
     }
 
     Future<void> voidSale() async {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Void Sale?'),
-          content: const Text(
-            'Are you sure you want to void this sale? Linked memberships will be voided and product stock restored. This action cannot be undone.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Void'),
-            ),
-          ],
-        ),
-      );
+      final reason = await showVoidSaleDialog(context);
 
-      if (confirmed != true || !context.mounted) return;
+      if (reason == null || !context.mounted) return;
 
       isUpdating.value = true;
       final result = await voidSaleWithSideEffects(
@@ -365,6 +347,7 @@ class _SaleDetailContent extends HookConsumerWidget {
         adjustmentRepo: ref.read(productAdjustmentRepositoryProvider),
         saleId: sale.id,
         voidedById: ref.read(currentAuthProvider)?.user.id,
+        voidReason: reason,
       );
       isUpdating.value = false;
 
@@ -530,6 +513,16 @@ class _SaleDetailContent extends HookConsumerWidget {
                       'By $voidedByName',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Colors.red.shade300,
+                      ),
+                    ),
+                  if (sale.voidReason != null && sale.voidReason!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        sale.voidReason!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.red.shade200,
+                        ),
                       ),
                     ),
                 ],

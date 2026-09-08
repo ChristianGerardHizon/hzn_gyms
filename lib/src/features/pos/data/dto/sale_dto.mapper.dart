@@ -87,6 +87,12 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
     _$voidedBy,
     opt: true,
   );
+  static String? _$voidReason(SaleDto v) => v.voidReason;
+  static const Field<SaleDto, String> _f$voidReason = Field(
+    'voidReason',
+    _$voidReason,
+    opt: true,
+  );
   static String? _$idempotencyKey(SaleDto v) => v.idempotencyKey;
   static const Field<SaleDto, String> _f$idempotencyKey = Field(
     'idempotencyKey',
@@ -122,6 +128,7 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
     #descriptor: _f$descriptor,
     #notes: _f$notes,
     #voidedBy: _f$voidedBy,
+    #voidReason: _f$voidReason,
     #idempotencyKey: _f$idempotencyKey,
     #created: _f$created,
     #updated: _f$updated,
@@ -143,6 +150,7 @@ class SaleDtoMapper extends ClassMapperBase<SaleDto> {
       descriptor: data.dec(_f$descriptor),
       notes: data.dec(_f$notes),
       voidedBy: data.dec(_f$voidedBy),
+      voidReason: data.dec(_f$voidReason),
       idempotencyKey: data.dec(_f$idempotencyKey),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -221,6 +229,7 @@ abstract class SaleDtoCopyWith<$R, $In extends SaleDto, $Out>
     String? descriptor,
     String? notes,
     String? voidedBy,
+    String? voidReason,
     String? idempotencyKey,
     String? created,
     String? updated,
@@ -252,6 +261,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
     Object? descriptor = $none,
     Object? notes = $none,
     Object? voidedBy = $none,
+    Object? voidReason = $none,
     Object? idempotencyKey = $none,
     Object? created = $none,
     Object? updated = $none,
@@ -271,6 +281,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
       if (descriptor != $none) #descriptor: descriptor,
       if (notes != $none) #notes: notes,
       if (voidedBy != $none) #voidedBy: voidedBy,
+      if (voidReason != $none) #voidReason: voidReason,
       if (idempotencyKey != $none) #idempotencyKey: idempotencyKey,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -292,6 +303,7 @@ class _SaleDtoCopyWithImpl<$R, $Out>
     descriptor: data.get(#descriptor, or: $value.descriptor),
     notes: data.get(#notes, or: $value.notes),
     voidedBy: data.get(#voidedBy, or: $value.voidedBy),
+    voidReason: data.get(#voidReason, or: $value.voidReason),
     idempotencyKey: data.get(#idempotencyKey, or: $value.idempotencyKey),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

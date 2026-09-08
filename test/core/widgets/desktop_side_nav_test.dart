@@ -127,13 +127,19 @@ void main() {
     expect(find.text('Categories'), findsOneWidget);
     expect(find.text('Check-In'), findsOneWidget);
     expect(find.text('Members'), findsOneWidget);
-    expect(find.text('People'), findsOneWidget);
     expect(find.text('Logout'), findsOneWidget);
     expect(find.text('Users'), findsNothing);
     expect(
       destinations.any((destination) => destination.id == AppNavId.system),
       isTrue,
     );
+
+    await tester.scrollUntilVisible(
+      find.text('People'),
+      48,
+      scrollable: navScrollable(),
+    );
+    expect(find.text('People'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('System'),
@@ -234,6 +240,11 @@ void main() {
     await tester.tap(find.text('Show more'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Reports'),
+      48,
+      scrollable: navScrollable(),
+    );
     expect(find.text('Reports'), findsOneWidget);
   });
 
@@ -305,7 +316,8 @@ void main() {
     expect(find.text('Search results'), findsOneWidget);
     expect(find.text('Members'), findsWidgets);
     expect(find.text('Memberships'), findsOneWidget);
-    expect(find.text('Shortcuts').hitTestable(), findsNothing);
+    // Nav list stays underneath the compact results popover.
+    expect(find.text('Shortcuts'), findsOneWidget);
 
     await tester.tap(find.text('Members').last);
     await tester.pumpAndSettle();
