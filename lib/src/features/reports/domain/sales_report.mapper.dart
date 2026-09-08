@@ -67,6 +67,14 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
     _$transactionCountByItemType,
     opt: true,
   );
+  static Map<String, int>? _$transactionCountByPaymentMethod(SalesReport v) =>
+      v.transactionCountByPaymentMethod;
+  static const Field<SalesReport, Map<String, int>>
+  _f$transactionCountByPaymentMethod = Field(
+    'transactionCountByPaymentMethod',
+    _$transactionCountByPaymentMethod,
+    opt: true,
+  );
   static int _$unpaidSalesCount(SalesReport v) => v.unpaidSalesCount;
   static const Field<SalesReport, int> _f$unpaidSalesCount = Field(
     'unpaidSalesCount',
@@ -103,6 +111,7 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
     #topSellingProducts: _f$topSellingProducts,
     #revenueByItemType: _f$revenueByItemType,
     #transactionCountByItemType: _f$transactionCountByItemType,
+    #transactionCountByPaymentMethod: _f$transactionCountByPaymentMethod,
     #unpaidSalesCount: _f$unpaidSalesCount,
     #unpaidBalance: _f$unpaidBalance,
     #staffPerformance: _f$staffPerformance,
@@ -119,6 +128,9 @@ class SalesReportMapper extends ClassMapperBase<SalesReport> {
       topSellingProducts: data.dec(_f$topSellingProducts),
       revenueByItemType: data.dec(_f$revenueByItemType),
       transactionCountByItemType: data.dec(_f$transactionCountByItemType),
+      transactionCountByPaymentMethod: data.dec(
+        _f$transactionCountByPaymentMethod,
+      ),
       unpaidSalesCount: data.dec(_f$unpaidSalesCount),
       unpaidBalance: data.dec(_f$unpaidBalance),
       staffPerformance: data.dec(_f$staffPerformance),
@@ -204,6 +216,8 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
   get revenueByItemType;
   MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
   get transactionCountByItemType;
+  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
+  get transactionCountByPaymentMethod;
   ListCopyWith<
     $R,
     StaffSalesSummary,
@@ -220,6 +234,7 @@ abstract class SalesReportCopyWith<$R, $In extends SalesReport, $Out>
     List<ProductSalesSummary>? topSellingProducts,
     Map<String, num>? revenueByItemType,
     Map<String, int>? transactionCountByItemType,
+    Map<String, int>? transactionCountByPaymentMethod,
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
@@ -282,6 +297,16 @@ class _SalesReportCopyWithImpl<$R, $Out>
         )
       : null;
   @override
+  MapCopyWith<$R, String, int, ObjectCopyWith<$R, int, int>>?
+  get transactionCountByPaymentMethod =>
+      $value.transactionCountByPaymentMethod != null
+      ? MapCopyWith(
+          $value.transactionCountByPaymentMethod!,
+          (v, t) => ObjectCopyWith(v, $identity, t),
+          (v) => call(transactionCountByPaymentMethod: v),
+        )
+      : null;
+  @override
   ListCopyWith<
     $R,
     StaffSalesSummary,
@@ -309,6 +334,7 @@ class _SalesReportCopyWithImpl<$R, $Out>
     List<ProductSalesSummary>? topSellingProducts,
     Map<String, num>? revenueByItemType,
     Object? transactionCountByItemType = $none,
+    Object? transactionCountByPaymentMethod = $none,
     int? unpaidSalesCount,
     num? unpaidBalance,
     List<StaffSalesSummary>? staffPerformance,
@@ -326,6 +352,8 @@ class _SalesReportCopyWithImpl<$R, $Out>
       if (revenueByItemType != null) #revenueByItemType: revenueByItemType,
       if (transactionCountByItemType != $none)
         #transactionCountByItemType: transactionCountByItemType,
+      if (transactionCountByPaymentMethod != $none)
+        #transactionCountByPaymentMethod: transactionCountByPaymentMethod,
       if (unpaidSalesCount != null) #unpaidSalesCount: unpaidSalesCount,
       if (unpaidBalance != null) #unpaidBalance: unpaidBalance,
       if (staffPerformance != null) #staffPerformance: staffPerformance,
@@ -356,6 +384,10 @@ class _SalesReportCopyWithImpl<$R, $Out>
     transactionCountByItemType: data.get(
       #transactionCountByItemType,
       or: $value.transactionCountByItemType,
+    ),
+    transactionCountByPaymentMethod: data.get(
+      #transactionCountByPaymentMethod,
+      or: $value.transactionCountByPaymentMethod,
     ),
     unpaidSalesCount: data.get(#unpaidSalesCount, or: $value.unpaidSalesCount),
     unpaidBalance: data.get(#unpaidBalance, or: $value.unpaidBalance),

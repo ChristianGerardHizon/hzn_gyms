@@ -9,6 +9,11 @@ void main() {
       expect(summary.walkInCount, 0);
       expect(summary.productCount, 0);
     });
+    test('payment method maps default to empty', () {
+      const summary = TodaySalesSummary(count: 1, total: 100);
+      expect(summary.revenueByPaymentMethod, isEmpty);
+      expect(summary.transactionCountByPaymentMethod, isEmpty);
+    });
   });
 
   group('aggregateTodaysSalesSummary', () {
@@ -80,6 +85,24 @@ void main() {
       expect(summary.membershipCount, 2);
       expect(summary.walkInCount, 4);
       expect(summary.productCount, 1);
+    });
+
+    test('carries payment method revenue and counts through', () {
+      final summary = aggregateTodaysSalesSummary(
+        const [
+          TodaysSalesBranchRow(
+            branchId: 'branch-a',
+            transactionCount: 2,
+            totalRevenue: 500,
+          ),
+        ],
+        revenueByPaymentMethod: const {'cash': 300, 'card': 200},
+        transactionCountByPaymentMethod: const {'cash': 2, 'card': 1},
+      );
+      expect(summary.revenueByPaymentMethod['cash'], 300);
+      expect(summary.revenueByPaymentMethod['card'], 200);
+      expect(summary.transactionCountByPaymentMethod['cash'], 2);
+      expect(summary.transactionCountByPaymentMethod['card'], 1);
     });
   });
 

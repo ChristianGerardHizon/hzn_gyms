@@ -18,6 +18,7 @@ import '../controllers/sale_refresh.dart';
 import 'open_unpaid_sale_dialog.dart';
 import 'payment_disposition_dialog.dart';
 import 'record_payment_dialog.dart';
+import 'void_sale_dialog.dart';
 
 /// Looks up open unpaid sales for [memberId] / [customerName] at the branch.
 Future<Sale?> findOpenUnpaidDuplicate(
@@ -73,6 +74,9 @@ Future<bool> resolveOpenUnpaidBeforeCreate(
       final voidedById = ref.read(currentAuthProvider)?.user.id;
       final container = ProviderScope.containerOf(context);
 
+      final reason = await showVoidSaleDialog(context);
+      if (reason == null || !context.mounted) return false;
+
       final voided = await voidSaleWithSideEffects(
         salesRepo: salesRepo,
         memberMembershipRepo: memberMembershipRepo,
@@ -81,6 +85,7 @@ Future<bool> resolveOpenUnpaidBeforeCreate(
         adjustmentRepo: adjustmentRepo,
         saleId: existing.id,
         voidedById: voidedById,
+        voidReason: reason,
       );
       final ok = voided.fold((_) => false, (_) => true);
       if (ok && context.mounted) {
@@ -148,6 +153,9 @@ Future<bool> recordPaymentWithDisposition(
       case PaymentDisposition.voidSale:
         // Use container from [context] so this stays safe when a parent dialog
         // was already popped (renew / quick-view flows).
+        final reason = await showVoidSaleDialog(context);
+        if (reason == null || !context.mounted) return false;
+
         final voidContainer = ProviderScope.containerOf(context);
         final salesRepo = voidContainer.read(salesRepositoryProvider);
         final memberMembershipRepo =
@@ -166,6 +174,7 @@ Future<bool> recordPaymentWithDisposition(
           adjustmentRepo: adjustmentRepo,
           saleId: currentSale.id,
           voidedById: voidedById,
+          voidReason: reason,
         );
         if (context.mounted) {
           refreshAfterSaleVoidedOnContainer(voidContainer, currentSale.id);

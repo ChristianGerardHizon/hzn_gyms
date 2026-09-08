@@ -12,9 +12,13 @@ class TodaySalesSummary {
     int membershipCount = 0,
     int walkInCount = 0,
     int productCount = 0,
+    Map<String, num> revenueByPaymentMethod = const {},
+    Map<String, int> transactionCountByPaymentMethod = const {},
   })  : _membershipCount = membershipCount,
         _walkInCount = walkInCount,
-        _productCount = productCount;
+        _productCount = productCount,
+        _revenueByPaymentMethod = revenueByPaymentMethod,
+        _transactionCountByPaymentMethod = transactionCountByPaymentMethod;
 
   final int count;
   final num total;
@@ -36,6 +40,8 @@ class TodaySalesSummary {
   final int? _membershipCount;
   final int? _walkInCount;
   final int? _productCount;
+  final Map<String, num>? _revenueByPaymentMethod;
+  final Map<String, int>? _transactionCountByPaymentMethod;
 
   /// Distinct sales with `membership` lines today.
   int get membershipCount => _membershipCount ?? 0;
@@ -45,6 +51,14 @@ class TodaySalesSummary {
 
   /// Distinct sales with `product` lines today.
   int get productCount => _productCount ?? 0;
+
+  /// Payment revenue by method key (`cash` / `card` / …) from daily summary.
+  Map<String, num> get revenueByPaymentMethod =>
+      _revenueByPaymentMethod ?? const {};
+
+  /// Distinct sale counts by payment method from daily summary.
+  Map<String, int> get transactionCountByPaymentMethod =>
+      _transactionCountByPaymentMethod ?? const {};
 }
 
 /// One per-branch row from `vw_todays_sales`.
@@ -87,6 +101,8 @@ TodaySalesSummary aggregateTodaysSalesSummary(
   int membershipCount = 0,
   int walkInCount = 0,
   int productCount = 0,
+  Map<String, num> revenueByPaymentMethod = const {},
+  Map<String, int> transactionCountByPaymentMethod = const {},
 }) {
   final byBranch = rows.toList();
   var count = 0;
@@ -105,6 +121,8 @@ TodaySalesSummary aggregateTodaysSalesSummary(
     membershipCount: membershipCount,
     walkInCount: walkInCount,
     productCount: productCount,
+    revenueByPaymentMethod: revenueByPaymentMethod,
+    transactionCountByPaymentMethod: transactionCountByPaymentMethod,
   );
 }
 

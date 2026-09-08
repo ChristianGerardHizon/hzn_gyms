@@ -80,6 +80,12 @@ class SaleMapper extends ClassMapperBase<Sale> {
     _$voidedById,
     opt: true,
   );
+  static String? _$voidReason(Sale v) => v.voidReason;
+  static const Field<Sale, String> _f$voidReason = Field(
+    'voidReason',
+    _$voidReason,
+    opt: true,
+  );
   static String? _$idempotencyKey(Sale v) => v.idempotencyKey;
   static const Field<Sale, String> _f$idempotencyKey = Field(
     'idempotencyKey',
@@ -113,6 +119,7 @@ class SaleMapper extends ClassMapperBase<Sale> {
     #descriptor: _f$descriptor,
     #notes: _f$notes,
     #voidedById: _f$voidedById,
+    #voidReason: _f$voidReason,
     #idempotencyKey: _f$idempotencyKey,
     #created: _f$created,
     #updated: _f$updated,
@@ -132,6 +139,7 @@ class SaleMapper extends ClassMapperBase<Sale> {
       descriptor: data.dec(_f$descriptor),
       notes: data.dec(_f$notes),
       voidedById: data.dec(_f$voidedById),
+      voidReason: data.dec(_f$voidReason),
       idempotencyKey: data.dec(_f$idempotencyKey),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -197,6 +205,7 @@ abstract class SaleCopyWith<$R, $In extends Sale, $Out>
     String? descriptor,
     String? notes,
     String? voidedById,
+    String? voidReason,
     String? idempotencyKey,
     DateTime? created,
     DateTime? updated,
@@ -224,6 +233,7 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
     Object? descriptor = $none,
     Object? notes = $none,
     Object? voidedById = $none,
+    Object? voidReason = $none,
     Object? idempotencyKey = $none,
     Object? created = $none,
     Object? updated = $none,
@@ -241,6 +251,7 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
       if (descriptor != $none) #descriptor: descriptor,
       if (notes != $none) #notes: notes,
       if (voidedById != $none) #voidedById: voidedById,
+      if (voidReason != $none) #voidReason: voidReason,
       if (idempotencyKey != $none) #idempotencyKey: idempotencyKey,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -260,6 +271,7 @@ class _SaleCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, Sale, $Out>
     descriptor: data.get(#descriptor, or: $value.descriptor),
     notes: data.get(#notes, or: $value.notes),
     voidedById: data.get(#voidedById, or: $value.voidedById),
+    voidReason: data.get(#voidReason, or: $value.voidReason),
     idempotencyKey: data.get(#idempotencyKey, or: $value.idempotencyKey),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

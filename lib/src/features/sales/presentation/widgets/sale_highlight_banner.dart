@@ -130,7 +130,7 @@ class SaleHighlightBanner extends StatelessWidget {
     // Priority 2: Pending
     if (status == 'pending') {
       return _HighlightInfo(
-        color: Colors.grey,
+        color: Colors.orange,
         icon: Icons.schedule,
         title: 'Pending',
         description: 'This sale is pending.',
