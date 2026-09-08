@@ -33,6 +33,9 @@ class Application extends HookConsumerWidget {
     if (orgResolution.isLoading && !orgResolution.hasValue) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
+        // Override web deep-link defaultRouteName so Navigator 1.0 does not
+        // try (and fail) to resolve e.g. /products during org loading.
+        initialRoute: '/',
         home: OrgLoadingSplash(),
       );
     }
