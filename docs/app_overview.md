@@ -585,7 +585,7 @@ lib/src/
 
 | Date | Feature | Description |
 |------|---------|-------------|
-| Sep 8 | Login + auth emails | Two-step login (email → password/code; Google on step 1); OTP error copy; branded PocketBase auth email templates |
+| Sep 8 | Login + auth emails | Two-step login (email → password/code; Google on step 1); OTP error copy; formal deliverability-safe auth emails with HZN logo |
 | Sep 7 | Email OTP login | Passwordless email OTP on login screen (send code → verify); PocketBase OTP + Resend |
 | Sep 7 | Org web favicon | Active organization logo drives browser favicon + apple-touch-icon on web |
 | Sep 7 | Google web login | Existing-staff Google OAuth on web via PocketBase; pb_hooks reject unknown Google emails |

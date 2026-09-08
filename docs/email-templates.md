@@ -2,32 +2,44 @@
 
 Source of truth for HZN Gyms PocketBase auth emails. HTML lives in [`docs/email-templates/`](email-templates/). Apply via Admin API — never hand-edit `server/pb_migrations/`.
 
+## Design goals (deliverability)
+
+- Transactional tone only — no marketing urgency, ALL CAPS, or spam-trigger phrasing
+- Single clear purpose per message; one primary CTA where needed
+- Table layout, inline CSS, web-safe fonts (Gmail / Outlook safe)
+- High text-to-image ratio; logo is the only image (`alt` set)
+- Hidden preheader for inbox preview text
+- Absolute logo URL: `{APP_URL}/email/hzn-logo.png` (shipped from [`web/email/`](../web/email/))
+- Footer identifies HZN systems and states the message is automated
+
 ## Brand tokens
 
 | Token | Value | Use |
 |-------|-------|-----|
-| Header background | `#0B0B0B` | Top bar |
-| Accent / CTA | `#22C55E` | Header underline + buttons |
-| Page background | `#F3F4F6` | Outer email canvas |
+| Header | `#0B0B0B` | Brand bar |
+| Accent (logo green) | `#02F268` | Accent bar + CTA fill |
+| Link | `#047857` | Fallback URLs |
+| Page | `#F4F5F7` | Outer background |
 | Card | `#FFFFFF` | Content panel |
-| Body text | `#111827` / `#374151` | Titles / copy |
+| Body / muted | `#111827` / `#4B5563` / `#6B7280` | Copy hierarchy |
+| Logo | `{APP_URL}/email/hzn-logo.png` | 40×40 header mark |
 
-Layout: table-based, inline CSS only (Gmail/Outlook-safe). Dark header + green accent mirrors the login screen without a full dark email body.
+Local preview copies also live in [`docs/email-templates/assets/`](email-templates/assets/).
 
 ## Templates (`users` collection)
 
 | File | PocketBase field | Subject | Placeholders |
 |------|------------------|---------|--------------|
-| `otp.html` | `otp.emailTemplate` | Your {APP_NAME} login code | `{APP_NAME}`, `{OTP}` |
-| `verification.html` | `verificationTemplate` | Verify your {APP_NAME} email | `{APP_NAME}`, `{APP_URL}`, `{TOKEN}` |
+| `otp.html` | `otp.emailTemplate` | Your {APP_NAME} sign-in code | `{APP_NAME}`, `{OTP}`, `{APP_URL}` |
+| `verification.html` | `verificationTemplate` | Verify your {APP_NAME} email address | `{APP_NAME}`, `{APP_URL}`, `{TOKEN}` |
 | `reset-password.html` | `resetPasswordTemplate` | Reset your {APP_NAME} password | `{APP_NAME}`, `{APP_URL}`, `{TOKEN}` |
-| `confirm-email-change.html` | `confirmEmailChangeTemplate` | Confirm your new {APP_NAME} email | `{APP_NAME}`, `{APP_URL}`, `{TOKEN}` |
-| `auth-alert.html` | `authAlert.emailTemplate` | New login to your {APP_NAME} account | `{APP_NAME}`, `{ALERT_INFO}` |
+| `confirm-email-change.html` | `confirmEmailChangeTemplate` | Confirm your new {APP_NAME} email address | `{APP_NAME}`, `{APP_URL}`, `{TOKEN}` |
+| `auth-alert.html` | `authAlert.emailTemplate` | New sign-in to your {APP_NAME} account | `{APP_NAME}`, `{ALERT_INFO}`, `{APP_URL}` |
 
 ### Link targets
 
 - **Verification** → Flutter route: `{APP_URL}/confirm-verification/{TOKEN}`
-- **Password reset** → PocketBase UI (no Flutter confirm page yet): `{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}`
+- **Password reset** → PocketBase UI: `{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}`
 - **Email change** → PocketBase UI: `{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}`
 
 OTP settings applied with the templates: `enabled: true`, `duration: 180`, `length: 6`.
@@ -53,10 +65,13 @@ Local requires PocketBase running at `LOCAL_API_URL` (usually `http://localhost:
 
 SMTP/Resend is configured separately in PocketBase Settings → Mailer (`RESEND_*` in `.env`). This script only patches collection email templates.
 
+**Logo note:** `{APP_URL}/email/hzn-logo.png` is available after a web deploy that includes `web/email/`. Until then, logo images may be broken in received mail even though the HTML body still renders.
+
 ## QA checklist
 
-1. Request a login code → email shows large 6-digit OTP and HZN header.
+1. Request a login code → formal OTP email with logo + large code; lands in inbox (not spam).
 2. Wrong/expired code in app → **"Invalid or expired login code."** (not credentials).
-3. New staff verification email → CTA opens `/confirm-verification/{token}` on the app host.
+3. Verification email → CTA opens `/confirm-verification/{token}` on the app host.
 4. Forgot password → branded reset email still opens PB confirm UI.
-5. Repeat after applying to staging and prod.
+5. Confirm logo loads from `{APP_URL}/email/hzn-logo.png` after web deploy.
+6. Repeat after applying to staging and prod.

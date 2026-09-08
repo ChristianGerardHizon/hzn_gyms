@@ -100,13 +100,13 @@ try {
     duration = $otpDuration
     length = 6
     emailTemplate = [pscustomobject]@{
-      subject = 'Your {APP_NAME} login code'
+      subject = 'Your {APP_NAME} sign-in code'
       body = $otpHtml
     }
   }
 
   $users.verificationTemplate = [pscustomobject]@{
-    subject = 'Verify your {APP_NAME} email'
+    subject = 'Verify your {APP_NAME} email address'
     body = $verificationHtml
   }
   $users.resetPasswordTemplate = [pscustomobject]@{
@@ -114,7 +114,7 @@ try {
     body = $resetHtml
   }
   $users.confirmEmailChangeTemplate = [pscustomobject]@{
-    subject = 'Confirm your new {APP_NAME} email'
+    subject = 'Confirm your new {APP_NAME} email address'
     body = $confirmEmailHtml
   }
 
@@ -123,7 +123,7 @@ try {
   }
   $users.authAlert.enabled = $true
   $users.authAlert.emailTemplate = [pscustomobject]@{
-    subject = 'New login to your {APP_NAME} account'
+    subject = 'New sign-in to your {APP_NAME} account'
     body = $authAlertHtml
   }
 
