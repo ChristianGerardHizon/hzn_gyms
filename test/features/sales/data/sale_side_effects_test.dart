@@ -121,13 +121,18 @@ void main() {
         adjustmentRepo: adjustmentRepo,
         saleId: 'sale-1',
         voidedById: 'user-1',
+        voidReason: '  Wrong amount  ',
       );
 
       expect(result.isRight(), isTrue);
       verify(
         () => salesRepo.updateSale(
           'sale-1',
-          {'status': 'voided', 'voidedBy': 'user-1'},
+          {
+            'status': 'voided',
+            'voidedBy': 'user-1',
+            'voidReason': 'Wrong amount',
+          },
         ),
       ).called(1);
       verify(
@@ -144,7 +149,7 @@ void main() {
           type: ProductAdjustmentType.productStock,
           oldValue: 5,
           newValue: 7,
-          reason: 'Void sale S-260807-TEST',
+          reason: 'Void sale S-260807-TEST: Wrong amount',
           productId: 'prod-1',
           productStockId: any(named: 'productStockId'),
           productLotId: 'lot-1',

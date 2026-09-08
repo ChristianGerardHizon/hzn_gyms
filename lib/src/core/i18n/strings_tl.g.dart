@@ -242,6 +242,9 @@ class _Translations$navigation$tl implements Translations$navigation$en {
 	@override String get system => 'Sistema';
 	@override String get noBranch => 'Walang Sangay';
 	@override String get allBranches => 'Lahat ng Sangay';
+	@override String get searchNavHint => 'Maghanap ng mga pahina';
+	@override String get searchResults => 'Mga resulta ng paghahanap';
+	@override String get noSearchResults => 'Walang resulta';
 }
 
 // Path: organizations
@@ -516,6 +519,9 @@ extension on TranslationsTl {
 			'navigation.system' => 'Sistema',
 			'navigation.noBranch' => 'Walang Sangay',
 			'navigation.allBranches' => 'Lahat ng Sangay',
+			'navigation.searchNavHint' => 'Maghanap ng mga pahina',
+			'navigation.searchResults' => 'Mga resulta ng paghahanap',
+			'navigation.noSearchResults' => 'Walang resulta',
 			'organizations.title' => 'Mga Organisasyon',
 			'organizations.create' => 'Gumawa ng Organisasyon',
 			'organizations.edit' => 'I-edit ang Organisasyon',

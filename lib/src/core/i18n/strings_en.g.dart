@@ -532,6 +532,15 @@ class Translations$navigation$en {
 
 	/// en: 'All Branches'
 	String get allBranches => 'All Branches';
+
+	/// en: 'Search pages'
+	String get searchNavHint => 'Search pages';
+
+	/// en: 'Search results'
+	String get searchResults => 'Search results';
+
+	/// en: 'No results'
+	String get noSearchResults => 'No results';
 }
 
 // Path: organizations
@@ -986,6 +995,9 @@ extension on Translations {
 			'navigation.system' => 'System',
 			'navigation.noBranch' => 'No Branch',
 			'navigation.allBranches' => 'All Branches',
+			'navigation.searchNavHint' => 'Search pages',
+			'navigation.searchResults' => 'Search results',
+			'navigation.noSearchResults' => 'No results',
 			'organizations.title' => 'Organizations',
 			'organizations.create' => 'Create Organization',
 			'organizations.edit' => 'Edit Organization',
