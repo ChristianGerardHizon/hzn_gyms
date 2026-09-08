@@ -44,9 +44,6 @@ abstract class OrganizationRepository {
   /// Soft deletes an organization by ID.
   FutureEither<void> delete(String id);
 
-  /// Re-triggers Porkbun DNS provisioning for a stuck/failed organization.
-  FutureEither<Organization> retryDnsProvisioning(String id);
-
   /// Validates setup checklist server-side and marks org ready when passed.
   FutureEither<Organization> completeSetup(String id);
 }
@@ -251,26 +248,6 @@ class OrganizationRepositoryImpl implements OrganizationRepository {
 
         // Soft delete
         await _collection.update(id, body: {'isDeleted': true});
-      },
-      Failure.handle,
-    ).run();
-  }
-
-  @override
-  FutureEither<Organization> retryDnsProvisioning(String id) async {
-    return TaskEither.tryCatch(
-      () async {
-        if (id.isEmpty) {
-          throw const DataFailure(
-            'Organization ID cannot be empty',
-            null,
-            'invalid_organization_id',
-          );
-        }
-
-        await _pb.send('/api/organizations/$id/retry-dns', method: 'POST');
-        final record = await _collection.getOne(id);
-        return _toEntity(record);
       },
       Failure.handle,
     ).run();

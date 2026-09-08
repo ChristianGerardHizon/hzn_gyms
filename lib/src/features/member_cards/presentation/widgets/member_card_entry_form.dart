@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../check_in/domain/rfid_keyboard_wedge_decoder.dart';
 import '../../../check_in/domain/rfid_wedge_candidate_key.dart';
+import '../../../check_in/presentation/controllers/rfid_listener_status.dart';
 
 /// How the card ID is being captured in [MemberCardEntryForm].
 enum MemberCardEntryMode {
@@ -39,7 +41,7 @@ bool memberCardEntryHasDraftInput(MemberCardEntryMode mode, String? cardValue) {
 ///
 /// Must be placed inside an existing [FormBuilder] (via [FormDialogScaffold] or a
 /// parent [FormBuilder] widget).
-class MemberCardEntryForm extends HookWidget {
+class MemberCardEntryForm extends HookConsumerWidget {
   const MemberCardEntryForm({
     super.key,
     required this.formKey,
@@ -67,7 +69,7 @@ class MemberCardEntryForm extends HookWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final decoder = useMemoized(RfidKeyboardWedgeDecoder.new);
     useListenable(entryMode);
@@ -85,6 +87,14 @@ class MemberCardEntryForm extends HookWidget {
         _notifyDraftChanged();
       });
     }
+
+    // Suppress dashboard/check-in RFID while this form owns the scanner.
+    useEffect(() {
+      if (!scanEnabled) return null;
+      final hold = ref.read(rfidListenerStatusControllerProvider.notifier);
+      hold.acquireCheckInHold();
+      return hold.releaseCheckInHold;
+    }, [scanEnabled]);
 
     useEffect(() {
       if (!scanEnabled || entryMode.value != MemberCardEntryMode.waitingForScan) {

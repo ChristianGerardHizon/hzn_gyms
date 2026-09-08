@@ -1,10 +1,12 @@
 import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
 import 'package:hzn_gyms/src/features/check_in/domain/rfid_keyboard_wedge_simulator.dart';
+import 'package:hzn_gyms/src/features/check_in/presentation/controllers/rfid_listener_status.dart';
 import 'package:hzn_gyms/src/features/member_cards/presentation/widgets/member_card_entry_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -102,6 +104,41 @@ void main() {
       expect(find.text('ABCD1234'), findsNothing);
       expect(find.text('Scan card'), findsOneWidget);
     });
+
+    testWidgets('acquires check-in hold while scanEnabled', (tester) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await _pumpForm(tester, container: container);
+
+      final notifier =
+          container.read(rfidListenerStatusControllerProvider.notifier);
+      expect(notifier.isCheckInHeld, isTrue);
+
+      // Hold stays after scan capture (dialog still owns the scanner).
+      await _pumpRfidWedgeScan(tester, 'ABCD1234');
+      expect(notifier.isCheckInHeld, isTrue);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      expect(notifier.isCheckInHeld, isFalse);
+    });
+
+    testWidgets('does not acquire hold when scanEnabled is false', (
+      tester,
+    ) async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await _pumpForm(tester, container: container, scanEnabled: false);
+
+      expect(
+        container
+            .read(rfidListenerStatusControllerProvider.notifier)
+            .isCheckInHeld,
+        isFalse,
+      );
+    });
   });
 }
 
@@ -129,17 +166,26 @@ Future<void> _pumpRfidWedgeScan(WidgetTester tester, String cardId) async {
 Future<void> _pumpForm(
   WidgetTester tester, {
   bool scanEnabled = true,
+  ProviderContainer? container,
 }) async {
   tester.view.physicalSize = const Size(1280, 800);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
+  final scope = container ?? ProviderContainer();
+  if (container == null) {
+    addTearDown(scope.dispose);
+  }
+
   await tester.pumpWidget(
-    TranslationProvider(
-      child: MaterialApp(
-        home: Scaffold(
-          body: _MemberCardEntryFormHarness(scanEnabled: scanEnabled),
+    UncontrolledProviderScope(
+      container: scope,
+      child: TranslationProvider(
+        child: MaterialApp(
+          home: Scaffold(
+            body: _MemberCardEntryFormHarness(scanEnabled: scanEnabled),
+          ),
         ),
       ),
     ),

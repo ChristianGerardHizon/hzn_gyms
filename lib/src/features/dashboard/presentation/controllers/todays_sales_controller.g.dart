@@ -114,3 +114,46 @@ final class TodaySalesSummaryProvider
 }
 
 String _$todaySalesSummaryHash() => r'997c6dc0caa75138670c5cc13908ba8ecb509f80';
+
+/// Today's open unpaid sales for the effective write branch.
+
+@ProviderFor(todayUnpaidSales)
+final todayUnpaidSalesProvider = TodayUnpaidSalesProvider._();
+
+/// Today's open unpaid sales for the effective write branch.
+
+final class TodayUnpaidSalesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Sale>>,
+          List<Sale>,
+          FutureOr<List<Sale>>
+        >
+    with $FutureModifier<List<Sale>>, $FutureProvider<List<Sale>> {
+  /// Today's open unpaid sales for the effective write branch.
+  TodayUnpaidSalesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todayUnpaidSalesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$todayUnpaidSalesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Sale>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Sale>> create(Ref ref) {
+    return todayUnpaidSales(ref);
+  }
+}
+
+String _$todayUnpaidSalesHash() => r'd2942f3bc57e24d675014d7283e5e729b3799a35';

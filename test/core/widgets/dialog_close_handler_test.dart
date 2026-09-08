@@ -112,4 +112,89 @@ void main() {
 
     expect(find.text('Blocked'), findsOneWidget);
   });
+
+  testWidgets(
+    'Escape with PopScope(canPop: false) discards only once',
+    (tester) async {
+      var discardPromptCount = 0;
+
+      Future<bool> confirmDiscard(BuildContext context) async {
+        discardPromptCount++;
+        final result = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Discard changes?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Keep editing'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Discard'),
+              ),
+            ],
+          ),
+        );
+        return result ?? false;
+      }
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) => Dialog(
+                      child: DialogCloseHandler(
+                        onClose: confirmDiscard,
+                        child: PopScope(
+                          canPop: false,
+                          onPopInvokedWithResult: (didPop, result) {
+                            if (didPop) return;
+                            confirmDiscard(dialogContext).then((shouldDiscard) {
+                              if (shouldDiscard && dialogContext.mounted) {
+                                Navigator.of(dialogContext).pop();
+                              }
+                            });
+                          },
+                          child: const SizedBox(
+                            width: 200,
+                            height: 100,
+                            child: Center(child: Text('Create Product')),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Create Product'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Discard changes?'), findsOneWidget);
+      expect(discardPromptCount, 1);
+
+      await tester.tap(find.text('Discard'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Create Product'), findsNothing);
+      expect(find.text('Discard changes?'), findsNothing);
+      expect(discardPromptCount, 1);
+    },
+  );
 }

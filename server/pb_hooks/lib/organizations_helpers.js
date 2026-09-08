@@ -295,23 +295,6 @@ function requireOrganizationsManage(e) {
     e.next()
 }
 
-// Route handler: POST /api/organizations/:id/retry-dns
-function retryDns(e) {
-    const id = e.request.pathValue("id")
-    const record = e.app.findRecordById("organizations", id)
-    provisionSubdomain(e.app, record)
-    return e.json(200, {
-        success: record.getString("dnsStatus") === "created",
-        dnsStatus: record.getString("dnsStatus"),
-        dnsError: record.getString("dnsError"),
-    })
-}
-
-// Scheduled job — no-op; auto DNS retry disabled with org DNS linking.
-function retryFailed() {
-    // intentionally empty
-}
-
 module.exports = {
     hostSuffix: hostSuffix,
     porkbunZone: porkbunZone,
@@ -324,6 +307,4 @@ module.exports = {
     onCreateSuccess: onCreateSuccess,
     onUpdateSuccess: onUpdateSuccess,
     requireOrganizationsManage: requireOrganizationsManage,
-    retryDns: retryDns,
-    retryFailed: retryFailed,
 }

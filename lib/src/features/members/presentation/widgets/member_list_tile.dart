@@ -7,8 +7,7 @@ import 'member_branch_activity_chips.dart';
 
 /// Shared member row for the members list and member picker.
 ///
-/// Layout mirrors [SaleListTile]:
-/// avatar | name / phone + branch activity | pending sync.
+/// Layout: avatar | name / phone | branch activity | pending sync.
 class MemberListTile extends StatelessWidget {
   const MemberListTile({
     super.key,
@@ -49,7 +48,6 @@ class MemberListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final title = member.name;
     final subtitle = buildSubtitle(member);
-    final showSubtitleRow = subtitle != null || showBranchActivity;
 
     return Material(
       color: isSelected
@@ -86,49 +84,37 @@ class MemberListTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (showSubtitleRow) ...[
+                    if (subtitle != null) ...[
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          if (subtitle != null)
-                            Flexible(
-                              child: Text(
-                                subtitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          if (showBranchActivity) ...[
-                            if (subtitle != null) const SizedBox(width: 6),
-                            // Flexible so the chip block can shrink below 160 on
-                            // narrow rows instead of overflowing the subtitle Row.
-                            Flexible(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 160),
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: MemberBranchActivityChips(
-                                    activity: activity,
-                                    branchCodeById: branchCodeById,
-                                    branchNameById: branchNameById,
-                                    branchColorById: branchColorById,
-                                    currentBranchId: currentBranchId,
-                                    isLoading: isActivityLoading,
-                                    dense: true,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
+              // Trailing column so every row's branch tag shares the same
+              // right edge and vertical center (not pinned to the subtitle).
+              if (showBranchActivity) ...[
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: MemberBranchActivityChips(
+                    activity: activity,
+                    branchCodeById: branchCodeById,
+                    branchNameById: branchNameById,
+                    branchColorById: branchColorById,
+                    currentBranchId: currentBranchId,
+                    isLoading: isActivityLoading,
+                    dense: true,
+                  ),
+                ),
+              ],
               if (member.isPendingSync) ...[
                 const SizedBox(width: 8),
                 Tooltip(

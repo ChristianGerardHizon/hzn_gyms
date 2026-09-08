@@ -10,55 +10,22 @@
 // Prefers pb_public/privacy-policy.html (web deploy), falls back to the
 // copy shipped with pb_hooks so hooks-only deploys still work.
 //
-// ES5 only — no const, let, arrow functions, or async/await.
+// Logic lives in lib/privacy_policy_helpers.js and is required inside each
+// callback — PB JSVM does not share top-level functions into handlers.
 // ============================================================================
-
-/**
- * Load privacy policy HTML from pb_public, then hooks fallback.
- */
-function loadPrivacyPolicyHtml() {
-  try {
-    return toString($os.readFile(__hooks + "/../pb_public/privacy-policy.html"));
-  } catch (errPublic) {
-    try {
-      return toString($os.readFile(__hooks + "/privacy-policy.html"));
-    } catch (errHooks) {
-      return null;
-    }
-  }
-}
-
-/**
- * Respond with the privacy policy HTML (200) or a small 404 page.
- */
-function servePrivacyPolicy(e) {
-  var html = loadPrivacyPolicyHtml();
-  if (!html) {
-    return e.html(
-      404,
-      "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>Not Found</title></head>" +
-        "<body><h1>Privacy Policy Not Found</h1>" +
-        "<p>The privacy policy file is missing on this server.</p></body></html>"
-    );
-  }
-
-  e.response.header().set("X-Robots-Tag", "noindex, nofollow");
-  e.response.header().set("Cache-Control", "public, max-age=300");
-  return e.html(200, html);
-}
 
 /**
  * GET /privacy-policy
  */
-routerAdd("GET", "/privacy-policy", function(e) {
-  return servePrivacyPolicy(e);
+routerAdd("GET", "/privacy-policy", function (e) {
+  return require(`${__hooks}/lib/privacy_policy_helpers.js`).serve(e);
 });
 
 /**
  * GET /privacy-policy/
  */
-routerAdd("GET", "/privacy-policy/", function(e) {
-  return servePrivacyPolicy(e);
+routerAdd("GET", "/privacy-policy/", function (e) {
+  return require(`${__hooks}/lib/privacy_policy_helpers.js`).serve(e);
 });
 
 /**
@@ -66,6 +33,6 @@ routerAdd("GET", "/privacy-policy/", function(e) {
  *
  * Explicit route so SPA fallback cannot replace a missing static file.
  */
-routerAdd("GET", "/privacy-policy.html", function(e) {
-  return servePrivacyPolicy(e);
+routerAdd("GET", "/privacy-policy.html", function (e) {
+  return require(`${__hooks}/lib/privacy_policy_helpers.js`).serve(e);
 });

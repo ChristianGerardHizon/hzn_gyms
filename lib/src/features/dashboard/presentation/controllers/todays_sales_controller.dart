@@ -120,3 +120,13 @@ Future<TodaySalesSummary> todaySalesSummary(Ref ref) async {
         paymentMethodTotals.transactionCountByPaymentMethod,
   );
 }
+
+/// Today's open unpaid sales for the effective write branch.
+@riverpod
+Future<List<Sale>> todayUnpaidSales(Ref ref) async {
+  final branchId = ref.watch(effectiveBranchIdForWriteProvider);
+  if (branchId == null) return const [];
+  final repo = ref.watch(salesRepositoryProvider);
+  final result = await repo.getOpenUnpaidSales(branchId: branchId);
+  return result.fold((_) => <Sale>[], (sales) => sales);
+}
