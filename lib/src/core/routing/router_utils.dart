@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/organizations/presentation/controllers/organization_memberships_controller.dart';
 import '../navigation/app_nav_destination.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
@@ -32,6 +33,19 @@ abstract class RouterUtils {
     final perms = ref.read(currentUserPermissionsProvider).value;
     if (perms?.canManageOrganizations ?? false) {
       return PlatformDashboardRoute.path;
+    }
+    final auth = ref.read(currentAuthProvider);
+    final linkedOrg = auth?.user.organization;
+    if (linkedOrg != null && linkedOrg.isNotEmpty) {
+      return DashboardRoute.path;
+    }
+    final membershipsAsync = ref.read(organizationMembershipsControllerProvider);
+    if (membershipsAsync.hasError || membershipsAsync.isLoading) {
+      return DashboardRoute.path;
+    }
+    final memberships = membershipsAsync.value;
+    if (memberships != null && !memberships.any((m) => m.isActive)) {
+      return AwaitingOrganizationRoute.path;
     }
     return DashboardRoute.path;
   }
@@ -206,6 +220,26 @@ abstract class RouterUtils {
       return null;
     }
 
+    final isOnAwaitingOrganization =
+        currentPath == AwaitingOrganizationRoute.path;
+
+    // 4d. Invite-required gate
+    if (isOnAwaitingOrganization) {
+      if (!isAuthenticated) return LoginRoute.path;
+      if (!isVerified) return VerifyEmailRoute.path;
+      final perms = ref.read(currentUserPermissionsProvider).value;
+      if (perms?.canManageOrganizations ?? false) {
+        return PlatformDashboardRoute.path;
+      }
+      final memberships =
+          ref.read(organizationMembershipsControllerProvider).value;
+      if (memberships != null && memberships.any((m) => m.isActive)) {
+        return DashboardRoute.path;
+      }
+      // Still loading memberships — stay put.
+      return null;
+    }
+
     // 5. Not authenticated + protected route - redirect to login
     if (!isAuthenticated && !isIgnored) {
       return LoginRoute.path;
@@ -214,6 +248,28 @@ abstract class RouterUtils {
     // 5b. Authenticated but unverified - force verify gate
     if (isAuthenticated && !isVerified && !isIgnored) {
       return VerifyEmailRoute.path;
+    }
+
+    // 5c. Authenticated, verified, no org membership / link, not platform admin
+    if (isAuthenticated && isVerified && !isIgnored) {
+      final perms = ref.read(currentUserPermissionsProvider).value;
+      final isPlatform = perms?.canManageOrganizations ?? false;
+      if (!isPlatform) {
+        final linkedOrg = authAsync.value?.user.organization;
+        final hasLinkedOrg = linkedOrg != null && linkedOrg.isNotEmpty;
+        if (!hasLinkedOrg) {
+          final membershipsAsync =
+              ref.read(organizationMembershipsControllerProvider);
+          // Do not return early while loading — that would skip permission
+          // guards. Invite gate only fires once memberships are known empty.
+          if (!membershipsAsync.isLoading &&
+              !membershipsAsync.hasError &&
+              membershipsAsync.value != null &&
+              !membershipsAsync.value!.any((m) => m.isActive)) {
+            return AwaitingOrganizationRoute.path;
+          }
+        }
+      }
     }
 
     // 6. Role permission guards for authenticated shell routes

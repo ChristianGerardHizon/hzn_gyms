@@ -1,15 +1,12 @@
 import 'package:hzn_gyms/src/core/i18n/strings.g.dart';
 import 'package:hzn_gyms/src/core/permissions/current_user_permissions.dart';
 import 'package:hzn_gyms/src/core/widgets/scope_switcher_bar.dart';
-import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
-import 'package:hzn_gyms/src/features/auth/domain/user.dart';
-import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organizations_controller.dart';
 import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
 import 'package:hzn_gyms/src/features/settings/presentation/controllers/branches_controller.dart';
 import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
-import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,9 +30,7 @@ void main() {
           overrides: [
             currentUserPermissionsProvider.overrideWith(
               () => _FakePermissionsController(
-                const CurrentUserPermissions(
-                  permissions: {Permissions.organizationsManage},
-                ),
+                const CurrentUserPermissions(superAdmin: true),
               ),
             ),
             organizationsControllerProvider.overrideWith(
@@ -94,61 +89,8 @@ void main() {
     expect(find.text('All Branches'), findsOneWidget);
     expect(find.byType(VerticalDivider), findsNothing);
   });
-
-  testWidgets(
-    'shows branch only when org-scoped admin has organizations.manage',
-    (tester) async {
-      await tester.pumpWidget(
-        TranslationProvider(
-          child: ProviderScope(
-            overrides: [
-              currentAuthProvider.overrideWithValue(
-                const AuthState(
-                  token: 'tok',
-                  user: User(
-                    id: 'org-admin',
-                    name: 'Org Admin',
-                    email: 'orgadmin@test.com',
-                    verified: true,
-                    organization: 'org-1',
-                  ),
-                ),
-              ),
-              currentUserPermissionsProvider.overrideWith(
-                () => _FakePermissionsController(
-                  const CurrentUserPermissions(
-                    permissions: {Permissions.organizationsManage},
-                  ),
-                ),
-              ),
-              organizationsControllerProvider.overrideWith(
-                () => _FakeOrganizationsController(const [org]),
-              ),
-              currentOrganizationControllerProvider.overrideWith(
-                () => _FakeCurrentOrganizationController(org),
-              ),
-              branchesControllerProvider.overrideWith(
-                () => _FakeBranchesController(const [branch]),
-              ),
-              currentBranchControllerProvider.overrideWith(
-                () => _FakeAllBranchesController(),
-              ),
-            ],
-            child: const MaterialApp(
-              home: Scaffold(body: ScopeSwitcherBar()),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Kylie Gym'), findsNothing);
-      expect(find.text('All Branches'), findsOneWidget);
-      expect(find.byType(VerticalDivider), findsNothing);
-      expect(find.byType(DropdownButton<String>), findsOneWidget);
-    },
-  );
 }
+
 class _FakePermissionsController extends CurrentUserPermissionsController {
   _FakePermissionsController(this._permissions);
 

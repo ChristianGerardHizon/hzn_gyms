@@ -248,7 +248,7 @@ void main() {
     expect(find.text('Reports'), findsOneWidget);
   });
 
-  testWidgets('hides Platform nav without organizations.manage', (tester) async {
+  testWidgets('hides Platform nav without superAdmin', (tester) async {
     final destinations = visibleAppNavDestinations(adminPerms);
 
     await tester.pumpWidget(
@@ -262,12 +262,10 @@ void main() {
     expect(find.text('Platform'), findsNothing);
   });
 
-  testWidgets('shows Platform nav with organizations.manage', (tester) async {
+  testWidgets('shows Platform nav with superAdmin', (tester) async {
     const platformPerms = CurrentUserPermissions(
-      permissions: {
-        Permissions.membersView,
-        Permissions.organizationsManage,
-      },
+      permissions: {Permissions.membersView},
+      superAdmin: true,
     );
     final destinations = visibleAppNavDestinations(platformPerms);
 

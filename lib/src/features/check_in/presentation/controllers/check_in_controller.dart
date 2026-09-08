@@ -11,6 +11,7 @@ import '../../../members/domain/member.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../memberships/domain/member_membership.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../settings/presentation/controllers/current_branch_controller.dart';
 import '../../data/repositories/check_in_repository.dart';
 import '../../domain/card_check_in_result.dart';
@@ -34,8 +35,9 @@ class CheckInController extends _$CheckInController {
 
   @override
   Future<List<CheckIn>> build() async {
-    // null branchId = "All branches" (no filter)
+    // null branchId = all branches in the current organization
     final branchId = ref.watch(currentBranchIdProvider);
+    final organizationId = ref.watch(currentOrganizationIdProvider);
 
     var disposed = false;
     Timer? debounce;
@@ -75,7 +77,10 @@ class CheckInController extends _$CheckInController {
           }),
     );
 
-    final result = await _repository.fetchTodaysCheckIns(branchId);
+    final result = await _repository.fetchTodaysCheckIns(
+      branchId,
+      organizationId: organizationId,
+    );
 
     return result.fold((failure) => throw failure, (checkIns) => checkIns);
   }
@@ -86,7 +91,11 @@ class CheckInController extends _$CheckInController {
     state = const AsyncLoading();
 
     final branchId = ref.read(currentBranchIdProvider);
-    final result = await _repository.fetchTodaysCheckIns(branchId);
+    final organizationId = ref.read(currentOrganizationIdProvider);
+    final result = await _repository.fetchTodaysCheckIns(
+      branchId,
+      organizationId: organizationId,
+    );
 
     state = result.fold(
       (failure) => AsyncError(failure, StackTrace.current),
@@ -98,7 +107,11 @@ class CheckInController extends _$CheckInController {
   Future<void> _softRefresh() async {
     _repository.invalidateCache();
     final branchId = ref.read(currentBranchIdProvider);
-    final result = await _repository.fetchTodaysCheckIns(branchId);
+    final organizationId = ref.read(currentOrganizationIdProvider);
+    final result = await _repository.fetchTodaysCheckIns(
+      branchId,
+      organizationId: organizationId,
+    );
 
     result.fold((_) {}, (checkIns) => state = AsyncData(checkIns));
   }

@@ -10,7 +10,7 @@ part of 'current_branch_controller.dart';
 // ignore_for_file: type=lint, type=warning
 /// Controller for managing the current working branch.
 ///
-/// - Admins: can switch to any branch or "All branches"; selection is persisted
+/// - Admins: can switch to any branch in the current org or "All branches"
 /// - Non-admins: can switch among allowed branches; locked if only one
 
 @ProviderFor(CurrentBranchController)
@@ -18,7 +18,7 @@ final currentBranchControllerProvider = CurrentBranchControllerProvider._();
 
 /// Controller for managing the current working branch.
 ///
-/// - Admins: can switch to any branch or "All branches"; selection is persisted
+/// - Admins: can switch to any branch in the current org or "All branches"
 /// - Non-admins: can switch among allowed branches; locked if only one
 final class CurrentBranchControllerProvider
     extends
@@ -28,7 +28,7 @@ final class CurrentBranchControllerProvider
         > {
   /// Controller for managing the current working branch.
   ///
-  /// - Admins: can switch to any branch or "All branches"; selection is persisted
+  /// - Admins: can switch to any branch in the current org or "All branches"
   /// - Non-admins: can switch among allowed branches; locked if only one
   CurrentBranchControllerProvider._()
     : super(
@@ -50,11 +50,11 @@ final class CurrentBranchControllerProvider
 }
 
 String _$currentBranchControllerHash() =>
-    r'a6a9668b7c1721bac5a9abe218aeb27203663a1a';
+    r'15e376aad41ad842fb04bedd94bd0060cba09c57';
 
 /// Controller for managing the current working branch.
 ///
-/// - Admins: can switch to any branch or "All branches"; selection is persisted
+/// - Admins: can switch to any branch in the current org or "All branches"
 /// - Non-admins: can switch among allowed branches; locked if only one
 
 abstract class _$CurrentBranchController
@@ -81,17 +81,17 @@ abstract class _$CurrentBranchController
   }
 }
 
-/// Whether admin is viewing all branches (no branch filter).
+/// Whether admin is viewing all branches (no concrete branch filter).
 
 @ProviderFor(viewingAllBranches)
 final viewingAllBranchesProvider = ViewingAllBranchesProvider._();
 
-/// Whether admin is viewing all branches (no branch filter).
+/// Whether admin is viewing all branches (no concrete branch filter).
 
 final class ViewingAllBranchesProvider
     extends $FunctionalProvider<bool, bool, bool>
     with $Provider<bool> {
-  /// Whether admin is viewing all branches (no branch filter).
+  /// Whether admin is viewing all branches (no concrete branch filter).
   ViewingAllBranchesProvider._()
     : super(
         from: null,
@@ -183,7 +183,8 @@ String _$currentBranchIdHash() => r'dd457fa7bdc31f57c2153247e3976e7a0f88db10';
 /// Convenience provider for branch filter string.
 ///
 /// Returns `branch = "id" && isDeleted = false` for a concrete branch,
-/// `isDeleted = false` when viewing All branches, or null while unset/loading.
+/// `branch.organization = "orgId" && isDeleted = false` when viewing All
+/// branches in an org, or null while unset/loading / no org.
 
 @ProviderFor(currentBranchFilter)
 final currentBranchFilterProvider = CurrentBranchFilterProvider._();
@@ -191,7 +192,8 @@ final currentBranchFilterProvider = CurrentBranchFilterProvider._();
 /// Convenience provider for branch filter string.
 ///
 /// Returns `branch = "id" && isDeleted = false` for a concrete branch,
-/// `isDeleted = false` when viewing All branches, or null while unset/loading.
+/// `branch.organization = "orgId" && isDeleted = false` when viewing All
+/// branches in an org, or null while unset/loading / no org.
 
 final class CurrentBranchFilterProvider
     extends $FunctionalProvider<String?, String?, String?>
@@ -199,7 +201,8 @@ final class CurrentBranchFilterProvider
   /// Convenience provider for branch filter string.
   ///
   /// Returns `branch = "id" && isDeleted = false` for a concrete branch,
-  /// `isDeleted = false` when viewing All branches, or null while unset/loading.
+  /// `branch.organization = "orgId" && isDeleted = false` when viewing All
+  /// branches in an org, or null while unset/loading / no org.
   CurrentBranchFilterProvider._()
     : super(
         from: null,
@@ -234,7 +237,7 @@ final class CurrentBranchFilterProvider
 }
 
 String _$currentBranchFilterHash() =>
-    r'f0afd8e12d2e8114a3d20e70c42709f85999633d';
+    r'27ec8bf79dc4a85c9ffefb06c17acef9185d2609';
 
 /// Branch ID to use when creating/updating records that require a branch.
 ///

@@ -1,6 +1,6 @@
 # Organization Onboarding
 
-Super-admins with `organizations.manage` use the **Platform** shell (`/platform`) to create tenants and run the setup wizard. Branch staff continue using the gym app at `/`.
+Super-admins with `users.superAdmin = true` use the **Platform** shell (`/platform`) to create tenants and run the setup wizard. Branch staff continue using the gym app at `/`. Role permissions stay per-organization and do not grant platform access.
 
 ## Platform shell routes
 
@@ -61,7 +61,9 @@ The script adds:
 
 - `organizations.setupStatus` (select: `pending_setup`, `ready`)
 - `organizations.setupCompletedAt` (date)
-- Org-scoped API rules on `users` and `branches` (tenant + `organizations.manage` bypass)
+- Org-scoped API rules on `users` and `branches` (tenant + `users.superAdmin` bypass)
+- `users.superAdmin` bool (default false) for platform operators
+- `organizations` CRUD rules require `@request.auth.superAdmin = true`
 
 ### Manual curl (if script unavailable)
 
@@ -81,7 +83,7 @@ The script adds:
 - [ ] Optional membership/product steps can be skipped
 - [ ] Complete setup sets badge to **Ready** on org list
 - [ ] **Enter tenant** switches org context and opens gym app at `/`
-- [ ] Branch staff without `organizations.manage` cannot open `/platform`
+- [ ] Branch staff without `users.superAdmin` cannot open `/platform`
 - [ ] Public resolve returns branding for tenant subdomain (optional / legacy)
 
 ## Backfill existing data

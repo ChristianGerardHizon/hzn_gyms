@@ -31,16 +31,17 @@ Repeat [backfill-organizations.md](backfill-organizations.md) against **staging*
 5. `PATCH` each user without `organization` → set org id
 6. Ensure `branches.organization` is required in schema
 
-## 4. Grant `organizations.manage`
+## 4. Grant platform access (`users.superAdmin`)
 
-`system.admin` does **not** include `organizations.manage`.
+Platform org create/manage is **not** a role permission (roles differ per organization).
 
-In PocketBase Admin → user roles:
+In PocketBase Admin → **users** collection:
 
-1. Edit the platform super-admin role (or create `Platform Admin`)
-2. Enable `organizations.manage` (and `organizations.view` if listed separately)
-3. Assign role to test user
-4. Verify app nav shows **Platform** link and `/platform` is accessible
+1. Open the platform operator user record
+2. Set `superAdmin` = `true`
+3. Verify app nav shows **Platform** link and `/platform` is accessible
+
+Only PocketBase `_superusers` may change `superAdmin` (app hooks strip client attempts).
 
 See [organization-onboarding.md](organization-onboarding.md) for setup wizard and schema patch details.
 
@@ -94,7 +95,7 @@ Caddy example: [caddy-hzngyms.com.example.caddy](caddy-hzngyms.com.example.caddy
 After staging sign-off:
 
 1. Repeat backfill (section 3) on **production** if not already done
-2. Grant `organizations.manage` on prod admin role
+2. Set `users.superAdmin = true` on prod platform operator accounts
 3. Merge `staging` → `main` with `version:minor` label
 4. Verify production deploy + smoke test
 5. Validate `kyliegym.hzngyms.com` (or prod subdomain) resolves with correct branding

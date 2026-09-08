@@ -66,6 +66,13 @@ class UserMapper extends ClassMapperBase<User> {
     _$organization,
     opt: true,
   );
+  static bool _$superAdmin(User v) => v.superAdmin;
+  static const Field<User, bool> _f$superAdmin = Field(
+    'superAdmin',
+    _$superAdmin,
+    opt: true,
+    def: false,
+  );
 
   @override
   final MappableFields<User> fields = const {
@@ -78,6 +85,7 @@ class UserMapper extends ClassMapperBase<User> {
     #allowedBranches: _f$allowedBranches,
     #roleId: _f$roleId,
     #organization: _f$organization,
+    #superAdmin: _f$superAdmin,
   };
 
   static User _instantiate(DecodingData data) {
@@ -91,6 +99,7 @@ class UserMapper extends ClassMapperBase<User> {
       allowedBranches: data.dec(_f$allowedBranches),
       roleId: data.dec(_f$roleId),
       organization: data.dec(_f$organization),
+      superAdmin: data.dec(_f$superAdmin),
     );
   }
 
@@ -152,6 +161,7 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     List<String>? allowedBranches,
     String? roleId,
     String? organization,
+    bool? superAdmin,
   });
   UserCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -180,6 +190,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     List<String>? allowedBranches,
     Object? roleId = $none,
     Object? organization = $none,
+    bool? superAdmin,
   }) => $apply(
     FieldCopyWithData({
       if (id != null) #id: id,
@@ -191,6 +202,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (allowedBranches != null) #allowedBranches: allowedBranches,
       if (roleId != $none) #roleId: roleId,
       if (organization != $none) #organization: organization,
+      if (superAdmin != null) #superAdmin: superAdmin,
     }),
   );
   @override
@@ -204,6 +216,7 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
     roleId: data.get(#roleId, or: $value.roleId),
     organization: data.get(#organization, or: $value.organization),
+    superAdmin: data.get(#superAdmin, or: $value.superAdmin),
   );
 
   @override

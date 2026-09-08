@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:hzn_gyms/src/core/packages/pocketbase/pb_filter.dart';
 import 'package:hzn_gyms/src/core/packages/storage/secure_storage_provider.dart';
 import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
 import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
 import 'package:hzn_gyms/src/features/settings/presentation/controllers/branches_controller.dart';
 import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
@@ -68,6 +69,7 @@ void main() {
     String? authBranch = 'branch-a',
     List<String> allowed = const ['branch-a', 'branch-b'],
     String? persisted,
+    String? organizationId = 'org-1',
   }) {
     if (persisted != null) {
       store['CURRENT_BRANCH_ID'] = persisted;
@@ -78,6 +80,7 @@ void main() {
             id: 'user-1',
             branch: authBranch,
             allowedBranches: allowed,
+            organization: organizationId,
           ),
     );
 
@@ -85,6 +88,7 @@ void main() {
       overrides: [
         secureStorageProvider.overrideWithValue(storage),
         currentAuthProvider.overrideWithValue(auth),
+        currentOrganizationIdProvider.overrideWith((ref) => organizationId),
         userProvider('user-1').overrideWith(
           (ref) async => users.User(
             id: 'user-1',
@@ -141,8 +145,20 @@ void main() {
     expect(container.read(effectiveBranchIdForWriteProvider), isNull);
     expect(
       container.read(currentBranchFilterProvider),
-      PBFilters.active.build(),
+      PBFilters.forBranchOrganization('org-1').build(),
     );
+  });
+
+  test('admin All branches without org yields null filter', () async {
+    final container = createContainer(
+      admin: true,
+      persisted: allBranchesSentinel,
+      organizationId: null,
+    );
+    addTearDown(container.dispose);
+
+    await container.read(currentBranchControllerProvider.future);
+    expect(container.read(currentBranchFilterProvider), isNull);
   });
 
   test('non-admin uses persisted allowed branch', () async {

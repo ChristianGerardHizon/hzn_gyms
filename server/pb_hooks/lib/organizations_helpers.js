@@ -287,12 +287,10 @@ function requireOrganizationsManage(e) {
             return
         }
     } catch (_) {
-        // fall through to role check
+        // fall through to superAdmin check
     }
-    const { roleHasPermission } = require(`${__hooks}/lib/permissions_helpers.js`)
-    const roleId = authRecord.getString("role")
-    if (!roleHasPermission(e.app, roleId, "organizations.manage")) {
-        throw new ForbiddenError("organizations.manage permission required")
+    if (!authRecord.getBool("superAdmin")) {
+        throw new ForbiddenError("superAdmin required")
     }
     e.next()
 }

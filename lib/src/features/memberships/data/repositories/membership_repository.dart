@@ -20,7 +20,13 @@ abstract class MembershipRepository {
   ///
   /// When [branchId] is set, returns plans valid at that branch
   /// (`validBranches` contains it, or empty = all branches).
-  FutureEither<List<Membership>> fetchAll({String? branchId, bool? activeOnly});
+  /// When [branchId] is null and [organizationId] is set, scopes by
+  /// `branch.organization`.
+  FutureEither<List<Membership>> fetchAll({
+    String? branchId,
+    String? organizationId,
+    bool? activeOnly,
+  });
 
   /// Fetches a single membership plan by ID.
   FutureEither<Membership> fetchOne(String id);
@@ -91,6 +97,7 @@ class MembershipRepositoryImpl implements MembershipRepository {
   @override
   FutureEither<List<Membership>> fetchAll({
     String? branchId,
+    String? organizationId,
     bool? activeOnly,
   }) async {
     if (_isCacheValid(branchId, activeOnly)) {
@@ -104,6 +111,8 @@ class MembershipRepositoryImpl implements MembershipRepository {
         filter.raw(
           '(validBranches.id ?= "$branchId" || validBranches.id = "")',
         );
+      } else if (organizationId != null && organizationId.isNotEmpty) {
+        filter.relation('branch.organization', organizationId);
       }
       if (activeOnly == true) {
         filter.isTrue('isActive');

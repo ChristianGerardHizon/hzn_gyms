@@ -9,6 +9,8 @@ abstract class PocketBaseCollections {
 
   // Organizations
   static const String organizations = 'organizations';
+  static const String organizationMemberships = 'organizationMemberships';
+  static const String organizationInvites = 'organizationInvites';
   static const String branches = 'branches';
   static const String printerConfigs = 'printerConfigs';
 

@@ -8,6 +8,7 @@ import '../../../../core/foundation/type_defs.dart';
 import '../../../../core/packages/pocketbase/pocketbase_collections.dart';
 import '../../../../core/packages/pocketbase/pocketbase_provider.dart';
 import '../../../memberships/data/repositories/membership_repository.dart';
+import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../data/local/member_local_data_source.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/member.dart';
@@ -37,6 +38,8 @@ class PaginatedMembersController extends _$PaginatedMembersController {
       ref.read(memberSortControllerProvider).toSortString();
 
   String? get _branchFilterId => ref.read(memberActiveBranchFilterProvider);
+
+  String? get _orgFilter => ref.read(currentBranchOrganizationFilterProvider);
 
   String get _branchViewSort {
     final sort = ref.read(memberSortControllerProvider);
@@ -96,7 +99,9 @@ class PaginatedMembersController extends _$PaginatedMembersController {
 
   void _triggerBackgroundSync() {
     // Fire-and-forget full sync so search and load-more can use local data.
-    unawaited(_repository.syncAllMembers(sort: _currentSort));
+    unawaited(
+      _repository.syncAllMembers(sort: _currentSort, filter: _orgFilter),
+    );
   }
 
   Future<PaginatedResult<Member>> _fetchActiveAtBranchPage({
@@ -154,8 +159,9 @@ class PaginatedMembersController extends _$PaginatedMembersController {
     _currentSearchQuery = null;
     _currentSearchFields = null;
 
-    // Rebuild when the active-branch filter changes.
+    // Rebuild when the active-branch filter or org changes.
     final branchFilterId = ref.watch(memberActiveBranchFilterProvider);
+    final orgFilter = ref.watch(currentBranchOrganizationFilterProvider);
 
     // Listen to sort changes and refresh
     ref.listen(memberSortControllerProvider, (_, __) {
@@ -170,6 +176,17 @@ class PaginatedMembersController extends _$PaginatedMembersController {
       return _toPaginatedState(result);
     }
 
+    // Without an org, do not leak cross-tenant members.
+    if (orgFilter == null || orgFilter.isEmpty) {
+      return const PaginatedState<Member>(
+        items: [],
+        currentPage: 1,
+        totalItems: 0,
+        totalPages: 0,
+        hasReachedEnd: true,
+      );
+    }
+
     final cached = await _loadCachedPage(page: 1);
     if (cached != null && cached.items.isNotEmpty) {
       state = AsyncData(_toPaginatedState(cached));
@@ -179,6 +196,7 @@ class PaginatedMembersController extends _$PaginatedMembersController {
       page: 1,
       perPage: Pagination.membersPageSize,
       sort: _currentSort,
+      filter: orgFilter,
     );
 
     return result.fold(
@@ -243,11 +261,13 @@ class PaginatedMembersController extends _$PaginatedMembersController {
             page: nextPage,
             perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _orgFilter,
           )
         : await _repository.fetchPaginated(
             page: nextPage,
             perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _orgFilter,
           );
 
     result.fold(
@@ -315,11 +335,13 @@ class PaginatedMembersController extends _$PaginatedMembersController {
             page: 1,
             perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _orgFilter,
           )
         : await _repository.fetchPaginated(
             page: 1,
             perPage: Pagination.membersPageSize,
             sort: _currentSort,
+            filter: _orgFilter,
           );
 
     result.fold(
@@ -377,6 +399,7 @@ class PaginatedMembersController extends _$PaginatedMembersController {
       page: 1,
       perPage: Pagination.membersPageSize,
       sort: _currentSort,
+      filter: _orgFilter,
     );
 
     result.fold(

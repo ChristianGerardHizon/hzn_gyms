@@ -9,8 +9,10 @@ import 'package:hzn_gyms/src/core/routing/router_utils.dart';
 import 'package:hzn_gyms/src/core/routing/routes/platform.routes.dart';
 import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
 import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
-import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization_membership.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organization_memberships_controller.dart';
 
+import '../../helpers/fake_organization_memberships.dart';
 import '../../helpers/fixtures.dart';
 
 class _AuthenticatedAuth extends AuthController {
@@ -21,9 +23,7 @@ class _AuthenticatedAuth extends AuthController {
 class _PlatformAdminPermissions extends CurrentUserPermissionsController {
   @override
   Future<CurrentUserPermissions> build() async {
-    return const CurrentUserPermissions(
-      permissions: {Permissions.organizationsManage},
-    );
+    return const CurrentUserPermissions(superAdmin: true);
   }
 }
 
@@ -63,6 +63,16 @@ void main() {
     testWidgets('splash sends platform admins to /platform', (tester) async {
       final container = ProviderContainer(
         overrides: [
+          organizationMembershipsControllerProvider.overrideWith(
+            () => FakeOrganizationMembershipsController(const [
+              OrganizationMembership(
+                id: 'om-1',
+                userId: 'user-1',
+                organizationId: 'org-1',
+                roleId: 'role-1',
+              ),
+            ]),
+          ),
           authControllerProvider.overrideWith(_AuthenticatedAuth.new),
           currentUserPermissionsProvider.overrideWith(
             _PlatformAdminPermissions.new,
@@ -104,9 +114,7 @@ void main() {
     });
 
     test('fallbackPathFor returns platform dashboard for org managers', () {
-      const perms = CurrentUserPermissions(
-        permissions: {Permissions.organizationsManage},
-      );
+      const perms = CurrentUserPermissions(superAdmin: true);
 
       expect(fallbackPathFor(perms), PlatformDashboardRoute.path);
     });
