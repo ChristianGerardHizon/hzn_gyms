@@ -1,10 +1,10 @@
-# Applies branded auth email templates from docs/email-templates/ to the users collection.
+# Applies branded auth email templates from docs/email-templates/ to users and _superusers.
 # Never hand-edit server/pb_migrations/ — PocketBase may auto-generate migrations from this PATCH.
 #
 # Usage (from repo root):
-#   pwsh ./scripts/patch-email-templates.ps1 local
-#   pwsh ./scripts/patch-email-templates.ps1 staging
-#   pwsh ./scripts/patch-email-templates.ps1 prod
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\patch-email-templates.ps1 local
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\patch-email-templates.ps1 staging
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\patch-email-templates.ps1 prod
 
 param(
   [Parameter(Mandatory = $true, Position = 0)]
@@ -30,6 +30,99 @@ function Read-TemplateHtml([string]$filePath) {
     throw "Missing template file: $filePath"
   }
   return [System.IO.File]::ReadAllText($filePath).Trim()
+}
+
+function Apply-AuthEmailTemplates {
+  param(
+    [string]$Base,
+    [string]$Token,
+    [string]$CollectionName,
+    [bool]$ForceEnableOtp,
+    [string]$OtpHtml,
+    [string]$VerificationHtml,
+    [string]$ResetHtml,
+    [string]$ConfirmEmailHtml,
+    [string]$AuthAlertHtml,
+    [string]$PatchBodyPath
+  )
+
+  Write-Host "Fetching $CollectionName collection..."
+  $colOut = curl.exe -s "$Base/api/collections/$CollectionName" -H "Authorization: $Token"
+  $col = $colOut | ConvertFrom-Json
+  if (-not $col.id) {
+    throw "Failed to load $CollectionName collection: $colOut"
+  }
+
+  $otpDuration = 180
+  if ($col.otp -and $col.otp.duration) { $otpDuration = [int]$col.otp.duration }
+  $otpEnabled = $ForceEnableOtp
+  if (-not $ForceEnableOtp -and $col.otp -and $null -ne $col.otp.enabled) {
+    $otpEnabled = [bool]$col.otp.enabled
+  }
+  $otpLength = 6
+  if (-not $ForceEnableOtp -and $col.otp -and $col.otp.length) {
+    $otpLength = [int]$col.otp.length
+  }
+
+  $col.otp = [pscustomobject]@{
+    enabled = $otpEnabled
+    duration = $otpDuration
+    length = $otpLength
+    emailTemplate = [pscustomobject]@{
+      subject = 'Your {APP_NAME} sign-in code'
+      body = $OtpHtml
+    }
+  }
+
+  $col.verificationTemplate = [pscustomobject]@{
+    subject = 'Verify your {APP_NAME} email address'
+    body = $VerificationHtml
+  }
+  $col.resetPasswordTemplate = [pscustomobject]@{
+    subject = 'Reset your {APP_NAME} password'
+    body = $ResetHtml
+  }
+  $col.confirmEmailChangeTemplate = [pscustomobject]@{
+    subject = 'Confirm your new {APP_NAME} email address'
+    body = $ConfirmEmailHtml
+  }
+
+  $alertEnabled = $true
+  if ($col.authAlert -and $null -ne $col.authAlert.enabled -and -not $ForceEnableOtp) {
+    $alertEnabled = [bool]$col.authAlert.enabled
+  }
+  if (-not $col.authAlert) {
+    $col | Add-Member -NotePropertyName authAlert -NotePropertyValue ([pscustomobject]@{}) -Force
+  }
+  $col.authAlert.enabled = $alertEnabled
+  $col.authAlert.emailTemplate = [pscustomobject]@{
+    subject = 'New sign-in to your {APP_NAME} account'
+    body = $AuthAlertHtml
+  }
+
+  $json = $col | ConvertTo-Json -Depth 40 -Compress
+  [System.IO.File]::WriteAllText(
+    $PatchBodyPath,
+    $json,
+    (New-Object System.Text.UTF8Encoding $false)
+  )
+
+  Write-Host "Patching $CollectionName auth email templates..."
+  $patchOut = curl.exe -s -X PATCH "$Base/api/collections/$CollectionName" `
+    -H "Authorization: $Token" `
+    -H 'Content-Type: application/json' `
+    --data-binary "@$PatchBodyPath"
+
+  $patched = $patchOut | ConvertFrom-Json
+  if (-not $patched.id) {
+    throw "PATCH failed for $CollectionName : $patchOut"
+  }
+
+  Write-Host ("OK {0}: otp formal={1}, verify formal={2}, otp.enabled={3}" -f `
+    $CollectionName, `
+    ($patched.otp.emailTemplate.body -like '*02F268*'), `
+    ($patched.verificationTemplate.body -like '*02F268*'), `
+    $patched.otp.enabled)
 }
 
 $envMap = Read-DotEnv (Join-Path $PSScriptRoot '..\.env')
@@ -65,7 +158,8 @@ $confirmEmailHtml = Read-TemplateHtml (Join-Path $templatesDir 'confirm-email-ch
 $authAlertHtml = Read-TemplateHtml (Join-Path $templatesDir 'auth-alert.html')
 
 $authBodyPath = Join-Path $env:TEMP "pb_email_templates_auth_$Target.json"
-$patchBodyPath = Join-Path $env:TEMP "pb_email_templates_patch_$Target.json"
+$usersPatchPath = Join-Path $env:TEMP "pb_email_templates_users_$Target.json"
+$superPatchPath = Join-Path $env:TEMP "pb_email_templates_super_$Target.json"
 
 [System.IO.File]::WriteAllText(
   $authBodyPath,
@@ -84,71 +178,24 @@ try {
   }
   $token = $auth.token
 
-  Write-Host 'Fetching users collection...'
-  $usersOut = curl.exe -s "$base/api/collections/users" -H "Authorization: $token"
-  $users = $usersOut | ConvertFrom-Json
-  if (-not $users.id) {
-    throw "Failed to load users collection: $usersOut"
-  }
+  Apply-AuthEmailTemplates `
+    -Base $base -Token $token -CollectionName 'users' -ForceEnableOtp $true `
+    -OtpHtml $otpHtml -VerificationHtml $verificationHtml -ResetHtml $resetHtml `
+    -ConfirmEmailHtml $confirmEmailHtml -AuthAlertHtml $authAlertHtml `
+    -PatchBodyPath $usersPatchPath
 
-  # Merge OTP settings; keep duration if already set.
-  $otpDuration = 180
-  if ($users.otp -and $users.otp.duration) { $otpDuration = [int]$users.otp.duration }
-
-  $users.otp = [pscustomobject]@{
-    enabled = $true
-    duration = $otpDuration
-    length = 6
-    emailTemplate = [pscustomobject]@{
-      subject = 'Your {APP_NAME} sign-in code'
-      body = $otpHtml
-    }
-  }
-
-  $users.verificationTemplate = [pscustomobject]@{
-    subject = 'Verify your {APP_NAME} email address'
-    body = $verificationHtml
-  }
-  $users.resetPasswordTemplate = [pscustomobject]@{
-    subject = 'Reset your {APP_NAME} password'
-    body = $resetHtml
-  }
-  $users.confirmEmailChangeTemplate = [pscustomobject]@{
-    subject = 'Confirm your new {APP_NAME} email address'
-    body = $confirmEmailHtml
-  }
-
-  if (-not $users.authAlert) {
-    $users | Add-Member -NotePropertyName authAlert -NotePropertyValue ([pscustomobject]@{}) -Force
-  }
-  $users.authAlert.enabled = $true
-  $users.authAlert.emailTemplate = [pscustomobject]@{
-    subject = 'New sign-in to your {APP_NAME} account'
-    body = $authAlertHtml
-  }
-
-  $json = $users | ConvertTo-Json -Depth 40 -Compress
-  [System.IO.File]::WriteAllText(
-    $patchBodyPath,
-    $json,
-    (New-Object System.Text.UTF8Encoding $false)
+  # Superusers confirm verification in PocketBase Admin UI, not the Flutter app route.
+  $superVerificationHtml = $verificationHtml.Replace(
+    '{APP_URL}/confirm-verification/{TOKEN}',
+    '{APP_URL}/_/#/auth/confirm-verification/{TOKEN}'
   )
 
-  Write-Host 'Patching users auth email templates...'
-  $patchOut = curl.exe -s -X PATCH "$base/api/collections/users" `
-    -H "Authorization: $token" `
-    -H 'Content-Type: application/json' `
-    --data-binary "@$patchBodyPath"
-
-  $patched = $patchOut | ConvertFrom-Json
-  if (-not $patched.id) {
-    throw "PATCH failed for $Target : $patchOut"
-  }
-
-  $otpSubject = $patched.otp.emailTemplate.subject
-  $verifySubject = $patched.verificationTemplate.subject
-  Write-Host "OK ($Target): otp='$otpSubject', verification='$verifySubject', otp.length=$($patched.otp.length), otp.enabled=$($patched.otp.enabled)"
+  Apply-AuthEmailTemplates `
+    -Base $base -Token $token -CollectionName '_superusers' -ForceEnableOtp $false `
+    -OtpHtml $otpHtml -VerificationHtml $superVerificationHtml -ResetHtml $resetHtml `
+    -ConfirmEmailHtml $confirmEmailHtml -AuthAlertHtml $authAlertHtml `
+    -PatchBodyPath $superPatchPath
 }
 finally {
-  Remove-Item -ErrorAction SilentlyContinue $authBodyPath, $patchBodyPath
+  Remove-Item -ErrorAction SilentlyContinue $authBodyPath, $usersPatchPath, $superPatchPath
 }

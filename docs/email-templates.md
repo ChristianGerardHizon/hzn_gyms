@@ -1,6 +1,6 @@
 # Auth email templates
 
-Source of truth for HZN Gyms PocketBase auth emails. HTML lives in [`docs/email-templates/`](email-templates/). Apply via Admin API — never hand-edit `server/pb_migrations/`.
+Source of truth for HZN Gyms PocketBase auth emails. HTML lives in [`docs/email-templates/`](email-templates/). Apply via Admin API to both **`users`** and **`_superusers`** — never hand-edit `server/pb_migrations/`.
 
 ## Design goals (deliverability)
 
@@ -26,7 +26,9 @@ Source of truth for HZN Gyms PocketBase auth emails. HTML lives in [`docs/email-
 
 Local preview copies also live in [`docs/email-templates/assets/`](email-templates/assets/).
 
-## Templates (`users` collection)
+## Templates (`users` and `_superusers`)
+
+Same HTML/subjects are applied to both auth collections. For `users`, OTP is forced `enabled: true` / `length: 6`. For `_superusers`, existing OTP/authAlert enabled flags are preserved.
 
 | File | PocketBase field | Subject | Placeholders |
 |------|------------------|---------|--------------|
@@ -38,7 +40,8 @@ Local preview copies also live in [`docs/email-templates/assets/`](email-templat
 
 ### Link targets
 
-- **Verification** → Flutter route: `{APP_URL}/confirm-verification/{TOKEN}`
+- **Verification (`users`)** → Flutter route: `{APP_URL}/confirm-verification/{TOKEN}`
+- **Verification (`_superusers`)** → PocketBase Admin UI: `{APP_URL}/_/#/auth/confirm-verification/{TOKEN}`
 - **Password reset** → PocketBase UI: `{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}`
 - **Email change** → PocketBase UI: `{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}`
 
