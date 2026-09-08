@@ -55,7 +55,7 @@ class SaleStatusCard extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'pending':
         return (
-          Colors.grey,
+          Colors.orange,
           Icons.schedule,
           'Pending',
           'This sale is pending',
