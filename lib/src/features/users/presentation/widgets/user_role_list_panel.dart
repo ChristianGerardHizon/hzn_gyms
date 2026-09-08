@@ -165,10 +165,13 @@ class _RoleListTile extends StatelessWidget {
       ),
       title: Row(
         children: [
-          Text(
-            role.name,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          Expanded(
+            child: Text(
+              role.name,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
           if (role.isSystem) ...[
