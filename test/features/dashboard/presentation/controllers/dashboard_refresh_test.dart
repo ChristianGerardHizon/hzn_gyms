@@ -1,8 +1,17 @@
+import 'dart:async';
+
 import 'package:hzn_gyms/src/core/foundation/paginated_state.dart';
+import 'package:hzn_gyms/src/features/activity_log/domain/activity_log.dart';
+import 'package:hzn_gyms/src/features/activity_log/presentation/controllers/todays_activity_logs_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/domain/inventory_alert.dart';
 import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/active_members_count_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/dashboard_kpi_provider.dart';
 import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/dashboard_members_controller.dart';
 import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/dashboard_refresh.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/expiring_memberships_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/inventory_alerts_controller.dart';
 import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/new_members_controller.dart';
+import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/todays_checkins_controller.dart';
 import 'package:hzn_gyms/src/features/dashboard/presentation/controllers/todays_sales_controller.dart';
 import 'package:hzn_gyms/src/features/pos/domain/sale.dart';
 import 'package:hzn_gyms/src/features/sales/presentation/controllers/paginated_sales_controller.dart';
@@ -21,6 +30,18 @@ class _TrackingPaginatedSalesController extends PaginatedSalesController {
   @override
   Future<void> refresh() async {
     refreshCount++;
+  }
+}
+
+class _EmptyTodaysActivityLogs extends TodaysActivityLogsController {
+  _EmptyTodaysActivityLogs(this._onBuild);
+
+  final void Function() _onBuild;
+
+  @override
+  Future<PaginatedState<ActivityLog>> build() async {
+    _onBuild();
+    return const PaginatedState(items: [], hasReachedEnd: true);
   }
 }
 
@@ -281,6 +302,116 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(paginated.refreshCount, 1);
+    },
+  );
+
+  testWidgets(
+    'refreshDashboard awaits rebuilds including unpaid sales',
+    (tester) async {
+      var salesBuilds = 0;
+      var summaryBuilds = 0;
+      var checkInsBuilds = 0;
+      var activeBuilds = 0;
+      var newMembersBuilds = 0;
+      var inventoryBuilds = 0;
+      var unpaidBuilds = 0;
+      var expiringBuilds = 0;
+      var activityBuilds = 0;
+      final completer = Completer<void>();
+      late Future<void> refreshFuture;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            todaySalesProvider.overrideWith((ref) async {
+              salesBuilds++;
+              return const [];
+            }),
+            todaySalesSummaryProvider.overrideWith((ref) async {
+              summaryBuilds++;
+              return const TodaySalesSummary(count: 0, total: 0);
+            }),
+            todaysCheckInsCountProvider.overrideWith((ref) async {
+              checkInsBuilds++;
+              return 0;
+            }),
+            activeMembersCountProvider.overrideWith((ref) async {
+              activeBuilds++;
+              return 0;
+            }),
+            todaysNewMembersCountProvider.overrideWith((ref) async {
+              newMembersBuilds++;
+              return 0;
+            }),
+            inventoryAlertsSummaryProvider.overrideWith((ref) async {
+              inventoryBuilds++;
+              return const InventoryAlertsSummary();
+            }),
+            todayUnpaidSalesProvider.overrideWith((ref) async {
+              unpaidBuilds++;
+              await completer.future;
+              return const [];
+            }),
+            expiringMembershipsProvider.overrideWith((ref) async {
+              expiringBuilds++;
+              return const [];
+            }),
+            todaysActivityLogsControllerProvider.overrideWith(
+              () => _EmptyTodaysActivityLogs(() => activityBuilds++),
+            ),
+            dashboardMembersPageProvider.overrideWith((ref, args) async {
+              return const DashboardMembersPage(
+                items: [],
+                totalItems: 0,
+                page: 1,
+                totalPages: 0,
+              );
+            }),
+            productsNearExpirationCountProvider.overrideWith((ref) async => 0),
+            productsExpiredCountProvider.overrideWith((ref) async => 0),
+            lowStockProductsCountProvider.overrideWith((ref) async => 0),
+            activeMembersListProvider.overrideWith((ref) async => const []),
+            todaysNewMembersListProvider.overrideWith((ref) async => const []),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              return MaterialApp(
+                home: Scaffold(
+                  body: TextButton(
+                    onPressed: () {
+                      refreshFuture = refreshDashboard(ref);
+                    },
+                    child: const Text('Refresh'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Refresh'));
+      await tester.pump();
+
+      // Still waiting on unpaid delay — builds should have started.
+      expect(unpaidBuilds, greaterThanOrEqualTo(1));
+      expect(summaryBuilds, greaterThanOrEqualTo(1));
+      expect(salesBuilds, greaterThanOrEqualTo(1));
+
+      completer.complete();
+      await refreshFuture;
+      await tester.pumpAndSettle();
+
+      expect(unpaidBuilds, 1);
+      expect(summaryBuilds, 1);
+      expect(salesBuilds, 1);
+      expect(checkInsBuilds, 1);
+      expect(activeBuilds, 1);
+      expect(newMembersBuilds, 1);
+      expect(inventoryBuilds, 1);
+      expect(expiringBuilds, 1);
+      expect(activityBuilds, 1);
     },
   );
 }

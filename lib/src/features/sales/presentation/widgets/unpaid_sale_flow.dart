@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
-import '../../../dashboard/presentation/widgets/unpaid_sales_queue_section.dart';
+import '../../../dashboard/presentation/controllers/todays_sales_controller.dart';
 import '../../../memberships/data/repositories/member_membership_repository.dart';
 import '../../../pos/data/repositories/sales_repository.dart';
 import '../../../pos/domain/sale.dart';

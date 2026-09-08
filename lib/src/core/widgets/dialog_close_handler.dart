@@ -7,8 +7,11 @@ import 'package:flutter/services.dart';
 /// - Close immediately (if [onClose] is null or returns true)
 /// - Show confirmation dialog (if [onClose] returns false initially)
 ///
-/// Uses [Navigator.maybePop] (not go_router `context.pop`) so overlay dialogs
-/// close reliably even when the shell route cannot pop.
+/// Without [onClose], uses [Navigator.maybePop] (not go_router `context.pop`)
+/// so overlay dialogs close reliably even when the shell route cannot pop.
+///
+/// After a confirmed [onClose], uses [Navigator.pop] so a child
+/// [PopScope] with `canPop: false` does not re-prompt (maybePop would).
 ///
 /// Usage with dirty guard:
 /// ```dart
@@ -51,7 +54,7 @@ class DialogCloseHandler extends StatelessWidget {
     if (onClose != null) {
       final shouldClose = await onClose!(context);
       if (shouldClose && context.mounted) {
-        await Navigator.of(context).maybePop();
+        Navigator.of(context).pop();
       }
       return;
     }

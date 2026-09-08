@@ -50,8 +50,11 @@ void refreshDashboardAfterMemberChangeOnContainer(ProviderContainer container) {
   container.invalidate(dashboardMembersPageProvider);
 }
 
+Future<void> _awaitIgnoreError(Future<Object?> future) =>
+    future.then<void>((_) {}, onError: (_) {});
+
 /// Invalidates all dashboard data providers so KPI, members, sales, and alerts
-/// reload from the server.
+/// reload from the server, then waits for the main cards to finish loading.
 Future<void> refreshDashboard(WidgetRef ref) async {
   ref.invalidate(inventoryAlertsSummaryProvider);
   refreshTodaysSales(ref);
@@ -66,4 +69,17 @@ Future<void> refreshDashboard(WidgetRef ref) async {
   ref.invalidate(productsExpiredCountProvider);
   ref.invalidate(lowStockProductsCountProvider);
   ref.invalidate(todaysActivityLogsControllerProvider);
+  ref.invalidate(todayUnpaidSalesProvider);
+
+  await Future.wait([
+    _awaitIgnoreError(ref.read(todaySalesSummaryProvider.future)),
+    _awaitIgnoreError(ref.read(todaySalesProvider.future)),
+    _awaitIgnoreError(ref.read(todaysCheckInsCountProvider.future)),
+    _awaitIgnoreError(ref.read(activeMembersCountProvider.future)),
+    _awaitIgnoreError(ref.read(todaysNewMembersCountProvider.future)),
+    _awaitIgnoreError(ref.read(inventoryAlertsSummaryProvider.future)),
+    _awaitIgnoreError(ref.read(todayUnpaidSalesProvider.future)),
+    _awaitIgnoreError(ref.read(expiringMembershipsProvider.future)),
+    _awaitIgnoreError(ref.read(todaysActivityLogsControllerProvider.future)),
+  ]);
 }

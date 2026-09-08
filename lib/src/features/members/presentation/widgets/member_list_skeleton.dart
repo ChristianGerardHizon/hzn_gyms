@@ -73,25 +73,21 @@ class MemberListSkeleton extends StatelessWidget {
                           children: [
                             Text('Member name placeholder'),
                             SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Expanded(child: Text('0912 345 6789')),
-                                SizedBox(width: 6),
-                                SizedBox(
-                                  height: 18,
-                                  width: 56,
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color: Color(0x14000000),
-                                      borderRadius: BorderRadius.all(
-                                        Radius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            Text('0912 345 6789'),
                           ],
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      SizedBox(
+                        height: 18,
+                        width: 56,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0x14000000),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
                     ],

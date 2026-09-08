@@ -142,37 +142,39 @@ void main() {
     expect(find.text('+1'), findsOneWidget);
   });
 
-  testWidgets('phone and chips share a narrow row without overflow', (
+  testWidgets('trailing chips stay aligned across rows with different phones', (
     tester,
   ) async {
-    final member = buildMember(
-      name: 'Jane Doe',
-      mobileNumber: '091234567890123',
+    final longPhone = buildMember(
+      name: 'Christian Hizon',
+      mobileNumber: '09983032084',
+    );
+    final shortPhone = buildMember(
+      name: 'Jane',
+      mobileNumber: 'asas',
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
-            width: 280,
-            child: MemberListTile(
-              member: member,
-              onTap: () {},
-              activity: const MemberBranchActivity(
-                branchIds: {'b1', 'b2', 'b3'},
-              ),
-              branchCodeById: const {
-                'b1': 'BCD',
-                'b2': 'MNL',
-                'b3': 'CEB',
-                'b4': 'DVO',
-              },
-              branchNameById: const {
-                'b1': 'Bacolod',
-                'b2': 'Manila',
-                'b3': 'Cebu',
-                'b4': 'Davao',
-              },
+            width: 360,
+            child: Column(
+              children: [
+                MemberListTile(
+                  member: longPhone,
+                  onTap: () {},
+                ),
+                MemberListTile(
+                  member: shortPhone,
+                  onTap: () {},
+                  activity: const MemberBranchActivity(
+                    branchIds: {'b1', 'b2'},
+                  ),
+                  branchCodeById: const {'b1': 'A', 'b2': 'B'},
+                  branchNameById: const {'b1': 'Alpha', 'b2': 'Beta'},
+                ),
+              ],
             ),
           ),
         ),
@@ -181,6 +183,10 @@ void main() {
 
     await tester.pump();
     expect(tester.takeException(), isNull);
+
+    final noneRight = tester.getBottomRight(find.text('None')).dx;
+    final allRight = tester.getBottomRight(find.text('All')).dx;
+    expect((noneRight - allRight).abs(), lessThan(1.0));
   });
 
   testWidgets('hides activity chips when showBranchActivity is false', (
