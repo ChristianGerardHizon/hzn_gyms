@@ -271,6 +271,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
           grain: grain,
         ),
         revenueByPaymentMethod: kpis.revenueByPaymentMethod,
+        transactionCountByPaymentMethod: kpis.transactionCountByPaymentMethod,
         topSellingProducts: topProducts,
         revenueByItemType: revenueByItemType,
         transactionCountByItemType: transactionCountByItemType,
@@ -481,6 +482,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       int transactionCount = 0;
       final revenueByBucket = <DateTime, num>{};
       final revenueByPaymentMethod = <String, num>{};
+      final transactionCountByPaymentMethod = <String, int>{};
 
       for (final record in summaryRecords) {
         final dateStr = record.getStringValue(salesView.dateField);
@@ -499,6 +501,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
         if (paymentMethod.isNotEmpty) {
           revenueByPaymentMethod[paymentMethod] =
               (revenueByPaymentMethod[paymentMethod] ?? 0) + revenue;
+          transactionCountByPaymentMethod[paymentMethod] =
+              (transactionCountByPaymentMethod[paymentMethod] ?? 0) + count;
         }
       }
 
@@ -557,6 +561,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         averageTransactionValue: avgValue,
         revenueTrend: revenueTrend,
         revenueByPaymentMethod: revenueByPaymentMethod,
+        transactionCountByPaymentMethod: transactionCountByPaymentMethod,
         topSellingProducts: topProducts.take(10).toList(),
         revenueByItemType: revenueByItemType,
         transactionCountByItemType: transactionCountByItemType,

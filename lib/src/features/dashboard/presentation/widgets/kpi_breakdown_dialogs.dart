@@ -34,7 +34,7 @@ Future<void> showTodaysSalesBreakdownDialog(BuildContext context) {
   return showKpiBreakdownDialog(
     context: context,
     title: "Today's Sales",
-    subtitle: 'Revenue by sale type and payment status',
+    subtitle: 'Revenue by sale type, payment method, and status',
     bodyBuilder: _todaysSalesBody,
   );
 }
@@ -74,6 +74,10 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
       final paid = sales.where((s) => s.isPaid).length;
       final unpaid = sales.length - paid;
 
+      final paymentLabels = <String, String>{
+        for (final e in (summary?.revenueByPaymentMethod ?? const {}).entries)
+          e.key: currency.format(e.value),
+      };
       return TodaysSalesBreakdownHeader(
         revenueLabel: currency.format(total),
         transactionCount: txnCount,
@@ -83,6 +87,9 @@ Widget _todaysSalesBody(BuildContext context, WidgetRef ref) {
         walkInCount: summary?.walkInCount ?? 0,
         productTotalLabel: currency.format(summary?.productTotal ?? 0),
         productCount: summary?.productCount ?? 0,
+        paymentMethodTotalLabels: paymentLabels,
+        paymentMethodCounts:
+            summary?.transactionCountByPaymentMethod ?? const {},
         paidCount: paid,
         unpaidCount: unpaid,
         branchChips: viewingAll

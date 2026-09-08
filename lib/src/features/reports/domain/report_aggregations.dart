@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../../pos/domain/payment_method.dart';
 import '../../pos/domain/sale_payment_status.dart';
 import 'period_bucket.dart';
 import 'report_period.dart';
@@ -232,6 +233,42 @@ String itemTypeLabel(String type) {
   }
 }
 
+/// Display label for payment-method keys (`card` → GCash in PH UI).
+String paymentMethodDisplayName(String key) {
+  return switch (key) {
+    'cash' => PaymentMethod.cash.displayName,
+    'card' => PaymentMethod.card.displayName,
+    'bankTransfer' => PaymentMethod.bankTransfer.displayName,
+    'check' => PaymentMethod.check.displayName,
+    _ => key,
+  };
+}
+
+/// Folds sales-summary view rows into revenue + transaction counts by method.
+({
+  Map<String, num> revenueByPaymentMethod,
+  Map<String, int> transactionCountByPaymentMethod,
+})
+aggregatePaymentMethodViewRows(
+  Iterable<({String paymentMethod, num totalRevenue, int transactionCount})>
+      rows,
+) {
+  final revenueByPaymentMethod = <String, num>{};
+  final transactionCountByPaymentMethod = <String, int>{};
+  for (final row in rows) {
+    final method = row.paymentMethod;
+    if (method.isEmpty) continue;
+    revenueByPaymentMethod[method] =
+        (revenueByPaymentMethod[method] ?? 0) + row.totalRevenue;
+    transactionCountByPaymentMethod[method] =
+        (transactionCountByPaymentMethod[method] ?? 0) + row.transactionCount;
+  }
+  return (
+    revenueByPaymentMethod: revenueByPaymentMethod,
+    transactionCountByPaymentMethod: transactionCountByPaymentMethod,
+  );
+}
+
 /// Normalizes empty/null sale line types to `product`.
 String normalizeSalesItemType(String? itemType) {
   if (itemType == null || itemType.isEmpty) return 'product';
@@ -450,6 +487,7 @@ bool isReportableSaleStatus(String status) =>
   int transactionCount,
   Map<DateTime, num> revenueByBucket,
   Map<String, num> revenueByPaymentMethod,
+  Map<String, int> transactionCountByPaymentMethod,
 })
 aggregateScopedSalesPayments({
   required Iterable<({String saleId, String status, DateTime? created})> sales,
@@ -470,6 +508,7 @@ aggregateScopedSalesPayments({
   var totalRevenue = 0.0;
   final revenueByBucket = <DateTime, num>{};
   final revenueByPaymentMethod = <String, num>{};
+  final transactionCountByPaymentMethod = <String, int>{};
 
   for (final payment in payments) {
     final created = completedCreated[payment.saleId];
@@ -498,6 +537,11 @@ aggregateScopedSalesPayments({
     if (method.isNotEmpty) {
       revenueByPaymentMethod[method] =
           (revenueByPaymentMethod[method] ?? 0) + net;
+      // Count non-refund payment rows (refunds only adjust net revenue).
+      if (payment.type.toLowerCase() != 'refund') {
+        transactionCountByPaymentMethod[method] =
+            (transactionCountByPaymentMethod[method] ?? 0) + 1;
+      }
     }
   }
 
@@ -507,6 +551,7 @@ aggregateScopedSalesPayments({
     transactionCount: completedCreated.length,
     revenueByBucket: revenueByBucket,
     revenueByPaymentMethod: revenueByPaymentMethod,
+    transactionCountByPaymentMethod: transactionCountByPaymentMethod,
   );
 }
 
