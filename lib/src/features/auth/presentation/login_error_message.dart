@@ -9,6 +9,8 @@ String loginErrorMessage(Object? error) {
         return t.failures.googleNoStaffAccount;
       case 'google_launch_failed':
         return t.failures.googleSignInFailed;
+      case 'otp_invalid':
+        return t.failures.invalidLoginCode;
       default:
         if (error is AuthFailure) {
           final msg = error.messageString;

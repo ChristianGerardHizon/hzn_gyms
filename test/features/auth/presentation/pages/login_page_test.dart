@@ -1,3 +1,4 @@
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
 import 'package:hzn_gyms/src/core/packages/app_info/app_info_provider.dart';
 import 'package:hzn_gyms/src/core/packages/pocketbase/pb_connectivity_provider.dart';
 import 'package:hzn_gyms/src/core/routing/pending_redirect_provider.dart';
@@ -21,9 +22,14 @@ const _fakeAuth = AuthState(
 /// Mirrors the real [AuthController.login] transition (loading -> data/error)
 /// without touching the network.
 class _FakeAuthController extends AuthController {
-  _FakeAuthController({this.shouldFail = false, this.otpId = 'otp-test'});
+  _FakeAuthController({
+    this.shouldFailLogin = false,
+    this.shouldFailOtp = false,
+    this.otpId = 'otp-test',
+  });
 
-  final bool shouldFail;
+  final bool shouldFailLogin;
+  final bool shouldFailOtp;
   final String otpId;
   int requestOtpCalls = 0;
 
@@ -34,7 +40,7 @@ class _FakeAuthController extends AuthController {
   Future<bool> login(String email, String password) async {
     state = const AsyncLoading();
     await Future<void>.delayed(Duration.zero);
-    if (shouldFail) {
+    if (shouldFailLogin) {
       state = AsyncError(Exception('bad credentials'), StackTrace.current);
       return false;
     }
@@ -46,7 +52,6 @@ class _FakeAuthController extends AuthController {
   Future<String?> requestOtp(String email) async {
     requestOtpCalls++;
     await Future<void>.delayed(Duration.zero);
-    if (shouldFail) return null;
     return otpId;
   }
 
@@ -54,8 +59,11 @@ class _FakeAuthController extends AuthController {
   Future<bool> loginWithOtp(String otpId, String code) async {
     state = const AsyncLoading();
     await Future<void>.delayed(Duration.zero);
-    if (shouldFail) {
-      state = AsyncError(Exception('bad otp'), StackTrace.current);
+    if (shouldFailOtp) {
+      state = AsyncError(
+        const AuthFailure('Invalid or expired OTP', null, 'otp_invalid'),
+        StackTrace.current,
+      );
       return false;
     }
     state = const AsyncData(_fakeAuth);
@@ -93,6 +101,10 @@ GoRouter _testRouter(ProviderContainer container) {
       GoRoute(
         path: '/deep/link',
         builder: (context, state) => const Text('DEEP_LINK'),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const Text('FORGOT'),
       ),
     ],
   );
@@ -139,10 +151,16 @@ _baseOverrides() => [
   outboxPendingCountProvider.overrideWith((ref) => Stream.value(0)),
 ];
 
+Future<void> _continueWithEmail(WidgetTester tester, String email) async {
+  await tester.enterText(find.byType(TextField).at(0), email);
+  await tester.tap(find.text('Continue'));
+  await tester.pumpAndSettle();
+}
+
 Future<void> _fillAndSubmit(WidgetTester tester) async {
-  await tester.enterText(find.byType(TextField).at(0), 'cashier@test.com');
-  await tester.enterText(find.byType(TextField).at(1), 'secret123');
-  await tester.tap(find.byType(FilledButton));
+  await _continueWithEmail(tester, 'cashier@test.com');
+  await tester.enterText(find.byType(TextField).at(0), 'secret123');
+  await tester.tap(find.text('Login'));
   await tester.pumpAndSettle();
 }
 
@@ -166,6 +184,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('HZN Gyms [Dev]'), findsOneWidget);
+      expect(find.text('Continue'), findsOneWidget);
     });
 
     testWidgets('navigates straight to dashboard on successful login '
@@ -228,7 +247,7 @@ void main() {
         overrides: [
           ..._baseOverrides(),
           authControllerProvider.overrideWith(
-            () => _FakeAuthController(shouldFail: true),
+            () => _FakeAuthController(shouldFailLogin: true),
           ),
         ],
       );
@@ -249,9 +268,7 @@ void main() {
       expect(find.text('DASHBOARD'), findsNothing);
     });
 
-    testWidgets('OTP mode sends code then verifies and navigates', (
-      tester,
-    ) async {
+    testWidgets('email then OTP verify navigates on success', (tester) async {
       final fake = _FakeAuthController();
       final container = ProviderContainer(
         overrides: [
@@ -269,12 +286,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Sign in with email code'));
-      await tester.pumpAndSettle();
+      await _continueWithEmail(tester, 'cashier@test.com');
+      expect(find.text('cashier@test.com'), findsOneWidget);
 
-      expect(find.text('Send code'), findsOneWidget);
-      await tester.enterText(find.byType(TextField).at(0), 'cashier@test.com');
-      await tester.tap(find.text('Send code'));
+      await tester.tap(find.text('Sign in with email code'));
       await tester.pumpAndSettle();
 
       expect(fake.requestOtpCalls, 1);
@@ -290,6 +305,40 @@ void main() {
 
       expect(find.text('DASHBOARD'), findsOneWidget);
       expect(find.byType(LoginPage), findsNothing);
+    });
+
+    testWidgets('invalid OTP shows login-code error not credentials', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          ..._baseOverrides(),
+          authControllerProvider.overrideWith(
+            () => _FakeAuthController(shouldFailOtp: true),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: _testRouter(container)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await _continueWithEmail(tester, 'cashier@test.com');
+      await tester.tap(find.text('Sign in with email code'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).at(0), '000000');
+      await tester.tap(find.text('Verify code'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Invalid or expired login code.'), findsOneWidget);
+      expect(find.text('Invalid email or password.'), findsNothing);
+      expect(find.byType(LoginPage), findsOneWidget);
     });
   });
 }

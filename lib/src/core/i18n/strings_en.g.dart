@@ -152,6 +152,12 @@ class Translations$auth$en {
 	/// en: 'Back to verify email'
 	String get backToVerifyEmail => 'Back to verify email';
 
+	/// en: 'Continue'
+	String get continueButton => 'Continue';
+
+	/// en: 'Change email'
+	String get changeEmail => 'Change email';
+
 	/// en: 'Sign in with email code'
 	String get signInWithEmailCode => 'Sign in with email code';
 
@@ -325,6 +331,9 @@ class Translations$failures$en {
 
 	/// en: 'Invalid email or password.'
 	String get invalidCredentials => 'Invalid email or password.';
+
+	/// en: 'Invalid or expired login code.'
+	String get invalidLoginCode => 'Invalid or expired login code.';
 
 	/// en: 'No staff account for this Google email. Ask an admin to create your user first.'
 	String get googleNoStaffAccount => 'No staff account for this Google email. Ask an admin to create your user first.';
@@ -862,6 +871,8 @@ extension on Translations {
 			'auth.verificationSuccess' => 'Email verified',
 			'auth.verificationFailed' => 'Verification link is invalid or expired.',
 			'auth.backToVerifyEmail' => 'Back to verify email',
+			'auth.continueButton' => 'Continue',
+			'auth.changeEmail' => 'Change email',
 			'auth.signInWithEmailCode' => 'Sign in with email code',
 			'auth.backToPasswordLogin' => 'Back to password login',
 			'auth.sendLoginCode' => 'Send code',
@@ -914,6 +925,7 @@ extension on Translations {
 			'failures.timeout' => 'Request timed out. Please try again.',
 			'failures.noInternet' => 'No internet connection.',
 			'failures.invalidCredentials' => 'Invalid email or password.',
+			'failures.invalidLoginCode' => 'Invalid or expired login code.',
 			'failures.googleNoStaffAccount' => 'No staff account for this Google email. Ask an admin to create your user first.',
 			'failures.googleSignInFailed' => 'Could not start Google sign-in. Please try again.',
 			'failures.accountDisabled' => 'Your account has been disabled.',

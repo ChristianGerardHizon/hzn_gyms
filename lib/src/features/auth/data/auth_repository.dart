@@ -258,6 +258,14 @@ class AuthRepositoryImpl implements AuthRepository {
       final authDto = AuthDto.fromAuthResult(result);
       await _persistAuth(authDto);
       return _createAuthState(authDto);
-    }, Failure.handle).run();
+    }, (error, stackTrace) {
+      final failure = Failure.handle(error, stackTrace);
+      // PB returns HTTP 400 "Invalid or expired OTP" — not 401 — so Failure.handle
+      // yields GenericFailure; remap so the login UI can show code-specific copy.
+      if (failure.messageString.toLowerCase().contains('otp')) {
+        return AuthFailure(error, stackTrace, 'otp_invalid');
+      }
+      return failure;
+    }).run();
   }
 }

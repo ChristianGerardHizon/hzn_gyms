@@ -35,6 +35,8 @@
     "verificationSuccess": "Na-verify ang email",
     "verificationFailed": "Invalid o expired ang verification link.",
     "backToVerifyEmail": "Bumalik sa verify email",
+    "continueButton": "Magpatuloy",
+    "changeEmail": "Palitan ang email",
     "signInWithEmailCode": "Mag-sign in gamit ang email code",
     "backToPasswordLogin": "Bumalik sa password login",
     "sendLoginCode": "Ipadala ang code",

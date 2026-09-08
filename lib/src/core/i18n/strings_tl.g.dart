@@ -91,6 +91,8 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String get verificationSuccess => 'Na-verify ang email';
 	@override String get verificationFailed => 'Invalid o expired ang verification link.';
 	@override String get backToVerifyEmail => 'Bumalik sa verify email';
+	@override String get continueButton => 'Magpatuloy';
+	@override String get changeEmail => 'Palitan ang email';
 	@override String get signInWithEmailCode => 'Mag-sign in gamit ang email code';
 	@override String get backToPasswordLogin => 'Bumalik sa password login';
 	@override String get sendLoginCode => 'Ipadala ang code';
@@ -161,6 +163,7 @@ class _Translations$failures$tl implements Translations$failures$en {
 	@override String get timeout => 'Nag-timeout ang request. Pakisubukang muli.';
 	@override String get noInternet => 'Walang koneksyon sa internet.';
 	@override String get invalidCredentials => 'Di-wastong email o password.';
+	@override String get invalidLoginCode => 'Di-wasto o expired na login code.';
 	@override String get googleNoStaffAccount => 'Walang staff account para sa Google email na ito. Magpa-create muna sa admin.';
 	@override String get googleSignInFailed => 'Hindi masimulan ang Google sign-in. Subukan ulit.';
 	@override String get accountDisabled => 'Ang iyong account ay na-disable.';
@@ -398,6 +401,8 @@ extension on TranslationsTl {
 			'auth.verificationSuccess' => 'Na-verify ang email',
 			'auth.verificationFailed' => 'Invalid o expired ang verification link.',
 			'auth.backToVerifyEmail' => 'Bumalik sa verify email',
+			'auth.continueButton' => 'Magpatuloy',
+			'auth.changeEmail' => 'Palitan ang email',
 			'auth.signInWithEmailCode' => 'Mag-sign in gamit ang email code',
 			'auth.backToPasswordLogin' => 'Bumalik sa password login',
 			'auth.sendLoginCode' => 'Ipadala ang code',
@@ -450,6 +455,7 @@ extension on TranslationsTl {
 			'failures.timeout' => 'Nag-timeout ang request. Pakisubukang muli.',
 			'failures.noInternet' => 'Walang koneksyon sa internet.',
 			'failures.invalidCredentials' => 'Di-wastong email o password.',
+			'failures.invalidLoginCode' => 'Di-wasto o expired na login code.',
 			'failures.googleNoStaffAccount' => 'Walang staff account para sa Google email na ito. Magpa-create muna sa admin.',
 			'failures.googleSignInFailed' => 'Hindi masimulan ang Google sign-in. Subukan ulit.',
 			'failures.accountDisabled' => 'Ang iyong account ay na-disable.',
