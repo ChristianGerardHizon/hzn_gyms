@@ -77,12 +77,19 @@ GoRouter router(Ref ref) {
       // `org_scoped_navigation.dart`) instead of `.go`/`.push` when
       // navigating to any route nested under here.
       //
-      // No explicit "bare /orgSlug/branchSlug -> dashboard" redirect is
-      // needed: DashboardRoute.path is '/', which concatenatePaths reduces
-      // to a no-op segment, so a bare hit already resolves directly to
-      // DashboardRoute without any extra redirect.
+      // go_router requires builder/pageBuilder/redirect on every GoRoute, and a
+      // complete match on this prefix never walks children — so bare
+      // /orgSlug/branchSlug must redirect to DashboardRoute (/dashboard).
       GoRoute(
         path: '/:orgSlug/:branchSlug',
+        redirect: (context, state) {
+          final org = state.pathParameters['orgSlug']!;
+          final branch = state.pathParameters['branchSlug']!;
+          if (state.uri.path == '/$org/$branch') {
+            return '/$org/$branch${DashboardRoute.path}';
+          }
+          return null;
+        },
         routes: [
           ShellRoute(
             builder: (context, state, child) => AppRoot(child: child),

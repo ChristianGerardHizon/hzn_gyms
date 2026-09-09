@@ -22,7 +22,7 @@ A comprehensive Flutter multi-platform gym management system supporting Android,
 
 ### Primary Features (Main Navigation)
 
-#### Dashboard (`/`)
+#### Dashboard (`/dashboard`)
 Home screen with gym metrics and quick actions.
 
 - Header greets the signed-in user by time of day (`Good Morning/Noon/Afternoon/Evening`) with app version under the title; RFID status + refresh stay on the right
@@ -416,7 +416,7 @@ App Root (Shell)
 │   └── /recovery
 │
 └── Main Shell (with navigation)
-    ├── / (Dashboard)
+    ├── /dashboard (Dashboard)
     ├── /check-in (Check-In)
     │   └── /check-in/records (Check-In Records)
     ├── /cashier (POS)
@@ -460,7 +460,7 @@ App Root (Shell)
 
 | Index | Route | Label | Icon |
 |-------|-------|-------|------|
-| 0 | `/` | Dashboard | `dashboard` |
+| 0 | `/dashboard` | Dashboard | `dashboard` |
 | 1 | `/check-in` | Check-In (Records via app-bar → `/check-in/records`) | `how_to_reg` |
 | 2 | `/cashier` | Cashier | `point_of_sale` |
 | 3 | `/sales` | Sales | `receipt_long` |
@@ -597,6 +597,7 @@ lib/src/
 | Sep 7 | Setup docs refresh | Documented keystore secrets, label-gated web-only, auto-promote YAML fix; Windows CMake project → `hzn_gyms` |
 | Sep 7 | Initial setup guide | Documented HZN Gyms provision pitfalls, secrets, and manual checklist (`docs/hzngyms-initial-setup.md`) |
 | Sep 7 | HZN Gyms PocketBase | New staging/prod instances at `*.hzngyms.hznsystems.com` (`/opt/pocketbase/hzn_gyms*`); kyliegym left untouched |
+| Sep 9 | Org/branch URL scopes + dashboard path | Main app routes nest under `/:orgSlug/:branchSlug`; dashboard moved from `/` to `/dashboard` (bare scope redirects there) |
 | Sep 6 | Deploy uploads | Staging and production both upload Sentry source maps, then rsync web + migrations + hooks (`scripts/deploy.sh`) |
 | Sep 8 | Org isolation + per-org roles | Gym lists scoped by `branch.organization`; org switch resets cache/branch; `organizationMemberships` drives per-org roles; invite-required gate; PB listRules require auth organization |
 | Sep 6 | Sentry project | Prod DSN and `sentry_dart_plugin` now target Sentry project `hzn-gyms` |
