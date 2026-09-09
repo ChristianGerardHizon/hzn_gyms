@@ -224,6 +224,10 @@ def _icon_on_black(img: Image.Image, size: int) -> Image.Image:
     return _fit_square(img, size, transparent=False, pad_fraction=0.0)
 
 
+def _icon_transparent(img: Image.Image, size: int) -> Image.Image:
+    return _fit_square(img, size, transparent=True, pad_fraction=0.0)
+
+
 def _write_web_favicons(mark: Image.Image, full: Image.Image) -> None:
     """Refresh web/ favicons referenced by index.html."""
     web_dir = REPO_ROOT / "web"
@@ -231,7 +235,7 @@ def _write_web_favicons(mark: Image.Image, full: Image.Image) -> None:
 
     for size in (16, 32, 48, 96):
         filename = f"favicon-{size}x{size}.png"
-        _icon_on_black(mark, size).save(web_dir / filename, format="PNG", optimize=True)
+        _icon_transparent(mark, size).save(web_dir / filename, format="PNG", optimize=True)
         print(f"  wrote {web_dir / filename} ({size}x{size})")
 
     apple = _icon_on_black(full, 180)
@@ -241,7 +245,7 @@ def _write_web_favicons(mark: Image.Image, full: Image.Image) -> None:
     # Multi-size ICO for browsers that request favicon.ico
     ico_sizes = []
     for size in (16, 32, 48):
-        ico_sizes.append(_icon_on_black(mark, size))
+        ico_sizes.append(_icon_transparent(mark, size))
     ico_sizes[0].save(
         web_dir / "favicon.ico",
         format="ICO",
