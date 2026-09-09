@@ -11,8 +11,19 @@ function isSuperuserAuth(authRecord) {
     }
 }
 
-function callerIsSuperAdmin(authRecord) {
+function callerIsSuperAdmin(app, authRecord) {
     if (!authRecord) return false;
+    // Prefer a fresh DB read — request auth can omit/stale custom bools
+    // after mid-session field changes (e.g. org switch).
+    try {
+        const id = authRecord.getString("id") || ("" + authRecord.id);
+        if (app && id) {
+            const fresh = app.findRecordById("users", id);
+            if (fresh && fresh.getBool("superAdmin")) return true;
+        }
+    } catch (_) {
+        // fall through to auth-record fields
+    }
     try {
         if (authRecord.getBool("superAdmin")) return true;
     } catch (_) {
@@ -42,11 +53,19 @@ function protectSuperAdminField(e, options) {
         e.record.set("superAdmin", false);
         return;
     }
+    // Always re-read from DB. originalCopy()/request merge can zero bools on
+    // partial PATCHes, which would strip platform operators on org switch.
     let previous = false;
     try {
-        previous = e.record.originalCopy().getBool("superAdmin");
+        const id = e.record.getString("id") || ("" + e.record.id);
+        const existing = e.app.findRecordById("users", id);
+        previous = existing.getBool("superAdmin");
     } catch (_) {
-        previous = false;
+        try {
+            previous = e.record.originalCopy().getBool("superAdmin");
+        } catch (_) {
+            previous = false;
+        }
     }
     e.record.set("superAdmin", previous);
 }
@@ -77,7 +96,7 @@ function enforceUserOrganizationScope(e, options) {
         return;
     }
 
-    if (callerIsSuperAdmin(authRecord)) {
+    if (callerIsSuperAdmin(e.app, authRecord)) {
         if (requireOrganization && !requestedOrg) {
             throw new BadRequestError("organization is required");
         }

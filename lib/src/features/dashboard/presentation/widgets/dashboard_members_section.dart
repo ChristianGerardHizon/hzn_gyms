@@ -96,6 +96,22 @@ class DashboardMembersSection extends HookConsumerWidget {
       ),
     );
 
+    // Create/renew invalidates page 1 — allow the next emission to reseed
+    // (otherwise loadedUpToPage > 0 ignores updates and new members never appear).
+    useEffect(() {
+      if (!shouldResetLoadedPageForDashboardMembersRefresh(
+        isProviderLoading: pageAsync.isLoading,
+        hasLoadedOnce: hasLoadedOnce.value,
+      )) {
+        return null;
+      }
+      loadedUpToPage.value = 0;
+      prefetchInFlight.value = <int>{};
+      prefetchGeneration.value++;
+      isLoadingMore.value = false;
+      return null;
+    }, [pageAsync.isLoading]);
+
     Future<void> prefetchAhead(int basePage) async {
       final generation = prefetchGeneration.value;
       final pagesToFetch = <int>[
@@ -602,8 +618,9 @@ class _DashboardMemberCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final days = dashboardMember.daysUntilExpiry;
+    final months = dashboardMember.monthsUntilExpiry;
     final isExpired = dashboardMember.isExpired;
-    final showBadge = days != null && (isExpired || days <= 7);
+    final showBadge = days != null;
 
     return Card(
       clipBehavior: Clip.hardEdge,
@@ -635,7 +652,10 @@ class _DashboardMemberCard extends StatelessWidget {
                           Positioned(
                             top: 6,
                             left: 6,
-                            child: _DaysLeftBadge(days: days),
+                            child: _MembershipRemainingBadge(
+                              days: days,
+                              months: months,
+                            ),
                           ),
                       ],
                     ),
@@ -658,7 +678,7 @@ class _DashboardMemberCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (showBadge) ...[
-                      _DaysLeftBadge(days: days),
+                      _MembershipRemainingBadge(days: days, months: months),
                       const SizedBox(height: 4),
                     ],
                     _MemberCardLabels(
@@ -721,15 +741,22 @@ class _MemberCardLabels extends StatelessWidget {
   }
 }
 
-/// A compact badge showing how many days are left until expiration.
-class _DaysLeftBadge extends StatelessWidget {
-  const _DaysLeftBadge({required this.days});
+/// Compact badge for remaining membership time on dashboard cards.
+///
+/// Active with ≥1 month → green months; ≤7 days → orange days; expired → red.
+class _MembershipRemainingBadge extends StatelessWidget {
+  const _MembershipRemainingBadge({
+    required this.days,
+    required this.months,
+  });
 
   final int? days;
+  final int? months;
 
   @override
   Widget build(BuildContext context) {
     final days = this.days;
+    final months = this.months;
     final String label;
     final Color backgroundColor;
 
@@ -739,9 +766,15 @@ class _DaysLeftBadge extends StatelessWidget {
     } else if (days < 0) {
       label = 'Expired';
       backgroundColor = Colors.red.shade700;
-    } else {
+    } else if (months != null && months >= 1) {
+      label = formatMonthsRemainingLabel(months);
+      backgroundColor = Colors.green.shade700;
+    } else if (days <= 7) {
       label = formatDaysRemainingLabel(days);
       backgroundColor = Colors.orange.shade700;
+    } else {
+      label = formatDaysRemainingLabel(days);
+      backgroundColor = Colors.green.shade700;
     }
 
     return Container(

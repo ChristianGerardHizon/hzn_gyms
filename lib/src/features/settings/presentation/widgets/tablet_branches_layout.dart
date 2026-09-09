@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/branches.routes.dart';
 import '../../domain/branch.dart';
 import '../controllers/branches_controller.dart';
@@ -156,7 +157,7 @@ class TabletBranchesLayout extends HookConsumerWidget {
                                     ),
                                     trailing: const Icon(Icons.chevron_right),
                                     onTap: () => BranchDetailRoute(id: branch.id)
-                                        .go(context),
+                                        .goScoped(context),
                                   );
                                 },
                               ),

@@ -90,14 +90,16 @@ class ConstrainedDialogContent extends StatelessWidget {
       );
     }
 
-    // Constrained mode for tablet/desktop
+    // Pin width on tablet/desktop so Expanded children don't stretch to the
+    // full inset area. Height stays loose so shrink-wrap forms stay compact.
+    final width = maxWidth.clamp(0.0, size.width - 32);
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxWidth: maxWidth,
+        maxWidth: width,
         minHeight: 200,
         maxHeight: size.height * 0.9,
       ),
-      child: child,
+      child: SizedBox(width: width, child: child),
     );
   }
 }

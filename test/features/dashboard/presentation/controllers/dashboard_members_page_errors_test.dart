@@ -52,6 +52,35 @@ void main() {
     });
   });
 
+  group('shouldResetLoadedPageForDashboardMembersRefresh', () {
+    test('resets when provider is loading after an initial seed', () {
+      expect(
+        shouldResetLoadedPageForDashboardMembersRefresh(
+          isProviderLoading: true,
+          hasLoadedOnce: true,
+        ),
+        isTrue,
+      );
+    });
+
+    test('does not reset on first load or when idle', () {
+      expect(
+        shouldResetLoadedPageForDashboardMembersRefresh(
+          isProviderLoading: true,
+          hasLoadedOnce: false,
+        ),
+        isFalse,
+      );
+      expect(
+        shouldResetLoadedPageForDashboardMembersRefresh(
+          isProviderLoading: false,
+          hasLoadedOnce: true,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('isUsedAfterDisposeError', () {
     test('matches Flutter disposed ValueNotifier message', () {
       expect(

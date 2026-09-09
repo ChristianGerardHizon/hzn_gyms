@@ -101,7 +101,29 @@ After staging sign-off:
 4. Verify production deploy + smoke test
 5. Validate `kyliegym.hzngyms.com` (or prod subdomain) resolves with correct branding
 
-## 8. Optional later
+## 8. PocketBase stuck in `activating` / HTTP 502
+
+**Symptom:** `systemctl is-active` stays `activating`; app/API return 502. Journal shows:
+
+`failed to apply migration … Duplicated or invalid field name …`
+
+**Cause:** Schema was already applied on that host under a different migration filename (Admin API / seed), then deploy rsync'd a repo migration that tries the same change again.
+
+**Fix (do not hand-edit migration `.js` files):** mark the conflicting file(s) as applied, then restart:
+
+```bash
+# applied = integer timestamp (match existing _migrations.applied scale)
+sqlite3 /opt/pocketbase/hzn_gyms_staging/pb_data/data.db \
+  "INSERT OR IGNORE INTO _migrations (file, applied) VALUES ('1788912755_updated_branches.js', 1788912755000001);"
+# repeat for each conflicting file / for prod DB path
+sudo systemctl restart pocketbase_hzn_gyms_staging.service   # or pocketbase_hzn_gyms.service
+```
+
+Confirm with `systemctl is-active` and `curl …/api/health`.
+
+**Sep 9 2026:** staging + prod crash-looped on `1788912755_updated_branches.js` (slug already present via `1788913508*` / `1788913799*`). Marked `1788912755` / `2778` / `2809` applied on both; also marked `1788935261` on prod (orgs rules already applied as `1788935161` / `5260`).
+
+## 9. Optional later
 
 - Sunsetting legacy `/opt/pocketbase/kyliegym*` (new stack live — see [`hzngyms-provision.md`](hzngyms-provision.md))
 - Rebrand `icon_pack/` assets

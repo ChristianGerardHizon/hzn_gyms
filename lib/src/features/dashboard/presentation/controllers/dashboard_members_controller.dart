@@ -50,6 +50,12 @@ class DashboardMember {
     return calendarDaysUntil(expirationDate!);
   }
 
+  /// Complete calendar months until membership expires, or null if none.
+  int? get monthsUntilExpiry {
+    if (expirationDate == null) return null;
+    return calendarMonthsUntil(expirationDate!);
+  }
+
   /// Whether this member's membership has expired.
   ///
   /// Expiration is inclusive of the end date — members expiring today
