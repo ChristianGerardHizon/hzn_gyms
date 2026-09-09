@@ -7,6 +7,7 @@ import '../../../../core/foundation/sort_config.dart';
 import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/products.routes.dart';
 import '../../../../core/utils/list_search_field.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
@@ -231,7 +232,7 @@ class ProductListPanel extends HookConsumerWidget {
                     ),
                     selected: isSelected,
                     selectedTileColor: theme.colorScheme.primaryContainer,
-                    onTap: () => ProductDetailRoute(id: product.id).go(context),
+                    onTap: () => ProductDetailRoute(id: product.id).goScoped(context),
                   );
                 },
               ),

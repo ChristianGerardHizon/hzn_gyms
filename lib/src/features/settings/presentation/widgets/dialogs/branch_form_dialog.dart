@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/hooks/use_form_dirty_guard.dart';
+import '../../../../../core/utils/slugify.dart';
 import '../../../../../core/widgets/branch_code_pill.dart';
 import '../../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../../core/widgets/form/form_dialog_scaffold.dart';
@@ -33,6 +34,7 @@ class BranchFormDialog extends HookConsumerWidget {
           ? {
               'name': branch!.name,
               'code': branch!.code,
+              'slug': branch!.slug,
               'color': branch!.color,
               'address': branch!.address,
               'contactNumber': branch!.contactNumber,
@@ -47,6 +49,8 @@ class BranchFormDialog extends HookConsumerWidget {
     final selectedColorId = useState<String?>(branch?.color);
     final previewCode = useState(branch?.code ?? '');
     final previewName = useState(branch?.name ?? '');
+    // Once the user edits the slug directly, stop auto-deriving it from name.
+    final slugManuallyEdited = useState(isEditing);
 
     Future<void> handleSave() async {
       final isValid = formKey.currentState!.saveAndValidate();
@@ -69,6 +73,7 @@ class BranchFormDialog extends HookConsumerWidget {
         id: branch?.id ?? '',
         name: (values['name'] as String).trim(),
         code: (values['code'] as String).trim().toUpperCase(),
+        slug: (values['slug'] as String).trim().toLowerCase(),
         address: (values['address'] as String?)?.trim() ?? '',
         contactNumber: (values['contactNumber'] as String?)?.trim() ?? '',
         operatingHours: _nullIfEmpty(values['operatingHours'] as String?),
@@ -141,7 +146,14 @@ class BranchFormDialog extends HookConsumerWidget {
             enabled: !isSaving.value,
             validator: branchNameValidator(),
             textInputAction: TextInputAction.next,
-            onChanged: (value) => previewName.value = value ?? '',
+            onChanged: (value) {
+              previewName.value = value ?? '';
+              if (!slugManuallyEdited.value) {
+                formKey.currentState?.fields['slug']?.didChange(
+                  slugify(value ?? ''),
+                );
+              }
+            },
           ),
           const SizedBox(height: 16),
           FormBuilderTextField(
@@ -167,6 +179,27 @@ class BranchFormDialog extends HookConsumerWidget {
             validator: branchCodeValidator(),
             textInputAction: TextInputAction.next,
             onChanged: (value) => previewCode.value = value ?? '',
+          ),
+          const SizedBox(height: 16),
+          FormBuilderTextField(
+            name: 'slug',
+            initialValue: branch?.slug,
+            decoration: const InputDecoration(
+              labelText: 'URL slug *',
+              hintText: 'e.g. downtown',
+              helperText:
+                  'Used in web links, e.g. /org/downtown/... Must be unique '
+                  'within the organization; "all" is reserved.',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.link),
+            ),
+            enabled: !isSaving.value,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9-]')),
+            ],
+            validator: branchSlugValidator(),
+            textInputAction: TextInputAction.next,
+            onChanged: (_) => slugManuallyEdited.value = true,
           ),
           const SizedBox(height: 16),
           FormBuilderField<String?>(
@@ -278,6 +311,7 @@ class BranchFormDialog extends HookConsumerWidget {
   static const _fieldLabels = {
     'name': 'Name',
     'code': 'Code',
+    'slug': 'URL slug',
     'color': 'Pill color',
     'address': 'Address',
     'contactNumber': 'Contact Number',
@@ -371,6 +405,24 @@ FormFieldValidator<String> branchCodeValidator() {
       RegExp(r'^[A-Za-z0-9]+$'),
       errorText: 'Letters and numbers only',
     ),
+  ]);
+}
+
+/// Required: URL-safe slug, unique per organization. "all" is reserved for
+/// the "all branches" route segment.
+FormFieldValidator<String> branchSlugValidator() {
+  return FormBuilderValidators.compose([
+    FormBuilderValidators.required(errorText: 'URL slug is required'),
+    FormBuilderValidators.match(
+      RegExp(r'^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'),
+      errorText: 'Lowercase letters, numbers and hyphens only',
+    ),
+    (value) {
+      if (value?.trim().toLowerCase() == 'all') {
+        return '"all" is reserved and cannot be used as a branch slug';
+      }
+      return null;
+    },
   ]);
 }
 

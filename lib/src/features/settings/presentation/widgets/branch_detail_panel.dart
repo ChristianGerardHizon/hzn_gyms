@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/branches.routes.dart';
 import '../../../../core/widgets/branch_code_pill.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -67,7 +68,7 @@ class BranchDetailPanel extends ConsumerWidget {
             if (context.canPop()) {
               context.pop();
             } else {
-              const BranchesRoute().go(context);
+              const BranchesRoute().goScoped(context);
             }
           },
         ),
@@ -124,7 +125,7 @@ class BranchDetailPanel extends ConsumerWidget {
         if (context.canPop()) {
           context.pop();
         } else {
-          const BranchesRoute().go(context);
+          const BranchesRoute().goScoped(context);
         }
       } else {
         showFormErrorDialog(

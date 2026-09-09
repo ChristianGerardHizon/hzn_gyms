@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/roles.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -63,7 +64,7 @@ class UserRolesPage extends HookConsumerWidget {
           onDelete: (role) => _showDeleteConfirmation(context, ref, role),
           onRoleTap: isTablet
               ? (role) => selectedRoleId.value = role.id
-              : (role) => RoleDetailRoute(id: role.id).push(context),
+              : (role) => RoleDetailRoute(id: role.id).pushScoped(context),
         );
 
         if (!isTablet) {

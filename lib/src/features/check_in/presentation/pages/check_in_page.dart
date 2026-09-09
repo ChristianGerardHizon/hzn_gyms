@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
@@ -446,7 +447,7 @@ class CheckInPage extends HookConsumerWidget {
               member: selectedMember.value!,
               activeMembership: activeMembership.value,
               onViewProfile: () =>
-                  MemberDetailRoute(id: selectedMember.value!.id).go(context),
+                  MemberDetailRoute(id: selectedMember.value!.id).goScoped(context),
             ),
             const SizedBox(height: 16),
 
@@ -584,7 +585,7 @@ class CheckInPage extends HookConsumerWidget {
             const RfidListenerStatusIcon(),
             IconButton(
               icon: const Icon(Icons.history),
-              onPressed: () => const CheckInRecordsRoute().push(context),
+              onPressed: () => const CheckInRecordsRoute().pushScoped(context),
               tooltip: 'Check-In Records',
             ),
             IconButton(

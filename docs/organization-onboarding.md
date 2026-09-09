@@ -2,6 +2,17 @@
 
 Super-admins with `users.superAdmin = true` use the **Platform** shell (`/platform`) to create tenants and run the setup wizard. Branch staff continue using the gym app at `/`. Role permissions stay per-organization and do not grant platform access.
 
+## Two admin layers
+
+| Layer | Mechanism | Powers |
+|-------|-----------|--------|
+| Platform superAdmin | `users.superAdmin = true` | `/platform`, create/manage organizations; no org membership required; bypasses the invite gate |
+| Organization Admin | System role **Admin** (`system.admin`, plus `members.manage` for invites) | Full control inside one tenant only |
+
+Do **not** create a role named “Platform Admin”. Platform access is only the `superAdmin` flag (set via PocketBase `_superusers`). Org full access is the **Admin** role. Enter Tenant still uses the user’s Admin role / membership for gym permissions — the flag alone does not grant all gym powers.
+
+Cleanup leftover Platform Admin roles: `.\scripts\cleanup-platform-admin-role.ps1 -Target local|staging|prod [-Apply]`.
+
 ## Platform shell routes
 
 | Route | Purpose |

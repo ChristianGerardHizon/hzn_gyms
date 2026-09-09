@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../../products/domain/product_category.dart';
@@ -36,7 +37,7 @@ class ProductCategoryListPanel extends HookConsumerWidget {
       floatingActionButton: FloatingActionButton(
         heroTag: 'product_category_fab',
         onPressed: () =>
-            const ProductCategoryDetailRoute(id: 'new').go(context),
+            const ProductCategoryDetailRoute(id: 'new').goScoped(context),
         child: const Icon(Icons.add),
       ),
       body: categoriesAsync.when(

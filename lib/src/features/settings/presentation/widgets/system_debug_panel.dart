@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../../core/packages/sentry/sentry_config.dart';
 import '../../../../core/utils/breakpoints.dart';
@@ -172,7 +173,7 @@ class SystemDebugPanel extends HookConsumerWidget {
                         'This debug button still works here.',
               ),
               trailing: TextButton(
-                onPressed: () => const CheckInRoute().go(context),
+                onPressed: () => const CheckInRoute().goScoped(context),
                 child: const Text('Open'),
               ),
             ),

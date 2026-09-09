@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../dashboard/presentation/controllers/dashboard_refresh.dart';
@@ -62,7 +63,7 @@ Future<bool> resolveOpenUnpaidBeforeCreate(
 
   switch (action) {
     case OpenUnpaidSaleAction.openExisting:
-      SaleDetailRoute(id: existing.id).go(context);
+      SaleDetailRoute(id: existing.id).goScoped(context);
       return false;
     case OpenUnpaidSaleAction.voidAndRecreate:
       // Capture deps before the async void so we never touch [ref] after dispose.

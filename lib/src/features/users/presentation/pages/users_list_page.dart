@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/users.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_users_controller.dart';
@@ -39,7 +40,7 @@ class UsersListPage extends ConsumerWidget {
           paginatedState: paginatedState,
           selectedId: null,
           onUserTap: (user) {
-            UserDetailRoute(id: user.id).push(context);
+            UserDetailRoute(id: user.id).pushScoped(context);
           },
           onRefresh: () =>
               ref.read(paginatedUsersControllerProvider.notifier).refresh(),

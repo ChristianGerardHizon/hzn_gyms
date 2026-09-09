@@ -5,6 +5,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/utils/slugify.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../settings/domain/branch.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
@@ -30,10 +31,14 @@ class OrganizationSetupBranchForm extends HookConsumerWidget {
       if (!(formKey.currentState?.saveAndValidate() ?? false)) return;
       isSaving.value = true;
       final values = formKey.currentState!.value;
+      final name = (values['name'] as String).trim();
       final branch = Branch(
         id: '',
-        name: (values['name'] as String).trim(),
+        name: name,
         code: (values['code'] as String).trim().toUpperCase(),
+        // First branch of a freshly-created org — no sibling branches yet,
+        // so a plain slugify(name) cannot collide.
+        slug: slugify(name),
         address: (values['address'] as String?)?.trim() ?? '',
         contactNumber: (values['contactNumber'] as String?)?.trim() ?? '',
         organization: organizationId,

@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../../core/utils/breakpoints.dart';
 import '../../../../../core/widgets/state/error_state.dart';
@@ -489,7 +490,7 @@ class SalesReportView extends HookConsumerWidget {
                   final sale = sales[index];
                   return TodaySaleListTile(
                     sale: sale,
-                    onTap: () => SaleDetailRoute(id: sale.id).push(context),
+                    onTap: () => SaleDetailRoute(id: sale.id).pushScoped(context),
                   );
                 },
               ),

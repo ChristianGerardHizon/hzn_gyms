@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../quantity_units/domain/quantity_unit.dart';
@@ -101,7 +102,7 @@ class QuantityUnitDetailPanel extends HookConsumerWidget {
         );
 
         if (isCreating) {
-          const QuantityUnitsRoute().go(context);
+          const QuantityUnitsRoute().goScoped(context);
         }
       }
     }
@@ -138,7 +139,7 @@ class QuantityUnitDetailPanel extends HookConsumerWidget {
         if (success) {
           showSuccessSnackBar(
               context, message: 'Quantity unit deleted successfully');
-          const QuantityUnitsRoute().go(context);
+          const QuantityUnitsRoute().goScoped(context);
         } else {
           showFormErrorDialog(
             context,
@@ -179,7 +180,7 @@ class QuantityUnitDetailPanel extends HookConsumerWidget {
         title: Text(isCreating ? 'New Quantity Unit' : 'Edit Quantity Unit'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => const QuantityUnitsRoute().go(context),
+          onPressed: () => const QuantityUnitsRoute().goScoped(context),
         ),
         actions: [
           if (!isCreating)

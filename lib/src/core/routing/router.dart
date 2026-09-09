@@ -69,24 +69,40 @@ GoRouter router(Ref ref) {
       // Platform super-admin shell
       $platformShellRoute,
 
-      // Main app shell with navigation
-      ShellRoute(
-        builder: (context, state, child) => AppRoot(child: child),
+      // Org/branch-scoped main app. `:orgSlug`/`:branchSlug` are hand-written
+      // (not part of any @TypedGoRoute tree) so none of the ~14 feature
+      // route files' `path:` constants need to change — go_router's path
+      // composition concatenates the unmodified child paths onto this
+      // dynamic prefix. Use `.goScoped(context)`/`.pushScoped(context)` (see
+      // `org_scoped_navigation.dart`) instead of `.go`/`.push` when
+      // navigating to any route nested under here.
+      //
+      // No explicit "bare /orgSlug/branchSlug -> dashboard" redirect is
+      // needed: DashboardRoute.path is '/', which concatenatePaths reduces
+      // to a no-op segment, so a bare hit already resolves directly to
+      // DashboardRoute without any extra redirect.
+      GoRoute(
+        path: '/:orgSlug/:branchSlug',
         routes: [
-          $dashboardRoute,
-          $checkInRoute,
-          $productsShellRoute,
-          $membersShellRoute,
-          $membershipsShellRoute,
-          $salesRoute,
-          $salesShellRoute,
-          $reportsRoute,
-          $usersShellRoute,
-          $rolesRoute,
-          $branchesShellRoute,
-          $profileRoute,
-          $outboxRoute,
-          $systemShellRoute,
+          ShellRoute(
+            builder: (context, state, child) => AppRoot(child: child),
+            routes: [
+              $dashboardRoute,
+              $checkInRoute,
+              $productsShellRoute,
+              $membersShellRoute,
+              $membershipsShellRoute,
+              $salesRoute,
+              $salesShellRoute,
+              $reportsRoute,
+              $usersShellRoute,
+              $rolesRoute,
+              $branchesShellRoute,
+              $profileRoute,
+              $outboxRoute,
+              $systemShellRoute,
+            ],
+          ),
         ],
       ),
     ],

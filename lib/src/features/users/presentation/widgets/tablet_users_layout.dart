@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/users.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/paginated_users_controller.dart';
@@ -51,7 +52,7 @@ class TabletUsersLayout extends ConsumerWidget {
                 selectedId: selectedUserId,
                 onUserTap: (user) {
                   // Navigate using the route - this updates the URL and detail panel
-                  UserDetailRoute(id: user.id).go(context);
+                  UserDetailRoute(id: user.id).goScoped(context);
                 },
                 onRefresh: () => usersController.refresh(),
                 onLoadMore: () => usersController.loadMore(),

@@ -35,6 +35,7 @@ void main() {
     id: 'branch-1',
     name: 'Main',
     code: 'MAIN',
+    slug: 'main',
     address: '',
     contactNumber: '',
     organization: orgId,

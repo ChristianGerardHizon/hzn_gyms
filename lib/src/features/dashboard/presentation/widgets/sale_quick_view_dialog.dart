@@ -293,9 +293,17 @@ class _SaleHeader extends ConsumerWidget {
           value: sale.customerDisplay,
           onValueTap: hasCustomerId
               ? () {
+                  // Root-navigator dialogs sit outside RouteBase.builder, so
+                  // GoRouterState.of(context) throws. Read the org/branch
+                  // scope from the router's current path instead, mirroring
+                  // `OrgScopedGoRouteData._scopedLocation`.
                   final router = GoRouter.of(context);
-                  final location =
+                  final segments = router.state.uri.pathSegments;
+                  final memberLocation =
                       MemberDetailRoute(id: sale.customerId!).location;
+                  final location = segments.length >= 2
+                      ? '/${segments[0]}/${segments[1]}$memberLocation'
+                      : memberLocation;
                   Navigator.of(context, rootNavigator: true).popUntil(
                     (route) => route is! PopupRoute,
                   );
@@ -591,8 +599,16 @@ class _ActionButtons extends StatelessWidget {
         if (canRecordPayment) const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () {
+            // Root-navigator dialogs sit outside RouteBase.builder, so
+            // GoRouterState.of(context) throws. Read the org/branch scope
+            // from the router's current path instead, mirroring
+            // `OrgScopedGoRouteData._scopedLocation`.
             final router = GoRouter.of(context);
-            final location = SaleDetailRoute(id: saleId).location;
+            final segments = router.state.uri.pathSegments;
+            final saleLocation = SaleDetailRoute(id: saleId).location;
+            final location = segments.length >= 2
+                ? '/${segments[0]}/${segments[1]}$saleLocation'
+                : saleLocation;
             // Close stacked dialogs (e.g. KPI list + quick view) before leaving.
             Navigator.of(context, rootNavigator: true).popUntil(
               (route) => route is! PopupRoute,

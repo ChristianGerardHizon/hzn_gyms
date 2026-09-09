@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/utils/currency_format.dart';
@@ -659,7 +660,7 @@ class _MemberSalesHistory extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                  onTap: () => SaleDetailRoute(id: sale.id).go(context),
+                  onTap: () => SaleDetailRoute(id: sale.id).goScoped(context),
                 );
               },
             ),

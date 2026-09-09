@@ -15,6 +15,7 @@ class BranchDto with BranchDtoMappable {
   final String collectionName;
   final String name;
   final String code;
+  final String slug;
   final String address;
   final String contactNumber;
   final String? operatingHours;
@@ -31,6 +32,7 @@ class BranchDto with BranchDtoMappable {
     required this.collectionName,
     required this.name,
     required this.code,
+    required this.slug,
     required this.address,
     required this.contactNumber,
     this.operatingHours,
@@ -52,6 +54,7 @@ class BranchDto with BranchDtoMappable {
       collectionName: json['collectionName'] as String? ?? '',
       name: json['name'] as String? ?? '',
       code: json['code'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
       address: json['address'] as String? ?? '',
       contactNumber: json['contactNumber'] as String? ?? '',
       operatingHours: json['operatingHours'] as String?,
@@ -70,6 +73,7 @@ class BranchDto with BranchDtoMappable {
       id: id,
       name: name,
       code: code,
+      slug: slug,
       address: address,
       contactNumber: contactNumber,
       operatingHours: operatingHours,

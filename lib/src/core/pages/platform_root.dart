@@ -8,6 +8,8 @@ import '../routing/routes/platform.routes.dart';
 import '../utils/breakpoints.dart';
 import '../widgets/organization_switcher.dart';
 import '../../features/organizations/presentation/controllers/current_organization_controller.dart';
+import '../../features/settings/presentation/controllers/current_branch_controller.dart'
+    show allBranchesSlug;
 
 /// Shell for platform super-admin routes (`/platform/*`).
 class PlatformRoot extends ConsumerWidget {
@@ -40,14 +42,13 @@ class PlatformRoot extends ConsumerWidget {
     }
 
     Future<void> enterTenant() async {
-      final orgId =
-          ref.read(currentOrganizationControllerProvider).value?.id;
-      if (orgId == null || orgId.isEmpty) return;
+      final org = ref.read(currentOrganizationControllerProvider).value;
+      if (org == null || org.id.isEmpty) return;
       await ref
           .read(currentOrganizationControllerProvider.notifier)
-          .switchOrganization(orgId);
+          .switchOrganization(org.id);
       if (context.mounted) {
-        const DashboardRoute().go(context);
+        context.go('/${org.slug}/$allBranchesSlug${DashboardRoute.path}');
       }
     }
 
