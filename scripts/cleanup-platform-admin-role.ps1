@@ -64,8 +64,13 @@ $auth = Invoke-RestMethod -Uri "$ApiUrl/api/collections/_superusers/auth-with-pa
     -Body (@{ identity = $Email; password = $Password } | ConvertTo-Json)
 $headers = @{ Authorization = $auth.token }
 
-function Get-RoleByName([string]$Name) {
-    $filter = [uri]::EscapeDataString(('name="{0}"' -f $Name))
+function Get-RoleByName([string]$Name, [switch]$ActiveOnly) {
+    $filterExpr = if ($ActiveOnly) {
+        'name="{0}" && isDeleted=false' -f $Name
+    } else {
+        'name="{0}"' -f $Name
+    }
+    $filter = [uri]::EscapeDataString($filterExpr)
     $uri = '{0}/api/collections/userRoles/records?filter={1}&perPage=5' -f $ApiUrl, $filter
     $resp = Invoke-RestMethod -Uri $uri -Headers $headers
     if ($resp.totalItems -lt 1) { return $null }
@@ -81,39 +86,55 @@ function Get-Permissions($Role) {
     return @($p)
 }
 
+function Ensure-AdminKeys($AdminRole) {
+    $requiredKeys = @('organizations.view', 'members.manage')
+    $adminPerms = Get-Permissions $AdminRole
+    $missing = @($requiredKeys | Where-Object { $adminPerms -notcontains $_ })
+    if ($missing.Count -eq 0) {
+        Write-Host 'Admin already has organizations.view + members.manage'
+        return @{ Missing = @(); Role = $AdminRole }
+    }
+    $newPerms = @($adminPerms) + $missing
+    Write-Host ("Admin missing keys: {0}" -f ($missing -join ', '))
+    if ($Apply) {
+        $updated = Invoke-RestMethod -Uri "$ApiUrl/api/collections/userRoles/records/$($AdminRole.id)" `
+            -Method PATCH -Headers $headers -ContentType 'application/json' `
+            -Body (@{ permissions = $newPerms } | ConvertTo-Json -Compress)
+        Write-Host ("  patched Admin permissions (now {0} keys)" -f $newPerms.Count)
+        return @{ Missing = $missing; Role = $updated }
+    }
+    Write-Host ("  would patch Admin permissions (+{0})" -f $missing.Count)
+    return @{ Missing = $missing; Role = $AdminRole }
+}
+
 $admin = Get-RoleByName 'Admin'
-$platform = Get-RoleByName 'Platform Admin'
+$platform = Get-RoleByName 'Platform Admin' -ActiveOnly
 
 if (-not $admin) {
     Write-Error "Admin role not found"
     exit 1
 }
 
+$ensure = Ensure-AdminKeys $admin
+$admin = $ensure.Role
+$missing = $ensure.Missing
+
 if (-not $platform) {
-    Write-Host 'Platform Admin role already gone - nothing to do.'
+    Write-Host 'Platform Admin role already gone (missing or soft-deleted) - nothing else to do.'
+    Write-Host ''
+    Write-Host ("Summary ({0}):" -f $mode)
+    Write-Host ("  Admin keys added:     {0}" -f $(if ($missing.Count) { $missing -join ', ' } else { '(none)' }))
+    Write-Host '  Users reassigned:     0'
+    Write-Host '  superAdmin flagged:   0'
+    Write-Host '  Memberships moved:    0'
+    Write-Host '  Platform Admin gone:  yes'
+    if (-not $Apply) {
+        Write-Host 'Re-run with -Apply to write changes.'
+    }
     exit 0
 }
 
 Write-Host ("Admin id={0} Platform Admin id={1}" -f $admin.id, $platform.id)
-
-$requiredKeys = @('organizations.view', 'members.manage')
-$adminPerms = Get-Permissions $admin
-$missing = @($requiredKeys | Where-Object { $adminPerms -notcontains $_ })
-if ($missing.Count -gt 0) {
-    $newPerms = @($adminPerms) + $missing
-    Write-Host ("Admin missing keys: {0}" -f ($missing -join ', '))
-    if ($Apply) {
-        $updated = Invoke-RestMethod -Uri "$ApiUrl/api/collections/userRoles/records/$($admin.id)" `
-            -Method PATCH -Headers $headers -ContentType 'application/json' `
-            -Body (@{ permissions = $newPerms } | ConvertTo-Json -Compress)
-        $admin = $updated
-        Write-Host ("  patched Admin permissions (now {0} keys)" -f $newPerms.Count)
-    } else {
-        Write-Host ("  would patch Admin permissions (+{0})" -f $missing.Count)
-    }
-} else {
-    Write-Host 'Admin already has organizations.view + members.manage'
-}
 
 # Reassign users
 $userFilter = [uri]::EscapeDataString(('role="{0}"' -f $platform.id))
