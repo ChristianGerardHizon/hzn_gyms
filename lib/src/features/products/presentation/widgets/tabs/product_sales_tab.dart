@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../../core/utils/currency_format.dart';
 import '../../../../../core/utils/date_utils.dart';
@@ -376,7 +377,7 @@ class _SaleLineListTile extends StatelessWidget {
       ),
       onTap: line.saleId.isEmpty
           ? null
-          : () => SaleDetailRoute(id: line.saleId).go(context),
+          : () => SaleDetailRoute(id: line.saleId).goScoped(context),
     );
   }
 }

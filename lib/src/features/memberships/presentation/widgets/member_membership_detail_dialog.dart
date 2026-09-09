@@ -448,8 +448,16 @@ class _LinkedSaleSection extends ConsumerWidget {
   final String saleId;
 
   void _openSale(BuildContext context) {
+    // Root-navigator dialogs sit outside RouteBase.builder, so
+    // GoRouterState.of(context) throws. Read the org/branch scope from the
+    // router's current path instead, mirroring
+    // `OrgScopedGoRouteData._scopedLocation`.
     final router = GoRouter.of(context);
-    final location = SaleDetailRoute(id: saleId).location;
+    final segments = router.state.uri.pathSegments;
+    final saleLocation = SaleDetailRoute(id: saleId).location;
+    final location = segments.length >= 2
+        ? '/${segments[0]}/${segments[1]}$saleLocation'
+        : saleLocation;
     Navigator.of(context).pop();
     router.push(location);
   }

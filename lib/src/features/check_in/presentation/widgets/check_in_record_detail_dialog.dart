@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -161,8 +162,21 @@ class CheckInRecordDetailDialog extends ConsumerWidget {
                     const SizedBox(height: 20),
                     FilledButton.icon(
                       onPressed: () {
+                        // Root-navigator dialogs sit outside
+                        // RouteBase.builder, so GoRouterState.of(context)
+                        // throws. Read the org/branch scope from the
+                        // router's current path instead, mirroring
+                        // `OrgScopedGoRouteData._scopedLocation`.
+                        final router = GoRouter.of(context);
+                        final segments = router.state.uri.pathSegments;
+                        final memberLocation = MemberDetailRoute(
+                          id: checkIn.memberId,
+                        ).location;
+                        final location = segments.length >= 2
+                            ? '/${segments[0]}/${segments[1]}$memberLocation'
+                            : memberLocation;
                         Navigator.of(context).pop();
-                        MemberDetailRoute(id: checkIn.memberId).go(context);
+                        router.go(location);
                       },
                       icon: const Icon(Icons.person_outline),
                       label: const Text('View Member Details'),

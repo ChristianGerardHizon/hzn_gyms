@@ -11,6 +11,7 @@ class Branch with BranchMappable {
     required this.id,
     required this.name,
     required this.code,
+    required this.slug,
     required this.address,
     required this.contactNumber,
     this.operatingHours,
@@ -30,6 +31,11 @@ class Branch with BranchMappable {
 
   /// Short pill label (max 5 alphanumeric), e.g. "BCD", "TAL".
   final String code;
+
+  /// URL-safe slug for the branch, unique within its organization. The
+  /// literal value "all" is reserved for the "all branches" route segment
+  /// and must never be assigned to a real branch.
+  final String slug;
 
   /// Branch address.
   final String address;

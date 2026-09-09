@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/users.routes.dart';
 import '../../../../core/utils/breakpoints.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -51,7 +53,7 @@ class UserDetailPage extends HookConsumerWidget {
               ? null
               : IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: () => const UsersRoute().go(context),
+                  onPressed: () => const UsersRoute().goScoped(context),
                 ),
         ),
         body: ErrorState.fromError(
@@ -67,7 +69,7 @@ class UserDetailPage extends HookConsumerWidget {
                   ? null
                   : IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: () => const UsersRoute().go(context),
+                      onPressed: () => const UsersRoute().goScoped(context),
                     ),
             ),
             body: const Center(child: Text('User not found')),
@@ -81,7 +83,7 @@ class UserDetailPage extends HookConsumerWidget {
                 ? null
                 : IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => const UsersRoute().go(context),
+                    onPressed: () => const UsersRoute().goScoped(context),
                   ),
             title: Text('${user.name} - ${user.displayRole}'),
             actions: [
@@ -252,6 +254,15 @@ class UserDetailPage extends HookConsumerWidget {
 
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref, User user) {
     final t = Translations.of(context);
+    // Captured from the page-level context (not the dialog's own, root-nav
+    // context, where GoRouterState.of(context) would throw), mirroring
+    // `OrgScopedGoRouteData._scopedLocation`.
+    final router = GoRouter.of(context);
+    final segments = router.state.uri.pathSegments;
+    const usersLocation = UsersRoute.path;
+    final usersScopedLocation = segments.length >= 2
+        ? '/${segments[0]}/${segments[1]}$usersLocation'
+        : usersLocation;
 
     showDialog(
       context: context,
@@ -271,7 +282,7 @@ class UserDetailPage extends HookConsumerWidget {
                   .deleteUser(user.id);
               if (context.mounted) {
                 if (success) {
-                  const UsersRoute().go(context);
+                  router.go(usersScopedLocation);
                   showSuccessSnackBar(context, message: 'User deleted');
                 } else {
                   showErrorSnackBar(context, message: 'Failed to delete user');

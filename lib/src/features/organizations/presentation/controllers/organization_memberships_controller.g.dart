@@ -44,7 +44,7 @@ final class OrganizationMembershipsControllerProvider
 }
 
 String _$organizationMembershipsControllerHash() =>
-    r'1e3bf2259057cbdb1f8a35521ac0bdb845ec5458';
+    r'b1beb02ca932902f75fe41baac7aef460619fa9f';
 
 /// Active organization memberships for the signed-in user.
 

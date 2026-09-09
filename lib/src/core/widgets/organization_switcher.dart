@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/organizations/presentation/controllers/current_organization_controller.dart';
 import '../../features/organizations/presentation/controllers/organizations_controller.dart';
+import '../../features/settings/presentation/controllers/current_branch_controller.dart'
+    show allBranchesSlug;
 import '../i18n/strings.g.dart';
 import '../permissions/current_user_permissions.dart';
+import '../routing/router_utils.dart';
+import '../routing/routes/dashboard.routes.dart';
 import 'cached_avatar.dart';
 import 'scope_switcher_bar.dart';
 /// Width used when the switcher sits in unbounded parents (e.g. AppBar actions).
@@ -115,13 +120,38 @@ class OrganizationSwitcher extends ConsumerWidget {
                           )
                           .toList(),
                       onChanged: (value) {
-                        if (value != null) {
-                          ref
-                              .read(
-                                currentOrganizationControllerProvider.notifier,
-                              )
-                              .switchOrganization(value);
-                        }
+                        if (value == null) return;
+                        final targetOrg = organizations.firstWhere(
+                          (o) => o.id == value,
+                          orElse: () => organizations.first,
+                        );
+                        final routerState = GoRouterState.of(context);
+                        // Inside the org/branch-scoped shell: preserve the
+                        // sub-path. Outside it (e.g. the /platform shell's
+                        // "enter this org" switcher): no sub-path to
+                        // preserve, land on the new org's dashboard.
+                        final isScoped =
+                            routerState.pathParameters['orgSlug'] != null;
+                        final currentLocation = routerState.uri.path;
+                        ref
+                            .read(
+                              currentOrganizationControllerProvider.notifier,
+                            )
+                            .switchOrganization(value)
+                            .then((_) {
+                              if (!context.mounted) return;
+                              // Reset branch to "all" — the old branch almost
+                              // certainly doesn't exist in the new org.
+                              final target = isScoped
+                                  ? RouterUtils.replaceScopeSegment(
+                                      currentLocation,
+                                      orgSlug: targetOrg.slug,
+                                      branchSlug: allBranchesSlug,
+                                    )
+                                  : '/${targetOrg.slug}/$allBranchesSlug'
+                                        '${DashboardRoute.path}';
+                              context.go(target);
+                            });
                       },
                     ),
                   ),

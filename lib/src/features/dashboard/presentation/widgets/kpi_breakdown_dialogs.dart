@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -196,8 +197,20 @@ Future<void> showTodaysCheckInsBreakdownDialog(BuildContext context) {
                 ),
                 trailing: branchPill,
                 onTap: () {
+                  // Root-navigator dialogs sit outside RouteBase.builder, so
+                  // GoRouterState.of(context) throws. Read the org/branch
+                  // scope from the router's current path instead, mirroring
+                  // `OrgScopedGoRouteData._scopedLocation`.
+                  final router = GoRouter.of(context);
+                  final segments = router.state.uri.pathSegments;
+                  final memberLocation = MemberDetailRoute(
+                    id: checkIn.memberId,
+                  ).location;
+                  final location = segments.length >= 2
+                      ? '/${segments[0]}/${segments[1]}$memberLocation'
+                      : memberLocation;
                   Navigator.of(context).pop();
-                  MemberDetailRoute(id: checkIn.memberId).go(context);
+                  router.go(location);
                 },
               );
             },
@@ -298,8 +311,20 @@ Future<void> showActiveMembersBreakdownDialog(BuildContext context) {
             ),
             trailing: branchPill,
             onTap: () {
+              // Root-navigator dialogs sit outside RouteBase.builder, so
+              // GoRouterState.of(context) throws. Read the org/branch scope
+              // from the router's current path instead, mirroring
+              // `OrgScopedGoRouteData._scopedLocation`.
+              final router = GoRouter.of(context);
+              final segments = router.state.uri.pathSegments;
+              final memberLocation = MemberDetailRoute(
+                id: membership.memberId,
+              ).location;
+              final location = segments.length >= 2
+                  ? '/${segments[0]}/${segments[1]}$memberLocation'
+                  : memberLocation;
               Navigator.of(context).pop();
-              MemberDetailRoute(id: membership.memberId).go(context);
+              router.go(location);
             },
           );
         },
@@ -399,8 +424,18 @@ Future<void> showNewMembersBreakdownDialog(BuildContext context) {
               ],
             ),
             onTap: () {
+              // Root-navigator dialogs sit outside RouteBase.builder, so
+              // GoRouterState.of(context) throws. Read the org/branch scope
+              // from the router's current path instead, mirroring
+              // `OrgScopedGoRouteData._scopedLocation`.
+              final router = GoRouter.of(context);
+              final segments = router.state.uri.pathSegments;
+              final memberLocation = MemberDetailRoute(id: member.id).location;
+              final location = segments.length >= 2
+                  ? '/${segments[0]}/${segments[1]}$memberLocation'
+                  : memberLocation;
               Navigator.of(context).pop();
-              MemberDetailRoute(id: member.id).go(context);
+              router.go(location);
             },
           );
         },

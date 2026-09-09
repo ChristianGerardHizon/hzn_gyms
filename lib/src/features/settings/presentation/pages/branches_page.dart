@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/i18n/strings.g.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/branches.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../../domain/branch.dart';
@@ -105,7 +106,7 @@ class BranchesPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  onTap: () => BranchDetailRoute(id: branch.id).push(context),
+                  onTap: () => BranchDetailRoute(id: branch.id).pushScoped(context),
                 );
               },
             ),

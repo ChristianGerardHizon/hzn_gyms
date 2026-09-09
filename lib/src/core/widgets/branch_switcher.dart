@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/settings/domain/branch.dart';
 import '../../features/settings/presentation/controllers/branches_controller.dart';
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../i18n/strings.g.dart';
+import '../routing/router_utils.dart';
 import 'scope_switcher_bar.dart';
 
 /// Branch switcher widget for the sidebar/drawer and tablet bar.
@@ -57,6 +59,31 @@ class BranchSwitcher extends HookConsumerWidget {
     );
     final switchableIdsSnapshot = useFuture(switchableIdsFuture);
 
+    void handleBranchChange(String? value, List<Branch> knownBranches) {
+      if (value == null) return;
+      final routerState = GoRouterState.of(context);
+      final isScoped = routerState.pathParameters['orgSlug'] != null;
+      final currentLocation = routerState.uri.path;
+      final targetSlug = value == allBranchesSentinel
+          ? allBranchesSlug
+          : knownBranches
+                .cast<Branch?>()
+                .firstWhere((b) => b?.id == value, orElse: () => null)
+                ?.slug;
+      ref
+          .read(currentBranchControllerProvider.notifier)
+          .switchBranch(value)
+          .then((_) {
+            if (!context.mounted || !isScoped || targetSlug == null) return;
+            context.go(
+              RouterUtils.replaceScopeSegment(
+                currentLocation,
+                branchSlug: targetSlug,
+              ),
+            );
+          });
+    }
+
     return currentBranchAsync.when(
       // Keep showing the current branch while switching instead of collapsing
       // the switcher into a spinner.
@@ -99,13 +126,7 @@ class BranchSwitcher extends HookConsumerWidget {
                   showAllOption: showAllOption,
                   allLabel: t.navigation.allBranches,
                   branches: const [],
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref
-                          .read(currentBranchControllerProvider.notifier)
-                          .switchBranch(value);
-                    }
-                  },
+                  onChanged: (value) => handleBranchChange(value, const []),
                 );
               }
               return currentBranch != null
@@ -141,13 +162,7 @@ class BranchSwitcher extends HookConsumerWidget {
               showAllOption: showAllOption,
               allLabel: t.navigation.allBranches,
               branches: options,
-              onChanged: (value) {
-                if (value != null) {
-                  ref
-                      .read(currentBranchControllerProvider.notifier)
-                      .switchBranch(value);
-                }
-              },
+              onChanged: (value) => handleBranchChange(value, allBranches),
             );
           },
           loading: () {
@@ -159,13 +174,7 @@ class BranchSwitcher extends HookConsumerWidget {
                 showAllOption: showAllOption,
                 allLabel: t.navigation.allBranches,
                 branches: const [],
-                onChanged: (value) {
-                  if (value != null) {
-                    ref
-                        .read(currentBranchControllerProvider.notifier)
-                        .switchBranch(value);
-                  }
-                },
+                onChanged: (value) => handleBranchChange(value, const []),
               );
             }
             return currentBranch != null
@@ -186,13 +195,7 @@ class BranchSwitcher extends HookConsumerWidget {
                 showAllOption: showAllOption,
                 allLabel: t.navigation.allBranches,
                 branches: const [],
-                onChanged: (value) {
-                  if (value != null) {
-                    ref
-                        .read(currentBranchControllerProvider.notifier)
-                        .switchBranch(value);
-                  }
-                },
+                onChanged: (value) => handleBranchChange(value, const []),
               );
             }
             return currentBranch != null

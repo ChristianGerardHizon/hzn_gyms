@@ -409,8 +409,20 @@ class ReceiptDialog extends HookConsumerWidget {
                     const SizedBox(width: 8),
                     TextButton(
                       onPressed: () {
+                        // Root-navigator dialogs sit outside
+                        // RouteBase.builder, so GoRouterState.of(context)
+                        // throws. Read the org/branch scope from the
+                        // router's current path instead, mirroring
+                        // `OrgScopedGoRouteData._scopedLocation`.
+                        final router = GoRouter.of(context);
+                        final segments = router.state.uri.pathSegments;
+                        final printerLocation = const PrinterSettingsRoute()
+                            .location;
+                        final location = segments.length >= 2
+                            ? '/${segments[0]}/${segments[1]}$printerLocation'
+                            : printerLocation;
                         context.pop();
-                        const PrinterSettingsRoute().go(context);
+                        router.go(location);
                       },
                       child: const Text('Setup Printer'),
                     ),

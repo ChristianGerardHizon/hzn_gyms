@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../core/foundation/sort_config.dart';
 import '../../../../core/hooks/use_debounced_callback.dart';
 import '../../../../core/hooks/use_infinite_scroll.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/list_search_field.dart';
 import '../../../../core/widgets/end_of_list_indicator.dart';
@@ -218,7 +219,7 @@ class MemberListPanel extends HookConsumerWidget {
                     currentBranchId: currentBranchId,
                     isActivityLoading: branchActivityAsync.isLoading,
                     onTap: () =>
-                        MemberDetailRoute(id: member.id).go(context),
+                        MemberDetailRoute(id: member.id).goScoped(context),
                   );
                 },
               ),

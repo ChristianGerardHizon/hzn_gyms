@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../activity_log/presentation/pages/activity_log_detail_page.dart';
 import '../../../activity_log/presentation/pages/activity_logs_page.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/form_feedback.dart';
 import '../../../../core/widgets/state/error_state.dart';
@@ -74,23 +75,23 @@ class TabletSystemLayout extends ConsumerWidget {
           onModeChanged: (mode) {
             switch (mode) {
               case SystemMode.productCategories:
-                const ProductCategoriesRoute().go(context);
+                const ProductCategoriesRoute().goScoped(context);
               case SystemMode.quantityUnits:
-                const QuantityUnitsRoute().go(context);
+                const QuantityUnitsRoute().goScoped(context);
               case SystemMode.printers:
-                const PrinterSettingsRoute().go(context);
+                const PrinterSettingsRoute().goScoped(context);
               case SystemMode.cashierGroups:
-                const CashierGroupsRoute().go(context);
+                const CashierGroupsRoute().goScoped(context);
               case SystemMode.appearance:
-                const AppearanceRoute().go(context);
+                const AppearanceRoute().goScoped(context);
               case SystemMode.camera:
-                const CameraRoute().go(context);
+                const CameraRoute().goScoped(context);
               case SystemMode.import:
-                const ImportRoute().go(context);
+                const ImportRoute().goScoped(context);
               case SystemMode.debug:
-                const SystemDebugRoute().go(context);
+                const SystemDebugRoute().goScoped(context);
               case SystemMode.activityLog:
-                const ActivityLogRoute().go(context);
+                const ActivityLogRoute().goScoped(context);
             }
           },
         ),
@@ -112,7 +113,7 @@ class TabletSystemLayout extends ConsumerWidget {
             width: 360,
             child: ActivityLogsPage(
               selectedId: selectedId,
-              onSelected: (id) => ActivityLogDetailRoute(id: id).go(context),
+              onSelected: (id) => ActivityLogDetailRoute(id: id).goScoped(context),
             ),
           ),
           const VerticalDivider(width: 1),
@@ -255,7 +256,7 @@ class _ProductCategoryListWrapper extends ConsumerWidget {
                       isSelected: category.id == selectedId,
                       isChild: false,
                       onTap: () =>
-                          ProductCategoryDetailRoute(id: category.id).go(context),
+                          ProductCategoryDetailRoute(id: category.id).goScoped(context),
                     ),
                     ...children.map((child) => Padding(
                           padding: const EdgeInsets.only(left: 24),
@@ -437,7 +438,7 @@ class _PrinterListWrapper extends ConsumerWidget {
                   trailing: printer.isEnabled
                       ? const Icon(Icons.chevron_right)
                       : Icon(Icons.block, color: theme.colorScheme.error),
-                  onTap: () => PrinterDetailRoute(id: printer.id).go(context),
+                  onTap: () => PrinterDetailRoute(id: printer.id).goScoped(context),
                 );
               },
             ),
@@ -539,7 +540,7 @@ class _QuantityUnitListWrapper extends ConsumerWidget {
                   title: Text(unit.name),
                   subtitle: Text(unit.shortPlural),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => QuantityUnitDetailRoute(id: unit.id).go(context),
+                  onTap: () => QuantityUnitDetailRoute(id: unit.id).goScoped(context),
                 );
               },
             ),
@@ -640,7 +641,7 @@ class _CashierGroupListWrapper extends ConsumerWidget {
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () =>
-                      CashierGroupDetailRoute(id: group.id).go(context),
+                      CashierGroupDetailRoute(id: group.id).goScoped(context),
                 );
               },
             ),
