@@ -24,7 +24,7 @@ part 'dashboard.routes.g.dart';
 class DashboardRoute extends GoRouteData with $DashboardRoute {
   const DashboardRoute();
 
-  static const path = '/';
+  static const path = '/dashboard';
 
   @override
   Widget build(BuildContext context, GoRouterState state) {

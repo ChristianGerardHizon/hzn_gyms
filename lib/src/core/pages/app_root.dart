@@ -133,7 +133,10 @@ class _AppRootState extends ConsumerState<AppRoot> {
       final routerState = GoRouterState.of(context);
       final prefix = _scopePrefix(routerState);
       final unscoped = routerState.uri.path.substring(prefix.length);
-      if (!canAccessPath(unscoped.isEmpty ? '/' : unscoped, perms)) {
+      if (!canAccessPath(
+        unscoped.isEmpty ? DashboardRoute.path : unscoped,
+        perms,
+      )) {
         context.go('$prefix${fallbackPathFor(perms)}');
       }
     });
@@ -144,7 +147,7 @@ class _AppRootState extends ConsumerState<AppRoot> {
     final prefix = _scopePrefix(routerState);
     final unscopedLocation = routerState.uri.path.substring(prefix.length);
     final selectedIndex = selectedNavIndexForPath(
-      unscopedLocation.isEmpty ? '/' : unscopedLocation,
+      unscopedLocation.isEmpty ? DashboardRoute.path : unscopedLocation,
       destinations,
     );
 

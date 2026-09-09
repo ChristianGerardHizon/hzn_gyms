@@ -74,6 +74,10 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
     redirect: (context, state) => RouterUtils.redirect(context, state, ref),
     routes: [
       GoRoute(path: '/', builder: (_, _) => const Text('dashboard')),
+      GoRoute(
+        path: '/dashboard',
+        builder: (_, _) => const Text('dashboard'),
+      ),
       GoRoute(path: '/splash', builder: (_, _) => const Text('splash')),
       GoRoute(path: '/login', builder: (_, _) => const Text('login')),
       GoRoute(path: '/members', builder: (_, _) => const Text('members')),
@@ -216,7 +220,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Staff without system.admin cannot stay on /system/printers.
-        expect(RouterUtils.currentLocation(router), '/');
+        expect(RouterUtils.currentLocation(router), '/dashboard');
         expect(find.text('dashboard'), findsOneWidget);
       },
     );
@@ -341,7 +345,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(RouterUtils.currentLocation(router), '/');
+      expect(RouterUtils.currentLocation(router), '/dashboard');
       expect(find.text('dashboard'), findsOneWidget);
       expect(find.text('cashier'), findsNothing);
     });
@@ -400,7 +404,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       final context = tester.element(find.byType(MaterialApp));
 
-      final result = RouterUtils.redirect(context, state, redirectRef);
+      final result = await RouterUtils.redirect(context, state, redirectRef);
 
       expect(result, '/system/printers');
       expect(container.read(pendingRedirectProvider.notifier).peek(), isNull);

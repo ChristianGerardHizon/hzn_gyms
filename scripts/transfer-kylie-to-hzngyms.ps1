@@ -4,7 +4,7 @@
 # Usage:
 #   .\scripts\transfer-kylie-to-hzngyms.ps1 -Since 2026-09-08 -Until 2026-09-09
 #   .\scripts\transfer-kylie-to-hzngyms.ps1 -Since 2026-09-08 -Until 2026-09-09 -Apply
-#   .\scripts\transfer-kylie-to-hzngyms.ps1 -Since 2026-09-08 -Until 2026-09-09 -Apply -IncludePictures
+#   .\scripts\transfer-kylie-to-hzngyms.ps1 -Since 2026-09-08 -Until 2026-09-09 -Apply -DefaultUserPassword 'Secret123!'
 #
 # Env (from .env): KYLIE_GYM_PROD_URL/EMAIL/PASSWORD, PROD_URL/EMAIL/PASSWORD
 
@@ -15,6 +15,7 @@ param(
     [switch]$IncludePictures,
     [switch]$IncludeActivityLogs,
     [string]$OrgSlug = "kyliegym",
+    [string]$DefaultUserPassword = "ChangeMe123!",
     [string]$EnvFile = ""
 )
 
@@ -285,21 +286,109 @@ $addOnMap = @{}
 $memberMembershipMap = @{}
 
 Write-Host ""
-Write-Host "-- users (map only) --"
-$srcUsers = Get-PbAll $SourceUrl $script:SourceToken "users" "" "id,email,name"
-$tgtUsers = Get-PbAll $TargetUrl $script:TargetToken "users" "" "id,email,name"
+Write-Host "-- users --"
+$srcUsers = @(Get-PbAll $SourceUrl $script:SourceToken "users")
+$tgtUsers = @(Get-PbAll $TargetUrl $script:TargetToken "users" "" "id,email,name")
 $tgtByEmail = @{}
 foreach ($u in $tgtUsers) { if ($u.email) { $tgtByEmail[$u.email.ToLowerInvariant()] = $u.id } }
+
+# Prefer Admin role id from source if it exists on target; else first Admin-named role.
+$defaultRoleId = "ca4gbxa1c9u0vu9"
+if (-not (Test-PbExists $TargetUrl $script:TargetToken "userRoles" $defaultRoleId)) {
+    $roles = @(Get-PbAll $TargetUrl $script:TargetToken "userRoles")
+    $adminRole = $roles | Where-Object { $_.name -eq "Admin" } | Select-Object -First 1
+    if ($adminRole) { $defaultRoleId = $adminRole.id }
+}
+
+function Ensure-OrgMembership {
+    param([string]$UserId, [string]$RoleId)
+    $filter = "user='$UserId' && organization='$orgId'"
+    $existing = @(Get-PbAll $TargetUrl $script:TargetToken "organizationMemberships" $filter)
+    if ($existing.Count -gt 0) { return }
+    $body = @{
+        user         = $UserId
+        organization = $orgId
+        role         = $RoleId
+        status       = "active"
+        joinedAt     = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fffZ")
+    }
+    if (-not $Apply) {
+        Write-Host "  DRY create organizationMemberships for user/$UserId"
+        Bump "organizationMemberships:create"
+        return
+    }
+    $null = Invoke-Pb $TargetUrl $script:TargetToken POST "/api/collections/organizationMemberships/records" $body
+    Write-Host "  CREATED organizationMemberships for user/$UserId"
+    Bump "organizationMemberships:create"
+}
+
 foreach ($u in $srcUsers) {
+    $roleId = if ($u.role -and (Test-PbExists $TargetUrl $script:TargetToken "userRoles" $u.role)) { $u.role } else { $defaultRoleId }
+
     if (Test-PbExists $TargetUrl $script:TargetToken "users" $u.id) {
         $userMap[$u.id] = $u.id
         Write-Host "  map same-id $($u.email) -> $($u.id)"
-    } elseif ($u.email -and $tgtByEmail.ContainsKey($u.email.ToLowerInvariant())) {
-        $userMap[$u.id] = $tgtByEmail[$u.email.ToLowerInvariant()]
-        Write-Host "  map email $($u.email) -> $($userMap[$u.id])"
+        # Keep org/branch aligned on target.
+        $patch = @{
+            organization    = $orgId
+            branch          = $branchId
+            allowedBranches = @($branchId)
+            role            = $roleId
+            name            = $u.name
+            verified        = [bool]$u.verified
+            isDeleted       = [bool]$u.isDeleted
+        }
+        if ($Apply) {
+            $null = Invoke-Pb $TargetUrl $script:TargetToken PATCH "/api/collections/users/records/$($u.id)" $patch
+            Bump "users:update"
+        } else {
+            Write-Host "  DRY update users/$($u.id)"
+            Bump "users:update"
+        }
+        Ensure-OrgMembership -UserId $u.id -RoleId $roleId
+        if ($IncludePictures -and $u.avatar) {
+            Transfer-FileIfNeeded "users" $u.id $u.id "avatar" $u.avatar
+        }
+        continue
+    }
+
+    if ($u.email -and $tgtByEmail.ContainsKey($u.email.ToLowerInvariant())) {
+        $mapped = $tgtByEmail[$u.email.ToLowerInvariant()]
+        $userMap[$u.id] = $mapped
+        Write-Host "  map email $($u.email) -> $mapped"
+        Ensure-OrgMembership -UserId $mapped -RoleId $roleId
+        continue
+    }
+
+    # Create with source id. Password cannot be copied; use DefaultUserPassword.
+    $email = $u.email
+    if (-not $email) { $email = "$($u.username)@kyliegym.imported.local" }
+    $payload = @{
+        id              = $u.id
+        email           = $email
+        emailVisibility = [bool]$u.emailVisibility
+        password        = $DefaultUserPassword
+        passwordConfirm = $DefaultUserPassword
+        name            = $u.name
+        verified        = $true
+        organization    = $orgId
+        branch          = $branchId
+        allowedBranches = @($branchId)
+        role            = $roleId
+        isDeleted       = [bool]$u.isDeleted
+    }
+    $userMap[$u.id] = $u.id
+    if (-not $Apply) {
+        Write-Host "  DRY create users/$($u.id) ($email) password=$DefaultUserPassword"
+        Bump "users:create"
     } else {
-        Warn "user $($u.email) ($($u.id)) has no target match - FKs will be cleared"
-        $userMap[$u.id] = ""
+        $null = Invoke-Pb $TargetUrl $script:TargetToken POST "/api/collections/users/records" $payload
+        Write-Host "  CREATED users/$($u.id) ($email)"
+        Bump "users:create"
+    }
+    Ensure-OrgMembership -UserId $u.id -RoleId $roleId
+    if ($IncludePictures -and $u.avatar) {
+        Transfer-FileIfNeeded "users" $u.id $u.id "avatar" $u.avatar
     }
 }
 
@@ -404,9 +493,11 @@ foreach ($aid in @($neededAddOnIds.Keys)) {
 }
 
 Write-Host ""
-Write-Host "-- products --"
-$srcProducts = Get-PbAll $SourceUrl $script:SourceToken "products" $windowFilter
-$tgtProducts = Get-PbAll $TargetUrl $script:TargetToken "products" "branch='$branchId'"
+Write-Host "-- products (full branch catalog) --"
+# Always sync the whole branch catalog — not just the date window — so POS
+# shows every product even if it was not touched in --Since/--Until.
+$srcProducts = @(Get-PbAll $SourceUrl $script:SourceToken "products" "branch='$branchId'")
+$tgtProducts = @(Get-PbAll $TargetUrl $script:TargetToken "products" "branch='$branchId'")
 $tgtProdByName = @{}
 foreach ($p in $tgtProducts) {
     $nkey = "$(NormName $p.name)|$($p.price)"
@@ -426,22 +517,42 @@ foreach ($p in $srcProducts) {
         $productMap[$p.id] = $targetId
         Write-Host "  map $($p.name) $($p.id) -> $targetId"
         Bump "products:map"
-    } else {
-        $productMap[$p.id] = $p.id
+        # Still refresh stock/sale flags on the mapped target.
         $payload = ConvertTo-Hashtable $p
+        $payload.Remove("id")
         $payload["branch"] = $branchId
         if ($payload["category"] -and -not (Test-PbExists $TargetUrl $script:TargetToken "productCategories" $payload["category"])) {
-            $catId = $payload["category"]
-            Warn "product $($p.name): category $catId missing - clearing"
             $payload["category"] = ""
         }
         if ($payload["quantityUnit"] -and -not (Test-PbExists $TargetUrl $script:TargetToken "quantityUnits" $payload["quantityUnit"])) {
             $payload["quantityUnit"] = ""
         }
-        Upsert-Record "products" $payload $p.id
-        if ($IncludePictures -and $p.image) {
-            Transfer-FileIfNeeded "products" $p.id $p.id "image" $p.image
+        if (-not $Apply) {
+            Write-Host "  DRY update products/$targetId (mapped from $($p.id))"
+            Bump "products:update"
+        } else {
+            $payload.Remove("created")
+            $null = Invoke-Pb $TargetUrl $script:TargetToken PATCH "/api/collections/products/records/$targetId" $payload
+            Write-Host "  UPDATED products/$targetId ($($p.name))"
+            Bump "products:update"
         }
+        continue
+    }
+
+    $productMap[$p.id] = $p.id
+    $payload = ConvertTo-Hashtable $p
+    $payload["branch"] = $branchId
+    if ($payload["category"] -and -not (Test-PbExists $TargetUrl $script:TargetToken "productCategories" $payload["category"])) {
+        $catId = $payload["category"]
+        Warn "product $($p.name): category $catId missing - clearing"
+        $payload["category"] = ""
+    }
+    if ($payload["quantityUnit"] -and -not (Test-PbExists $TargetUrl $script:TargetToken "quantityUnits" $payload["quantityUnit"])) {
+        $payload["quantityUnit"] = ""
+    }
+    Upsert-Record "products" $payload $p.id
+    if ($IncludePictures -and $p.image) {
+        Transfer-FileIfNeeded "products" $p.id $p.id "image" $p.image
     }
 }
 
@@ -533,30 +644,10 @@ foreach ($c in @(Get-PbAll $SourceUrl $script:SourceToken "memberCards" $windowF
     Upsert-Record "memberCards" $payload $c.id
 }
 
-Write-Host ""
-Write-Host "-- memberMemberships --"
-foreach ($m in $windowedMM) {
-    $payload = ConvertTo-Hashtable $m
-    $payload["member"] = Remap-Id $memberMap $payload["member"]
-    $payload["membership"] = Remap-Id $membershipMap $payload["membership"]
-    $payload["branch"] = $branchId
-    $payload["soldBy"] = Map-User $payload["soldBy"]
-    $memberMembershipMap[$m.id] = $m.id
-    Upsert-Record "memberMemberships" $payload $m.id
-}
-
-Write-Host ""
-Write-Host "-- memberMembershipAddOns --"
-foreach ($a in $windowedMMA) {
-    $payload = ConvertTo-Hashtable $a
-    $payload["memberMembership"] = Remap-Id $memberMembershipMap $payload["memberMembership"]
-    $payload["membershipAddOn"] = Remap-Id $addOnMap $payload["membershipAddOn"]
-    Upsert-Record "memberMembershipAddOns" $payload $a.id
-}
-
+# Sales before memberMemberships (MM.saleId FK).
 Write-Host ""
 Write-Host "-- sales --"
-$windowedSales = Get-PbAll $SourceUrl $script:SourceToken "sales" $windowFilter
+$windowedSales = @(Get-PbAll $SourceUrl $script:SourceToken "sales" $windowFilter)
 foreach ($s in $windowedSales) {
     $payload = ConvertTo-Hashtable $s
     $payload["branch"] = $branchId
@@ -608,6 +699,31 @@ foreach ($p in @($paymentById.Values)) {
 }
 
 Write-Host ""
+Write-Host "-- memberMemberships --"
+foreach ($m in $windowedMM) {
+    $payload = ConvertTo-Hashtable $m
+    $payload["member"] = Remap-Id $memberMap $payload["member"]
+    $payload["membership"] = Remap-Id $membershipMap $payload["membership"]
+    $payload["branch"] = $branchId
+    $payload["soldBy"] = Map-User $payload["soldBy"]
+    if ($payload["saleId"] -and -not (Test-PbExists $TargetUrl $script:TargetToken "sales" $payload["saleId"])) {
+        Warn "memberMemberships/$($m.id): saleId $($payload['saleId']) missing on target - clearing"
+        $payload["saleId"] = ""
+    }
+    $memberMembershipMap[$m.id] = $m.id
+    Upsert-Record "memberMemberships" $payload $m.id
+}
+
+Write-Host ""
+Write-Host "-- memberMembershipAddOns --"
+foreach ($a in $windowedMMA) {
+    $payload = ConvertTo-Hashtable $a
+    $payload["memberMembership"] = Remap-Id $memberMembershipMap $payload["memberMembership"]
+    $payload["membershipAddOn"] = Remap-Id $addOnMap $payload["membershipAddOn"]
+    Upsert-Record "memberMembershipAddOns" $payload $a.id
+}
+
+Write-Host ""
 Write-Host "-- checkIns --"
 foreach ($c in @(Get-PbAll $SourceUrl $script:SourceToken "checkIns" $windowFilter)) {
     $payload = ConvertTo-Hashtable $c
@@ -616,7 +732,13 @@ foreach ($c in @(Get-PbAll $SourceUrl $script:SourceToken "checkIns" $windowFilt
     $payload["checkedInBy"] = Map-User $payload["checkedInBy"]
     $payload["voidedBy"] = Map-User $payload["voidedBy"]
     if ($payload["memberMembership"]) {
-        $payload["memberMembership"] = Remap-Id $memberMembershipMap $payload["memberMembership"]
+        $mmId = Remap-Id $memberMembershipMap $payload["memberMembership"]
+        if (-not (Test-PbExists $TargetUrl $script:TargetToken "memberMemberships" $mmId)) {
+            Warn "checkIns/$($c.id): memberMembership $mmId missing - clearing"
+            $payload["memberMembership"] = ""
+        } else {
+            $payload["memberMembership"] = $mmId
+        }
     }
     Upsert-Record "checkIns" $payload $c.id
 }
