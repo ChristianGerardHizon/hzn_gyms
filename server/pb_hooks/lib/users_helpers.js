@@ -14,7 +14,13 @@ function isSuperuserAuth(authRecord) {
 function callerIsSuperAdmin(authRecord) {
     if (!authRecord) return false;
     try {
-        return !!authRecord.getBool("superAdmin");
+        if (authRecord.getBool("superAdmin")) return true;
+    } catch (_) {
+        // fall through
+    }
+    try {
+        const raw = authRecord.get("superAdmin");
+        return raw === true || raw === 1 || raw === "true";
     } catch (_) {
         return false;
     }

@@ -53,10 +53,16 @@ class CurrentOrganizationController extends _$CurrentOrganizationController {
   /// `@request.auth.organization` match, resets branch, clears member cache,
   /// and invalidates tenant-scoped list providers.
   Future<void> switchOrganization(String organizationId) async {
+    final auth = ref.read(currentAuthProvider);
+    // No-op when already in this tenant — avoids auth refresh / router churn.
+    if (auth?.user.organization == organizationId &&
+        state.value?.id == organizationId) {
+      return;
+    }
+
     state = const AsyncLoading<Organization?>();
     await _persistOrganizationId(organizationId);
 
-    final auth = ref.read(currentAuthProvider);
     if (auth != null) {
       final pb = ref.read(pocketbaseProvider);
       final body = <String, dynamic>{'organization': organizationId};
@@ -76,11 +82,14 @@ class CurrentOrganizationController extends _$CurrentOrganizationController {
         });
       }
 
-      await pb.collection(PocketBaseCollections.users).update(
-        auth.user.id,
-        body: body,
-      );
-      await ref.read(authControllerProvider.notifier).refresh();
+      // Skip the users PATCH when auth is already linked to this org.
+      if (auth.user.organization != organizationId) {
+        await pb.collection(PocketBaseCollections.users).update(
+          auth.user.id,
+          body: body,
+        );
+        await ref.read(authControllerProvider.notifier).refresh();
+      }
     }
 
     final org = await _fetchOrganization(organizationId);
@@ -117,9 +126,20 @@ class CurrentOrganizationController extends _$CurrentOrganizationController {
 
 /// Convenience provider for the current organization ID, or null if
 /// unresolved.
+///
+/// Prefers the resolved [currentOrganizationControllerProvider] record, then
+/// falls back to `auth.user.organization` so tenant-scoped lists (e.g. branches)
+/// still work if the organization row cannot be fetched briefly.
 @Riverpod(keepAlive: true)
 String? currentOrganizationId(Ref ref) {
-  return ref.watch(currentOrganizationControllerProvider).value?.id;
+  final fromController =
+      ref.watch(currentOrganizationControllerProvider).value?.id;
+  if (fromController != null && fromController.isNotEmpty) {
+    return fromController;
+  }
+  final fromAuth = ref.watch(currentAuthProvider)?.user.organization;
+  if (fromAuth != null && fromAuth.isNotEmpty) return fromAuth;
+  return null;
 }
 
 /// Convenience provider for an organization-scoped filter string.

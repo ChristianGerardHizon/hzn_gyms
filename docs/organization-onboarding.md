@@ -73,6 +73,7 @@ The script adds:
 - `organizations.setupStatus` (select: `pending_setup`, `ready`)
 - `organizations.setupCompletedAt` (date)
 - Org-scoped API rules on `users` and `branches` (tenant + `users.superAdmin` bypass)
+- `users` create/update rules: `superAdmin` short-circuits without requiring `users.create` / `users.edit` (needed so platform operators can enter a tenant and create the first org admin)
 - `users.superAdmin` bool (default false) for platform operators
 - `organizations` CRUD rules require `@request.auth.superAdmin = true`
 

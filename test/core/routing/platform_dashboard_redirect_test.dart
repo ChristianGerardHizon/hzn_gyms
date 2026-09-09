@@ -29,7 +29,7 @@ class _PlatformAdminPermissions extends CurrentUserPermissionsController {
 
 void main() {
   group('platform dashboard redirects', () {
-    test('legacy /organizations redirects to platform org list', () {
+    test('legacy /organizations redirects to platform org list', () async {
       final router = GoRouter(
         routes: [GoRoute(path: '/', builder: (_, _) => const SizedBox())],
       );
@@ -51,7 +51,7 @@ void main() {
         return null;
       }));
 
-      final result = RouterUtils.redirect(
+      final result = await RouterUtils.redirect(
         _FakeBuildContext(),
         state,
         redirectRef,
@@ -109,7 +109,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       final context = tester.element(find.byType(MaterialApp));
 
-      final result = RouterUtils.redirect(context, state, redirectRef);
+      final result = await RouterUtils.redirect(context, state, redirectRef);
       expect(result, PlatformDashboardRoute.path);
     });
 

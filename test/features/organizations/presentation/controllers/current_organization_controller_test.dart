@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hzn_gyms/src/core/foundation/failure.dart';
 import 'package:hzn_gyms/src/core/packages/storage/secure_storage_provider.dart';
 import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
 import 'package:hzn_gyms/src/features/auth/domain/user.dart';
@@ -125,5 +126,19 @@ void main() {
     expect(resolved, org);
     verify(() => orgRepo.fetchOne('org-1')).called(1);
     verifyNever(() => orgRepo.fetchOne('org-other'));
+  });
+
+  test('currentOrganizationId falls back to auth when org fetch fails', () async {
+    when(() => orgRepo.fetchOne('org-1')).thenAnswer(
+      (_) async => left(const DataFailure('not found', null, 'not_found')),
+    );
+
+    final container = createContainer(auth: authWithOrg);
+    addTearDown(container.dispose);
+
+    await container.read(currentOrganizationControllerProvider.future);
+
+    expect(container.read(currentOrganizationControllerProvider).value, isNull);
+    expect(container.read(currentOrganizationIdProvider), 'org-1');
   });
 }
