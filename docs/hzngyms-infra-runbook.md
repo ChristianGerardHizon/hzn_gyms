@@ -33,17 +33,18 @@ Repeat [backfill-organizations.md](backfill-organizations.md) against **staging*
 
 ## 4. Grant platform access (`users.superAdmin`)
 
-Platform org create/manage is **not** a role permission (roles differ per organization).
+Platform org create/manage is **not** a role permission (roles differ per organization). Do **not** create a “Platform Admin” role.
 
 In PocketBase Admin → **users** collection:
 
 1. Open the platform operator user record
 2. Set `superAdmin` = `true`
-3. Verify app nav shows **Platform** link and `/platform` is accessible
+3. Assign the org **Admin** role if they will Enter Tenant (gym powers come from that role / membership, not from the flag alone)
+4. Verify app nav shows **Platform** link and `/platform` is accessible
 
 Only PocketBase `_superusers` may change `superAdmin` (app hooks strip client attempts).
 
-See [organization-onboarding.md](organization-onboarding.md) for setup wizard and schema patch details.
+See [organization-onboarding.md](organization-onboarding.md) for the two admin layers, setup wizard, and schema patch details. Leftover Platform Admin cleanup: `.\scripts\cleanup-platform-admin-role.ps1`.
 
 ## 5. Staging QA
 
