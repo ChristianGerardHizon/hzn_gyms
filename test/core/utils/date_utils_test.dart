@@ -39,6 +39,32 @@ void main() {
     });
   });
 
+  group('calendarMonthsUntil', () {
+    test('counts complete months with day-of-month awareness', () {
+      final now = DateTime(2026, 1, 15);
+      expect(
+        calendarMonthsUntil(DateTime(2026, 2, 14), now: now),
+        0,
+      );
+      expect(
+        calendarMonthsUntil(DateTime(2026, 2, 15), now: now),
+        1,
+      );
+      expect(
+        calendarMonthsUntil(DateTime(2026, 10, 9), now: now),
+        8,
+      );
+    });
+
+    test('returns negative when date is before today', () {
+      final now = DateTime(2026, 3, 15);
+      expect(
+        calendarMonthsUntil(DateTime(2026, 1, 15), now: now),
+        -2,
+      );
+    });
+  });
+
   group('computeMembershipStartDate', () {
     // isBeforeToday uses DateTime.now(); keep fixtures relative to today.
     final now = DateTime.now();

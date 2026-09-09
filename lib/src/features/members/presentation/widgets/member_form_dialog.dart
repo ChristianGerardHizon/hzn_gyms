@@ -158,9 +158,9 @@ Future<MemberFormResult?> showMemberFormDialog(
 }) {
   return showConstrainedDialog<MemberFormResult>(
     context: context,
-    // The edit form is a plain form that shrink-wraps on desktop/tablet, while
-    // the create flow is a full-screen 5-step wizard.
-    fullScreen: member == null,
+    maxWidth: member == null
+        ? DialogConstraints.largeMaxWidth
+        : DialogConstraints.defaultMaxWidth,
     builder: (context) => MemberFormDialog(
       member: member,
       initialName: initialName,
@@ -589,7 +589,7 @@ class _MemberCreateWizard extends HookConsumerWidget {
               }
             },
             child: ConstrainedDialogContent(
-              fullScreen: true,
+              maxWidth: DialogConstraints.largeMaxWidth,
               child: Scaffold(
                 backgroundColor: Colors.transparent,
                 body: Column(

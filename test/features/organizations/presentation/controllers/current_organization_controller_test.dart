@@ -10,6 +10,7 @@ import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_control
 import 'package:hzn_gyms/src/features/organizations/data/repositories/organization_repository.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/tenant_scope_invalidation.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockOrganizationRepository extends Mock
@@ -141,4 +142,28 @@ void main() {
     expect(container.read(currentOrganizationControllerProvider).value, isNull);
     expect(container.read(currentOrganizationIdProvider), 'org-1');
   });
+
+  test(
+    'invalidateTenantScopedProviders from org notifier does not circular-depend',
+    () async {
+      when(() => orgRepo.fetchOne('org-1')).thenAnswer((_) async => right(org));
+
+      final container = createContainer(auth: authWithOrg);
+      addTearDown(container.dispose);
+
+      await container.read(currentOrganizationControllerProvider.future);
+      // Establish orgId → orgController edge (same graph branch controllers use).
+      expect(container.read(currentOrganizationIdProvider), 'org-1');
+
+      final notifier =
+          container.read(currentOrganizationControllerProvider.notifier);
+
+      // Must use container.invalidate — ref.invalidate of org-dependent
+      // providers from this notifier throws CircularDependencyError.
+      expect(
+        () => invalidateTenantScopedProviders(notifier.ref.container),
+        returnsNormally,
+      );
+    },
+  );
 }

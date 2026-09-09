@@ -8,3 +8,12 @@ String formatDaysRemainingLabel(int daysRemaining) {
   if (daysRemaining == 1) return '1 day left';
   return '$daysRemaining days left';
 }
+
+/// Short label for membership months remaining on dashboard cards.
+///
+/// - `1` → `1 month left`
+/// - `n` → `n months left`
+String formatMonthsRemainingLabel(int monthsRemaining) {
+  if (monthsRemaining == 1) return '1 month left';
+  return '$monthsRemaining months left';
+}

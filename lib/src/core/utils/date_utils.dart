@@ -83,6 +83,19 @@ int calendarDaysUntil(DateTime date) {
   return target.difference(today).inDays;
 }
 
+/// Whole calendar months from today (local) to [date].
+///
+/// Counts complete months remaining (day-of-month aware): e.g. Jan 15 → Feb 14
+/// is `0`, Jan 15 → Feb 15 is `1`. Negative when [date] is before today.
+int calendarMonthsUntil(DateTime date, {DateTime? now}) {
+  final today = toLocalDateOnly(now ?? DateTime.now());
+  final target = toLocalDateOnly(date);
+  var months =
+      (target.year - today.year) * 12 + (target.month - today.month);
+  if (target.day < today.day) months -= 1;
+  return months;
+}
+
 /// Whether [date]'s local calendar day is strictly before today.
 bool isBeforeToday(DateTime date) => calendarDaysUntil(date) < 0;
 

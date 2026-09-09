@@ -22,6 +22,16 @@ bool canCommitDashboardMembersPrefetch({
   return isMounted && requestGeneration == currentGeneration;
 }
 
+/// After create/renew invalidates page 1, reset [loadedUpToPage] so the next
+/// [AsyncData] reseeds the local list (otherwise updates are ignored once
+/// page 1 has already been applied).
+bool shouldResetLoadedPageForDashboardMembersRefresh({
+  required bool isProviderLoading,
+  required bool hasLoadedOnce,
+}) {
+  return isProviderLoading && hasLoadedOnce;
+}
+
 /// Whether [error] is using a disposed [ValueNotifier] / ChangeNotifier.
 bool isUsedAfterDisposeError(Object error) {
   final message = error.toString();

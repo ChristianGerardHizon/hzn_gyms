@@ -18,24 +18,29 @@ import '../../../settings/presentation/controllers/current_branch_controller.dar
 import '../../../users/presentation/controllers/paginated_users_controller.dart';
 
 /// Invalidates keepAlive / tenant-scoped providers after an org switch.
-void invalidateTenantScopedProviders(Ref ref) {
-  ref.invalidate(currentBranchControllerProvider);
-  ref.invalidate(branchesControllerProvider);
-  ref.invalidate(paginatedMembersControllerProvider);
-  ref.invalidate(membersControllerProvider);
-  ref.invalidate(paginatedSalesControllerProvider);
-  ref.invalidate(paginatedProductsControllerProvider);
-  ref.invalidate(membershipsControllerProvider);
-  ref.invalidate(paginatedUsersControllerProvider);
-  ref.invalidate(checkInRecordsControllerProvider);
-  ref.invalidate(activeMembersCountProvider);
-  ref.invalidate(activeMembersListProvider);
-  ref.invalidate(todaysCheckInsCountProvider);
-  ref.invalidate(todaySalesProvider);
-  ref.invalidate(todaySalesSummaryProvider);
-  ref.invalidate(todaysNewMembersCountProvider);
-  ref.invalidate(todaysNewMembersListProvider);
-  ref.invalidate(expiringMembershipsProvider);
-  ref.invalidate(inventoryAlertsSummaryProvider);
-  ref.invalidate(topSellingProductsProvider);
+///
+/// Uses [ProviderContainer.invalidate] (not [Ref.invalidate]) so this is safe
+/// to call from [CurrentOrganizationController]: many of these providers watch
+/// [currentOrganizationIdProvider], and `ref.invalidate` would register a
+/// circular dependency.
+void invalidateTenantScopedProviders(ProviderContainer container) {
+  container.invalidate(currentBranchControllerProvider);
+  container.invalidate(branchesControllerProvider);
+  container.invalidate(paginatedMembersControllerProvider);
+  container.invalidate(membersControllerProvider);
+  container.invalidate(paginatedSalesControllerProvider);
+  container.invalidate(paginatedProductsControllerProvider);
+  container.invalidate(membershipsControllerProvider);
+  container.invalidate(paginatedUsersControllerProvider);
+  container.invalidate(checkInRecordsControllerProvider);
+  container.invalidate(activeMembersCountProvider);
+  container.invalidate(activeMembersListProvider);
+  container.invalidate(todaysCheckInsCountProvider);
+  container.invalidate(todaySalesProvider);
+  container.invalidate(todaySalesSummaryProvider);
+  container.invalidate(todaysNewMembersCountProvider);
+  container.invalidate(todaysNewMembersListProvider);
+  container.invalidate(expiringMembershipsProvider);
+  container.invalidate(inventoryAlertsSummaryProvider);
+  container.invalidate(topSellingProductsProvider);
 }
