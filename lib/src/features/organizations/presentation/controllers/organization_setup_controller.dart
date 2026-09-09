@@ -90,9 +90,14 @@ class OrganizationSetupController extends _$OrganizationSetupController {
       (org) => org,
     );
 
-    await ref
-        .read(currentOrganizationControllerProvider.notifier)
-        .switchOrganization(orgId);
+    // Enter tenant context once if needed. Calling switchOrganization on every
+    // rebuild re-PATCHes users + refreshes auth, which re-triggers GoRouter.
+    final currentOrgId = ref.read(currentOrganizationIdProvider);
+    if (currentOrgId != orgId) {
+      await ref
+          .read(currentOrganizationControllerProvider.notifier)
+          .switchOrganization(orgId);
+    }
 
     final branches = await ref.read(branchesControllerProvider.future);
     final hasBranch = branches.isNotEmpty;

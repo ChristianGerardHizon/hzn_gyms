@@ -150,6 +150,7 @@ void main() {
 
     test('allows profile and core ops paths', () {
       expect(canAccessPath('/profile', staff), isTrue);
+      expect(canAccessPath('/dashboard', staff), isTrue);
       expect(canAccessPath('/check-in', staff), isTrue);
       expect(canAccessPath('/check-in/records', staff), isTrue);
       expect(canAccessPath('/cashier', staff), isTrue);
@@ -203,6 +204,7 @@ void main() {
       expect(isPermissionSensitivePath('/system/camera'), isFalse);
       expect(isPermissionSensitivePath('/members'), isFalse);
       expect(isPermissionSensitivePath('/'), isFalse);
+      expect(isPermissionSensitivePath('/dashboard'), isFalse);
     });
   });
 

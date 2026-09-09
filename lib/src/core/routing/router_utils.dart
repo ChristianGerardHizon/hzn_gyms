@@ -339,13 +339,12 @@ abstract class RouterUtils {
         state.pathParameters['orgSlug'] == null &&
         allAppNavDestinations.any((d) => matchesRoutePath(currentPath, d.path))) {
       final prefix = _resolveScopePrefix(ref);
-      // Still resolving org/branch (e.g. first frame after login) — stay put
-      // rather than guessing; a later redirect pass will pick this back up.
-      if (prefix == null) return null;
-      final rewritten = state.uri.replace(
-        path: '$prefix$currentPath',
-      );
-      return rewritten.toString();
+      // Still resolving org/branch (e.g. first frame after login) — fall
+      // through to permission guards rather than exiting redirect early.
+      // A later refresh will rewrite once the scope is known.
+      if (prefix != null) {
+        return state.uri.replace(path: '$prefix$currentPath').toString();
+      }
     }
 
     // 5e. Validate an already-scoped URL's org/branch segments against what
@@ -422,7 +421,10 @@ abstract class RouterUtils {
               .length
           : 0;
       final unscopedPath = currentPath.substring(scopePrefixLength);
-      if (!canAccessPath(unscopedPath.isEmpty ? '/' : unscopedPath, perms)) {
+      if (!canAccessPath(
+        unscopedPath.isEmpty ? DashboardRoute.path : unscopedPath,
+        perms,
+      )) {
         final prefix = currentPath.substring(0, scopePrefixLength);
         return '$prefix${fallbackPathFor(perms)}';
       }
