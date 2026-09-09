@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../../core/i18n/strings.g.dart';
+import '../../../../../core/widgets/dialog/dialog_constraints.dart';
 import '../../../../../core/widgets/dialog_close_handler.dart';
 import '../../../domain/sale_status_filter.dart';
 import '../../controllers/sale_search_controller.dart';
@@ -14,15 +15,13 @@ class SaleSearchFieldsDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final size = MediaQuery.sizeOf(context);
     final t = Translations.of(context);
     final selectedFields = ref.watch(saleSearchFieldsProvider);
     final selectedStatuses = ref.watch(saleStatusFiltersProvider);
 
     return DialogCloseHandler(
-      child: SizedBox(
-        width: size.width,
-        height: size.height,
+      child: ConstrainedDialogContent(
+        maxWidth: DialogConstraints.compactMaxWidth,
         child: Column(
           children: [
             // Header
@@ -192,14 +191,9 @@ class SaleSearchFieldsDialog extends ConsumerWidget {
 
 /// Shows the sale search fields selection dialog.
 void showSaleSearchFieldsDialog(BuildContext context) {
-  showDialog(
+  showConstrainedDialog(
     context: context,
-    useRootNavigator: true,
-    barrierDismissible: false,
-    builder: (context) => const Dialog(
-      insetPadding: EdgeInsets.all(8),
-      clipBehavior: Clip.antiAlias,
-      child: SaleSearchFieldsDialog(),
-    ),
+    maxWidth: DialogConstraints.compactMaxWidth,
+    builder: (context) => const SaleSearchFieldsDialog(),
   );
 }

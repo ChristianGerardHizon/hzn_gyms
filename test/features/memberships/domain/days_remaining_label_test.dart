@@ -17,4 +17,15 @@ void main() {
       expect(formatDaysRemainingLabel(2), '2 days left');
     });
   });
+
+  group('formatMonthsRemainingLabel', () {
+    test('returns singular month left for one month', () {
+      expect(formatMonthsRemainingLabel(1), '1 month left');
+    });
+
+    test('returns plural months left for multiple months', () {
+      expect(formatMonthsRemainingLabel(2), '2 months left');
+      expect(formatMonthsRemainingLabel(11), '11 months left');
+    });
+  });
 }

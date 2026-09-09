@@ -101,8 +101,8 @@ class CurrentOrganizationController extends _$CurrentOrganizationController {
       // Local DB may be unavailable (tests); continue switch.
     }
 
-    invalidateTenantScopedProviders(ref);
-    ref.invalidate(organizationMembershipsControllerProvider);
+    invalidateTenantScopedProviders(ref.container);
+    ref.container.invalidate(organizationMembershipsControllerProvider);
   }
 
   Future<Organization?> _fetchOrganization(String id) async {
