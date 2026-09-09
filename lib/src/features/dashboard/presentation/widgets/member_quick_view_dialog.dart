@@ -608,8 +608,16 @@ class _ActionButtons extends ConsumerWidget {
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: () {
+            // Root-navigator dialogs sit outside RouteBase.builder, so
+            // GoRouterState.of(context) throws. Read the org/branch scope
+            // from the router's current path instead, mirroring
+            // `OrgScopedGoRouteData._scopedLocation`.
             final router = GoRouter.of(context);
-            final location = MemberDetailRoute(id: memberId).location;
+            final segments = router.state.uri.pathSegments;
+            final memberLocation = MemberDetailRoute(id: memberId).location;
+            final location = segments.length >= 2
+                ? '/${segments[0]}/${segments[1]}$memberLocation'
+                : memberLocation;
             // Close stacked dialogs (e.g. KPI list + quick view) before leaving.
             Navigator.of(context, rootNavigator: true).popUntil(
               (route) => route is! PopupRoute,

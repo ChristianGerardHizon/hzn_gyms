@@ -420,7 +420,19 @@ bool hasCreateUserOrganizationId(String? orgId) =>
     orgId != null && orgId.isNotEmpty;
 
 /// Resolves the user detail location for the shell that opened create-user.
+///
+/// Root-navigator dialogs sit outside `RouteBase.builder`, so
+/// `GoRouterState.of(context)` throws and the org/branch scope can't be read
+/// off the ambient route state. Instead, the org/branch slugs are parsed
+/// from [currentPath] (the router's current URI path) and prepended
+/// manually, mirroring `OrgScopedGoRouteData._scopedLocation`.
 String userDetailLocationForCurrentPath(String currentPath, String userId) {
+  final segments = Uri.parse(currentPath).pathSegments;
+  if (segments.length >= 2) {
+    final orgSlug = segments[0];
+    final branchSlug = segments[1];
+    return '/$orgSlug/$branchSlug${UserDetailRoute(id: userId).location}';
+  }
   return UserDetailRoute(id: userId).location;
 }
 

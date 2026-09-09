@@ -47,7 +47,7 @@ final class RfidListenerStatusControllerProvider
 }
 
 String _$rfidListenerStatusControllerHash() =>
-    r'9a9006cba0985a89744a0c672231eefcccd08c20';
+    r'5d427d1dbb55e1bbde1123129088e4f67fdc81cf';
 
 /// Exposes RFID listener state for the Check-In app bar indicator.
 

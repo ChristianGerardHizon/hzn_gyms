@@ -8,6 +8,7 @@ void main() {
         id: '1',
         name: 'Bacolod Branch',
         code: 'bcd',
+        slug: 'bcd',
         address: 'x',
         contactNumber: '1',
       );
@@ -19,6 +20,7 @@ void main() {
         id: '1',
         name: 'Bacolod Branch',
         code: '',
+        slug: 'bacolod-branch',
         address: 'x',
         contactNumber: '1',
       );

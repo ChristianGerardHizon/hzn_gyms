@@ -25,6 +25,7 @@ import '../../../features/quantity_units/domain/quantity_unit.dart';
 import '../../permissions/current_user_permissions.dart';
 import '../../utils/breakpoints.dart';
 import '../../widgets/state/error_state.dart';
+import '../org_scoped_navigation.dart';
 
 part 'system.routes.g.dart';
 
@@ -273,7 +274,12 @@ class ActivityLogRoute extends GoRouteData with $ActivityLogRoute {
       context,
     ).read(currentUserPermissionsProvider).value;
     if (perms != null && !perms.canViewActivityLog) {
-      return const AppearanceRoute().location;
+      // `.location` is unprefixed; prepend the org/branch scope manually
+      // since redirect() returns a String rather than navigating directly
+      // (see OrgScopedGoRouteData._scopedLocation for the equivalent).
+      final orgSlug = state.pathParameters['orgSlug'];
+      final branchSlug = state.pathParameters['branchSlug'];
+      return '/$orgSlug/$branchSlug${const AppearanceRoute().location}';
     }
     return null;
   }
@@ -299,7 +305,12 @@ class ActivityLogDetailRoute extends GoRouteData with $ActivityLogDetailRoute {
       context,
     ).read(currentUserPermissionsProvider).value;
     if (perms != null && !perms.canViewActivityLog) {
-      return const AppearanceRoute().location;
+      // `.location` is unprefixed; prepend the org/branch scope manually
+      // since redirect() returns a String rather than navigating directly
+      // (see OrgScopedGoRouteData._scopedLocation for the equivalent).
+      final orgSlug = state.pathParameters['orgSlug'];
+      final branchSlug = state.pathParameters['branchSlug'];
+      return '/$orgSlug/$branchSlug${const AppearanceRoute().location}';
     }
     return null;
   }
@@ -373,7 +384,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Product Categories',
               description: 'Manage product category hierarchy',
               color: theme.colorScheme.secondary,
-              onTap: () => const ProductCategoriesRoute().go(context),
+              onTap: () => const ProductCategoriesRoute().goScoped(context),
             ),
             const SizedBox(height: 16),
             _SystemOptionCard(
@@ -381,7 +392,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Quantity Units',
               description: 'Manage units of measurement',
               color: Colors.cyan,
-              onTap: () => const QuantityUnitsRoute().go(context),
+              onTap: () => const QuantityUnitsRoute().goScoped(context),
             ),
             const SizedBox(height: 16),
             _SystemOptionCard(
@@ -389,7 +400,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Printers',
               description: 'Configure thermal receipt printers',
               color: Colors.orange,
-              onTap: () => const PrinterSettingsRoute().go(context),
+              onTap: () => const PrinterSettingsRoute().goScoped(context),
             ),
             const SizedBox(height: 16),
             _SystemOptionCard(
@@ -397,7 +408,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Cashier Layout',
               description: 'Customize cashier page groups',
               color: Colors.teal,
-              onTap: () => const CashierGroupsRoute().go(context),
+              onTap: () => const CashierGroupsRoute().goScoped(context),
             ),
             const SizedBox(height: 16),
           ],
@@ -406,7 +417,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
             title: 'Appearance',
             description: 'Choose light, dark, or system theme',
             color: Colors.purple,
-            onTap: () => const AppearanceRoute().go(context),
+            onTap: () => const AppearanceRoute().goScoped(context),
           ),
           const SizedBox(height: 16),
           _SystemOptionCard(
@@ -414,7 +425,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
             title: 'Camera',
             description: 'Default camera for member photo capture',
             color: Colors.blue,
-            onTap: () => const CameraRoute().go(context),
+            onTap: () => const CameraRoute().goScoped(context),
           ),
           const SizedBox(height: 16),
 
@@ -424,7 +435,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Import',
               description: 'Import products from CSV file',
               color: Colors.indigo,
-              onTap: () => const ImportRoute().go(context),
+              onTap: () => const ImportRoute().goScoped(context),
             ),
             const SizedBox(height: 16),
             _SystemOptionCard(
@@ -432,7 +443,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Debug',
               description: 'Simulate RFID scans and other test tools',
               color: Colors.brown,
-              onTap: () => const SystemDebugRoute().go(context),
+              onTap: () => const SystemDebugRoute().goScoped(context),
             ),
             const SizedBox(height: 16),
           ],
@@ -442,7 +453,7 @@ class _MobileSystemLandingPage extends ConsumerWidget {
               title: 'Activity Log',
               description: 'View system-wide change history',
               color: Colors.blueGrey,
-              onTap: () => const ActivityLogRoute().go(context),
+              onTap: () => const ActivityLogRoute().goScoped(context),
             ),
           ],
         ],
@@ -591,7 +602,7 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
                       isChild: false,
                       onTap: () => ProductCategoryDetailRoute(
                         id: category.id,
-                      ).push(context),
+                      ).pushScoped(context),
                     ),
                     ...children.map(
                       (child) => Padding(
@@ -601,7 +612,7 @@ class _MobileProductCategoriesListPage extends ConsumerWidget {
                           isChild: true,
                           onTap: () => ProductCategoryDetailRoute(
                             id: child.id,
-                          ).push(context),
+                          ).pushScoped(context),
                         ),
                       ),
                     ),
@@ -746,7 +757,7 @@ class _MobilePrinterListPage extends ConsumerWidget {
                   trailing: printer.isEnabled
                       ? const Icon(Icons.chevron_right)
                       : Icon(Icons.block, color: theme.colorScheme.error),
-                  onTap: () => PrinterDetailRoute(id: printer.id).push(context),
+                  onTap: () => PrinterDetailRoute(id: printer.id).pushScoped(context),
                 );
               },
             ),
@@ -858,7 +869,7 @@ class _MobileQuantityUnitsListPage extends ConsumerWidget {
                 return _MobileQuantityUnitListTile(
                   unit: unit,
                   onTap: () =>
-                      QuantityUnitDetailRoute(id: unit.id).push(context),
+                      QuantityUnitDetailRoute(id: unit.id).pushScoped(context),
                 );
               },
             ),

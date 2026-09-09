@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/memberships.routes.dart';
 import '../../../../core/utils/currency_format.dart';
 import '../../../settings/presentation/controllers/branches_controller.dart';
@@ -219,7 +220,7 @@ class _MembershipListTile extends ConsumerWidget {
             : 'Add to favorites',
         onPressed: toggleFavorite,
       ),
-      onTap: () => MembershipDetailRoute(id: membership.id).go(context),
+      onTap: () => MembershipDetailRoute(id: membership.id).goScoped(context),
     );
   }
 }

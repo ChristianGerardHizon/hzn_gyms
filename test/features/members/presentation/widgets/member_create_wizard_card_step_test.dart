@@ -22,6 +22,7 @@ const _testBranch = Branch(
   id: 'branch-1',
   name: 'Main Branch',
   code: 'MAIN',
+  slug: 'main',
   address: '123 Gym St',
   contactNumber: '555-0100',
 );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/system.routes.dart';
 import '../../../../core/widgets/state/error_state.dart';
 import '../controllers/activity_logs_controller.dart';
@@ -72,7 +73,7 @@ class ActivityLogsPage extends ConsumerWidget {
                         if (onSelected != null) {
                           onSelected!(log.id);
                         } else {
-                          ActivityLogDetailRoute(id: log.id).push(context);
+                          ActivityLogDetailRoute(id: log.id).pushScoped(context);
                         }
                       },
                     );

@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/packages/pocketbase/pb_filter.dart';
 import '../../../../core/packages/storage/secure_storage_provider.dart';
+import '../../../../core/routing/route_scope_provider.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../organizations/presentation/controllers/current_organization_controller.dart';
 import '../../../users/presentation/controllers/user_provider.dart';
@@ -16,6 +17,10 @@ const _currentBranchStorageKey = 'CURRENT_BRANCH_ID';
 
 /// Sentinel stored when admin selects "All branches".
 const allBranchesSentinel = '__ALL__';
+
+/// Reserved `branchSlug` URL segment for "All branches" (admin) mode.
+/// Never assignable to a real branch — enforced by [branchSlugValidator].
+const allBranchesSlug = 'all';
 
 /// Resolved working-branch selection for the signed-in user.
 class CurrentBranchSelection {
@@ -49,6 +54,7 @@ class CurrentBranchController extends _$CurrentBranchController {
 
     // Rebuild when the active organization changes (org switcher).
     ref.watch(currentOrganizationIdProvider);
+    final routeScope = ref.watch(currentRouteScopeProvider);
 
     final orgBranches = await ref.watch(branchesControllerProvider.future);
     final orgBranchIds = orgBranches.map((b) => b.id).toSet();
@@ -59,6 +65,31 @@ class CurrentBranchController extends _$CurrentBranchController {
       auth.user.allowedBranches,
     );
     final isAdmin = await _checkIsAdmin();
+
+    // The URL is the source of truth for the working branch once a
+    // validated route scope exists: no server-side patch is needed to
+    // switch branches (unlike organization), so it's safe to just follow
+    // it. Falls through to the persisted/default logic below only if the
+    // route segment doesn't resolve to a branch this user may access
+    // (router_utils validation should prevent that in practice).
+    if (routeScope != null) {
+      if (routeScope.branchSlug == allBranchesSlug) {
+        if (isAdmin) {
+          await _persistBranch(allBranchesSentinel);
+          return const CurrentBranchSelection(isAll: true);
+        }
+      } else {
+        final match = orgBranches.cast<Branch?>().firstWhere(
+              (b) => b?.slug == routeScope.branchSlug,
+              orElse: () => null,
+            );
+        if (match != null && (isAdmin || allowedIds.contains(match.id))) {
+          await _persistBranch(match.id);
+          return CurrentBranchSelection(branch: match);
+        }
+      }
+    }
+
     final persisted = await _loadPersistedBranch();
 
     if (isAdmin) {

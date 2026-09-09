@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../routing/org_scoped_navigation.dart';
 import '../routing/routes/outbox.routes.dart';
 import '../sync/outbox_sync_worker.dart';
 
@@ -17,7 +18,7 @@ class OutboxPendingBadge extends ConsumerWidget {
       data: (count) {
         if (count == 0) return const SizedBox.shrink();
         return InkWell(
-          onTap: () => const OutboxRoute().go(context),
+          onTap: () => const OutboxRoute().goScoped(context),
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),

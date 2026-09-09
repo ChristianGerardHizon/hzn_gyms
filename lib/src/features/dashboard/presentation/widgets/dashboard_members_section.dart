@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/utils/perf_logger.dart';
 import '../../../../core/widgets/cached_avatar.dart';
@@ -365,7 +366,7 @@ class DashboardMembersSection extends HookConsumerWidget {
                       },
                     ),
                     TextButton(
-                      onPressed: () => const MembersRoute().go(context),
+                      onPressed: () => const MembersRoute().goScoped(context),
                       child: const Text('View All'),
                     ),
                   ],

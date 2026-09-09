@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../i18n/strings.g.dart';
+import '../routing/org_scoped_navigation.dart';
 import '../routing/routes/branches.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/roles.routes.dart';
@@ -156,42 +157,42 @@ class BreadcrumbNav extends StatelessWidget {
         return BreadcrumbItem(
           label: t.navigation.products,
           path: ProductsRoute.path,
-          onTap: () => const ProductsRoute().go(context),
+          onTap: () => const ProductsRoute().goScoped(context),
         );
 
       case 'cashier':
         return BreadcrumbItem(
           label: t.navigation.sales,
           path: SalesRoute.path,
-          onTap: () => const SalesRoute().go(context),
+          onTap: () => const SalesRoute().goScoped(context),
         );
 
       case 'users':
         return BreadcrumbItem(
           label: t.navigation.users,
           path: UsersRoute.path,
-          onTap: () => const UsersRoute().go(context),
+          onTap: () => const UsersRoute().goScoped(context),
         );
 
       case 'roles':
         return BreadcrumbItem(
           label: t.navigation.roles,
           path: RolesRoute.path,
-          onTap: () => const RolesRoute().go(context),
+          onTap: () => const RolesRoute().goScoped(context),
         );
 
       case 'branches':
         return BreadcrumbItem(
           label: t.navigation.branches,
           path: BranchesRoute.path,
-          onTap: () => const BranchesRoute().go(context),
+          onTap: () => const BranchesRoute().goScoped(context),
         );
 
       case 'system':
         return BreadcrumbItem(
           label: t.navigation.system,
           path: SystemRoute.path,
-          onTap: () => const SystemRoute().go(context),
+          onTap: () => const SystemRoute().goScoped(context),
         );
 
       default:

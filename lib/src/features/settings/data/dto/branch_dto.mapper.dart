@@ -38,6 +38,8 @@ class BranchDtoMapper extends ClassMapperBase<BranchDto> {
   static const Field<BranchDto, String> _f$name = Field('name', _$name);
   static String _$code(BranchDto v) => v.code;
   static const Field<BranchDto, String> _f$code = Field('code', _$code);
+  static String _$slug(BranchDto v) => v.slug;
+  static const Field<BranchDto, String> _f$slug = Field('slug', _$slug);
   static String _$address(BranchDto v) => v.address;
   static const Field<BranchDto, String> _f$address = Field(
     'address',
@@ -99,6 +101,7 @@ class BranchDtoMapper extends ClassMapperBase<BranchDto> {
     #collectionName: _f$collectionName,
     #name: _f$name,
     #code: _f$code,
+    #slug: _f$slug,
     #address: _f$address,
     #contactNumber: _f$contactNumber,
     #operatingHours: _f$operatingHours,
@@ -117,6 +120,7 @@ class BranchDtoMapper extends ClassMapperBase<BranchDto> {
       collectionName: data.dec(_f$collectionName),
       name: data.dec(_f$name),
       code: data.dec(_f$code),
+      slug: data.dec(_f$slug),
       address: data.dec(_f$address),
       contactNumber: data.dec(_f$contactNumber),
       operatingHours: data.dec(_f$operatingHours),
@@ -194,6 +198,7 @@ abstract class BranchDtoCopyWith<$R, $In extends BranchDto, $Out>
     String? collectionName,
     String? name,
     String? code,
+    String? slug,
     String? address,
     String? contactNumber,
     String? operatingHours,
@@ -222,6 +227,7 @@ class _BranchDtoCopyWithImpl<$R, $Out>
     String? collectionName,
     String? name,
     String? code,
+    String? slug,
     String? address,
     String? contactNumber,
     Object? operatingHours = $none,
@@ -238,6 +244,7 @@ class _BranchDtoCopyWithImpl<$R, $Out>
       if (collectionName != null) #collectionName: collectionName,
       if (name != null) #name: name,
       if (code != null) #code: code,
+      if (slug != null) #slug: slug,
       if (address != null) #address: address,
       if (contactNumber != null) #contactNumber: contactNumber,
       if (operatingHours != $none) #operatingHours: operatingHours,
@@ -256,6 +263,7 @@ class _BranchDtoCopyWithImpl<$R, $Out>
     collectionName: data.get(#collectionName, or: $value.collectionName),
     name: data.get(#name, or: $value.name),
     code: data.get(#code, or: $value.code),
+    slug: data.get(#slug, or: $value.slug),
     address: data.get(#address, or: $value.address),
     contactNumber: data.get(#contactNumber, or: $value.contactNumber),
     operatingHours: data.get(#operatingHours, or: $value.operatingHours),

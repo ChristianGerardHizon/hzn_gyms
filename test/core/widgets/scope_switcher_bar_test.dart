@@ -17,6 +17,7 @@ void main() {
     id: 'branch-a',
     name: 'Branch A',
     code: 'BRA',
+    slug: 'bra',
     address: 'x',
     contactNumber: '1',
   );

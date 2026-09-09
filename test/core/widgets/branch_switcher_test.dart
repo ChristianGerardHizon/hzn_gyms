@@ -22,6 +22,7 @@ void main() {
       id: 'branch-a',
       name: 'Branch A',
       code: 'BRA',
+      slug: 'bra',
       address: 'x',
       contactNumber: '1',
     );
@@ -29,6 +30,7 @@ void main() {
       id: 'branch-b',
       name: 'Branch B',
       code: 'BRB',
+      slug: 'brb',
       address: 'y',
       contactNumber: '2',
     );

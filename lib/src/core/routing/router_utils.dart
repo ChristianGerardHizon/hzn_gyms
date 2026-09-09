@@ -5,10 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/organizations/presentation/controllers/current_organization_controller.dart';
 import '../../features/organizations/presentation/controllers/organization_memberships_controller.dart';
+import '../../features/settings/presentation/controllers/branches_controller.dart';
+import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../navigation/app_nav_destination.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
+import 'route_scope_provider.dart';
 import 'routes/auth.routes.dart';
 import 'routes/check_in.routes.dart';
 import 'routes/dashboard.routes.dart';
@@ -29,6 +33,12 @@ abstract class RouterUtils {
   ];
 
   /// Home path for an authenticated, verified user.
+  ///
+  /// [DashboardRoute.path] results are prefixed with the resolved
+  /// `/orgSlug/branchSlug` scope when available; falls back to the bare
+  /// path while the organization hasn't resolved yet (e.g. right after
+  /// login) — [redirect] step 5d/5e will correct it on the next pass.
+  ///
   static String homePathFor(Ref ref) {
     final perms = ref.read(currentUserPermissionsProvider).value;
     if (perms?.canManageOrganizations ?? false) {
@@ -37,17 +47,58 @@ abstract class RouterUtils {
     final auth = ref.read(currentAuthProvider);
     final linkedOrg = auth?.user.organization;
     if (linkedOrg != null && linkedOrg.isNotEmpty) {
-      return DashboardRoute.path;
+      return _scopedDashboardPath(ref);
     }
     final membershipsAsync = ref.read(organizationMembershipsControllerProvider);
     if (membershipsAsync.hasError || membershipsAsync.isLoading) {
-      return DashboardRoute.path;
+      return _scopedDashboardPath(ref);
     }
     final memberships = membershipsAsync.value;
     if (memberships != null && !memberships.any((m) => m.isActive)) {
       return AwaitingOrganizationRoute.path;
     }
-    return DashboardRoute.path;
+    return _scopedDashboardPath(ref);
+  }
+
+  /// [DashboardRoute.path] prefixed with the current org/branch scope, or
+  /// the bare path if the scope can't be resolved yet.
+  static String _scopedDashboardPath(Ref ref) {
+    final prefix = _resolveScopePrefix(ref);
+    if (prefix == null) return DashboardRoute.path;
+    return '$prefix${DashboardRoute.path}';
+  }
+
+  /// Resolves `/orgSlug/branchSlug` from the current org/branch controllers,
+  /// or null while either is unresolved.
+  static String? _resolveScopePrefix(Ref ref) {
+    final org = ref.read(currentOrganizationControllerProvider).value;
+    if (org == null || org.slug.isEmpty) return null;
+    final branchSelection = ref.read(currentBranchControllerProvider).value;
+    if (branchSelection == null) return null;
+    final branchSlug = branchSelection.isAll
+        ? allBranchesSlug
+        : branchSelection.branch?.slug;
+    if (branchSlug == null || branchSlug.isEmpty) return null;
+    return '/${org.slug}/$branchSlug';
+  }
+
+  /// Replaces the `/orgSlug/branchSlug` segments of [currentLocation],
+  /// preserving everything after them (e.g. switching branch while on
+  /// `/acme/downtown/system/product-categories` with `branchSlug: 'all'`
+  /// yields `/acme/all/system/product-categories`, not a bounce to
+  /// dashboard). Returns [currentLocation] unchanged if it doesn't start
+  /// with two path segments.
+  static String replaceScopeSegment(
+    String currentLocation, {
+    String? orgSlug,
+    String? branchSlug,
+  }) {
+    final segments = currentLocation.split('/');
+    // ['', orgSlug, branchSlug, ...rest]
+    if (segments.length < 3) return currentLocation;
+    if (orgSlug != null) segments[1] = orgSlug;
+    if (branchSlug != null) segments[2] = branchSlug;
+    return segments.join('/');
   }
 
   /// Former top-level check-in records path (now nested under check-in).
@@ -101,11 +152,11 @@ abstract class RouterUtils {
   /// Redirects unauthenticated users to login and
   /// authenticated users away from login pages.
   /// Preserves deep link URLs on web by storing them during auth loading.
-  static FutureOr<String?> redirect(
+  static Future<String?> redirect(
     BuildContext context,
     GoRouterState state,
     Ref ref,
-  ) {
+  ) async {
     final currentPath = state.matchedLocation;
     final fullUri = state.uri.toString();
 
@@ -272,10 +323,93 @@ abstract class RouterUtils {
       }
     }
 
+    final perms = ref.read(currentUserPermissionsProvider).value;
+    final isPlatformAdmin = perms?.canManageOrganizations ?? false;
+
+    // 5d. Flat legacy main-app path (no org/branch prefix) → rewrite to the
+    // scoped equivalent using the currently-resolved org/branch. Preserves
+    // old bookmarks / not-yet-updated internal navigation. Platform routes
+    // never get this prefix — they're excluded by not appearing in
+    // [allAppNavDestinations]. Applies to platform admins too (unlike 5e) —
+    // this only rewrites using whatever org/branch is already resolved, it
+    // never switches tenants, so it's safe regardless of role.
+    if (isAuthenticated &&
+        isVerified &&
+        !isIgnored &&
+        state.pathParameters['orgSlug'] == null &&
+        allAppNavDestinations.any((d) => matchesRoutePath(currentPath, d.path))) {
+      final prefix = _resolveScopePrefix(ref);
+      // Still resolving org/branch (e.g. first frame after login) — stay put
+      // rather than guessing; a later redirect pass will pick this back up.
+      if (prefix == null) return null;
+      final rewritten = state.uri.replace(
+        path: '$prefix$currentPath',
+      );
+      return rewritten.toString();
+    }
+
+    // 5e. Validate an already-scoped URL's org/branch segments against what
+    // this user may actually access. Org is validated/self-healing only —
+    // never a trigger to switch tenants from a bare URL (that requires a
+    // server-side `users.organization` patch; see
+    // [CurrentOrganizationController.switchOrganization]). Branch may
+    // safely be sourced from the URL (no server patch involved), so once
+    // validated it's published to [currentRouteScopeProvider] and
+    // [CurrentBranchController] follows it.
+    if (isAuthenticated &&
+        isVerified &&
+        !isIgnored &&
+        !isPlatformAdmin &&
+        state.pathParameters['orgSlug'] != null) {
+      final orgSlug = state.pathParameters['orgSlug']!;
+      final branchSlug = state.pathParameters['branchSlug']!;
+
+      final orgAsync = ref.read(currentOrganizationControllerProvider);
+      if (orgAsync.isLoading) return null;
+      final org = orgAsync.value;
+      if (org == null || org.slug != orgSlug) {
+        final prefix = _resolveScopePrefix(ref);
+        if (prefix == null) return null;
+        // currentPath already carries the wrong org/branch segments — strip
+        // them before prepending the resolved (correct) prefix, or this
+        // would double up into `/rightOrg/rightBranch/wrongOrg/wrongBranch/...`.
+        final wrongPrefixLength = '/$orgSlug/$branchSlug'.length;
+        final suffix = currentPath.substring(wrongPrefixLength);
+        return state.uri.replace(path: '$prefix$suffix').toString();
+      }
+
+      final branchesAsync = ref.read(branchesControllerProvider);
+      if (branchesAsync.isLoading) return null;
+      final orgBranches = branchesAsync.value ?? const [];
+
+      bool branchValid;
+      if (branchSlug == allBranchesSlug) {
+        branchValid = await ref
+            .read(currentBranchControllerProvider.notifier)
+            .canViewAllBranches();
+      } else {
+        final match = orgBranches
+            .where((b) => b.slug == branchSlug)
+            .firstOrNull;
+        if (match == null) {
+          branchValid = false;
+        } else {
+          final allowedIds = await ref
+              .read(currentBranchControllerProvider.notifier)
+              .switchableBranchIds();
+          branchValid = allowedIds.contains(match.id);
+        }
+      }
+
+      if (!branchValid) {
+        return homePathFor(ref);
+      }
+
+      ref.read(currentRouteScopeProvider.notifier).set(orgSlug, branchSlug);
+    }
+
     // 6. Role permission guards for authenticated shell routes
     if (isAuthenticated && !isIgnored) {
-      final permsAsync = ref.read(currentUserPermissionsProvider);
-      final perms = permsAsync.value;
       if (perms == null) {
         // Wait for permissions. Do not redirect sensitive paths to the
         // dashboard — that permanently loses deep links on web refresh
@@ -283,8 +417,14 @@ abstract class RouterUtils {
         // once perms resolve, canAccessPath / AppRoot kick unauthorized users.
         return null;
       }
-      if (!canAccessPath(currentPath, perms)) {
-        return fallbackPathFor(perms);
+      final scopePrefixLength = state.pathParameters['orgSlug'] != null
+          ? '/${state.pathParameters['orgSlug']}/${state.pathParameters['branchSlug']}'
+              .length
+          : 0;
+      final unscopedPath = currentPath.substring(scopePrefixLength);
+      if (!canAccessPath(unscopedPath.isEmpty ? '/' : unscopedPath, perms)) {
+        final prefix = currentPath.substring(0, scopePrefixLength);
+        return '$prefix${fallbackPathFor(perms)}';
       }
     }
 
@@ -293,6 +433,10 @@ abstract class RouterUtils {
   }
 
   /// Error page builder for unknown routes.
+  ///
+  /// Uses [_errorPageHomePath] (via a [Consumer]) rather than a bare
+  /// `DashboardRoute().go(context)` since an error page has no guaranteed
+  /// org/branch route scope to build a `.goScoped` navigation from.
   static Widget errorBuilder(BuildContext context, GoRouterState state) {
     return Scaffold(
       appBar: AppBar(title: const Text('Page Not Found')),
@@ -309,13 +453,36 @@ abstract class RouterUtils {
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => const DashboardRoute().go(context),
-              child: const Text('Go Home'),
+            Consumer(
+              builder: (context, ref, _) => FilledButton(
+                onPressed: () => context.go(_errorPageHomePath(ref)),
+                child: const Text('Go Home'),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Same resolution as [homePathFor], duplicated against [WidgetRef]
+  /// (unrelated to [Ref] in this riverpod version) since [errorBuilder] has
+  /// no ambient provider [Ref] to call the shared version with.
+  static String _errorPageHomePath(WidgetRef ref) {
+    final perms = ref.read(currentUserPermissionsProvider).value;
+    if (perms?.canManageOrganizations ?? false) {
+      return PlatformDashboardRoute.path;
+    }
+    final org = ref.read(currentOrganizationControllerProvider).value;
+    final branchSelection = ref.read(currentBranchControllerProvider).value;
+    if (org != null && org.slug.isNotEmpty && branchSelection != null) {
+      final branchSlug = branchSelection.isAll
+          ? allBranchesSlug
+          : branchSelection.branch?.slug;
+      if (branchSlug != null && branchSlug.isNotEmpty) {
+        return '/${org.slug}/$branchSlug${DashboardRoute.path}';
+      }
+    }
+    return DashboardRoute.path;
   }
 }

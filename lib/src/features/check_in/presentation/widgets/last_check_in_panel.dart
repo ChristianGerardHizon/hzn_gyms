@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/widgets/cached_avatar.dart';
 import '../../../../core/widgets/form_feedback.dart';
@@ -201,7 +202,7 @@ class LastCheckInPanel extends ConsumerWidget {
                       textStyle: theme.textTheme.titleSmall,
                     ),
                     onPressed: () =>
-                        MemberDetailRoute(id: checkIn.memberId).go(context),
+                        MemberDetailRoute(id: checkIn.memberId).goScoped(context),
                     child: const Text('View Full Profile'),
                   ),
                 ),

@@ -7,6 +7,7 @@ import '../navigation/app_nav_destination.dart';
 import '../packages/pocketbase/pb_connectivity_provider.dart';
 import '../permissions/current_user_permissions.dart';
 import '../sync/outbox_sync_worker.dart';
+import '../routing/org_scoped_navigation.dart';
 import '../routing/routes/branches.routes.dart';
 import '../routing/routes/check_in.routes.dart';
 import '../routing/routes/dashboard.routes.dart';
@@ -61,40 +62,50 @@ class _AppRootState extends ConsumerState<AppRoot> {
   void _goToDestination(AppNavDestination destination) {
     switch (destination.id) {
       case AppNavId.dashboard:
-        const DashboardRoute().go(context);
+        const DashboardRoute().goScoped(context);
       case AppNavId.checkIn:
-        const CheckInRoute().go(context);
+        const CheckInRoute().goScoped(context);
       case AppNavId.cashier:
-        const SalesRoute().go(context);
+        const SalesRoute().goScoped(context);
       case AppNavId.sales:
-        const SalesHistoryRoute().go(context);
+        const SalesHistoryRoute().goScoped(context);
       case AppNavId.products:
-        const ProductsRoute().go(context);
+        const ProductsRoute().goScoped(context);
       case AppNavId.members:
-        const MembersRoute().go(context);
+        const MembersRoute().goScoped(context);
       case AppNavId.memberships:
-        const MembershipsRoute().go(context);
+        const MembershipsRoute().goScoped(context);
       case AppNavId.reports:
-        const ReportsRoute().go(context);
+        const ReportsRoute().goScoped(context);
       case AppNavId.users:
-        const UsersRoute().go(context);
+        const UsersRoute().goScoped(context);
       case AppNavId.roles:
-        const RolesRoute().go(context);
+        const RolesRoute().goScoped(context);
       case AppNavId.branches:
-        const BranchesRoute().go(context);
+        const BranchesRoute().goScoped(context);
       case AppNavId.organizations:
         const PlatformDashboardRoute().go(context);
       case AppNavId.profile:
-        const ProfileRoute().go(context);
+        const ProfileRoute().goScoped(context);
       case AppNavId.outbox:
-        const OutboxRoute().go(context);
+        const OutboxRoute().goScoped(context);
       case AppNavId.system:
-        const SystemRoute().go(context);
+        const SystemRoute().goScoped(context);
     }
   }
 
   void _openDrawer() {
     _scaffoldKey.currentState?.openDrawer();
+  }
+
+  /// `/orgSlug/branchSlug` for the current route, or `''` when this shell
+  /// isn't nested under the scoped ancestor route (shouldn't happen in
+  /// practice — `AppRoot` only builds inside it — but is a safe no-op).
+  String _scopePrefix(GoRouterState state) {
+    final orgSlug = state.pathParameters['orgSlug'];
+    final branchSlug = state.pathParameters['branchSlug'];
+    if (orgSlug == null || branchSlug == null) return '';
+    return '/$orgSlug/$branchSlug';
   }
 
   List<AppNavDestination> _visibleDestinations() {
@@ -119,16 +130,23 @@ class _AppRootState extends ConsumerState<AppRoot> {
     ref.listen(currentUserPermissionsProvider, (previous, next) {
       final perms = next.value;
       if (perms == null || !context.mounted) return;
-      final location = GoRouterState.of(context).uri.path;
-      if (!canAccessPath(location, perms)) {
-        context.go(fallbackPathFor(perms));
+      final routerState = GoRouterState.of(context);
+      final prefix = _scopePrefix(routerState);
+      final unscoped = routerState.uri.path.substring(prefix.length);
+      if (!canAccessPath(unscoped.isEmpty ? '/' : unscoped, perms)) {
+        context.go('$prefix${fallbackPathFor(perms)}');
       }
     });
 
     final isMobile = Breakpoints.isMobile(context);
     final destinations = _visibleDestinations();
-    final location = GoRouterState.of(context).uri.path;
-    final selectedIndex = selectedNavIndexForPath(location, destinations);
+    final routerState = GoRouterState.of(context);
+    final prefix = _scopePrefix(routerState);
+    final unscopedLocation = routerState.uri.path.substring(prefix.length);
+    final selectedIndex = selectedNavIndexForPath(
+      unscopedLocation.isEmpty ? '/' : unscopedLocation,
+      destinations,
+    );
 
     return PopScope(
       canPop: false,

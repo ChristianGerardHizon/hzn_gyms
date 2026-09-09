@@ -38,6 +38,7 @@ void main() {
     id: 'branch-a',
     name: 'Bacolod Branch',
     code: 'BCD',
+    slug: 'bcd',
     address: 'x',
     contactNumber: '1',
   );

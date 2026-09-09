@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../../core/permissions/current_user_permissions.dart';
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/check_in.routes.dart';
 import '../../../members/presentation/widgets/member_form_dialog.dart';
 import '../../../members/presentation/widgets/member_picker_dialog.dart';
@@ -59,7 +60,7 @@ class QuickActionsSection extends ConsumerWidget {
                   icon: Icons.how_to_reg,
                   label: 'Check-In',
                   color: Colors.teal,
-                  onTap: () => const CheckInRoute().go(context),
+                  onTap: () => const CheckInRoute().goScoped(context),
                 ),
                 const SizedBox(width: 12),
                 _QuickActionButton(

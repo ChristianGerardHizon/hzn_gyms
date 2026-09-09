@@ -33,6 +33,7 @@ void main() {
     id: 'branch-a',
     name: 'Bacolod Branch',
     code: 'BCD',
+    slug: 'bcd',
     address: 'x',
     contactNumber: '1',
   );
@@ -40,6 +41,7 @@ void main() {
     id: 'branch-b',
     name: 'Talisay Branch',
     code: 'TAL',
+    slug: 'tal',
     address: 'y',
     contactNumber: '2',
   );

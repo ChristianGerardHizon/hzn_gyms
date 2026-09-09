@@ -9,6 +9,7 @@ void main() {
     id: 'branch-1',
     name: 'Bacolod Branch',
     code: 'bcd',
+    slug: 'bcd',
     address: 'x',
     contactNumber: '1',
     color: 'teal',
@@ -72,6 +73,7 @@ void main() {
       id: 'branch-2',
       name: 'Talisay Branch',
       code: 'tal',
+      slug: 'tal',
       address: 'y',
       contactNumber: '2',
     );

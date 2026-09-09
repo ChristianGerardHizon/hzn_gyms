@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../../core/routing/routes/sales_history.routes.dart';
 import '../../../../core/widgets/branch_code_pill.dart';
@@ -58,7 +59,7 @@ class SaleDetailPage extends ConsumerWidget {
               ? null
               : IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: () => const SalesHistoryRoute().go(context),
+                  onPressed: () => const SalesHistoryRoute().goScoped(context),
                 ),
         ),
         body: ErrorState.fromError(
@@ -74,7 +75,7 @@ class SaleDetailPage extends ConsumerWidget {
                   ? null
                   : IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: () => const SalesHistoryRoute().go(context),
+                      onPressed: () => const SalesHistoryRoute().goScoped(context),
                     ),
             ),
             body: const Center(
@@ -120,7 +121,7 @@ class _SaleDetailContent extends HookConsumerWidget {
             ? null
             : IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () => const SalesHistoryRoute().go(context),
+                onPressed: () => const SalesHistoryRoute().goScoped(context),
               ),
         title: Text(
           headline,
@@ -1121,7 +1122,7 @@ class _CustomerInfoRow extends StatelessWidget {
             child: hasCustomerId
                 ? InkWell(
                     onTap: () =>
-                        MemberDetailRoute(id: customerId!).go(context),
+                        MemberDetailRoute(id: customerId!).goScoped(context),
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 2),

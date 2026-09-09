@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routing/org_scoped_navigation.dart';
 import '../../../../core/routing/routes/members.routes.dart';
 import '../../../memberships/domain/days_remaining_label.dart';
 import '../../../memberships/domain/member_membership.dart';
@@ -86,7 +87,7 @@ class _ExpiringMembershipTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () =>
-            MemberDetailRoute(id: membership.memberId).go(context),
+            MemberDetailRoute(id: membership.memberId).goScoped(context),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
