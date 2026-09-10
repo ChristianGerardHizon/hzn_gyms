@@ -116,6 +116,65 @@ void main() {
       expect(find.text('Add Card'), findsOneWidget);
       expect(find.text('Monthly Plan'), findsOneWidget);
     });
+
+    testWidgets(
+      'All-branches mode shows active membership and disables Purchase',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              effectiveBranchIdForWriteProvider.overrideWithValue(null),
+              memberProvider('member-1').overrideWith(
+                (ref) async => const Member(
+                  id: 'member-1',
+                  name: 'Juan Garcia',
+                ),
+              ),
+              memberMembershipsControllerProvider('member-1').overrideWith(
+                () => _FakeMemberMembershipsController([
+                  buildMemberMembership(
+                    membershipName: 'Monthly Plan',
+                    membershipValidBranches: const ['branch-1'],
+                  ),
+                ]),
+              ),
+              memberBranchActivityForIdsProvider('member-1').overrideWith(
+                (ref) async => const MemberBranchActivityState(
+                  activityByMemberId: {
+                    'member-1': MemberBranchActivity(branchIds: {'branch-1'}),
+                  },
+                  branchCodeById: {'branch-1': 'MAIN'},
+                  branchNameById: {'branch-1': 'Main Branch'},
+                  branchColorById: {'branch-1': 'teal'},
+                ),
+              ),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(
+                body: MemberQuickViewDialog(memberId: 'member-1'),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        expect(find.text('No membership'), findsNothing);
+        expect(find.text('No membership at this branch'), findsNothing);
+        expect(find.text('Monthly Plan'), findsOneWidget);
+        expect(find.text('Renew membership'), findsOneWidget);
+
+        final renewButton = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Renew membership'),
+        );
+        expect(renewButton.onPressed, isNull);
+      },
+    );
   });
 }
 

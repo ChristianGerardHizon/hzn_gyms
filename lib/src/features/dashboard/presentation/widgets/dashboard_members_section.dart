@@ -665,7 +665,7 @@ class _DashboardMemberCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: _MemberCardLabels(
                       name: dashboardMember.name,
-                      expirationDate: dashboardMember.expirationDate,
+                      expirationDate: dashboardMember.displayExpirationDate,
                       isExpired: isExpired,
                     ),
                   ),
@@ -683,7 +683,7 @@ class _DashboardMemberCard extends StatelessWidget {
                     ],
                     _MemberCardLabels(
                       name: dashboardMember.name,
-                      expirationDate: dashboardMember.expirationDate,
+                      expirationDate: dashboardMember.displayExpirationDate,
                       isExpired: isExpired,
                     ),
                   ],

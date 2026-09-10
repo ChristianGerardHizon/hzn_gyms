@@ -116,6 +116,9 @@ class Translations$auth$en {
 	/// en: 'Signing in...'
 	String get signingIn => 'Signing in...';
 
+	/// en: 'You're almost there — just warming things up'
+	String get almostThereWarmingUp => 'You\'re almost there — just warming things up';
+
 	/// en: 'Verify your email'
 	String get verifyEmailTitle => 'Verify your email';
 
@@ -653,6 +656,33 @@ class Translations$organizations$en {
 	/// en: 'Dashboard'
 	String get platformDashboard => 'Dashboard';
 
+	/// en: 'Users'
+	String get platformUsersTitle => 'Users';
+
+	/// en: 'No users found'
+	String get platformUsersEmpty => 'No users found';
+
+	/// en: 'Search by name or email'
+	String get platformUsersSearchHint => 'Search by name or email';
+
+	/// en: 'Platform admin'
+	String get platformUsersAdminLabel => 'Platform admin';
+
+	/// en: 'User granted platform admin access'
+	String get platformUsersGrantSuccess => 'User granted platform admin access';
+
+	/// en: 'Platform admin access revoked'
+	String get platformUsersRevokeSuccess => 'Platform admin access revoked';
+
+	/// en: 'You cannot change your own platform admin status'
+	String get platformUsersCannotChangeSelf => 'You cannot change your own platform admin status';
+
+	/// en: 'Failed to update platform admin status'
+	String get platformUsersToggleFailed => 'Failed to update platform admin status';
+
+	/// en: 'View all users'
+	String get viewAllUsers => 'View all users';
+
 	/// en: 'Enter tenant'
 	String get enterTenant => 'Enter tenant';
 
@@ -874,6 +904,7 @@ extension on Translations {
 			'auth.continueWithGoogle' => 'Continue with Google',
 			'auth.orDivider' => 'or',
 			'auth.signingIn' => 'Signing in...',
+			'auth.almostThereWarmingUp' => 'You\'re almost there — just warming things up',
 			'auth.verifyEmailTitle' => 'Verify your email',
 			'auth.verifyEmailSubtitle' => ({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.',
 			'auth.verifyEmailContinue' => 'I\'ve verified — Continue',
@@ -1038,6 +1069,15 @@ extension on Translations {
 			'organizations.awaitingInviteBody' => 'You need to be invited to an organization before you can use the app. Ask your organization admin for an invite, then sign in again.',
 			'organizations.platformTitle' => 'Platform',
 			'organizations.platformDashboard' => 'Dashboard',
+			'organizations.platformUsersTitle' => 'Users',
+			'organizations.platformUsersEmpty' => 'No users found',
+			'organizations.platformUsersSearchHint' => 'Search by name or email',
+			'organizations.platformUsersAdminLabel' => 'Platform admin',
+			'organizations.platformUsersGrantSuccess' => 'User granted platform admin access',
+			'organizations.platformUsersRevokeSuccess' => 'Platform admin access revoked',
+			'organizations.platformUsersCannotChangeSelf' => 'You cannot change your own platform admin status',
+			'organizations.platformUsersToggleFailed' => 'Failed to update platform admin status',
+			'organizations.viewAllUsers' => 'View all users',
 			'organizations.enterTenant' => 'Enter tenant',
 			'organizations.viewAllOrganizations' => 'View all organizations',
 			'organizations.recentOrganizations' => 'Recent organizations',

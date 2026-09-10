@@ -75,6 +75,12 @@ class UserMapper extends ClassMapperBase<User> {
     _$organizationId,
     opt: true,
   );
+  static String? _$organizationName(User v) => v.organizationName;
+  static const Field<User, String> _f$organizationName = Field(
+    'organizationName',
+    _$organizationName,
+    opt: true,
+  );
   static List<String> _$allowedBranchIds(User v) => v.allowedBranchIds;
   static const Field<User, List<String>> _f$allowedBranchIds = Field(
     'allowedBranchIds',
@@ -88,6 +94,13 @@ class UserMapper extends ClassMapperBase<User> {
     _$allowedBranchNames,
     opt: true,
     def: const [],
+  );
+  static bool _$superAdmin(User v) => v.superAdmin;
+  static const Field<User, bool> _f$superAdmin = Field(
+    'superAdmin',
+    _$superAdmin,
+    opt: true,
+    def: false,
   );
   static bool _$isDeleted(User v) => v.isDeleted;
   static const Field<User, bool> _f$isDeleted = Field(
@@ -121,8 +134,10 @@ class UserMapper extends ClassMapperBase<User> {
     #branchId: _f$branchId,
     #branchName: _f$branchName,
     #organizationId: _f$organizationId,
+    #organizationName: _f$organizationName,
     #allowedBranchIds: _f$allowedBranchIds,
     #allowedBranchNames: _f$allowedBranchNames,
+    #superAdmin: _f$superAdmin,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
@@ -140,8 +155,10 @@ class UserMapper extends ClassMapperBase<User> {
       branchId: data.dec(_f$branchId),
       branchName: data.dec(_f$branchName),
       organizationId: data.dec(_f$organizationId),
+      organizationName: data.dec(_f$organizationName),
       allowedBranchIds: data.dec(_f$allowedBranchIds),
       allowedBranchNames: data.dec(_f$allowedBranchNames),
+      superAdmin: data.dec(_f$superAdmin),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
@@ -209,8 +226,10 @@ abstract class UserCopyWith<$R, $In extends User, $Out>
     String? branchId,
     String? branchName,
     String? organizationId,
+    String? organizationName,
     List<String>? allowedBranchIds,
     List<String>? allowedBranchNames,
+    bool? superAdmin,
     bool? isDeleted,
     DateTime? created,
     DateTime? updated,
@@ -250,8 +269,10 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     Object? branchId = $none,
     Object? branchName = $none,
     Object? organizationId = $none,
+    Object? organizationName = $none,
     List<String>? allowedBranchIds,
     List<String>? allowedBranchNames,
+    bool? superAdmin,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
@@ -267,8 +288,10 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
       if (branchId != $none) #branchId: branchId,
       if (branchName != $none) #branchName: branchName,
       if (organizationId != $none) #organizationId: organizationId,
+      if (organizationName != $none) #organizationName: organizationName,
       if (allowedBranchIds != null) #allowedBranchIds: allowedBranchIds,
       if (allowedBranchNames != null) #allowedBranchNames: allowedBranchNames,
+      if (superAdmin != null) #superAdmin: superAdmin,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
@@ -286,11 +309,13 @@ class _UserCopyWithImpl<$R, $Out> extends ClassCopyWithBase<$R, User, $Out>
     branchId: data.get(#branchId, or: $value.branchId),
     branchName: data.get(#branchName, or: $value.branchName),
     organizationId: data.get(#organizationId, or: $value.organizationId),
+    organizationName: data.get(#organizationName, or: $value.organizationName),
     allowedBranchIds: data.get(#allowedBranchIds, or: $value.allowedBranchIds),
     allowedBranchNames: data.get(
       #allowedBranchNames,
       or: $value.allowedBranchNames,
     ),
+    superAdmin: data.get(#superAdmin, or: $value.superAdmin),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),

@@ -1,0 +1,24 @@
+---
+description: Always use Impeccable for UI/UX design, polish, and visual work
+alwaysApply: true
+---
+
+# Impeccable for UI Design
+
+For any UI/UX work in this project—new screens, redesigns, polish, layout, typography, color, motion, forms, empty states, accessibility, or visual critique—**read and follow** `.cursor/skills/impeccable/SKILL.md` before editing UI.
+
+## Required
+
+1. Run `.cursor/skills/impeccable/scripts/impeccable.cmd context` once per session (Windows), or the `impeccable` launcher on Unix, with cwd at the project root.
+2. Load the matching command playbook under `.cursor/skills/impeccable/reference/` (or `new-work.md` for a new surface).
+3. Read `reference/craft-floor.md` immediately before any UI edit.
+4. Prefer Impeccable over other frontend design skills (including `ui-ux-pro-max`).
+5. Honor existing `PRODUCT.md` / `DESIGN.md` and this app’s Flutter/Material patterns (`HookConsumerWidget`, form_builder, etc.).
+
+## Skip when
+
+- Backend-only, schema, sync, non-visual domain logic, or tests with no UI change.
+
+## Commands
+
+Users may invoke `/impeccable`, `/impeccable polish`, `/impeccable audit`, `/impeccable distill`, etc. Follow the skill’s routing table.

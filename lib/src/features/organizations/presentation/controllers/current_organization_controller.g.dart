@@ -54,7 +54,7 @@ final class CurrentOrganizationControllerProvider
 }
 
 String _$currentOrganizationControllerHash() =>
-    r'5b59ce84df21c881f7d734875c3a983370c3304a';
+    r'26b6dc4e9b5c8cd1f5af1e44f85b0d8d8b4e3d14';
 
 /// Controller for resolving/switching the current organization.
 ///
@@ -84,18 +84,30 @@ abstract class _$CurrentOrganizationController
 
 /// Convenience provider for the current organization ID, or null if
 /// unresolved.
+///
+/// Prefers the resolved [currentOrganizationControllerProvider] record, then
+/// falls back to `auth.user.organization` so tenant-scoped lists (e.g. branches)
+/// still work if the organization row cannot be fetched briefly.
 
 @ProviderFor(currentOrganizationId)
 final currentOrganizationIdProvider = CurrentOrganizationIdProvider._();
 
 /// Convenience provider for the current organization ID, or null if
 /// unresolved.
+///
+/// Prefers the resolved [currentOrganizationControllerProvider] record, then
+/// falls back to `auth.user.organization` so tenant-scoped lists (e.g. branches)
+/// still work if the organization row cannot be fetched briefly.
 
 final class CurrentOrganizationIdProvider
     extends $FunctionalProvider<String?, String?, String?>
     with $Provider<String?> {
   /// Convenience provider for the current organization ID, or null if
   /// unresolved.
+  ///
+  /// Prefers the resolved [currentOrganizationControllerProvider] record, then
+  /// falls back to `auth.user.organization` so tenant-scoped lists (e.g. branches)
+  /// still work if the organization row cannot be fetched briefly.
   CurrentOrganizationIdProvider._()
     : super(
         from: null,
@@ -130,7 +142,7 @@ final class CurrentOrganizationIdProvider
 }
 
 String _$currentOrganizationIdHash() =>
-    r'ac7eab489dba76f0b27102077ebd74f5074e8569';
+    r'ed6f9eab0a21cebaada6576ca37bee93440ce4d5';
 
 /// Convenience provider for an organization-scoped filter string.
 ///

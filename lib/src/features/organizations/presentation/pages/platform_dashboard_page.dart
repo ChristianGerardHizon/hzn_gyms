@@ -77,6 +77,11 @@ class PlatformDashboardPage extends ConsumerWidget {
                 icon: const Icon(Icons.list),
                 label: Text(t.organizations.viewAllOrganizations),
               ),
+              OutlinedButton.icon(
+                onPressed: () => const PlatformUsersRoute().go(context),
+                icon: const Icon(Icons.people_outline),
+                label: Text(t.organizations.viewAllUsers),
+              ),
             ],
           ),
           const SizedBox(height: 24),

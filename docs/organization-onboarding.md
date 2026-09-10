@@ -6,10 +6,10 @@ Super-admins with `users.superAdmin = true` use the **Platform** shell (`/platfo
 
 | Layer | Mechanism | Powers |
 |-------|-----------|--------|
-| Platform superAdmin | `users.superAdmin = true` | `/platform`, create/manage organizations; no org membership required; bypasses the invite gate |
+| Platform superAdmin | `users.superAdmin = true` | `/platform`, create/manage organizations, `/platform/users` (grant/revoke platform admin); no org membership required; bypasses the invite gate |
 | Organization Admin | System role **Admin** (`system.admin`, plus `members.manage` for invites) | Full control inside one tenant only |
 
-Do **not** create a role named “Platform Admin”. Platform access is only the `superAdmin` flag (set via PocketBase `_superusers`). Org full access is the **Admin** role. Enter Tenant still uses the user’s Admin role / membership for gym permissions — the flag alone does not grant all gym powers.
+Do **not** create a role named “Platform Admin”. Platform access is only the `superAdmin` flag. Seed the **first** platform operator via PocketBase `_superusers`; additional operators can be granted from **Platform → Users**. Org full access is the **Admin** role. Enter Tenant still uses the user’s Admin role / membership for gym permissions — the flag alone does not grant all gym powers.
 
 Cleanup leftover Platform Admin roles: `.\scripts\cleanup-platform-admin-role.ps1 -Target local|staging|prod [-Apply]`.
 
@@ -20,6 +20,7 @@ Cleanup leftover Platform Admin roles: `.\scripts\cleanup-platform-admin-role.ps
 | `/platform` | Dashboard — tenant counts, recent orgs, quick links |
 | `/platform/organizations` | Organization list (create, edit, continue setup) |
 | `/platform/organizations/:orgId/setup` | Guided onboarding wizard |
+| `/platform/users` | All users across orgs; toggle `users.superAdmin` |
 
 Legacy `/organizations` redirects to `/platform/organizations`. The old `/organization/*` nested paths still redirect to top-level `/users`, `/roles`, and `/branches`.
 

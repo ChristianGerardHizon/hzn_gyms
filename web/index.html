@@ -61,10 +61,24 @@
       left: 50%;
       transform: translate(-50%, 0);
       margin: 0;
+      width: min(90vw, 320px);
+      text-align: center;
       font-family: system-ui, sans-serif;
-      font-size: 14px;
       letter-spacing: 0.02em;
       color: #bbbbbb;
+    }
+
+    #splash-loading-note {
+      margin: 0 0 10px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #999999;
+    }
+
+    #splash-loading-verb {
+      margin: 0;
+      font-size: 14px;
+      min-height: 1.2em;
     }
   </style>
   
@@ -133,11 +147,94 @@
     }
   </style>
   <script id="splash-screen-script">
+    var splashLoadingInterval = null;
+
     function removeSplashFromWeb() {
+      if (splashLoadingInterval != null) {
+        clearInterval(splashLoadingInterval);
+        splashLoadingInterval = null;
+      }
       document.getElementById("splash")?.remove();
       document.getElementById("splash-branding")?.remove();
+      document.getElementById("splash-loading")?.remove();
+      document.getElementById("splash-loading-style")?.remove();
       document.body.style.background = "transparent";
     }
+
+    (function () {
+      var verbs = [
+        "Loading",
+        "Initializing",
+        "Bootstrapping",
+        "Preparing",
+        "Warming up",
+        "Assembling",
+        "Hydrating",
+        "Compiling",
+        "Unpacking",
+        "Provisioning",
+        "Orchestrating",
+        "Calibrating",
+        "Spinning up",
+        "Syncing",
+        "Connecting",
+        "Fetching",
+        "Resolving",
+        "Configuring",
+        "Priming",
+        "Awakening",
+        "Igniting",
+        "Launching",
+        "Mounting",
+        "Wiring",
+        "Linking",
+        "Caching",
+        "Buffering",
+        "Streaming",
+        "Decoding",
+        "Rendering",
+        "Composing",
+        "Building",
+        "Crafting",
+        "Forging",
+        "Brewing",
+        "Conjuring",
+        "Summoning",
+        "Materializing",
+        "Manifesting",
+        "Engaging",
+        "Activating",
+        "Enabling",
+        "Aligning",
+        "Tuning",
+        "Polishing",
+        "Finishing",
+        "Finalizing",
+        "Settling in",
+        "Getting ready",
+        "Almost there"
+      ];
+
+      function startSplashLoadingRotation() {
+        var verbEl = document.getElementById("splash-loading-verb");
+        if (!verbEl) return;
+
+        var index = 0;
+        verbEl.textContent = verbs[index] + "...";
+        splashLoadingInterval = setInterval(function () {
+          index = (index + 1) % verbs.length;
+          verbEl.textContent = verbs[index] + "...";
+        }, 1800);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", startSplashLoadingRotation);
+      } else {
+        startSplashLoadingRotation();
+      }
+
+      window.addEventListener("flutter-first-frame", removeSplashFromWeb);
+    })();
   </script>
 </head>
 <body>
@@ -150,7 +247,10 @@
   
   
   
-  <p id="splash-loading">Loading...</p>
+  <div id="splash-loading" role="status" aria-live="polite">
+    <p id="splash-loading-note">Initial load may take a moment — please wait</p>
+    <p id="splash-loading-verb">Loading...</p>
+  </div>
   
   
   

@@ -176,7 +176,8 @@ bool canAccessPath(String location, CurrentUserPermissions permissions) {
     return permissions.has(Permissions.branchesView);
   }
   if (location == PlatformDashboardRoute.path ||
-      matchesRoutePath(location, PlatformOrganizationsRoute.path)) {
+      matchesRoutePath(location, PlatformOrganizationsRoute.path) ||
+      matchesRoutePath(location, PlatformUsersRoute.path)) {
     return permissions.canManageOrganizations;
   }
   if (matchesRoutePath(location, OrganizationsRoute.path)) {
@@ -206,6 +207,7 @@ bool isPermissionSensitivePath(String location) {
       matchesRoutePath(location, RolesRoute.path) ||
       matchesRoutePath(location, BranchesRoute.path) ||
       matchesRoutePath(location, PlatformOrganizationsRoute.path) ||
+      matchesRoutePath(location, PlatformUsersRoute.path) ||
       location == PlatformDashboardRoute.path ||
       matchesRoutePath(location, OrganizationsRoute.path) ||
       matchesRoutePath(location, ReportsRoute.path) ||

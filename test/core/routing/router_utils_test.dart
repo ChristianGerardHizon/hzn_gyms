@@ -4,6 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  group('RouterUtils.isEmptyRootPath', () {
+    test('is true for empty and slash-only paths', () {
+      expect(RouterUtils.isEmptyRootPath(''), isTrue);
+      expect(RouterUtils.isEmptyRootPath('/'), isTrue);
+      expect(RouterUtils.isEmptyRootPath('/dashboard'), isFalse);
+      expect(RouterUtils.isEmptyRootPath('/login'), isFalse);
+    });
+  });
+
   group('RouterUtils.currentLocation', () {
     testWidgets('returns matched location for a known route', (tester) async {
       final router = GoRouter(

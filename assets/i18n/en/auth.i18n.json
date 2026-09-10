@@ -23,6 +23,7 @@
     "continueWithGoogle": "Continue with Google",
     "orDivider": "or",
     "signingIn": "Signing in...",
+    "almostThereWarmingUp": "You're almost there — just warming things up",
     "verifyEmailTitle": "Verify your email",
     "verifyEmailSubtitle(email)": "We sent a verification link to $email. Open the link, then tap Continue.",
     "verifyEmailContinue": "I've verified — Continue",
