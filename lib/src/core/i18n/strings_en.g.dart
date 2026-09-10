@@ -116,6 +116,9 @@ class Translations$auth$en {
 	/// en: 'Signing in...'
 	String get signingIn => 'Signing in...';
 
+	/// en: 'You're almost there — just warming things up'
+	String get almostThereWarmingUp => 'You\'re almost there — just warming things up';
+
 	/// en: 'Verify your email'
 	String get verifyEmailTitle => 'Verify your email';
 
@@ -901,6 +904,7 @@ extension on Translations {
 			'auth.continueWithGoogle' => 'Continue with Google',
 			'auth.orDivider' => 'or',
 			'auth.signingIn' => 'Signing in...',
+			'auth.almostThereWarmingUp' => 'You\'re almost there — just warming things up',
 			'auth.verifyEmailTitle' => 'Verify your email',
 			'auth.verifyEmailSubtitle' => ({required Object email}) => 'We sent a verification link to ${email}. Open the link, then tap Continue.',
 			'auth.verifyEmailContinue' => 'I\'ve verified — Continue',

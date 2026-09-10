@@ -5,6 +5,55 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../helpers/fixtures.dart';
 
 void main() {
+  group('pickRenewableMembership', () {
+    test('returns null when only cancelled or voided', () {
+      final result = pickRenewableMembership([
+        buildMemberMembership(status: MemberMembershipStatus.cancelled),
+        buildMemberMembership(
+          id: 'mm-void',
+          status: MemberMembershipStatus.voided,
+        ),
+      ]);
+      expect(result, isNull);
+    });
+
+    test('returns active membership regardless of validBranches', () {
+      final active = buildMemberMembership(
+        id: 'mm-active',
+        membershipValidBranches: const ['branch-1'],
+      );
+      final result = pickRenewableMembership([active]);
+      expect(result?.id, 'mm-active');
+    });
+
+    test('prefers currently active over pending', () {
+      final pending = buildMemberMembership(
+        id: 'mm-pending',
+        status: MemberMembershipStatus.pending,
+        endDate: DateTime.now().add(const Duration(days: 60)),
+      );
+      final active = buildMemberMembership(
+        id: 'mm-active',
+        endDate: DateTime.now().add(const Duration(days: 10)),
+      );
+      final result = pickRenewableMembership([pending, active]);
+      expect(result?.id, 'mm-active');
+    });
+
+    test('prefers latest end date among currently active', () {
+      final earlier = buildMemberMembership(
+        id: 'mm-early',
+        endDate: DateTime.now().add(const Duration(days: 10)),
+      );
+      final later = buildMemberMembership(
+        id: 'mm-late',
+        endDate: DateTime.now().add(const Duration(days: 30)),
+      );
+      final result = pickRenewableMembership([earlier, later]);
+      expect(result?.id, 'mm-late');
+    });
+  });
+
   group('pickRenewableMembershipAtBranch', () {
     test('returns null when no memberships valid at branch', () {
       final result = pickRenewableMembershipAtBranch(

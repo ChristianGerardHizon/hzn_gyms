@@ -5,7 +5,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/organizations/presentation/controllers/current_organization_controller.dart';
 import '../../features/organizations/presentation/controllers/organization_memberships_controller.dart';
+import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../packages/sentry/sentry_config.dart';
 import '../pages/app_root.dart';
 import '../permissions/current_user_permissions.dart';
@@ -174,6 +176,16 @@ GoRouter router(Ref ref) {
   });
 
   ref.listen(organizationMembershipsControllerProvider, (previous, next) {
+    router.refresh();
+  });
+
+  // Org/branch resolve after login; refresh so splash/flat paths rewrite to
+  // /{orgSlug}/{branchSlug}/… once the scope prefix is available.
+  ref.listen(currentOrganizationControllerProvider, (previous, next) {
+    router.refresh();
+  });
+
+  ref.listen(currentBranchControllerProvider, (previous, next) {
     router.refresh();
   });
 

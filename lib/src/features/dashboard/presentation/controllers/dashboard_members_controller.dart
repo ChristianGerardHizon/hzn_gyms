@@ -42,18 +42,28 @@ class DashboardMember {
   final DateTime? expirationDate;
   final String? membershipStatus;
 
-  /// Days until membership expires, or null if no membership.
+  /// End date shown on cards when the view row is an active membership.
+  ///
+  /// Non-active statuses (cancelled/voided/etc.) can still carry an
+  /// [expirationDate] from the view join fallback — those must not drive
+  /// the days-left pill or end-date label.
+  DateTime? get displayExpirationDate =>
+      membershipStatus == 'active' ? expirationDate : null;
+
+  /// Days until membership expires, or null if no active membership.
   ///
   /// Returns `0` on the expiration day (still valid through that day).
   int? get daysUntilExpiry {
-    if (expirationDate == null) return null;
-    return calendarDaysUntil(expirationDate!);
+    final end = displayExpirationDate;
+    if (end == null) return null;
+    return calendarDaysUntil(end);
   }
 
   /// Complete calendar months until membership expires, or null if none.
   int? get monthsUntilExpiry {
-    if (expirationDate == null) return null;
-    return calendarMonthsUntil(expirationDate!);
+    final end = displayExpirationDate;
+    if (end == null) return null;
+    return calendarMonthsUntil(end);
   }
 
   /// Whether this member's membership has expired.
@@ -61,12 +71,13 @@ class DashboardMember {
   /// Expiration is inclusive of the end date — members expiring today
   /// are not considered expired until the following day.
   bool get isExpired {
-    if (expirationDate == null) return false;
-    return isBeforeToday(expirationDate!);
+    final end = displayExpirationDate;
+    if (end == null) return false;
+    return isBeforeToday(end);
   }
 
   /// Whether this member has an active (non-expired) membership.
-  bool get hasActiveMembership => expirationDate != null && !isExpired;
+  bool get hasActiveMembership => displayExpirationDate != null && !isExpired;
 
   /// Factory from a PocketBase RecordModel from the view collection.
   factory DashboardMember.fromViewRecord(
@@ -221,11 +232,13 @@ Future<DashboardMembersPage> dashboardMembersPage(
     case MemberStatusFilter.all:
       break;
     case MemberStatusFilter.active:
-      // Non-expired memberships (expiration day is still valid)
+      // Non-expired active memberships (expiration day is still valid)
+      filter.equals('membershipStatus', 'active');
       filter.greaterOrEqual('expirationDate', startOfToday);
       break;
     case MemberStatusFilter.expiringSoon:
-      // From today through the next 7 calendar days (inclusive)
+      // Active memberships from today through the next 7 calendar days
+      filter.equals('membershipStatus', 'active');
       filter.greaterOrEqual('expirationDate', startOfToday);
       filter.lessOrEqual('expirationDate', endOfSevenDayWindow);
       break;

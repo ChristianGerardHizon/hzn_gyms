@@ -10,6 +10,7 @@ import '../../features/organizations/presentation/controllers/organization_membe
 import '../../features/settings/presentation/controllers/branches_controller.dart';
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../navigation/app_nav_destination.dart';
+import '../pages/page_not_found_page.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'route_scope_provider.dart';
@@ -35,9 +36,9 @@ abstract class RouterUtils {
   /// Home path for an authenticated, verified user.
   ///
   /// [DashboardRoute.path] results are prefixed with the resolved
-  /// `/orgSlug/branchSlug` scope when available; falls back to the bare
-  /// path while the organization hasn't resolved yet (e.g. right after
-  /// login) — [redirect] step 5d/5e will correct it on the next pass.
+  /// `/orgSlug/branchSlug` scope when available. While org/branch are still
+  /// resolving (e.g. right after login), parks on [SplashRoute.path] — bare
+  /// `/dashboard` is not a top-level route under the org/branch shell.
   ///
   static String homePathFor(Ref ref) {
     final perms = ref.read(currentUserPermissionsProvider).value;
@@ -61,10 +62,10 @@ abstract class RouterUtils {
   }
 
   /// [DashboardRoute.path] prefixed with the current org/branch scope, or
-  /// the bare path if the scope can't be resolved yet.
+  /// [SplashRoute.path] while the scope can't be resolved yet.
   static String _scopedDashboardPath(Ref ref) {
     final prefix = _resolveScopePrefix(ref);
-    if (prefix == null) return DashboardRoute.path;
+    if (prefix == null) return SplashRoute.path;
     return '$prefix${DashboardRoute.path}';
   }
 
@@ -185,7 +186,7 @@ abstract class RouterUtils {
 
     // Cashier is dashboard-dialog only — redirect standalone /cashier.
     if (uriPath == SalesRoute.path) {
-      return DashboardRoute.path;
+      return homePathFor(ref);
     }
 
     // Check if this route should skip auth check
@@ -300,7 +301,7 @@ abstract class RouterUtils {
       final memberships =
           ref.read(organizationMembershipsControllerProvider).value;
       if (memberships != null && memberships.any((m) => m.isActive)) {
-        return DashboardRoute.path;
+        return homePathFor(ref);
       }
       // Still loading memberships — stay put.
       return null;
@@ -358,12 +359,13 @@ abstract class RouterUtils {
         state.pathParameters['orgSlug'] == null &&
         allAppNavDestinations.any((d) => matchesRoutePath(uriPath, d.path))) {
       final prefix = _resolveScopePrefix(ref);
-      // Still resolving org/branch (e.g. first frame after login) — fall
-      // through to permission guards rather than exiting redirect early.
-      // A later refresh will rewrite once the scope is known.
       if (prefix != null) {
         return state.uri.replace(path: '$prefix$uriPath').toString();
       }
+      // Still resolving org/branch — park on splash so go_router does not
+      // treat the unmatched flat path as a 404. Org/branch listeners refresh
+      // the router once the scope is known.
+      return SplashRoute.path;
     }
 
     // 5e. Validate an already-scoped URL's org/branch segments against what
@@ -479,28 +481,9 @@ abstract class RouterUtils {
           );
         }
 
-        return Scaffold(
-          appBar: AppBar(title: const Text('Page Not Found')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                const SizedBox(height: 16),
-                Text('404', style: Theme.of(context).textTheme.headlineLarge),
-                const SizedBox(height: 8),
-                Text(
-                  'Page not found',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: () => context.go(home),
-                  child: const Text('Go Home'),
-                ),
-              ],
-            ),
-          ),
+        return PageNotFoundPage(
+          attemptedPath: current,
+          onGoHome: () => context.go(home),
         );
       },
     );
@@ -524,6 +507,7 @@ abstract class RouterUtils {
         return '/${org.slug}/$branchSlug${DashboardRoute.path}';
       }
     }
-    return DashboardRoute.path;
+    // Park on splash while scope resolves — bare `/dashboard` is unmatched.
+    return SplashRoute.path;
   }
 }

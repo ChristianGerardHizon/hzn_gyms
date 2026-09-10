@@ -79,6 +79,7 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String get continueWithGoogle => 'Magpatuloy gamit ang Google';
 	@override String get orDivider => 'o';
 	@override String get signingIn => 'Nagsa-sign in...';
+	@override String get almostThereWarmingUp => 'Malapit ka na — pinapainit pa lang ang mga bagay';
 	@override String get verifyEmailTitle => 'I-verify ang email';
 	@override String verifyEmailSubtitle({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.';
 	@override String get verifyEmailContinue => 'Na-verify ko — Magpatuloy';
@@ -403,6 +404,7 @@ extension on TranslationsTl {
 			'auth.continueWithGoogle' => 'Magpatuloy gamit ang Google',
 			'auth.orDivider' => 'o',
 			'auth.signingIn' => 'Nagsa-sign in...',
+			'auth.almostThereWarmingUp' => 'Malapit ka na — pinapainit pa lang ang mga bagay',
 			'auth.verifyEmailTitle' => 'I-verify ang email',
 			'auth.verifyEmailSubtitle' => ({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.',
 			'auth.verifyEmailContinue' => 'Na-verify ko — Magpatuloy',
