@@ -90,3 +90,11 @@ app.*.map.json
 /auth.json
 /patch.json
 .tmp_*.json
+
+# Impeccable (shared config committed; local consent/cache ignored)
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/build/
+.impeccable/live/
