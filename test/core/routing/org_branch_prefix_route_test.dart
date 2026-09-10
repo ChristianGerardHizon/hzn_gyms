@@ -105,5 +105,46 @@ void main() {
       expect(find.text('members'), findsOneWidget);
       expect(router.state.uri.path, '/acme/main/members');
     });
+    testWidgets('bare /org/branch/ with trailing slash redirects to dashboard', (
+      tester,
+    ) async {
+      final router = GoRouter(
+        initialLocation: '/acme/main/',
+        routes: [
+          GoRoute(
+            path: '/:orgSlug/:branchSlug',
+            redirect: (context, state) {
+              final org = state.pathParameters['orgSlug']!;
+              final branch = state.pathParameters['branchSlug']!;
+              final path = state.uri.path.replaceAll(RegExp(r'/+$'), '');
+              if (path == '/$org/$branch') {
+                return '/$org/$branch/dashboard';
+              }
+              return null;
+            },
+            routes: [
+              ShellRoute(
+                builder: (context, state, child) => Scaffold(body: child),
+                routes: [
+                  GoRoute(
+                    path: '/dashboard',
+                    builder: (context, state) => Text(
+                      '${state.pathParameters['orgSlug']}/'
+                      '${state.pathParameters['branchSlug']}',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      expect(find.text('acme/main'), findsOneWidget);
+      expect(router.state.uri.path, '/acme/main/dashboard');
+    });
   });
 }

@@ -207,7 +207,7 @@ class MemberQuickViewDialog extends ConsumerWidget {
                           memberships,
                           branchId,
                         )
-                      : null;
+                      : pickRenewableMembership(memberships);
                   return _ActionButtons(
                     memberId: memberId,
                     memberName: name,
@@ -375,7 +375,7 @@ class _MembershipSummary extends StatelessWidget {
     final theme = Theme.of(context);
     final primary = branchId != null
         ? pickRenewableMembershipAtBranch(memberships, branchId!)
-        : null;
+        : pickRenewableMembership(memberships);
 
     if (primary == null) {
       final hasActivityElsewhere =

@@ -22,6 +22,7 @@ class UserDto with UserDtoMappable {
   final String? branch;
   final String? organization;
   final List<String> allowedBranches;
+  final bool superAdmin;
   final bool isDeleted;
   final String? created;
   final String? updated;
@@ -29,6 +30,7 @@ class UserDto with UserDtoMappable {
   // Expanded fields (populated from expand)
   final String? roleName;
   final String? branchName;
+  final String? organizationName;
   final List<String> allowedBranchNames;
 
   const UserDto({
@@ -43,11 +45,13 @@ class UserDto with UserDtoMappable {
     this.branch,
     this.organization,
     this.allowedBranches = const [],
+    this.superAdmin = false,
     this.isDeleted = false,
     this.created,
     this.updated,
     this.roleName,
     this.branchName,
+    this.organizationName,
     this.allowedBranchNames = const [],
   });
 
@@ -62,6 +66,9 @@ class UserDto with UserDtoMappable {
     // Get expanded branch name
     final branchExpanded = record.get<String>('expand.branch.name');
     final branchName = branchExpanded.isNotEmpty ? branchExpanded : null;
+
+    final orgExpanded = record.get<String>('expand.organization.name');
+    final organizationName = orgExpanded.isNotEmpty ? orgExpanded : null;
 
     final allowedBranches = _parseIdList(json['allowedBranches']);
     final allowedBranchNames = _parseExpandedNames(record, json['expand']);
@@ -78,11 +85,13 @@ class UserDto with UserDtoMappable {
       branch: json['branch'] as String?,
       organization: json['organization'] as String?,
       allowedBranches: allowedBranches,
+      superAdmin: json['superAdmin'] as bool? ?? false,
       isDeleted: json['isDeleted'] as bool? ?? false,
       created: json['created'] as String?,
       updated: json['updated'] as String?,
       roleName: roleName,
       branchName: branchName,
+      organizationName: organizationName,
       allowedBranchNames: allowedBranchNames,
     );
   }
@@ -130,8 +139,10 @@ class UserDto with UserDtoMappable {
       branchId: branch,
       branchName: branchName,
       organizationId: organization,
+      organizationName: organizationName,
       allowedBranchIds: allowedBranches,
       allowedBranchNames: allowedBranchNames,
+      superAdmin: superAdmin,
       isDeleted: isDeleted,
       created: parseToLocal(created),
       updated: parseToLocal(updated),

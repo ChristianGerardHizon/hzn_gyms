@@ -5,8 +5,13 @@ import 'package:hzn_gyms/src/core/routing/pending_redirect_provider.dart';
 import 'package:hzn_gyms/src/core/routing/router_utils.dart';
 import 'package:hzn_gyms/src/features/auth/domain/auth_state.dart';
 import 'package:hzn_gyms/src/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:hzn_gyms/src/features/organizations/domain/organization.dart';
 import 'package:hzn_gyms/src/features/organizations/domain/organization_membership.dart';
+import 'package:hzn_gyms/src/features/organizations/presentation/controllers/current_organization_controller.dart';
 import 'package:hzn_gyms/src/features/organizations/presentation/controllers/organization_memberships_controller.dart';
+import 'package:hzn_gyms/src/features/settings/domain/branch.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/branches_controller.dart';
+import 'package:hzn_gyms/src/features/settings/presentation/controllers/current_branch_controller.dart';
 import 'package:hzn_gyms/src/features/users/domain/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +20,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../helpers/fake_organization_memberships.dart';
 import '../../helpers/fixtures.dart';
+
+const _testOrg = Organization(id: 'org-1', name: 'Test Gym', slug: 'testgym');
+const _testBranch = Branch(
+  id: 'branch-1',
+  name: 'Main',
+  code: 'MAIN',
+  slug: 'main',
+  address: 'x',
+  contactNumber: '1',
+);
+const _scopedDashboard = '/testgym/main/dashboard';
 
 const _testMembership = OrganizationMembership(
   id: 'om-1',
@@ -33,9 +49,28 @@ final _emptyMembershipsOverride =
       () => FakeOrganizationMembershipsController(const []),
     );
 
+final _scopeOverrides = [
+  currentOrganizationControllerProvider.overrideWith(
+    () => _FixedCurrentOrganization(_testOrg),
+  ),
+  currentBranchControllerProvider.overrideWith(
+    () => _FixedCurrentBranch(
+      const CurrentBranchSelection(branch: _testBranch),
+    ),
+  ),
+  branchesControllerProvider.overrideWith(
+    () => _FakeBranchesController(const [_testBranch]),
+  ),
+];
+
 class _AuthenticatedAuth extends AuthController {
   @override
   Future<AuthState?> build() async => buildAuthState();
+}
+
+class _SignedOutAuth extends AuthController {
+  @override
+  Future<AuthState?> build() async => null;
 }
 
 class _LoadingAuth extends AuthController {
@@ -64,6 +99,42 @@ class _LoadingPermissions extends CurrentUserPermissionsController {
   Future<CurrentUserPermissions> build() => _completer.future;
 }
 
+class _FixedCurrentOrganization extends CurrentOrganizationController {
+  _FixedCurrentOrganization(this._org);
+
+  final Organization? _org;
+
+  @override
+  Future<Organization?> build() async => _org;
+}
+
+class _FixedCurrentBranch extends CurrentBranchController {
+  _FixedCurrentBranch(this._selection);
+
+  final CurrentBranchSelection _selection;
+
+  @override
+  Future<CurrentBranchSelection> build() async => _selection;
+
+  @override
+  Future<List<String>> switchableBranchIds() async {
+    final id = _selection.branch?.id;
+    return id == null ? const [] : [id];
+  }
+
+  @override
+  Future<bool> canViewAllBranches() async => false;
+}
+
+class _FakeBranchesController extends BranchesController {
+  _FakeBranchesController(this._branches);
+
+  final List<Branch> _branches;
+
+  @override
+  Future<List<Branch>> build() async => _branches;
+}
+
 /// Minimal router that uses [RouterUtils.redirect] like the app.
 final _testRouterProvider = Provider.family<GoRouter, String>((
   ref,
@@ -82,6 +153,14 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
       GoRoute(path: '/login', builder: (_, _) => const Text('login')),
       GoRoute(path: '/members', builder: (_, _) => const Text('members')),
       GoRoute(
+        path: '/platform/organizations',
+        builder: (_, _) => const Text('platform-orgs'),
+      ),
+      GoRoute(
+        path: '/platform',
+        builder: (_, _) => const Text('platform'),
+      ),
+      GoRoute(
         path: '/system/printers',
         builder: (_, _) => const Text('printers'),
       ),
@@ -98,6 +177,38 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
         path: '/awaiting-organization',
         builder: (_, _) => const Text('awaiting'),
       ),
+      // Production-shaped org/branch shell (dashboard is not top-level).
+      GoRoute(
+        path: '/:orgSlug/:branchSlug',
+        redirect: (context, state) {
+          final org = state.pathParameters['orgSlug']!;
+          final branch = state.pathParameters['branchSlug']!;
+          final path = state.uri.path.replaceAll(RegExp(r'/+$'), '');
+          if (path == '/$org/$branch') {
+            return '/$org/$branch/dashboard';
+          }
+          return null;
+        },
+        routes: [
+          ShellRoute(
+            builder: (context, state, child) => Scaffold(body: child),
+            routes: [
+              GoRoute(
+                path: '/dashboard',
+                builder: (_, _) => const Text('scoped-dashboard'),
+              ),
+              GoRoute(
+                path: '/members',
+                builder: (_, _) => const Text('scoped-members'),
+              ),
+              GoRoute(
+                path: '/system/printers',
+                builder: (_, _) => const Text('scoped-printers'),
+              ),
+            ],
+          ),
+        ],
+      ),
     ],
   );
 
@@ -107,6 +218,8 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
     organizationMembershipsControllerProvider,
     (_, _) => router.refresh(),
   );
+  ref.listen(currentOrganizationControllerProvider, (_, _) => router.refresh());
+  ref.listen(currentBranchControllerProvider, (_, _) => router.refresh());
   Future.microtask(router.refresh);
 
   return router;
@@ -146,6 +259,72 @@ void main() {
     });
   });
 
+  group('RouterUtils.homePathFor', () {
+    test('parks on splash when org/branch scope is unresolved', () {
+      late final Ref homeRef;
+      final container = ProviderContainer(
+        overrides: [
+          _membershipsOverride,
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(
+                permissions: {Permissions.membersView},
+              ),
+            ),
+          ),
+          currentOrganizationControllerProvider.overrideWith(
+            () => _FixedCurrentOrganization(null),
+          ),
+          currentBranchControllerProvider.overrideWith(
+            () => _FixedCurrentBranch(const CurrentBranchSelection()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(
+        Provider((ref) {
+          homeRef = ref;
+          return null;
+        }),
+      );
+
+      expect(RouterUtils.homePathFor(homeRef), '/splash');
+    });
+
+    test('returns scoped dashboard when org/branch are resolved', () async {
+      late final Ref homeRef;
+      final container = ProviderContainer(
+        overrides: [
+          _membershipsOverride,
+          ..._scopeOverrides,
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(
+                permissions: {Permissions.membersView},
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(currentOrganizationControllerProvider.future);
+      await container.read(currentBranchControllerProvider.future);
+
+      container.read(
+        Provider((ref) {
+          homeRef = ref;
+          return null;
+        }),
+      );
+
+      expect(RouterUtils.homePathFor(homeRef), _scopedDashboard);
+    });
+  });
+
   group('RouterUtils.redirect', () {
     testWidgets(
       'stays on permission-sensitive path while role permissions load',
@@ -154,6 +333,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             _membershipsOverride,
+            ..._scopeOverrides,
             authControllerProvider.overrideWith(_AuthenticatedAuth.new),
             currentUserPermissionsProvider.overrideWith(
               () => _LoadingPermissions(permsCompleter),
@@ -162,7 +342,13 @@ void main() {
         );
         addTearDown(container.dispose);
 
-        final router = container.read(_testRouterProvider('/system/printers'));
+        await container.read(currentOrganizationControllerProvider.future);
+        await container.read(currentBranchControllerProvider.future);
+        await container.read(branchesControllerProvider.future);
+
+        final router = container.read(
+          _testRouterProvider('/testgym/main/system/printers'),
+        );
 
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -174,9 +360,12 @@ void main() {
         await tester.pump();
         await tester.pump();
 
-        expect(RouterUtils.currentLocation(router), '/system/printers');
-        expect(find.text('printers'), findsOneWidget);
-        expect(find.text('dashboard'), findsNothing);
+        expect(
+          RouterUtils.currentLocation(router),
+          '/testgym/main/system/printers',
+        );
+        expect(find.text('scoped-printers'), findsOneWidget);
+        expect(find.text('scoped-dashboard'), findsNothing);
 
         permsCompleter.complete(
           const CurrentUserPermissions(
@@ -187,7 +376,10 @@ void main() {
         await tester.pump();
         await tester.pump();
 
-        expect(RouterUtils.currentLocation(router), '/system/printers');
+        expect(
+          RouterUtils.currentLocation(router),
+          '/testgym/main/system/printers',
+        );
       },
     );
 
@@ -197,6 +389,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             _membershipsOverride,
+            ..._scopeOverrides,
             authControllerProvider.overrideWith(_AuthenticatedAuth.new),
             currentUserPermissionsProvider.overrideWith(
               () => _FixedPermissions(
@@ -209,7 +402,13 @@ void main() {
         );
         addTearDown(container.dispose);
 
-        final router = container.read(_testRouterProvider('/system/printers'));
+        await container.read(currentOrganizationControllerProvider.future);
+        await container.read(currentBranchControllerProvider.future);
+        await container.read(branchesControllerProvider.future);
+
+        final router = container.read(
+          _testRouterProvider('/testgym/main/system/printers'),
+        );
 
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -220,8 +419,47 @@ void main() {
         await tester.pumpAndSettle();
 
         // Staff without system.admin cannot stay on /system/printers.
-        expect(RouterUtils.currentLocation(router), '/dashboard');
-        expect(find.text('dashboard'), findsOneWidget);
+        expect(RouterUtils.currentLocation(router), _scopedDashboard);
+        expect(find.text('scoped-dashboard'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'parks flat app paths on splash when org/branch are unresolved',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            _membershipsOverride,
+            authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+            currentUserPermissionsProvider.overrideWith(
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membersView},
+                ),
+              ),
+            ),
+            currentOrganizationControllerProvider.overrideWith(
+              () => _FixedCurrentOrganization(null),
+            ),
+            currentBranchControllerProvider.overrideWith(
+              () => _FixedCurrentBranch(const CurrentBranchSelection()),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(_testRouterProvider('/dashboard'));
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(RouterUtils.currentLocation(router), '/splash');
+        expect(find.text('splash'), findsOneWidget);
       },
     );
 
@@ -303,6 +541,80 @@ void main() {
         );
         addTearDown(container.dispose);
 
+        // Platform home is the correct landing path for superAdmin.
+        final router = container.read(_testRouterProvider('/platform'));
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(RouterUtils.currentLocation(router), '/platform');
+        expect(find.text('platform'), findsOneWidget);
+        expect(find.text('awaiting'), findsNothing);
+      },
+    );
+
+    testWidgets('empty root `/` redirects authenticated user to scoped home', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          _membershipsOverride,
+          ..._scopeOverrides,
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(
+                permissions: {Permissions.membersView},
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(_testRouterProvider('/'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), _scopedDashboard);
+      expect(find.text('scoped-dashboard'), findsOneWidget);
+    });
+
+    testWidgets(
+      'empty root `/` parks on splash when scope is unresolved',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            _membershipsOverride,
+            authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+            currentUserPermissionsProvider.overrideWith(
+              () => _FixedPermissions(
+                const CurrentUserPermissions(
+                  permissions: {Permissions.membersView},
+                ),
+              ),
+            ),
+            currentOrganizationControllerProvider.overrideWith(
+              () => _FixedCurrentOrganization(null),
+            ),
+            currentBranchControllerProvider.overrideWith(
+              () => _FixedCurrentBranch(const CurrentBranchSelection()),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
         final router = container.read(_testRouterProvider('/'));
 
         await tester.pumpWidget(
@@ -313,16 +625,72 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(RouterUtils.currentLocation(router), '/');
-        expect(find.text('dashboard'), findsOneWidget);
-        expect(find.text('awaiting'), findsNothing);
+        expect(RouterUtils.currentLocation(router), '/splash');
+        expect(find.text('splash'), findsOneWidget);
       },
     );
 
-    testWidgets('redirects standalone /cashier to dashboard', (tester) async {
+    testWidgets('empty root `/` redirects platform admin to platform home', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          _emptyMembershipsOverride,
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(superAdmin: true),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(_testRouterProvider('/'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), '/platform');
+      expect(find.text('platform'), findsOneWidget);
+    });
+
+    testWidgets('empty root `/` redirects signed-out user to login', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(_SignedOutAuth.new),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(_testRouterProvider('/'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), '/login');
+      expect(find.text('login'), findsOneWidget);
+    });
+
+    testWidgets('redirects standalone /cashier to scoped dashboard', (
+      tester,
+    ) async {
       final container = ProviderContainer(
         overrides: [
           _membershipsOverride,
+          ..._scopeOverrides,
           authControllerProvider.overrideWith(_AuthenticatedAuth.new),
           currentUserPermissionsProvider.overrideWith(
             () => _FixedPermissions(
@@ -345,8 +713,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(RouterUtils.currentLocation(router), '/dashboard');
-      expect(find.text('dashboard'), findsOneWidget);
+      expect(RouterUtils.currentLocation(router), _scopedDashboard);
+      expect(find.text('scoped-dashboard'), findsOneWidget);
       expect(find.text('cashier'), findsNothing);
     });
 

@@ -10,6 +10,7 @@ import '../../features/organizations/presentation/controllers/organization_membe
 import '../../features/settings/presentation/controllers/branches_controller.dart';
 import '../../features/settings/presentation/controllers/current_branch_controller.dart';
 import '../navigation/app_nav_destination.dart';
+import '../pages/page_not_found_page.dart';
 import '../permissions/current_user_permissions.dart';
 import 'pending_redirect_provider.dart';
 import 'route_scope_provider.dart';
@@ -35,9 +36,9 @@ abstract class RouterUtils {
   /// Home path for an authenticated, verified user.
   ///
   /// [DashboardRoute.path] results are prefixed with the resolved
-  /// `/orgSlug/branchSlug` scope when available; falls back to the bare
-  /// path while the organization hasn't resolved yet (e.g. right after
-  /// login) — [redirect] step 5d/5e will correct it on the next pass.
+  /// `/orgSlug/branchSlug` scope when available. While org/branch are still
+  /// resolving (e.g. right after login), parks on [SplashRoute.path] — bare
+  /// `/dashboard` is not a top-level route under the org/branch shell.
   ///
   static String homePathFor(Ref ref) {
     final perms = ref.read(currentUserPermissionsProvider).value;
@@ -61,10 +62,10 @@ abstract class RouterUtils {
   }
 
   /// [DashboardRoute.path] prefixed with the current org/branch scope, or
-  /// the bare path if the scope can't be resolved yet.
+  /// [SplashRoute.path] while the scope can't be resolved yet.
   static String _scopedDashboardPath(Ref ref) {
     final prefix = _resolveScopePrefix(ref);
-    if (prefix == null) return DashboardRoute.path;
+    if (prefix == null) return SplashRoute.path;
     return '$prefix${DashboardRoute.path}';
   }
 
@@ -147,6 +148,9 @@ abstract class RouterUtils {
     return null;
   }
 
+  /// True for `/` or an empty path (no registered top-level route).
+  static bool isEmptyRootPath(String path) => path.isEmpty || path == '/';
+
   /// Global redirect function for auth guards.
   ///
   /// Redirects unauthenticated users to login and
@@ -158,33 +162,36 @@ abstract class RouterUtils {
     Ref ref,
   ) async {
     final currentPath = state.matchedLocation;
+    // Prefer uri.path for unmatched URLs — matchedLocation is often empty
+    // on the error/404 path, which would skip flat-path rewrites.
+    final uriPath = state.uri.path;
     final fullUri = state.uri.toString();
 
     // Legacy organization nested paths → top-level users/roles/branches.
-    final legacyOrgRedirect = legacyOrganizationRedirect(state.uri.path);
+    final legacyOrgRedirect = legacyOrganizationRedirect(uriPath);
     if (legacyOrgRedirect != null) {
       return legacyOrgRedirect;
     }
 
     // Legacy /organizations → platform org list.
-    if (state.uri.path == OrganizationsRoute.path) {
+    if (uriPath == OrganizationsRoute.path) {
       return PlatformOrganizationsRoute.path;
     }
 
     // Legacy bookmark/deep link → nested records route.
     // Use uri.path: unmatched locations may not set matchedLocation.
-    if (state.uri.path == legacyCheckInRecordsPath) {
+    if (uriPath == legacyCheckInRecordsPath) {
       return CheckInRecordsRoute.path;
     }
 
     // Cashier is dashboard-dialog only — redirect standalone /cashier.
-    if (state.uri.path == SalesRoute.path) {
-      return DashboardRoute.path;
+    if (uriPath == SalesRoute.path) {
+      return homePathFor(ref);
     }
 
     // Check if this route should skip auth check
     final isIgnored = ignoredRoutes.any(
-      (route) => currentPath.startsWith(route),
+      (route) => currentPath.startsWith(route) || uriPath.startsWith(route),
     );
 
     final authAsync = ref.read(authControllerProvider);
@@ -197,6 +204,15 @@ abstract class RouterUtils {
     final isOnConfirmVerification = currentPath.startsWith(
       '/confirm-verification',
     );
+
+    // Bare `/` (or empty) is not a registered route under the org/branch
+    // shell — send users to splash/login/home instead of the 404 page.
+    if (isEmptyRootPath(uriPath)) {
+      if (isAuthLoading) return SplashRoute.path;
+      if (!isAuthenticated) return LoginRoute.path;
+      if (!isVerified) return VerifyEmailRoute.path;
+      return homePathFor(ref);
+    }
 
     // 1. Still loading auth on splash - stay on splash
     if (isAuthLoading && isOnSplashPage) {
@@ -285,7 +301,7 @@ abstract class RouterUtils {
       final memberships =
           ref.read(organizationMembershipsControllerProvider).value;
       if (memberships != null && memberships.any((m) => m.isActive)) {
-        return DashboardRoute.path;
+        return homePathFor(ref);
       }
       // Still loading memberships — stay put.
       return null;
@@ -333,18 +349,23 @@ abstract class RouterUtils {
     // [allAppNavDestinations]. Applies to platform admins too (unlike 5e) —
     // this only rewrites using whatever org/branch is already resolved, it
     // never switches tenants, so it's safe regardless of role.
+    //
+    // Use [uriPath] (not matchedLocation): bare `/dashboard` does not match
+    // any top-level route under the org/branch shell, so matchedLocation is
+    // empty on the way to errorBuilder and would skip this rewrite.
     if (isAuthenticated &&
         isVerified &&
         !isIgnored &&
         state.pathParameters['orgSlug'] == null &&
-        allAppNavDestinations.any((d) => matchesRoutePath(currentPath, d.path))) {
+        allAppNavDestinations.any((d) => matchesRoutePath(uriPath, d.path))) {
       final prefix = _resolveScopePrefix(ref);
-      // Still resolving org/branch (e.g. first frame after login) — fall
-      // through to permission guards rather than exiting redirect early.
-      // A later refresh will rewrite once the scope is known.
       if (prefix != null) {
-        return state.uri.replace(path: '$prefix$currentPath').toString();
+        return state.uri.replace(path: '$prefix$uriPath').toString();
       }
+      // Still resolving org/branch — park on splash so go_router does not
+      // treat the unmatched flat path as a 404. Org/branch listeners refresh
+      // the router once the scope is known.
+      return SplashRoute.path;
     }
 
     // 5e. Validate an already-scoped URL's org/branch segments against what
@@ -436,34 +457,35 @@ abstract class RouterUtils {
 
   /// Error page builder for unknown routes.
   ///
+  /// Auto-redirects to the resolved home path when it differs from the
+  /// current URI (so `/` / typos land on dashboard instead of a dead-end
+  /// 404). Falls back to a manual "Go Home" page only when home cannot be
+  /// resolved to something better than the current location.
+  ///
   /// Uses [_errorPageHomePath] (via a [Consumer]) rather than a bare
   /// `DashboardRoute().go(context)` since an error page has no guaranteed
   /// org/branch route scope to build a `.goScoped` navigation from.
   static Widget errorBuilder(BuildContext context, GoRouterState state) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Page Not Found')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text('404', style: Theme.of(context).textTheme.headlineLarge),
-            const SizedBox(height: 8),
-            Text(
-              'Page not found',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            Consumer(
-              builder: (context, ref, _) => FilledButton(
-                onPressed: () => context.go(_errorPageHomePath(ref)),
-                child: const Text('Go Home'),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return Consumer(
+      builder: (context, ref, _) {
+        final home = _errorPageHomePath(ref);
+        final current = state.uri.path;
+        // Avoid a redirect loop when home itself is still an unmatched flat
+        // path (e.g. bare `/dashboard` before org/branch scope resolves).
+        if (home != current) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go(home);
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return PageNotFoundPage(
+          attemptedPath: current,
+          onGoHome: () => context.go(home),
+        );
+      },
     );
   }
 
@@ -485,6 +507,7 @@ abstract class RouterUtils {
         return '/${org.slug}/$branchSlug${DashboardRoute.path}';
       }
     }
-    return DashboardRoute.path;
+    // Park on splash while scope resolves — bare `/dashboard` is unmatched.
+    return SplashRoute.path;
   }
 }

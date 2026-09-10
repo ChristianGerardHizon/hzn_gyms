@@ -19,8 +19,10 @@ class User with UserMappable {
     this.branchId,
     this.branchName,
     this.organizationId,
+    this.organizationName,
     this.allowedBranchIds = const [],
     this.allowedBranchNames = const [],
+    this.superAdmin = false,
     this.isDeleted = false,
     this.created,
     this.updated,
@@ -56,11 +58,17 @@ class User with UserMappable {
   /// FK to Organization (tenant).
   final String? organizationId;
 
+  /// Organization name (expanded from FK).
+  final String? organizationName;
+
   /// Branch IDs the user may switch to.
   final List<String> allowedBranchIds;
 
   /// Allowed branch names (expanded), aligned with [allowedBranchIds] when available.
   final List<String> allowedBranchNames;
+
+  /// Platform operator flag (`users.superAdmin`). Cross-org; not a role.
+  final bool superAdmin;
 
   /// Soft delete flag.
   final bool isDeleted;
@@ -79,6 +87,9 @@ class User with UserMappable {
 
   /// Display branch name or default text.
   String get displayBranch => branchName ?? 'No Branch';
+
+  /// Display organization name or default text.
+  String get displayOrganization => organizationName ?? 'No Organization';
 
   /// Display allowed branches as a comma-separated list.
   String get displayAllowedBranches {

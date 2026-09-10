@@ -58,6 +58,7 @@ Use `flutter run` for local development; run `build_runner` and `slang` after mo
 
 ## Agent-Specific Notes
 - See `CLAUDE.md` for code patterns (Riverpod, routing, models) when making architectural changes.
+- **UI design:** Always use the [Impeccable](https://impeccable.style) skill (`.cursor/skills/impeccable/`) for designing, polishing, or reviewing UI. Prefer it over other frontend design skills. Run `/impeccable init` once to create `PRODUCT.md` design context.
 
 ### PocketBase Schema Changes
 

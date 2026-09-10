@@ -28,6 +28,14 @@ void main() {
         canAccessPath('/platform/organizations/org-1/setup', branchAdmin),
         isFalse,
       );
+      expect(
+        canAccessPath(PlatformUsersRoute.path, branchAdmin),
+        isFalse,
+      );
+    });
+
+    test('platform admin can access platform users path', () {
+      expect(canAccessPath(PlatformUsersRoute.path, platformAdmin), isTrue);
     });
 
     test('setup path is permission-sensitive while permissions load', () {
@@ -36,6 +44,7 @@ void main() {
         isTrue,
       );
       expect(isPermissionSensitivePath(PlatformDashboardRoute.path), isTrue);
+      expect(isPermissionSensitivePath(PlatformUsersRoute.path), isTrue);
     });
   });
 }

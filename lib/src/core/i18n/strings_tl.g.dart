@@ -79,6 +79,7 @@ class _Translations$auth$tl implements Translations$auth$en {
 	@override String get continueWithGoogle => 'Magpatuloy gamit ang Google';
 	@override String get orDivider => 'o';
 	@override String get signingIn => 'Nagsa-sign in...';
+	@override String get almostThereWarmingUp => 'Malapit ka na — pinapainit pa lang ang mga bagay';
 	@override String get verifyEmailTitle => 'I-verify ang email';
 	@override String verifyEmailSubtitle({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.';
 	@override String get verifyEmailContinue => 'Na-verify ko — Magpatuloy';
@@ -288,6 +289,15 @@ class _Translations$organizations$tl implements Translations$organizations$en {
 	@override String get awaitingInviteBody => 'Kailangan kang imbitahan sa isang organisasyon bago mo magamit ang app. Humingi ng invite sa admin ng organisasyon, tapos mag-sign in ulit.';
 	@override String get platformTitle => 'Platform';
 	@override String get platformDashboard => 'Dashboard';
+	@override String get platformUsersTitle => 'Mga User';
+	@override String get platformUsersEmpty => 'Walang nahanap na user';
+	@override String get platformUsersSearchHint => 'Maghanap sa pangalan o email';
+	@override String get platformUsersAdminLabel => 'Platform admin';
+	@override String get platformUsersGrantSuccess => 'Binigyan ng platform admin access ang user';
+	@override String get platformUsersRevokeSuccess => 'Inalis ang platform admin access';
+	@override String get platformUsersCannotChangeSelf => 'Hindi mo mababago ang sarili mong platform admin status';
+	@override String get platformUsersToggleFailed => 'Hindi na-update ang platform admin status';
+	@override String get viewAllUsers => 'Tingnan lahat ng user';
 	@override String get enterTenant => 'Pumasok sa tenant';
 	@override String get viewAllOrganizations => 'Tingnan lahat ng organisasyon';
 	@override String get recentOrganizations => 'Kamakailang organisasyon';
@@ -394,6 +404,7 @@ extension on TranslationsTl {
 			'auth.continueWithGoogle' => 'Magpatuloy gamit ang Google',
 			'auth.orDivider' => 'o',
 			'auth.signingIn' => 'Nagsa-sign in...',
+			'auth.almostThereWarmingUp' => 'Malapit ka na — pinapainit pa lang ang mga bagay',
 			'auth.verifyEmailTitle' => 'I-verify ang email',
 			'auth.verifyEmailSubtitle' => ({required Object email}) => 'Nagpadala kami ng verification link sa ${email}. Buksan ang link, tapos pindutin ang Continue.',
 			'auth.verifyEmailContinue' => 'Na-verify ko — Magpatuloy',
@@ -558,6 +569,15 @@ extension on TranslationsTl {
 			'organizations.awaitingInviteBody' => 'Kailangan kang imbitahan sa isang organisasyon bago mo magamit ang app. Humingi ng invite sa admin ng organisasyon, tapos mag-sign in ulit.',
 			'organizations.platformTitle' => 'Platform',
 			'organizations.platformDashboard' => 'Dashboard',
+			'organizations.platformUsersTitle' => 'Mga User',
+			'organizations.platformUsersEmpty' => 'Walang nahanap na user',
+			'organizations.platformUsersSearchHint' => 'Maghanap sa pangalan o email',
+			'organizations.platformUsersAdminLabel' => 'Platform admin',
+			'organizations.platformUsersGrantSuccess' => 'Binigyan ng platform admin access ang user',
+			'organizations.platformUsersRevokeSuccess' => 'Inalis ang platform admin access',
+			'organizations.platformUsersCannotChangeSelf' => 'Hindi mo mababago ang sarili mong platform admin status',
+			'organizations.platformUsersToggleFailed' => 'Hindi na-update ang platform admin status',
+			'organizations.viewAllUsers' => 'Tingnan lahat ng user',
 			'organizations.enterTenant' => 'Pumasok sa tenant',
 			'organizations.viewAllOrganizations' => 'Tingnan lahat ng organisasyon',
 			'organizations.recentOrganizations' => 'Kamakailang organisasyon',

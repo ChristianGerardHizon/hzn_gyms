@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../features/organizations/presentation/pages/organization_setup_page.dart';
 import '../../../features/organizations/presentation/pages/organizations_page.dart';
 import '../../../features/organizations/presentation/pages/platform_dashboard_page.dart';
+import '../../../features/organizations/presentation/pages/platform_users_page.dart';
 import '../../pages/platform_root.dart';
 
 part 'platform.routes.g.dart';
@@ -18,6 +19,7 @@ part 'platform.routes.g.dart';
         TypedGoRoute<OrganizationSetupRoute>(path: ':orgId/setup'),
       ],
     ),
+    TypedGoRoute<PlatformUsersRoute>(path: PlatformUsersRoute.path),
   ],
 )
 class PlatformShellRoute extends ShellRouteData {
@@ -63,5 +65,17 @@ class OrganizationSetupRoute extends GoRouteData with $OrganizationSetupRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return OrganizationSetupPage(organizationId: orgId);
+  }
+}
+
+/// Cross-org users list — toggle platform `superAdmin`.
+class PlatformUsersRoute extends GoRouteData with $PlatformUsersRoute {
+  const PlatformUsersRoute();
+
+  static const path = '/platform/users';
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const PlatformUsersPage();
   }
 }

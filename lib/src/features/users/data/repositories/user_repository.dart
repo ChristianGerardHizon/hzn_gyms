@@ -70,6 +70,9 @@ abstract class UserRepository {
     required String newPassword,
   });
 
+  /// Sets platform operator flag (`users.superAdmin`) only.
+  FutureEither<User> setSuperAdmin(String id, bool value);
+
   /// Invalidates the user list cache.
   void invalidateCache();
 }
@@ -87,7 +90,7 @@ class UserRepositoryImpl implements UserRepository {
   UserRepositoryImpl(this._pb);
 
   RecordService get _collection => _pb.collection(PocketBaseCollections.users);
-  String get _expand => 'role,branch,allowedBranches';
+  String get _expand => 'role,branch,allowedBranches,organization';
 
   // Cache for user list
   List<User>? _cachedUsers;
@@ -364,6 +367,19 @@ class UserRepositoryImpl implements UserRepository {
           'passwordConfirm': newPassword,
         },
       );
+    }, Failure.handle).run();
+  }
+
+  @override
+  FutureEither<User> setSuperAdmin(String id, bool value) async {
+    return TaskEither.tryCatch(() async {
+      final record = await _collection.update(
+        id,
+        body: {'superAdmin': value},
+        expand: _expand,
+      );
+      invalidateCache();
+      return _toEntity(record);
     }, Failure.handle).run();
   }
 }
