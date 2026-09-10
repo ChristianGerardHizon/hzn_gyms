@@ -85,7 +85,9 @@ GoRouter router(Ref ref) {
         redirect: (context, state) {
           final org = state.pathParameters['orgSlug']!;
           final branch = state.pathParameters['branchSlug']!;
-          if (state.uri.path == '/$org/$branch') {
+          // Normalize trailing slash so `/org/branch/` still lands on dashboard.
+          final path = state.uri.path.replaceAll(RegExp(r'/+$'), '');
+          if (path == '/$org/$branch') {
             return '/$org/$branch${DashboardRoute.path}';
           }
           return null;

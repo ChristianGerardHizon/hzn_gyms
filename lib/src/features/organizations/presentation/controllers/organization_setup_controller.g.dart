@@ -57,7 +57,7 @@ final class OrganizationSetupControllerProvider
 }
 
 String _$organizationSetupControllerHash() =>
-    r'013ac4cd42a5aef29670f27b254c56f2fcc5abe3';
+    r'88482b99f5a7d289f38223a34d0647ffd4497593';
 
 final class OrganizationSetupControllerFamily extends $Family
     with

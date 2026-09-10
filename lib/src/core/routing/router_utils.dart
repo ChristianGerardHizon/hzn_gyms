@@ -147,6 +147,9 @@ abstract class RouterUtils {
     return null;
   }
 
+  /// True for `/` or an empty path (no registered top-level route).
+  static bool isEmptyRootPath(String path) => path.isEmpty || path == '/';
+
   /// Global redirect function for auth guards.
   ///
   /// Redirects unauthenticated users to login and
@@ -158,33 +161,36 @@ abstract class RouterUtils {
     Ref ref,
   ) async {
     final currentPath = state.matchedLocation;
+    // Prefer uri.path for unmatched URLs — matchedLocation is often empty
+    // on the error/404 path, which would skip flat-path rewrites.
+    final uriPath = state.uri.path;
     final fullUri = state.uri.toString();
 
     // Legacy organization nested paths → top-level users/roles/branches.
-    final legacyOrgRedirect = legacyOrganizationRedirect(state.uri.path);
+    final legacyOrgRedirect = legacyOrganizationRedirect(uriPath);
     if (legacyOrgRedirect != null) {
       return legacyOrgRedirect;
     }
 
     // Legacy /organizations → platform org list.
-    if (state.uri.path == OrganizationsRoute.path) {
+    if (uriPath == OrganizationsRoute.path) {
       return PlatformOrganizationsRoute.path;
     }
 
     // Legacy bookmark/deep link → nested records route.
     // Use uri.path: unmatched locations may not set matchedLocation.
-    if (state.uri.path == legacyCheckInRecordsPath) {
+    if (uriPath == legacyCheckInRecordsPath) {
       return CheckInRecordsRoute.path;
     }
 
     // Cashier is dashboard-dialog only — redirect standalone /cashier.
-    if (state.uri.path == SalesRoute.path) {
+    if (uriPath == SalesRoute.path) {
       return DashboardRoute.path;
     }
 
     // Check if this route should skip auth check
     final isIgnored = ignoredRoutes.any(
-      (route) => currentPath.startsWith(route),
+      (route) => currentPath.startsWith(route) || uriPath.startsWith(route),
     );
 
     final authAsync = ref.read(authControllerProvider);
@@ -197,6 +203,15 @@ abstract class RouterUtils {
     final isOnConfirmVerification = currentPath.startsWith(
       '/confirm-verification',
     );
+
+    // Bare `/` (or empty) is not a registered route under the org/branch
+    // shell — send users to splash/login/home instead of the 404 page.
+    if (isEmptyRootPath(uriPath)) {
+      if (isAuthLoading) return SplashRoute.path;
+      if (!isAuthenticated) return LoginRoute.path;
+      if (!isVerified) return VerifyEmailRoute.path;
+      return homePathFor(ref);
+    }
 
     // 1. Still loading auth on splash - stay on splash
     if (isAuthLoading && isOnSplashPage) {
@@ -333,17 +348,21 @@ abstract class RouterUtils {
     // [allAppNavDestinations]. Applies to platform admins too (unlike 5e) —
     // this only rewrites using whatever org/branch is already resolved, it
     // never switches tenants, so it's safe regardless of role.
+    //
+    // Use [uriPath] (not matchedLocation): bare `/dashboard` does not match
+    // any top-level route under the org/branch shell, so matchedLocation is
+    // empty on the way to errorBuilder and would skip this rewrite.
     if (isAuthenticated &&
         isVerified &&
         !isIgnored &&
         state.pathParameters['orgSlug'] == null &&
-        allAppNavDestinations.any((d) => matchesRoutePath(currentPath, d.path))) {
+        allAppNavDestinations.any((d) => matchesRoutePath(uriPath, d.path))) {
       final prefix = _resolveScopePrefix(ref);
       // Still resolving org/branch (e.g. first frame after login) — fall
       // through to permission guards rather than exiting redirect early.
       // A later refresh will rewrite once the scope is known.
       if (prefix != null) {
-        return state.uri.replace(path: '$prefix$currentPath').toString();
+        return state.uri.replace(path: '$prefix$uriPath').toString();
       }
     }
 
@@ -436,34 +455,54 @@ abstract class RouterUtils {
 
   /// Error page builder for unknown routes.
   ///
+  /// Auto-redirects to the resolved home path when it differs from the
+  /// current URI (so `/` / typos land on dashboard instead of a dead-end
+  /// 404). Falls back to a manual "Go Home" page only when home cannot be
+  /// resolved to something better than the current location.
+  ///
   /// Uses [_errorPageHomePath] (via a [Consumer]) rather than a bare
   /// `DashboardRoute().go(context)` since an error page has no guaranteed
   /// org/branch route scope to build a `.goScoped` navigation from.
   static Widget errorBuilder(BuildContext context, GoRouterState state) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Page Not Found')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text('404', style: Theme.of(context).textTheme.headlineLarge),
-            const SizedBox(height: 8),
-            Text(
-              'Page not found',
-              style: Theme.of(context).textTheme.bodyLarge,
+    return Consumer(
+      builder: (context, ref, _) {
+        final home = _errorPageHomePath(ref);
+        final current = state.uri.path;
+        // Avoid a redirect loop when home itself is still an unmatched flat
+        // path (e.g. bare `/dashboard` before org/branch scope resolves).
+        if (home != current) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.go(home);
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(title: const Text('Page Not Found')),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text('404', style: Theme.of(context).textTheme.headlineLarge),
+                const SizedBox(height: 8),
+                Text(
+                  'Page not found',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => context.go(home),
+                  child: const Text('Go Home'),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            Consumer(
-              builder: (context, ref, _) => FilledButton(
-                onPressed: () => context.go(_errorPageHomePath(ref)),
-                child: const Text('Go Home'),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

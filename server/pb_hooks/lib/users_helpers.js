@@ -38,8 +38,9 @@ function callerIsSuperAdmin(app, authRecord) {
 }
 
 /**
- * Only PocketBase `_superusers` may set `superAdmin`. Non-superuser creates
- * force false; updates restore the existing DB value.
+ * PocketBase `_superusers` and app platform operators (`users.superAdmin`)
+ * may set `superAdmin`. Everyone else: creates force false; updates restore
+ * the existing DB value.
  *
  * @param {core.RecordRequestEvent} e
  * @param {{ isCreate?: boolean }} [options]
@@ -47,6 +48,10 @@ function callerIsSuperAdmin(app, authRecord) {
 function protectSuperAdminField(e, options) {
     const isCreate = !!(options && options.isCreate);
     if (isSuperuserAuth(e.auth)) {
+        return;
+    }
+    // Platform operators may grant/revoke via the /platform/users UI.
+    if (callerIsSuperAdmin(e.app, e.auth)) {
         return;
     }
     if (isCreate) {

@@ -28,7 +28,9 @@ class PlatformRoot extends ConsumerWidget {
       return child;
     }
 
-    final selectedIndex = location.startsWith(PlatformOrganizationsRoute.path)
+    final selectedIndex = location.startsWith(PlatformUsersRoute.path)
+        ? 2
+        : location.startsWith(PlatformOrganizationsRoute.path)
         ? 1
         : 0;
 
@@ -38,6 +40,8 @@ class PlatformRoot extends ConsumerWidget {
           const PlatformDashboardRoute().go(context);
         case 1:
           const PlatformOrganizationsRoute().go(context);
+        case 2:
+          const PlatformUsersRoute().go(context);
       }
     }
 
@@ -87,6 +91,11 @@ class PlatformRoot extends ConsumerWidget {
                       selectedIcon: const Icon(Icons.business),
                       label: Text(t.organizations.title),
                     ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.people_outline),
+                      selectedIcon: const Icon(Icons.people),
+                      label: Text(t.organizations.platformUsersTitle),
+                    ),
                   ],
                 ),
                 const VerticalDivider(width: 1),
@@ -107,6 +116,11 @@ class PlatformRoot extends ConsumerWidget {
                   icon: const Icon(Icons.business_outlined),
                   selectedIcon: const Icon(Icons.business),
                   label: t.organizations.title,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.people_outline),
+                  selectedIcon: const Icon(Icons.people),
+                  label: t.organizations.platformUsersTitle,
                 ),
               ],
             )

@@ -157,4 +157,73 @@ void main() {
     expect(body['name'], 'Admin');
     expect(body.containsKey('username'), isFalse);
   });
+
+  test('setSuperAdmin sends only superAdmin field', () async {
+    when(
+      () => users.update(
+        any(),
+        body: any(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer(
+      (_) async => buildRecord(
+        id: 'user-2',
+        collectionName: 'users',
+        data: {
+          'name': 'Staff',
+          'email': 'staff@example.com',
+          'superAdmin': true,
+        },
+      ),
+    );
+
+    final result = await repo.setSuperAdmin('user-2', true);
+
+    expect(result.isRight(), isTrue);
+    result.fold((_) => fail('expected Right'), (user) {
+      expect(user.superAdmin, isTrue);
+    });
+
+    final body = verify(
+      () => users.update(
+        'user-2',
+        body: captureAny(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).captured.single as Map<String, dynamic>;
+
+    expect(body, {'superAdmin': true});
+  });
+
+  test('setSuperAdmin can revoke platform access', () async {
+    when(
+      () => users.update(
+        any(),
+        body: any(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).thenAnswer(
+      (_) async => buildRecord(
+        id: 'user-2',
+        collectionName: 'users',
+        data: {
+          'name': 'Staff',
+          'superAdmin': false,
+        },
+      ),
+    );
+
+    final result = await repo.setSuperAdmin('user-2', false);
+
+    expect(result.isRight(), isTrue);
+    final body = verify(
+      () => users.update(
+        'user-2',
+        body: captureAny(named: 'body'),
+        expand: any(named: 'expand'),
+      ),
+    ).captured.single as Map<String, dynamic>;
+
+    expect(body, {'superAdmin': false});
+  });
 }

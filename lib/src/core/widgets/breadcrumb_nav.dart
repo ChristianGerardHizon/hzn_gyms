@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../i18n/strings.g.dart';
 import '../routing/org_scoped_navigation.dart';
 import '../routing/routes/branches.routes.dart';
+import '../routing/routes/dashboard.routes.dart';
 import '../routing/routes/products.routes.dart';
 import '../routing/routes/roles.routes.dart';
 import '../routing/routes/sales.routes.dart';
@@ -111,7 +112,8 @@ class BreadcrumbNav extends StatelessWidget {
       // On dashboard - show just Dashboard
       items.add(BreadcrumbItem(
         label: t.navigation.dashboard,
-        path: '/',
+        path: DashboardRoute.path,
+        onTap: () => const DashboardRoute().goScoped(context),
       ));
       return items;
     }

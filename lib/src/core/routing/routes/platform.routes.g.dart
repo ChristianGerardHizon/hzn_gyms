@@ -28,6 +28,11 @@ RouteBase get $platformShellRoute => ShellRouteData.$route(
         ),
       ],
     ),
+    GoRouteData.$route(
+      path: '/platform/users',
+      hasOverriddenOnExit: false,
+      factory: $PlatformUsersRoute._fromState,
+    ),
   ],
 );
 
@@ -88,6 +93,27 @@ mixin $OrganizationSetupRoute on GoRouteData {
   String get location => GoRouteData.$location(
     '/platform/organizations/${Uri.encodeComponent(_self.orgId)}/setup',
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $PlatformUsersRoute on GoRouteData {
+  static PlatformUsersRoute _fromState(GoRouterState state) =>
+      const PlatformUsersRoute();
+
+  @override
+  String get location => GoRouteData.$location('/platform/users');
 
   @override
   void go(BuildContext context) => context.go(location);

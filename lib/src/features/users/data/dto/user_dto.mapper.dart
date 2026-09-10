@@ -76,6 +76,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     opt: true,
     def: const [],
   );
+  static bool _$superAdmin(UserDto v) => v.superAdmin;
+  static const Field<UserDto, bool> _f$superAdmin = Field(
+    'superAdmin',
+    _$superAdmin,
+    opt: true,
+    def: false,
+  );
   static bool _$isDeleted(UserDto v) => v.isDeleted;
   static const Field<UserDto, bool> _f$isDeleted = Field(
     'isDeleted',
@@ -107,6 +114,12 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     _$branchName,
     opt: true,
   );
+  static String? _$organizationName(UserDto v) => v.organizationName;
+  static const Field<UserDto, String> _f$organizationName = Field(
+    'organizationName',
+    _$organizationName,
+    opt: true,
+  );
   static List<String> _$allowedBranchNames(UserDto v) => v.allowedBranchNames;
   static const Field<UserDto, List<String>> _f$allowedBranchNames = Field(
     'allowedBranchNames',
@@ -128,11 +141,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
     #branch: _f$branch,
     #organization: _f$organization,
     #allowedBranches: _f$allowedBranches,
+    #superAdmin: _f$superAdmin,
     #isDeleted: _f$isDeleted,
     #created: _f$created,
     #updated: _f$updated,
     #roleName: _f$roleName,
     #branchName: _f$branchName,
+    #organizationName: _f$organizationName,
     #allowedBranchNames: _f$allowedBranchNames,
   };
 
@@ -149,11 +164,13 @@ class UserDtoMapper extends ClassMapperBase<UserDto> {
       branch: data.dec(_f$branch),
       organization: data.dec(_f$organization),
       allowedBranches: data.dec(_f$allowedBranches),
+      superAdmin: data.dec(_f$superAdmin),
       isDeleted: data.dec(_f$isDeleted),
       created: data.dec(_f$created),
       updated: data.dec(_f$updated),
       roleName: data.dec(_f$roleName),
       branchName: data.dec(_f$branchName),
+      organizationName: data.dec(_f$organizationName),
       allowedBranchNames: data.dec(_f$allowedBranchNames),
     );
   }
@@ -231,11 +248,13 @@ abstract class UserDtoCopyWith<$R, $In extends UserDto, $Out>
     String? branch,
     String? organization,
     List<String>? allowedBranches,
+    bool? superAdmin,
     bool? isDeleted,
     String? created,
     String? updated,
     String? roleName,
     String? branchName,
+    String? organizationName,
     List<String>? allowedBranchNames,
   });
   UserDtoCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
@@ -276,11 +295,13 @@ class _UserDtoCopyWithImpl<$R, $Out>
     Object? branch = $none,
     Object? organization = $none,
     List<String>? allowedBranches,
+    bool? superAdmin,
     bool? isDeleted,
     Object? created = $none,
     Object? updated = $none,
     Object? roleName = $none,
     Object? branchName = $none,
+    Object? organizationName = $none,
     List<String>? allowedBranchNames,
   }) => $apply(
     FieldCopyWithData({
@@ -295,11 +316,13 @@ class _UserDtoCopyWithImpl<$R, $Out>
       if (branch != $none) #branch: branch,
       if (organization != $none) #organization: organization,
       if (allowedBranches != null) #allowedBranches: allowedBranches,
+      if (superAdmin != null) #superAdmin: superAdmin,
       if (isDeleted != null) #isDeleted: isDeleted,
       if (created != $none) #created: created,
       if (updated != $none) #updated: updated,
       if (roleName != $none) #roleName: roleName,
       if (branchName != $none) #branchName: branchName,
+      if (organizationName != $none) #organizationName: organizationName,
       if (allowedBranchNames != null) #allowedBranchNames: allowedBranchNames,
     }),
   );
@@ -316,11 +339,13 @@ class _UserDtoCopyWithImpl<$R, $Out>
     branch: data.get(#branch, or: $value.branch),
     organization: data.get(#organization, or: $value.organization),
     allowedBranches: data.get(#allowedBranches, or: $value.allowedBranches),
+    superAdmin: data.get(#superAdmin, or: $value.superAdmin),
     isDeleted: data.get(#isDeleted, or: $value.isDeleted),
     created: data.get(#created, or: $value.created),
     updated: data.get(#updated, or: $value.updated),
     roleName: data.get(#roleName, or: $value.roleName),
     branchName: data.get(#branchName, or: $value.branchName),
+    organizationName: data.get(#organizationName, or: $value.organizationName),
     allowedBranchNames: data.get(
       #allowedBranchNames,
       or: $value.allowedBranchNames,

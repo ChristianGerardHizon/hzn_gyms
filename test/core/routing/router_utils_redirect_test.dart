@@ -38,6 +38,11 @@ class _AuthenticatedAuth extends AuthController {
   Future<AuthState?> build() async => buildAuthState();
 }
 
+class _SignedOutAuth extends AuthController {
+  @override
+  Future<AuthState?> build() async => null;
+}
+
 class _LoadingAuth extends AuthController {
   @override
   Future<AuthState?> build() async {
@@ -81,6 +86,14 @@ final _testRouterProvider = Provider.family<GoRouter, String>((
       GoRoute(path: '/splash', builder: (_, _) => const Text('splash')),
       GoRoute(path: '/login', builder: (_, _) => const Text('login')),
       GoRoute(path: '/members', builder: (_, _) => const Text('members')),
+      GoRoute(
+        path: '/platform/organizations',
+        builder: (_, _) => const Text('platform-orgs'),
+      ),
+      GoRoute(
+        path: '/platform',
+        builder: (_, _) => const Text('platform'),
+      ),
       GoRoute(
         path: '/system/printers',
         builder: (_, _) => const Text('printers'),
@@ -303,7 +316,8 @@ void main() {
         );
         addTearDown(container.dispose);
 
-        final router = container.read(_testRouterProvider('/'));
+        // Platform home is the correct landing path for superAdmin.
+        final router = container.read(_testRouterProvider('/platform'));
 
         await tester.pumpWidget(
           UncontrolledProviderScope(
@@ -313,11 +327,97 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(RouterUtils.currentLocation(router), '/');
-        expect(find.text('dashboard'), findsOneWidget);
+        expect(RouterUtils.currentLocation(router), '/platform');
+        expect(find.text('platform'), findsOneWidget);
         expect(find.text('awaiting'), findsNothing);
       },
     );
+
+    testWidgets('empty root `/` redirects authenticated user to home', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          _membershipsOverride,
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(
+                permissions: {Permissions.membersView},
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(_testRouterProvider('/'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), '/dashboard');
+      expect(find.text('dashboard'), findsOneWidget);
+    });
+
+    testWidgets('empty root `/` redirects platform admin to platform home', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          _emptyMembershipsOverride,
+          authControllerProvider.overrideWith(_AuthenticatedAuth.new),
+          currentUserPermissionsProvider.overrideWith(
+            () => _FixedPermissions(
+              const CurrentUserPermissions(superAdmin: true),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(_testRouterProvider('/'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), '/platform');
+      expect(find.text('platform'), findsOneWidget);
+    });
+
+    testWidgets('empty root `/` redirects signed-out user to login', (
+      tester,
+    ) async {
+      final container = ProviderContainer(
+        overrides: [
+          authControllerProvider.overrideWith(_SignedOutAuth.new),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final router = container.read(_testRouterProvider('/'));
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(RouterUtils.currentLocation(router), '/login');
+      expect(find.text('login'), findsOneWidget);
+    });
 
     testWidgets('redirects standalone /cashier to dashboard', (tester) async {
       final container = ProviderContainer(
